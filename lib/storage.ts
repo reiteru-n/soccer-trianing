@@ -22,6 +22,7 @@ export interface AllData {
   bodyRecords: BodyRecord[];
   trainingMenu: TrainingMenuItem[];
   trainingLogs: TrainingLog[];
+  childBirthDate: string;
 }
 
 export async function fetchAllData(): Promise<AllData> {
@@ -32,6 +33,7 @@ export async function fetchAllData(): Promise<AllData> {
       bodyRecords: [],
       trainingMenu: INITIAL_TRAINING_MENU,
       trainingLogs: [],
+      childBirthDate: "",
     };
   }
   try {
@@ -43,6 +45,7 @@ export async function fetchAllData(): Promise<AllData> {
       bodyRecords: data.bodyRecords ?? [],
       trainingMenu: data.trainingMenu ?? INITIAL_TRAINING_MENU,
       trainingLogs: data.trainingLogs ?? [],
+      childBirthDate: data.childBirthDate ?? "",
     };
   } catch {
     return {
@@ -51,6 +54,7 @@ export async function fetchAllData(): Promise<AllData> {
       bodyRecords: [],
       trainingMenu: INITIAL_TRAINING_MENU,
       trainingLogs: [],
+      childBirthDate: "",
     };
   }
 }
@@ -67,6 +71,7 @@ export function saveLiftingRecords(records: LiftingRecord[]): void { savePartial
 export function savePracticeNotes(notes: PracticeNote[]): void { savePartial({ practiceNotes: notes }); }
 export function saveBodyRecords(records: BodyRecord[]): void { savePartial({ bodyRecords: records }); }
 export function saveTrainingMenu(menu: TrainingMenuItem[]): void { savePartial({ trainingMenu: menu }); }
+export function saveBirthDate(date: string): void { savePartial({ childBirthDate: date }); }
 export function saveTrainingLogs(logs: TrainingLog[]): void { savePartial({ trainingLogs: logs }); }
 
 export async function exportData(): Promise<void> {
@@ -94,6 +99,7 @@ export async function importData(json: string): Promise<void> {
       bodyRecords: data.bodyRecords,
       trainingMenu: data.trainingMenu,
       trainingLogs: data.trainingLogs,
+      childBirthDate: data.childBirthDate,
     }),
   });
 }

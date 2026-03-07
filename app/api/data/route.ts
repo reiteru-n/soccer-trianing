@@ -7,6 +7,7 @@ interface AppData {
   bodyRecords: unknown[];
   trainingMenu: unknown[];
   trainingLogs: unknown[];
+  childBirthDate: string;
 }
 
 const DATA_KEY = 'takuto_app_data';
@@ -54,6 +55,7 @@ export async function GET() {
       bodyRecords: [],
       trainingMenu: INITIAL_TRAINING_MENU,
       trainingLogs: [],
+      childBirthDate: "",
     });
   }
   // Fill missing fields for existing data (migration)
@@ -63,6 +65,7 @@ export async function GET() {
     bodyRecords: data.bodyRecords ?? [],
     trainingMenu: data.trainingMenu ?? INITIAL_TRAINING_MENU,
     trainingLogs: data.trainingLogs ?? [],
+    childBirthDate: (data as any).childBirthDate ?? "",
   });
 }
 
@@ -74,6 +77,7 @@ export async function POST(req: Request) {
     bodyRecords: [],
     trainingMenu: INITIAL_TRAINING_MENU,
     trainingLogs: [],
+    childBirthDate: "",
   };
   await writeData({
     liftingRecords: body.liftingRecords ?? current.liftingRecords,
@@ -81,6 +85,7 @@ export async function POST(req: Request) {
     bodyRecords: body.bodyRecords ?? current.bodyRecords ?? [],
     trainingMenu: body.trainingMenu ?? current.trainingMenu ?? INITIAL_TRAINING_MENU,
     trainingLogs: body.trainingLogs ?? current.trainingLogs ?? [],
+    childBirthDate: (body as any).childBirthDate ?? (current as any).childBirthDate ?? "",
   });
   return NextResponse.json({ ok: true });
 }

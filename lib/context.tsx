@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog } from './types';
-import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, generateId } from './storage';
+import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, generateId } from './storage';
 import { MILESTONES } from './data';
 
 interface AppContextType {
@@ -29,6 +29,8 @@ interface AppContextType {
   maxCount: number;
   newMilestoneAchieved: number | null;
   clearNewMilestone: () => void;
+  childBirthDate: string;
+  setChildBirthDate: (d: string) => void;
   isLoading: boolean;
 }
 
@@ -51,6 +53,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [bodyRecords, setBodyRecords] = useState<BodyRecord[]>([]);
   const [trainingMenu, setTrainingMenu] = useState<TrainingMenuItem[]>([]);
   const [trainingLogs, setTrainingLogs] = useState<TrainingLog[]>([]);
+  const [childBirthDate, setChildBirthDateState] = useState("");
   const [newMilestoneAchieved, setNewMilestoneAchieved] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -62,6 +65,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setBodyRecords(data.bodyRecords);
       setTrainingMenu(data.trainingMenu);
       setTrainingLogs(data.trainingLogs);
+      setChildBirthDateState(data.childBirthDate ?? "");
       setIsLoading(false);
     }
     load();
@@ -179,6 +183,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setChildBirthDate = useCallback((d: string) => { setChildBirthDateState(d); saveBirthDate(d); }, []);
   const clearNewMilestone = useCallback(() => setNewMilestoneAchieved(null), []);
 
   return (
@@ -190,6 +195,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         trainingMenu, addTrainingMenuItem, updateTrainingMenuItem, deleteTrainingMenuItem, reorderTrainingMenu,
         trainingLogs, toggleTrainingLogItem,
         milestones, maxCount, newMilestoneAchieved, clearNewMilestone,
+        childBirthDate, setChildBirthDate,
         isLoading,
       }}
     >

@@ -84,7 +84,7 @@ export default function TrainingPage() {
                   <span className="text-2xl">{done ? "✅" : "⬜"}</span>
                   <div className="flex-1 min-w-0">
                     <p className={"font-semibold text-sm " + (done ? "line-through text-gray-400" : "text-gray-800")}>{item.name}</p>
-                    <p className="text-xs text-gray-400">{item.targetCount}{item.isMinimum ? "回以上" : "回"} · {item.estimatedMinutes}分</p>
+                    <p className="text-xs text-gray-400">{item.targetCount}{item.isMinimum ? "回以上" : "回"}</p>
                   </div>
                 </button>
               );

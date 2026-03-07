@@ -12,6 +12,7 @@ import NoteForm from '@/components/NoteForm';
 import ConfettiEffect from '@/components/ConfettiEffect';
 import { BodyRecord } from '@/lib/types';
 import { exportData, importData } from '@/lib/storage';
+import BodyChart from '@/components/BodyChart';
 
 function todayStr() {
   const d = new Date();
@@ -19,13 +20,15 @@ function todayStr() {
 }
 
 export default function DashboardPage() {
-  const { liftingRecords, addLiftingRecord, practiceNotes, addPracticeNote, milestones, maxCount, newMilestoneAchieved, clearNewMilestone, bodyRecords, addBodyRecord, deleteBodyRecord, isLoading } = useApp();
+  const { liftingRecords, addLiftingRecord, practiceNotes, addPracticeNote, milestones, maxCount, newMilestoneAchieved, clearNewMilestone, bodyRecords, addBodyRecord, deleteBodyRecord, childBirthDate, setChildBirthDate, isLoading } = useApp();
   const [showLiftingForm, setShowLiftingForm] = useState(false);
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [showBodyForm, setShowBodyForm] = useState(false);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyHeight, setBodyHeight] = useState("");
   const [bodyDate, setBodyDate] = useState(todayStr());
+  const [showBodyChart, setShowBodyChart] = useState(false);
+  const [birthDateInput, setBirthDateInput] = useState("");
   const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
   const sortedBody = [...bodyRecords].sort((a, b) => b.date.localeCompare(a.date));
   const pastLocations = [...new Set([...liftingRecords.map((r) => r.location), ...practiceNotes.map((n) => n.location)])];
@@ -75,6 +78,30 @@ export default function DashboardPage() {
           <div className="flex bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-16 text-center">体重</span><span className="w-16 text-center">身長</span><span className="w-6"></span></div>
           {sortedBody.slice(0,5).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-16 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-16 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="w-6 text-gray-300 hover:text-red-400 text-lg">×</button></div>))}
         </div>) : (<p className="text-sm text-gray-400 text-center py-4">まだ記録がありません</p>)}
+        {sortedBody.length >= 1 && (
+          <div className="mt-3">
+            <button onClick={()=>setShowBodyChart(!showBodyChart)} className="text-xs text-blue-500 font-medium">{showBodyChart ? "グラフを閉じる" : "📊 グラフで見る"}</button>
+            {showBodyChart && (
+              <div className="mt-3 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                {!childBirthDate ? (
+                  <div className="mb-3">
+                    <p className="text-xs text-gray-500 mb-2">平均・SDを表示するには生年月日を入力してください</p>
+                    <div className="flex gap-2">
+                      <input type="date" value={birthDateInput} onChange={e=>setBirthDateInput(e.target.value)} className="flex-1 rounded-xl border-2 border-gray-200 px-3 py-2 text-sm" />
+                      <button onClick={()=>setChildBirthDate(birthDateInput.split("-").join("/"))} className="bg-blue-600 text-white font-bold px-3 py-2 rounded-xl text-sm">設定</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-gray-400">生年月日: {childBirthDate}</p>
+                    <button onClick={()=>setChildBirthDate("")} className="text-xs text-gray-400 hover:text-red-400">変更</button>
+                  </div>
+                )}
+                <BodyChart records={bodyRecords} birthDate={childBirthDate} />
+              </div>
+            )}
+          </div>
+        )}
       </section>
       <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-gray-700">📝 最新の練習ノート</h2><Link href="/notes" className="text-xs text-green-500 font-medium">もっと見る →</Link></div>{latestNotes.length === 0 ? (<p className="text-sm text-gray-400 text-center py-4">まだノートがありません</p>) : (<div className="space-y-3">{latestNotes.map((n) => <NoteCard key={n.id} note={n} />)}</div>)}</section>
       <section className="mb-2"><h2 className="text-base font-bold text-gray-700 mb-3">💾 データ管理</h2><div className="flex gap-3"><button onClick={exportData} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm">📤 エクスポート</button><label className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2.5 rounded-xl text-sm cursor-pointer text-center">📥 インポート<input type="file" accept=".json" onChange={handleImport} className="hidden" /></label></div></section>
