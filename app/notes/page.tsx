@@ -16,13 +16,13 @@ export default function NotesPage() {
   const displayed = showUndoneOnly
     ? sorted.filter((n) => n.improvements.some((i) => !i.done))
     : sorted;
-
   const undoneCount = sorted.filter((n) => n.improvements.some((i) => !i.done)).length;
 
   const pastLocations = [...new Set([
     ...practiceNotes.map((n) => n.location),
     ...liftingRecords.map((r) => r.location),
   ])];
+  const pastCategories = [...new Set(practiceNotes.map((n) => n.category).filter(Boolean) as string[])];
 
   const handleEditSave = (data: Omit<PracticeNote, 'id'>) => {
     if (editingNote) {
@@ -54,29 +54,20 @@ export default function NotesPage() {
         </div>
       </header>
 
-      {/* Filter toggle */}
       <div className="mb-4 flex gap-2">
         <button
           onClick={() => setShowUndoneOnly(false)}
-          className={`flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors ${
-            !showUndoneOnly
-              ? 'bg-green-600 border-green-600 text-white'
-              : 'bg-white border-gray-200 text-gray-600'
-          }`}
+          className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (!showUndoneOnly ? "bg-green-600 border-green-600 text-white" : "bg-white border-gray-200 text-gray-600")}
         >
           すべて表示
         </button>
         <button
           onClick={() => setShowUndoneOnly(true)}
-          className={`flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors ${
-            showUndoneOnly
-              ? 'bg-orange-500 border-orange-500 text-white'
-              : 'bg-white border-gray-200 text-gray-600'
-          }`}
+          className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (showUndoneOnly ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-gray-200 text-gray-600")}
         >
           💪 未改善のみ
           {undoneCount > 0 && (
-            <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${showUndoneOnly ? 'bg-white text-orange-500' : 'bg-orange-100 text-orange-600'}`}>
+            <span className={"ml-1.5 text-xs px-1.5 py-0.5 rounded-full " + (showUndoneOnly ? "bg-white text-orange-500" : "bg-orange-100 text-orange-600")}>
               {undoneCount}
             </span>
           )}
@@ -105,7 +96,6 @@ export default function NotesPage() {
         </div>
       )}
 
-      {/* FAB */}
       <button
         onClick={() => setShowForm(true)}
         className="fixed bottom-20 right-4 z-40 w-14 h-14 bg-green-600 hover:bg-green-700 text-white text-2xl rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
@@ -119,6 +109,7 @@ export default function NotesPage() {
           onSave={addPracticeNote}
           onClose={() => setShowForm(false)}
           pastLocations={pastLocations}
+          pastCategories={pastCategories}
         />
       )}
       {editingNote && (
@@ -126,6 +117,7 @@ export default function NotesPage() {
           onSave={handleEditSave}
           onClose={() => setEditingNote(null)}
           pastLocations={pastLocations}
+          pastCategories={pastCategories}
           initialValues={editingNote}
         />
       )}

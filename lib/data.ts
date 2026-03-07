@@ -1,4 +1,4 @@
-import { LiftingRecord, PracticeNote } from './types';
+import { LiftingRecord, PracticeNote, TrainingMenuItem } from './types';
 
 export const DATA_VERSION = '2';
 
@@ -36,6 +36,7 @@ export const INITIAL_PRACTICE_NOTES: PracticeNote[] = [
     id: '1',
     date: '2026/01/22',
     location: 'リーフスタジアム',
+    category: 'チーム練習',
     goodPoints: 'シュートの足が振り切ることができた。',
     improvements: [{ text: '周りを見ていない', done: false }],
   },
@@ -43,6 +44,7 @@ export const INITIAL_PRACTICE_NOTES: PracticeNote[] = [
     id: '2',
     date: '2026/01/23',
     location: '家',
+    category: '自主練',
     goodPoints: '自分で課題の修正メニューができた。',
     improvements: [{ text: 'シュートの足が降れてなかった。', done: false }],
   },
@@ -50,6 +52,7 @@ export const INITIAL_PRACTICE_NOTES: PracticeNote[] = [
     id: '3',
     date: '2026/01/24',
     location: '野比小',
+    category: 'チーム練習',
     goodPoints: 'カバーができた。',
     improvements: [{ text: '取られたあと取り返すのが遅い', done: false }],
   },
@@ -57,6 +60,7 @@ export const INITIAL_PRACTICE_NOTES: PracticeNote[] = [
     id: '4',
     date: '2026/01/29',
     location: 'リーフスタジアム',
+    category: 'チーム練習',
     goodPoints: 'フェイントでかわした。',
     improvements: [{ text: 'ボールを取りに行くとき焦った。', done: false }],
   },
@@ -64,9 +68,27 @@ export const INITIAL_PRACTICE_NOTES: PracticeNote[] = [
     id: '5',
     date: '2026/02/22',
     location: 'SCH',
+    category: 'スクール',
     goodPoints: 'かわしたあとスピードを上げられた。',
     improvements: [{ text: '取られた後にプレーが遅かった。', done: false }],
   },
+];
+
+export const INITIAL_TRAINING_MENU: TrainingMenuItem[] = [
+  { id: 'tm1',  name: 'ミニハードル(片足づつ)',        targetCount: 10, isMinimum: false, estimatedMinutes: 3, order: 1 },
+  { id: 'tm2',  name: 'ミニハードル(両足)',             targetCount: 10, isMinimum: false, estimatedMinutes: 3, order: 2 },
+  { id: 'tm3',  name: 'ラダー(1歩)',                   targetCount: 10, isMinimum: false, estimatedMinutes: 3, order: 3 },
+  { id: 'tm4',  name: 'ラダー(2歩)',                   targetCount: 10, isMinimum: false, estimatedMinutes: 3, order: 4 },
+  { id: 'tm5',  name: 'ラダー(中々外)',                targetCount: 10, isMinimum: false, estimatedMinutes: 3, order: 5 },
+  { id: 'tm6',  name: 'バンドダッシュ',                targetCount: 10, isMinimum: false, estimatedMinutes: 5, order: 6 },
+  { id: 'tm7',  name: 'リフティング(インステップ左足)', targetCount: 50, isMinimum: true,  estimatedMinutes: 3, order: 7 },
+  { id: 'tm8',  name: 'リフティング(インステップ右足)', targetCount: 15, isMinimum: true,  estimatedMinutes: 3, order: 8 },
+  { id: 'tm9',  name: 'リフティング(インサイド左足)',  targetCount: 5,  isMinimum: true,  estimatedMinutes: 3, order: 9 },
+  { id: 'tm10', name: 'リフティング(インサイド右足)',  targetCount: 5,  isMinimum: true,  estimatedMinutes: 3, order: 10 },
+  { id: 'tm11', name: 'リフティング(アウトサイド左足)',targetCount: 5,  isMinimum: true,  estimatedMinutes: 3, order: 11 },
+  { id: 'tm12', name: 'リフティング(アウトサイド右足)',targetCount: 5,  isMinimum: true,  estimatedMinutes: 3, order: 12 },
+  { id: 'tm13', name: 'リフティング(もも)',            targetCount: 6,  isMinimum: true,  estimatedMinutes: 3, order: 13 },
+  { id: 'tm14', name: 'リフティング(むね)',            targetCount: 4,  isMinimum: true,  estimatedMinutes: 3, order: 14 },
 ];
 
 export const MILESTONES = [10, 50, 100, 200, 300, 500, 1000];

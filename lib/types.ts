@@ -19,8 +19,31 @@ export interface PracticeNote {
   id: string;
   date: string; // yyyy/mm/dd
   location: string;
+  category?: string;
   goodPoints: string;
   improvements: ImprovementItem[];
+}
+
+export interface BodyRecord {
+  id: string;
+  date: string; // yyyy/mm/dd
+  weight?: number; // kg
+  height?: number; // cm
+}
+
+export interface TrainingMenuItem {
+  id: string;
+  name: string;
+  targetCount: number;
+  isMinimum: boolean; // true = "以上"
+  estimatedMinutes: number;
+  order: number;
+}
+
+export interface TrainingLog {
+  id: string;
+  date: string; // yyyy/mm/dd
+  completedItemIds: string[];
 }
 
 export type MilestoneStatus = 'achieved' | 'challenging' | 'locked';

@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { LiftingRecord, PracticeNote, Milestone } from './types';
-import { getLiftingRecords, saveLiftingRecords, getPracticeNotes, savePracticeNotes, generateId } from './storage';
+import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog } from './types';
+import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, generateId } from './storage';
 import { MILESTONES } from './data';
 
 interface AppContextType {
@@ -15,6 +15,16 @@ interface AppContextType {
   updatePracticeNote: (id: string, data: Omit<PracticeNote, 'id'>) => void;
   deletePracticeNote: (id: string) => void;
   toggleImprovementItem: (noteId: string, index: number) => void;
+  bodyRecords: BodyRecord[];
+  addBodyRecord: (record: Omit<BodyRecord, 'id'>) => void;
+  deleteBodyRecord: (id: string) => void;
+  trainingMenu: TrainingMenuItem[];
+  addTrainingMenuItem: (item: Omit<TrainingMenuItem, 'id' | 'order'>) => void;
+  updateTrainingMenuItem: (id: string, data: Omit<TrainingMenuItem, 'id' | 'order'>) => void;
+  deleteTrainingMenuItem: (id: string) => void;
+  reorderTrainingMenu: (items: TrainingMenuItem[]) => void;
+  trainingLogs: TrainingLog[];
+  toggleTrainingLogItem: (date: string, itemId: string) => void;
   milestones: Milestone[];
   maxCount: number;
   newMilestoneAchieved: number | null;
@@ -35,21 +45,23 @@ function computeMilestones(max: number): Milestone[] {
     return { target, status: 'locked' as const };
   });
 }
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const [liftingRecords, setLiftingRecords] = useState<LiftingRecord[]>([]);
   const [practiceNotes, setPracticeNotes] = useState<PracticeNote[]>([]);
+  const [bodyRecords, setBodyRecords] = useState<BodyRecord[]>([]);
+  const [trainingMenu, setTrainingMenu] = useState<TrainingMenuItem[]>([]);
+  const [trainingLogs, setTrainingLogs] = useState<TrainingLog[]>([]);
   const [newMilestoneAchieved, setNewMilestoneAchieved] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const [lifting, notes] = await Promise.all([
-        getLiftingRecords(),
-        getPracticeNotes(),
-      ]);
-      setLiftingRecords(lifting);
-      setPracticeNotes(notes);
+      const data = await fetchAllData();
+      setLiftingRecords(data.liftingRecords);
+      setPracticeNotes(data.practiceNotes);
+      setBodyRecords(data.bodyRecords);
+      setTrainingMenu(data.trainingMenu);
+      setTrainingLogs(data.trainingLogs);
       setIsLoading(false);
     }
     load();
@@ -58,102 +70,126 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const maxCount = liftingRecords.length > 0 ? Math.max(...liftingRecords.map((r) => r.count)) : 0;
   const milestones = computeMilestones(maxCount);
 
-  const addLiftingRecord = useCallback(
-    (record: Omit<LiftingRecord, 'id'>) => {
-      const prevMax = liftingRecords.length > 0 ? Math.max(...liftingRecords.map((r) => r.count)) : 0;
-      const newRecord = { ...record, id: generateId() };
-      const updated = [...liftingRecords, newRecord];
-      setLiftingRecords(updated);
-      saveLiftingRecords(updated);
+  const addLiftingRecord = useCallback((record: Omit<LiftingRecord, 'id'>) => {
+    const prevMax = liftingRecords.length > 0 ? Math.max(...liftingRecords.map((r) => r.count)) : 0;
+    const newRecord = { ...record, id: generateId() };
+    const updated = [...liftingRecords, newRecord];
+    setLiftingRecords(updated);
+    saveLiftingRecords(updated);
+    const newMax = Math.max(prevMax, record.count);
+    if (newMax > prevMax) {
+      const achieved = MILESTONES.filter((m) => m <= newMax && m > prevMax);
+      if (achieved.length > 0) setNewMilestoneAchieved(achieved[achieved.length - 1]);
+    }
+  }, [liftingRecords]);
 
-      const newMax = Math.max(prevMax, record.count);
-      if (newMax > prevMax) {
-        const achieved = MILESTONES.filter((m) => m <= newMax && m > prevMax);
-        if (achieved.length > 0) setNewMilestoneAchieved(achieved[achieved.length - 1]);
-      }
-    },
-    [liftingRecords]
-  );
+  const updateLiftingRecord = useCallback((id: string, data: Omit<LiftingRecord, 'id'>) => {
+    const updated = liftingRecords.map((r) => (r.id === id ? { ...data, id } : r));
+    setLiftingRecords(updated);
+    saveLiftingRecords(updated);
+  }, [liftingRecords]);
 
-  const updateLiftingRecord = useCallback(
-    (id: string, data: Omit<LiftingRecord, 'id'>) => {
-      const updated = liftingRecords.map((r) => (r.id === id ? { ...data, id } : r));
-      setLiftingRecords(updated);
-      saveLiftingRecords(updated);
-    },
-    [liftingRecords]
-  );
+  const deleteLiftingRecord = useCallback((id: string) => {
+    const updated = liftingRecords.filter((r) => r.id !== id);
+    setLiftingRecords(updated);
+    saveLiftingRecords(updated);
+  }, [liftingRecords]);
 
-  const deleteLiftingRecord = useCallback(
-    (id: string) => {
-      const updated = liftingRecords.filter((r) => r.id !== id);
-      setLiftingRecords(updated);
-      saveLiftingRecords(updated);
-    },
-    [liftingRecords]
-  );
+  const addPracticeNote = useCallback((note: Omit<PracticeNote, 'id'>) => {
+    const updated = [...practiceNotes, { ...note, id: generateId() }];
+    setPracticeNotes(updated);
+    savePracticeNotes(updated);
+  }, [practiceNotes]);
 
-  const addPracticeNote = useCallback(
-    (note: Omit<PracticeNote, 'id'>) => {
-      const newNote = { ...note, id: generateId() };
-      const updated = [...practiceNotes, newNote];
-      setPracticeNotes(updated);
-      savePracticeNotes(updated);
-    },
-    [practiceNotes]
-  );
+  const updatePracticeNote = useCallback((id: string, data: Omit<PracticeNote, 'id'>) => {
+    const updated = practiceNotes.map((n) => (n.id === id ? { ...data, id } : n));
+    setPracticeNotes(updated);
+    savePracticeNotes(updated);
+  }, [practiceNotes]);
 
-  const updatePracticeNote = useCallback(
-    (id: string, data: Omit<PracticeNote, 'id'>) => {
-      const updated = practiceNotes.map((n) => (n.id === id ? { ...data, id } : n));
-      setPracticeNotes(updated);
-      savePracticeNotes(updated);
-    },
-    [practiceNotes]
-  );
+  const deletePracticeNote = useCallback((id: string) => {
+    const updated = practiceNotes.filter((n) => n.id !== id);
+    setPracticeNotes(updated);
+    savePracticeNotes(updated);
+  }, [practiceNotes]);
+  const toggleImprovementItem = useCallback((noteId: string, index: number) => {
+    const updated = practiceNotes.map((n) => {
+      if (n.id !== noteId) return n;
+      const improvements = n.improvements.map((item, i) =>
+        i === index ? { ...item, done: !item.done } : item
+      );
+      return { ...n, improvements };
+    });
+    setPracticeNotes(updated);
+    savePracticeNotes(updated);
+  }, [practiceNotes]);
 
-  const deletePracticeNote = useCallback(
-    (id: string) => {
-      const updated = practiceNotes.filter((n) => n.id !== id);
-      setPracticeNotes(updated);
-      savePracticeNotes(updated);
-    },
-    [practiceNotes]
-  );
+  const addBodyRecord = useCallback((record: Omit<BodyRecord, 'id'>) => {
+    const updated = [...bodyRecords, { ...record, id: generateId() }];
+    setBodyRecords(updated);
+    saveBodyRecords(updated);
+  }, [bodyRecords]);
 
-  const toggleImprovementItem = useCallback(
-    (noteId: string, index: number) => {
-      const updated = practiceNotes.map((n) => {
-        if (n.id !== noteId) return n;
-        const improvements = n.improvements.map((item, i) =>
-          i === index ? { ...item, done: !item.done } : item
+  const deleteBodyRecord = useCallback((id: string) => {
+    const updated = bodyRecords.filter((r) => r.id !== id);
+    setBodyRecords(updated);
+    saveBodyRecords(updated);
+  }, [bodyRecords]);
+
+  const addTrainingMenuItem = useCallback((item: Omit<TrainingMenuItem, 'id' | 'order'>) => {
+    const maxOrder = trainingMenu.length > 0 ? Math.max(...trainingMenu.map((m) => m.order)) : 0;
+    const updated = [...trainingMenu, { ...item, id: generateId(), order: maxOrder + 1 }];
+    setTrainingMenu(updated);
+    saveTrainingMenu(updated);
+  }, [trainingMenu]);
+
+  const updateTrainingMenuItem = useCallback((id: string, data: Omit<TrainingMenuItem, 'id' | 'order'>) => {
+    const updated = trainingMenu.map((m) => (m.id === id ? { ...data, id, order: m.order } : m));
+    setTrainingMenu(updated);
+    saveTrainingMenu(updated);
+  }, [trainingMenu]);
+
+  const deleteTrainingMenuItem = useCallback((id: string) => {
+    const updated = trainingMenu.filter((m) => m.id !== id);
+    setTrainingMenu(updated);
+    saveTrainingMenu(updated);
+  }, [trainingMenu]);
+
+  const reorderTrainingMenu = useCallback((items: TrainingMenuItem[]) => {
+    setTrainingMenu(items);
+    saveTrainingMenu(items);
+  }, []);
+
+  const toggleTrainingLogItem = useCallback((date: string, itemId: string) => {
+    setTrainingLogs((prev) => {
+      const existing = prev.find((l) => l.date === date);
+      let updated: TrainingLog[];
+      if (existing) {
+        const has = existing.completedItemIds.includes(itemId);
+        updated = prev.map((l) =>
+          l.date === date
+            ? { ...l, completedItemIds: has ? l.completedItemIds.filter((id) => id !== itemId) : [...l.completedItemIds, itemId] }
+            : l
         );
-        return { ...n, improvements };
-      });
-      setPracticeNotes(updated);
-      savePracticeNotes(updated);
-    },
-    [practiceNotes]
-  );
+      } else {
+        updated = [...prev, { id: generateId(), date, completedItemIds: [itemId] }];
+      }
+      saveTrainingLogs(updated);
+      return updated;
+    });
+  }, []);
 
   const clearNewMilestone = useCallback(() => setNewMilestoneAchieved(null), []);
 
   return (
     <AppContext.Provider
       value={{
-        liftingRecords,
-        addLiftingRecord,
-        updateLiftingRecord,
-        deleteLiftingRecord,
-        practiceNotes,
-        addPracticeNote,
-        updatePracticeNote,
-        deletePracticeNote,
-        toggleImprovementItem,
-        milestones,
-        maxCount,
-        newMilestoneAchieved,
-        clearNewMilestone,
+        liftingRecords, addLiftingRecord, updateLiftingRecord, deleteLiftingRecord,
+        practiceNotes, addPracticeNote, updatePracticeNote, deletePracticeNote, toggleImprovementItem,
+        bodyRecords, addBodyRecord, deleteBodyRecord,
+        trainingMenu, addTrainingMenuItem, updateTrainingMenuItem, deleteTrainingMenuItem, reorderTrainingMenu,
+        trainingLogs, toggleTrainingLogItem,
+        milestones, maxCount, newMilestoneAchieved, clearNewMilestone,
         isLoading,
       }}
     >

@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
-import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES } from '@/lib/data';
+import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU } from '@/lib/data';
 
 interface AppData {
   liftingRecords: unknown[];
   practiceNotes: unknown[];
+  bodyRecords: unknown[];
+  trainingMenu: unknown[];
+  trainingLogs: unknown[];
 }
 
 const DATA_KEY = 'takuto_app_data';
 
 async function readData(): Promise<AppData | null> {
-  // Production: Upstash Redis
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
     const { Redis } = await import('@upstash/redis');
     const redis = new Redis({
@@ -18,7 +20,6 @@ async function readData(): Promise<AppData | null> {
     });
     return redis.get<AppData>(DATA_KEY);
   }
-  // Development: local JSON file
   try {
     const { readFileSync } = await import('fs');
     const { join } = await import('path');
@@ -50,9 +51,19 @@ export async function GET() {
     return NextResponse.json({
       liftingRecords: INITIAL_LIFTING_RECORDS,
       practiceNotes: INITIAL_PRACTICE_NOTES,
+      bodyRecords: [],
+      trainingMenu: INITIAL_TRAINING_MENU,
+      trainingLogs: [],
     });
   }
-  return NextResponse.json(data);
+  // Fill missing fields for existing data (migration)
+  return NextResponse.json({
+    liftingRecords: data.liftingRecords ?? INITIAL_LIFTING_RECORDS,
+    practiceNotes: data.practiceNotes ?? INITIAL_PRACTICE_NOTES,
+    bodyRecords: data.bodyRecords ?? [],
+    trainingMenu: data.trainingMenu ?? INITIAL_TRAINING_MENU,
+    trainingLogs: data.trainingLogs ?? [],
+  });
 }
 
 export async function POST(req: Request) {
@@ -60,10 +71,16 @@ export async function POST(req: Request) {
   const current = await readData() ?? {
     liftingRecords: INITIAL_LIFTING_RECORDS,
     practiceNotes: INITIAL_PRACTICE_NOTES,
+    bodyRecords: [],
+    trainingMenu: INITIAL_TRAINING_MENU,
+    trainingLogs: [],
   };
   await writeData({
     liftingRecords: body.liftingRecords ?? current.liftingRecords,
     practiceNotes: body.practiceNotes ?? current.practiceNotes,
+    bodyRecords: body.bodyRecords ?? current.bodyRecords ?? [],
+    trainingMenu: body.trainingMenu ?? current.trainingMenu ?? INITIAL_TRAINING_MENU,
+    trainingLogs: body.trainingLogs ?? current.trainingLogs ?? [],
   });
   return NextResponse.json({ ok: true });
 }

@@ -1,11 +1,10 @@
-import { LiftingRecord, PracticeNote, ImprovementItem } from './types';
-import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES } from './data';
+import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog } from './types';
+import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU } from './data';
 
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-// Migrate old notes where improvements was a plain string
 function migrateNote(note: any): PracticeNote {
   if (typeof note.improvements === 'string') {
     const lines = note.improvements.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
@@ -17,46 +16,58 @@ function migrateNote(note: any): PracticeNote {
   return note as PracticeNote;
 }
 
-async function fetchAllData(): Promise<{ liftingRecords: LiftingRecord[]; practiceNotes: PracticeNote[] }> {
-  const res = await fetch('/api/data');
-  return res.json();
+export interface AllData {
+  liftingRecords: LiftingRecord[];
+  practiceNotes: PracticeNote[];
+  bodyRecords: BodyRecord[];
+  trainingMenu: TrainingMenuItem[];
+  trainingLogs: TrainingLog[];
 }
 
-async function saveData(body: { liftingRecords?: LiftingRecord[]; practiceNotes?: PracticeNote[] }): Promise<void> {
-  await fetch('/api/data', {
+export async function fetchAllData(): Promise<AllData> {
+  if (typeof window === 'undefined') {
+    return {
+      liftingRecords: INITIAL_LIFTING_RECORDS,
+      practiceNotes: INITIAL_PRACTICE_NOTES,
+      bodyRecords: [],
+      trainingMenu: INITIAL_TRAINING_MENU,
+      trainingLogs: [],
+    };
+  }
+  try {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    return {
+      liftingRecords: data.liftingRecords ?? INITIAL_LIFTING_RECORDS,
+      practiceNotes: (data.practiceNotes ?? INITIAL_PRACTICE_NOTES).map(migrateNote),
+      bodyRecords: data.bodyRecords ?? [],
+      trainingMenu: data.trainingMenu ?? INITIAL_TRAINING_MENU,
+      trainingLogs: data.trainingLogs ?? [],
+    };
+  } catch {
+    return {
+      liftingRecords: INITIAL_LIFTING_RECORDS,
+      practiceNotes: INITIAL_PRACTICE_NOTES,
+      bodyRecords: [],
+      trainingMenu: INITIAL_TRAINING_MENU,
+      trainingLogs: [],
+    };
+  }
+}
+
+function savePartial(body: Partial<Record<string, unknown>>): void {
+  fetch('/api/data', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  });
+  }).catch(console.error);
 }
 
-export async function getLiftingRecords(): Promise<LiftingRecord[]> {
-  if (typeof window === 'undefined') return INITIAL_LIFTING_RECORDS;
-  try {
-    const data = await fetchAllData();
-    return data.liftingRecords ?? INITIAL_LIFTING_RECORDS;
-  } catch {
-    return INITIAL_LIFTING_RECORDS;
-  }
-}
-
-export function saveLiftingRecords(records: LiftingRecord[]): void {
-  saveData({ liftingRecords: records }).catch(console.error);
-}
-
-export async function getPracticeNotes(): Promise<PracticeNote[]> {
-  if (typeof window === 'undefined') return INITIAL_PRACTICE_NOTES;
-  try {
-    const data = await fetchAllData();
-    return (data.practiceNotes ?? INITIAL_PRACTICE_NOTES).map(migrateNote);
-  } catch {
-    return INITIAL_PRACTICE_NOTES;
-  }
-}
-
-export function savePracticeNotes(notes: PracticeNote[]): void {
-  saveData({ practiceNotes: notes }).catch(console.error);
-}
+export function saveLiftingRecords(records: LiftingRecord[]): void { savePartial({ liftingRecords: records }); }
+export function savePracticeNotes(notes: PracticeNote[]): void { savePartial({ practiceNotes: notes }); }
+export function saveBodyRecords(records: BodyRecord[]): void { savePartial({ bodyRecords: records }); }
+export function saveTrainingMenu(menu: TrainingMenuItem[]): void { savePartial({ trainingMenu: menu }); }
+export function saveTrainingLogs(logs: TrainingLog[]): void { savePartial({ trainingLogs: logs }); }
 
 export async function exportData(): Promise<void> {
   const data = await fetchAllData();
@@ -74,8 +85,15 @@ export async function exportData(): Promise<void> {
 
 export async function importData(json: string): Promise<void> {
   const data = JSON.parse(json);
-  await saveData({
-    liftingRecords: data.liftingRecords,
-    practiceNotes: data.practiceNotes,
+  await fetch('/api/data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      liftingRecords: data.liftingRecords,
+      practiceNotes: data.practiceNotes,
+      bodyRecords: data.bodyRecords,
+      trainingMenu: data.trainingMenu,
+      trainingLogs: data.trainingLogs,
+    }),
   });
 }
