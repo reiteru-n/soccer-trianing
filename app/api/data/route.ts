@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS } from '@/lib/data';
+// cache-bust: 2026-03-08
 
 interface AppData {
   liftingRecords: unknown[];
