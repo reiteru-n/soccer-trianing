@@ -10,7 +10,7 @@ import PartSummaryCards from '@/components/PartSummaryCards';
 import ConfettiEffect from '@/components/ConfettiEffect';
 import { LiftingPart, LiftingSide, LiftingRecord } from '@/lib/types';
 
-const PARTS: (LiftingPart | 'all')[] = ['all', 'インステップ', 'インサイド', 'アウトサイド', 'もも', '頭'];
+const PARTS: (LiftingPart | 'all')[] = ['all', 'インステップ', 'インサイド', 'アウトサイド', 'もも', '頭', '胸→足'];
 const SIDES: (LiftingSide | 'all')[] = ['all', '左足', '右足', '両足'];
 
 const PART_LABELS: Record<string, string> = { all: '全部位' };

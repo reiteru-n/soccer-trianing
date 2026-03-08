@@ -55,7 +55,28 @@ function sdLabel(sd: number): { text: string; color: string } {
   return { text: sd > 0 ? "かなり大きい" : "かなり小さい", color: "text-red-500" };
 }
 
-function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color }: {
+function makeVerticalLinePlugin(currentAge: number) {
+  return {
+    id: 'currentAgeLine',
+    afterDraw(chart: ChartJS) {
+      const { ctx, chartArea, scales } = chart as any;
+      if (!chartArea || !scales?.x) return;
+      const x = scales.x.getPixelForValue(currentAge);
+      if (x < chartArea.left || x > chartArea.right) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(250,204,21,0.75)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+}
+
+function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color, currentAge }: {
   actual: Point[];
   band: { upper: Point[]; lower: Point[] };
   mean: Point[];
@@ -63,8 +84,10 @@ function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color }: {
   axisMax: number;
   unit: string;
   color: string;
+  currentAge?: number;
 }) {
   const rgb = color === "orange" ? "234,88,12" : "37,99,235";
+  const plugins = currentAge != null ? [makeVerticalLinePlugin(currentAge)] : [];
   const datasets = [
     { data: band.upper, fill: '+1', backgroundColor: `rgba(${rgb},0.15)`, borderColor: 'transparent', borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.4, parsing: false, label: '' },
     { data: band.lower, fill: false, borderColor: 'transparent', borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.4, parsing: false, label: '' },
@@ -73,6 +96,7 @@ function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color }: {
   ];
   return (
     <Line
+      plugins={plugins}
       data={{ datasets: datasets as any[] }}
       options={{
         responsive: true,
@@ -131,9 +155,16 @@ export default function BodyChart({ records, birthDate }: Props) {
     return <p className="text-xs text-gray-400 text-center py-4">生年月日を入力するとグラフが表示されます</p>;
   }
 
+  const todayTokyo = (() => {
+    const now = new Date();
+    const t = new Date(now.getTime() + (9 * 60 - now.getTimezoneOffset()) * 60000);
+    return `${t.getUTCFullYear()}/${String(t.getUTCMonth()+1).padStart(2,'0')}/${String(t.getUTCDate()).padStart(2,'0')}`;
+  })();
+  const currentAge = ageYears(birthDate, todayTokyo);
+
   const allAges = sorted.map(r => ageYears(birthDate, r.date));
-  const axisMin = Math.floor(Math.min(...allAges));
-  const axisMax = Math.ceil(Math.max(...allAges));
+  const axisMin = Math.floor(Math.min(...allAges, currentAge));
+  const axisMax = Math.ceil(Math.max(...allAges, currentAge));
 
   const refMin = Math.max(0, axisMin);
   const refMax = Math.min(17, axisMax + 1);
@@ -199,7 +230,7 @@ export default function BodyChart({ records, birthDate }: Props) {
             band={{ upper: mkBand(H, 2), lower: mkBand(H, -2) }}
             mean={mkBand(H, 0)}
             axisMin={axisMin} axisMax={axisMax}
-            unit="cm" color="orange"
+            unit="cm" color="orange" currentAge={currentAge}
           />
         </div>
       )}
@@ -213,12 +244,12 @@ export default function BodyChart({ records, birthDate }: Props) {
             band={{ upper: mkBand(W, 2), lower: mkBand(W, -2) }}
             mean={mkBand(W, 0)}
             axisMin={axisMin} axisMax={axisMax}
-            unit="kg" color="blue"
+            unit="kg" color="blue" currentAge={currentAge}
           />
         </div>
       )}
 
-      <p className="text-[9px] text-gray-300 text-right">帯: ±2SD 参考範囲</p>
+      <p className="text-[9px] text-gray-300 text-right">帯: ±2SD 参考範囲　<span className="text-yellow-400/70">｜</span> 現在の年齢</p>
     </div>
   );
 }

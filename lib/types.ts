@@ -1,4 +1,4 @@
-export type LiftingPart = 'インステップ' | 'インサイド' | 'アウトサイド' | 'もも' | '頭';
+export type LiftingPart = 'インステップ' | 'インサイド' | 'アウトサイド' | 'もも' | '頭' | '胸→足';
 export type LiftingSide = '左足' | '右足' | '両足';
 
 export interface LiftingRecord {

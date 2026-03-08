@@ -59,7 +59,7 @@ export default function LiftingTable({ records, filterPart, filterSide, onDelete
                 <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{r.date}</td>
                 <td className="px-3 py-2 text-right font-bold text-blue-700">{r.count}</td>
                 <td className="px-3 py-2 text-gray-700">{r.part}</td>
-                <td className="px-3 py-2 text-gray-700">{r.part === '頭' ? '-' : r.side}</td>
+                <td className="px-3 py-2 text-gray-700">{(r.part === '頭' || r.part === '胸→足') ? '-' : r.side}</td>
                 <td className="px-3 py-2 text-gray-600">{r.location}</td>
                 {hasActions && (
                   <td className="px-2 py-2">

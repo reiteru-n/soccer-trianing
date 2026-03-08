@@ -63,22 +63,22 @@ export default function DashboardPage() {
       </div>
       <section className="mb-5">
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-3 text-center shadow-lg shadow-blue-900/40 border border-blue-400/20">
+          <button onClick={() => { const el = document.getElementById('section-lifting'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 16, behavior: 'smooth' }); }} className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-3 text-center shadow-lg shadow-blue-900/40 border border-blue-400/20 active:scale-95 transition-transform">
             <p className="text-xl mb-0.5">🏆</p>
             <p className="text-[10px] text-blue-100 leading-tight">リフティング<br/>最高</p>
             <p className="text-xl font-extrabold text-white mt-0.5">{maxCount}<span className="text-xs font-normal">回</span></p>
-          </div>
-          <div className="bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl p-3 text-center shadow-lg shadow-teal-900/40 border border-cyan-400/20">
+          </button>
+          <button onClick={() => { const el = document.getElementById('section-notes'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 16, behavior: 'smooth' }); }} className="bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl p-3 text-center shadow-lg shadow-teal-900/40 border border-cyan-400/20 active:scale-95 transition-transform">
             <p className="text-xl mb-0.5">📝</p>
             <p className="text-[10px] text-cyan-100 leading-tight">練習ノート<br/>記録数</p>
             <p className="text-xl font-extrabold text-white mt-0.5">{practiceNotes.length}<span className="text-xs font-normal">回</span></p>
-          </div>
-          <div className="bg-gradient-to-br from-violet-500 to-indigo-700 rounded-2xl p-3 text-center shadow-lg shadow-indigo-900/40 border border-violet-400/20">
+          </button>
+          <button onClick={() => { const el = document.getElementById('section-body'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 16, behavior: 'smooth' }); }} className="bg-gradient-to-br from-violet-500 to-indigo-700 rounded-2xl p-3 text-center shadow-lg shadow-indigo-900/40 border border-violet-400/20 active:scale-95 transition-transform">
             <p className="text-xl mb-0.5">📏</p>
             <p className="text-[10px] text-violet-100 leading-tight mb-0.5">身長 / 体重</p>
             <p className="text-sm font-extrabold text-white leading-tight">{latestH?.height ?? '-'}<span className="text-[10px] font-normal">cm</span></p>
             <p className="text-sm font-bold text-violet-200 leading-tight">{latestW?.weight ?? '-'}<span className="text-[10px] font-normal">kg</span></p>
-          </div>
+          </button>
         </div>
       </section>
       <section className="mb-6">
@@ -89,10 +89,10 @@ export default function DashboardPage() {
           <button onClick={() => setShowBodyForm(true)} className="flex-1 bg-gradient-to-b from-violet-500 to-indigo-700 hover:from-violet-400 hover:to-indigo-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-indigo-900/50 border border-violet-400/30 transition-all active:scale-95"><span className="text-2xl">📏</span><span className="text-xs">身長・体重</span></button>
         </div>
       </section>
-      <section className="mb-6"><SummaryCards records={liftingRecords} /></section>
+      <section id="section-lifting" className="mb-6"><SummaryCards records={liftingRecords} /></section>
       <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">🏅 マイルストーン</h2><Link href="/lifting" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div><MilestoneSection milestones={milestones} maxCount={maxCount} /></section>
       <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📈 成長グラフ（インステップ左足）</h2><Link href="/lifting" className="text-xs text-blue-300 font-medium">詳細 →</Link></div><div className="bg-slate-800/80 rounded-2xl p-4 shadow-xl shadow-blue-900/40 border border-white/10"><LiftingChart records={liftingRecords} filterPart="インステップ" filterSide="左足" /></div></section>
-      <section className="mb-6">
+      <section id="section-body" className="mb-6">
         <div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📏 体重・身長</h2></div>
         {sortedBody.length > 0 ? (<div className="bg-white/95 rounded-2xl shadow-xl shadow-blue-900/30 border border-white/20 overflow-hidden">
           <div className="flex bg-slate-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-16 text-center">体重</span><span className="w-16 text-center">身長</span><span className="w-6"></span></div>
@@ -118,7 +118,7 @@ export default function DashboardPage() {
           </div>
         )}
       </section>
-      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📝 最新の練習ノート</h2><Link href="/notes" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div>{latestNotes.length === 0 ? (<p className="text-sm text-blue-200/60 text-center py-4">まだノートがありません</p>) : (<div className="space-y-3">{latestNotes.map((n) => <NoteCard key={n.id} note={n} />)}</div>)}</section>
+      <section id="section-notes" className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📝 最新の練習ノート</h2><Link href="/notes" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div>{latestNotes.length === 0 ? (<p className="text-sm text-blue-200/60 text-center py-4">まだノートがありません</p>) : (<div className="space-y-3">{latestNotes.map((n) => <NoteCard key={n.id} note={n} />)}</div>)}</section>
       <section className="mb-2"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase mb-3">💾 データ管理</h2><div className="flex gap-3"><button onClick={exportData} className="flex-1 bg-blue-600/80 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm border border-blue-400/30">📤 エクスポート</button><label className="flex-1 bg-slate-600/80 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-sm cursor-pointer text-center border border-slate-400/30">📥 インポート<input type="file" accept=".json" onChange={handleImport} className="hidden" /></label></div></section>
       {showLiftingForm && <LiftingForm onSave={addLiftingRecord} onClose={() => setShowLiftingForm(false)} pastLocations={pastLocations} />}
       {showNoteForm && <NoteForm onSave={addPracticeNote} onClose={() => setShowNoteForm(false)} pastLocations={pastLocations} pastCategories={pastCategories} />}

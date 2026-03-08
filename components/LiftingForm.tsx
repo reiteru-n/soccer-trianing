@@ -10,7 +10,8 @@ interface Props {
   initialValues?: LiftingRecord;
 }
 
-const PARTS: LiftingPart[] = ['インステップ', 'インサイド', 'アウトサイド', 'もも', '頭'];
+const PARTS: LiftingPart[] = ['インステップ', 'インサイド', 'アウトサイド', 'もも', '頭', '胸→足'];
+const NO_SIDE_PARTS: LiftingPart[] = ['頭', '胸→足'];
 const SIDES: LiftingSide[] = ['左足', '右足', '両足'];
 
 function todayStr() {
@@ -26,7 +27,7 @@ export default function LiftingForm({ onSave, onClose, pastLocations, initialVal
   const [side, setSide] = useState<LiftingSide>(initialValues?.side ?? '左足');
 
   useEffect(() => {
-    if (part === '頭') setSide('両足');
+    if (NO_SIDE_PARTS.includes(part)) setSide('両足');
   }, [part]);
 
   const handleSubmit = (e: FormEvent) => {
@@ -118,7 +119,7 @@ export default function LiftingForm({ onSave, onClose, pastLocations, initialVal
               </div>
             </div>
 
-            {part !== '頭' && (
+            {!NO_SIDE_PARTS.includes(part) && (
               <div>
                 <label className="block text-sm font-semibold text-gray-600 mb-2">↔️ 左右</label>
                 <div className="flex gap-2">
