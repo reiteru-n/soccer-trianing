@@ -10,7 +10,8 @@ const CATEGORY_COLORS: Record<string, { bg: string; badge: string; text: string 
   'チーム練習': { bg: 'bg-blue-50',   badge: 'bg-blue-600',   text: 'text-blue-700' },
   'スクール':   { bg: 'bg-green-50',  badge: 'bg-green-600',  text: 'text-green-700' },
   '試合':       { bg: 'bg-red-50',    badge: 'bg-red-600',    text: 'text-red-700' },
-  '自主練':     { bg: 'bg-orange-50', badge: 'bg-orange-500', text: 'text-orange-700' },
+  '自主練':       { bg: 'bg-orange-50', badge: 'bg-orange-500', text: 'text-orange-700' },
+  'セレクション': { bg: 'bg-purple-50', badge: 'bg-purple-600', text: 'text-purple-700' },
 };
 const DEFAULT_COLOR = { bg: 'bg-gray-50', badge: 'bg-gray-500', text: 'text-gray-700' };
 

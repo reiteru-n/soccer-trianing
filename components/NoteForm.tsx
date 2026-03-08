@@ -11,7 +11,7 @@ interface Props {
   initialValues?: PracticeNote;
 }
 
-const PRESET_CATEGORIES = ['チーム練習', 'スクール', '自主練', '試合', 'その他'];
+const PRESET_CATEGORIES = ['チーム練習', 'スクール', '自主練', '試合', 'セレクション', 'その他'];
 
 function todayStr() {
   const d = new Date();
