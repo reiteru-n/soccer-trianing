@@ -48,6 +48,66 @@ type Point = { x: number; y: number };
 
 interface Props { records: BodyRecord[]; birthDate: string; }
 
+function sdLabel(sd: number): { text: string; color: string } {
+  const abs = Math.abs(sd);
+  if (abs <= 1) return { text: "標準範囲内", color: "text-green-600" };
+  if (abs <= 2) return { text: "やや" + (sd > 0 ? "大きい" : "小さい"), color: "text-yellow-600" };
+  return { text: sd > 0 ? "かなり大きい" : "かなり小さい", color: "text-red-500" };
+}
+
+function MiniChart({ actual, band, axisMin, axisMax, unit, color }: {
+  actual: Point[];
+  band: { upper: Point[]; lower: Point[] };
+  axisMin: number;
+  axisMax: number;
+  unit: string;
+  color: string;
+}) {
+  const rgb = color === "orange" ? "234,88,12" : "37,99,235";
+  const datasets = [
+    { data: band.upper, fill: '+1', backgroundColor: `rgba(${rgb},0.15)`, borderColor: 'transparent', borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.4, parsing: false, label: '' },
+    { data: band.lower, fill: false, borderColor: 'transparent', borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.4, parsing: false, label: '' },
+    { data: actual, fill: false, borderColor: `rgb(${rgb})`, backgroundColor: `rgb(${rgb})`, borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, tension: 0.3, parsing: false, label: unit === 'cm' ? '身長' : '体重' },
+  ];
+  return (
+    <Line
+      data={{ datasets: datasets as any[] }}
+      options={{
+        responsive: true,
+        parsing: false,
+        interaction: { mode: 'nearest' as const, axis: 'x', intersect: false },
+        plugins: {
+          datalabels: { display: false },
+          legend: { display: false },
+          tooltip: {
+            filter: (item: any) => !!item.dataset.label,
+            callbacks: {
+              title: (items: any[]) => `${items[0]?.parsed.x.toFixed(1)}歳`,
+              label: (ctx: any) => `${ctx.dataset.label}: ${ctx.parsed.y}${unit}`,
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear' as const,
+            min: axisMin,
+            max: axisMax,
+            ticks: { font: { size: 9 }, callback: (v: unknown) => String(v) },
+            afterBuildTicks: (axis: Scale) => {
+              const ticks = [];
+              for (let i = axisMin; i <= axisMax; i++) ticks.push({ value: i });
+              axis.ticks = ticks;
+            },
+          },
+          y: {
+            ticks: { font: { size: 9 }, callback: (v: unknown) => `${v}${unit}` },
+          },
+        }
+      } as any}
+    />
+  );
+}
+
 export default function BodyChart({ records, birthDate }: Props) {
   const sorted = [...records].sort((a,b) => a.date.localeCompare(b.date));
   const hRecs = sorted.filter(r => r.height != null);
@@ -61,12 +121,9 @@ export default function BodyChart({ records, birthDate }: Props) {
   }
 
   const allAges = sorted.map(r => ageYears(birthDate, r.date));
-  const dataMinAge = Math.min(...allAges);
-  const dataMaxAge = Math.max(...allAges);
-  const axisMin = Math.floor(dataMinAge);
-  const axisMax = Math.ceil(dataMaxAge);
+  const axisMin = Math.floor(Math.min(...allAges));
+  const axisMax = Math.ceil(Math.max(...allAges));
 
-  // 参照データは1年刻み（0〜17歳の範囲内）
   const refMin = Math.max(0, axisMin);
   const refMax = Math.min(17, axisMax + 1);
   const refAges: number[] = [];
@@ -80,76 +137,75 @@ export default function BodyChart({ records, birthDate }: Props) {
   const hActual: Point[] = hRecs.map(r => ({ x: ageYears(birthDate, r.date), y: r.height! }));
   const wActual: Point[] = wRecs.map(r => ({ x: ageYears(birthDate, r.date), y: r.weight! }));
 
-  const band = (data: Point[], yID: string, fill: string | boolean, bg: string) => ({
-    data, yAxisID: yID, fill, backgroundColor: bg,
-    borderColor: 'transparent', borderWidth: 0,
-    pointRadius: 0, pointHoverRadius: 0,
-    tension: 0.4, parsing: false, label: '',
-  });
-
-  const datasets = [
-    band(mkBand(H,  2), 'y',  '+1', 'rgba(234,88,12,0.15)'),
-    band(mkBand(H, -2), 'y',  false, 'transparent'),
-    band(mkBand(W,  2), 'y1', '+1', 'rgba(37,99,235,0.15)'),
-    band(mkBand(W, -2), 'y1', false, 'transparent'),
-    { label: '身長', data: hActual, yAxisID: 'y',  borderColor: '#ea580c', backgroundColor: '#ea580c', borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 6, tension: 0.3, parsing: false, fill: false },
-    { label: '体重', data: wActual, yAxisID: 'y1', borderColor: '#2563eb', backgroundColor: '#2563eb', borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 6, tension: 0.3, parsing: false, fill: false },
-  ];
+  // 最新値と偏差
+  const latestH = hRecs.at(-1);
+  const latestW = wRecs.at(-1);
+  const latestHAge = latestH ? ageYears(birthDate, latestH.date) : null;
+  const latestWAge = latestW ? ageYears(birthDate, latestW.date) : null;
+  const hRef = latestHAge != null ? interp(H, latestHAge) : null;
+  const wRef = latestWAge != null ? interp(W, latestWAge) : null;
+  const hSD = (hRef && latestH?.height != null) ? (latestH.height - hRef.mean) / hRef.sd : null;
+  const wSD = (wRef && latestW?.weight != null) ? (latestW.weight - wRef.mean) / wRef.sd : null;
 
   return (
-    <Line
-      data={{ datasets: datasets as any[] }}
-      options={{
-        responsive: true,
-        parsing: false,
-        interaction: { mode: 'nearest' as const, axis: 'x', intersect: false },
-        plugins: {
-          datalabels: { display: false },
-          legend: {
-            position: 'bottom' as const,
-            labels: { font: { size: 11 }, boxWidth: 14, padding: 10, filter: (item: any) => !!item.text },
-          },
-          tooltip: {
-            filter: (item: any) => !!item.dataset.label,
-            callbacks: {
-              title: (items: any[]) => `${items[0]?.parsed.x.toFixed(1)}歳`,
-              label: (ctx: any) => {
-                if (!ctx.dataset.label) return '';
-                const unit = ctx.dataset.yAxisID === 'y' ? 'cm' : 'kg';
-                return `${ctx.dataset.label}: ${ctx.parsed.y}${unit}`;
-              },
-            }
-          }
-        },
-        scales: {
-          x: {
-            type: 'linear' as const,
-            min: axisMin,
-            max: axisMax,
-            title: { display: true, text: '年齢(歳)', font: { size: 11 } },
-            afterBuildTicks: (axis: Scale) => {
-              const ticks = [];
-              for (let i = axisMin; i <= axisMax; i++) ticks.push({ value: i });
-              axis.ticks = ticks;
-            },
-            ticks: {
-              font: { size: 10 },
-              callback: (v: unknown) => String(v),
-            },
-          },
-          y: {
-            position: 'left' as const,
-            title: { display: true, text: '身長(cm)', font: { size: 11 } },
-            ticks: { font: { size: 10 } },
-          },
-          y1: {
-            position: 'right' as const,
-            title: { display: true, text: '体重(kg)', font: { size: 11 } },
-            ticks: { font: { size: 10 } },
-            grid: { drawOnChartArea: false },
-          },
-        }
-      } as any}
-    />
+    <div className="space-y-4">
+      {/* 現在の偏差カード */}
+      <div className="grid grid-cols-2 gap-2">
+        {latestH && hRef && hSD != null && (
+          <div className="bg-orange-50 rounded-xl p-3">
+            <p className="text-[10px] text-gray-400 mb-0.5">最新身長 <span className="text-gray-300">{latestH.date}</span></p>
+            <p className="text-xl font-extrabold text-orange-600">{latestH.height} <span className="text-sm font-normal">cm</span></p>
+            <p className="text-[10px] text-gray-400">平均 {hRef.mean.toFixed(1)}cm</p>
+            <p className="text-xs font-bold mt-0.5">
+              <span className="text-gray-500">{hSD >= 0 ? "+" : ""}{((latestH.height??0) - hRef.mean).toFixed(1)}cm</span>
+              <span className="text-gray-300 mx-1">/</span>
+              <span className="text-gray-500">{hSD >= 0 ? "+" : ""}{hSD.toFixed(1)}SD</span>
+            </p>
+            <p className={`text-[10px] font-semibold mt-0.5 ${sdLabel(hSD).color}`}>{sdLabel(hSD).text}</p>
+          </div>
+        )}
+        {latestW && wRef && wSD != null && (
+          <div className="bg-blue-50 rounded-xl p-3">
+            <p className="text-[10px] text-gray-400 mb-0.5">最新体重 <span className="text-gray-300">{latestW.date}</span></p>
+            <p className="text-xl font-extrabold text-blue-600">{latestW.weight} <span className="text-sm font-normal">kg</span></p>
+            <p className="text-[10px] text-gray-400">平均 {wRef.mean.toFixed(1)}kg</p>
+            <p className="text-xs font-bold mt-0.5">
+              <span className="text-gray-500">{wSD >= 0 ? "+" : ""}{((latestW.weight??0) - wRef.mean).toFixed(1)}kg</span>
+              <span className="text-gray-300 mx-1">/</span>
+              <span className="text-gray-500">{wSD >= 0 ? "+" : ""}{wSD.toFixed(1)}SD</span>
+            </p>
+            <p className={`text-[10px] font-semibold mt-0.5 ${sdLabel(wSD).color}`}>{sdLabel(wSD).text}</p>
+          </div>
+        )}
+      </div>
+
+      {/* 身長グラフ */}
+      {hRecs.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-gray-500 mb-1">📏 身長 (cm)</p>
+          <MiniChart
+            actual={hActual}
+            band={{ upper: mkBand(H, 2), lower: mkBand(H, -2) }}
+            axisMin={axisMin} axisMax={axisMax}
+            unit="cm" color="orange"
+          />
+        </div>
+      )}
+
+      {/* 体重グラフ */}
+      {wRecs.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-gray-500 mb-1">⚖️ 体重 (kg)</p>
+          <MiniChart
+            actual={wActual}
+            band={{ upper: mkBand(W, 2), lower: mkBand(W, -2) }}
+            axisMin={axisMin} axisMax={axisMax}
+            unit="kg" color="blue"
+          />
+        </div>
+      )}
+
+      <p className="text-[9px] text-gray-300 text-right">帯: ±2SD 参考範囲</p>
+    </div>
   );
 }
