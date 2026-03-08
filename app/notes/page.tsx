@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useApp } from '@/lib/context';
 import NoteCard from '@/components/NoteCard';
 import NoteForm from '@/components/NoteForm';
@@ -12,12 +12,40 @@ export default function NotesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingNote, setEditingNote] = useState<PracticeNote | null>(null);
   const [showUndoneOnly, setShowUndoneOnly] = useState(false);
+  const [groupByLocation, setGroupByLocation] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const sorted = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.date));
-  const displayed = showUndoneOnly
-    ? sorted.filter((n) => n.improvements.some((i) => !i.done))
-    : sorted;
+  const sorted = useMemo(
+    () => [...practiceNotes].sort((a, b) => b.date.localeCompare(a.date)),
+    [practiceNotes]
+  );
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    let base = showUndoneOnly ? sorted.filter((n) => n.improvements.some((i) => !i.done)) : sorted;
+    if (!q) return base;
+    return base.filter((n) =>
+      n.location.toLowerCase().includes(q) ||
+      (n.category ?? '').toLowerCase().includes(q) ||
+      n.date.includes(q) ||
+      n.goodPoints.toLowerCase().includes(q) ||
+      n.improvements.some((i) => i.text.toLowerCase().includes(q))
+    );
+  }, [sorted, showUndoneOnly, searchQuery]);
+
   const undoneCount = sorted.filter((n) => n.improvements.some((i) => !i.done)).length;
+
+  // group by location
+  const grouped = useMemo(() => {
+    if (!groupByLocation) return null;
+    const map = new Map<string, PracticeNote[]>();
+    for (const n of filtered) {
+      const loc = n.location || '不明';
+      if (!map.has(loc)) map.set(loc, []);
+      map.get(loc)!.push(n);
+    }
+    return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
+  }, [filtered, groupByLocation]);
 
   const pastLocations = [...new Set([
     ...practiceNotes.map((n) => n.location),
@@ -43,6 +71,13 @@ export default function NotesPage() {
     );
   }
 
+  const noteCardProps = (note: PracticeNote) => ({
+    note,
+    onDelete: deletePracticeNote,
+    onEdit: (n: PracticeNote) => setEditingNote(n),
+    onToggleImprovement: toggleImprovementItem,
+  });
+
   return (
     <>
       <header className="mb-5">
@@ -60,45 +95,72 @@ export default function NotesPage() {
         <PracticeStats notes={practiceNotes} />
       </section>
 
+      {/* 検索 */}
+      <div className="mb-3">
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="🔍 場所・区分・内容で検索..."
+          className="w-full rounded-xl border-2 border-gray-200 px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none bg-white"
+        />
+        {searchQuery && (
+          <p className="text-xs text-gray-400 mt-1 pl-1">{filtered.length}件ヒット</p>
+        )}
+      </div>
+
+      {/* フィルター & グループ切替 */}
       <div className="mb-4 flex gap-2">
         <button
           onClick={() => setShowUndoneOnly(false)}
           className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (!showUndoneOnly ? "bg-green-600 border-green-600 text-white" : "bg-white border-gray-200 text-gray-600")}
         >
-          すべて表示
+          すべて
         </button>
         <button
           onClick={() => setShowUndoneOnly(true)}
           className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (showUndoneOnly ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-gray-200 text-gray-600")}
         >
-          💪 未改善のみ
+          💪 未改善
           {undoneCount > 0 && (
-            <span className={"ml-1.5 text-xs px-1.5 py-0.5 rounded-full " + (showUndoneOnly ? "bg-white text-orange-500" : "bg-orange-100 text-orange-600")}>
+            <span className={"ml-1 text-xs px-1.5 py-0.5 rounded-full " + (showUndoneOnly ? "bg-white text-orange-500" : "bg-orange-100 text-orange-600")}>
               {undoneCount}
             </span>
           )}
         </button>
+        <button
+          onClick={() => setGroupByLocation((v) => !v)}
+          className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (groupByLocation ? "bg-blue-600 border-blue-600 text-white" : "bg-white border-gray-200 text-gray-600")}
+        >
+          📍 場所別
+        </button>
       </div>
 
-      {displayed.length === 0 ? (
+      {/* 一覧 */}
+      {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          <p className="text-4xl mb-3">{showUndoneOnly ? '🎉' : '📓'}</p>
+          <p className="text-4xl mb-3">{searchQuery ? '🔍' : showUndoneOnly ? '🎉' : '📓'}</p>
           <p className="text-sm">
-            {showUndoneOnly ? 'すべての改善項目がクリア済みです！' : 'まだ練習ノートがありません'}
+            {searchQuery ? '該当するノートがありません' : showUndoneOnly ? 'すべての改善項目がクリア済みです！' : 'まだ練習ノートがありません'}
           </p>
-          {!showUndoneOnly && <p className="text-xs mt-1">右下の ＋ ボタンで追加しよう！</p>}
+        </div>
+      ) : grouped ? (
+        <div className="space-y-5">
+          {grouped.map(([loc, notes]) => (
+            <div key={loc}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-gray-500">📍 {loc}</span>
+                <span className="text-xs text-gray-400">{notes.length}件</span>
+              </div>
+              <div className="space-y-3">
+                {notes.map((note) => <NoteCard key={note.id} {...noteCardProps(note)} />)}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="space-y-4">
-          {displayed.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              onDelete={deletePracticeNote}
-              onEdit={(n) => setEditingNote(n)}
-              onToggleImprovement={toggleImprovementItem}
-            />
-          ))}
+          {filtered.map((note) => <NoteCard key={note.id} {...noteCardProps(note)} />)}
         </div>
       )}
 
