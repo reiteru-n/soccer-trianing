@@ -59,20 +59,13 @@ export default function DashboardPage() {
       <section className="mb-6"><h2 className="text-base font-bold text-gray-700 mb-3">✏️ 今日の記録を追加</h2><div className="flex gap-3">
         <button onClick={() => setShowLiftingForm(true)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-md"><span className="text-2xl">⚽</span><span className="text-sm">リフティング</span></button>
         <button onClick={() => setShowNoteForm(true)} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-md"><span className="text-2xl">📝</span><span className="text-sm">練習ノート</span></button>
+        <button onClick={() => setShowBodyForm(true)} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-md"><span className="text-2xl">📏</span><span className="text-sm">身長・体重</span></button>
       </div></section>
       <section className="mb-6"><SummaryCards records={liftingRecords} /></section>
       <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-gray-700">🏅 マイルストーン</h2><Link href="/lifting" className="text-xs text-blue-500 font-medium">もっと見る →</Link></div><MilestoneSection milestones={milestones} maxCount={maxCount} /></section>
       <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-gray-700">📈 成長グラフ（インステップ左足）</h2><Link href="/lifting" className="text-xs text-blue-500 font-medium">詳細 →</Link></div><div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><LiftingChart records={liftingRecords} filterPart="インステップ" filterSide="左足" /></div></section>
       <section className="mb-6">
-        <div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-gray-700">📏 体重・身長</h2><button onClick={() => setShowBodyForm(!showBodyForm)} className="text-xs text-blue-500 font-medium">{showBodyForm ? "閉じる" : "+ 記録する"}</button></div>
-        {showBodyForm && (<form onSubmit={handleBodySave} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-3 space-y-3">
-          <div><label className="block text-xs font-semibold text-gray-500 mb-1">📅 日付</label><input type="date" value={bodyDate.split("/").join("-")} onChange={(e)=>setBodyDate(e.target.value.split("-").join("/"))} className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none" /></div>
-          <div className="flex gap-3">
-            <div className="flex-1"><label className="block text-xs font-semibold text-gray-500 mb-1">⚖️ 体重 (kg)</label><input type="number" step="0.1" inputMode="decimal" value={bodyWeight} onChange={(e)=>setBodyWeight(e.target.value)} placeholder="例: 35.5" className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none" /></div>
-            <div className="flex-1"><label className="block text-xs font-semibold text-gray-500 mb-1">📐 身長 (cm)</label><input type="number" step="0.1" inputMode="decimal" value={bodyHeight} onChange={(e)=>setBodyHeight(e.target.value)} placeholder="例: 140.0" className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none" /></div>
-          </div>
-          <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm">💾 記録する</button>
-        </form>)}
+        <div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-gray-700">📏 体重・身長</h2></div>
         {sortedBody.length > 0 ? (<div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="flex bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-16 text-center">体重</span><span className="w-16 text-center">身長</span><span className="w-6"></span></div>
           {sortedBody.slice(0,5).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-16 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-16 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="w-6 text-gray-300 hover:text-red-400 text-lg">×</button></div>))}
@@ -101,6 +94,35 @@ export default function DashboardPage() {
       <section className="mb-2"><h2 className="text-base font-bold text-gray-700 mb-3">💾 データ管理</h2><div className="flex gap-3"><button onClick={exportData} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm">📤 エクスポート</button><label className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2.5 rounded-xl text-sm cursor-pointer text-center">📥 インポート<input type="file" accept=".json" onChange={handleImport} className="hidden" /></label></div></section>
       {showLiftingForm && <LiftingForm onSave={addLiftingRecord} onClose={() => setShowLiftingForm(false)} pastLocations={pastLocations} />}
       {showNoteForm && <NoteForm onSave={addPracticeNote} onClose={() => setShowNoteForm(false)} pastLocations={pastLocations} pastCategories={pastCategories} />}
+      {showBodyForm && (
+        <div className="fixed inset-0 z-50 flex items-end pb-16 sm:pb-0 sm:items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowBodyForm(false)}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="px-6 pt-6 pb-8 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-800">📏 身長・体重を記録</h2>
+                <button onClick={() => setShowBodyForm(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+              </div>
+              <form onSubmit={handleBodySave} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 mb-1">📅 日付</label>
+                  <input type="date" value={bodyDate.split("/").join("-")} onChange={e => setBodyDate(e.target.value.split("-").join("/"))} className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-sm font-semibold text-gray-600 mb-1">📐 身長 (cm)</label>
+                    <input type="number" step="0.1" inputMode="decimal" value={bodyHeight} onChange={e => setBodyHeight(e.target.value)} placeholder="例: 112.0" className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-semibold text-gray-600 mb-1">⚖️ 体重 (kg)</label>
+                    <input type="number" step="0.1" inputMode="decimal" value={bodyWeight} onChange={e => setBodyWeight(e.target.value)} placeholder="例: 18.5" className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+                  </div>
+                </div>
+                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl text-base">💾 記録する</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

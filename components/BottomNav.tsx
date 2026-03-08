@@ -16,7 +16,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto relative">
-        <span className="absolute top-0.5 right-2 text-[9px] text-gray-300 select-none">202603082200</span>
+        <span className="absolute top-0.5 right-2 text-[9px] text-gray-300 select-none">202603082220</span>
         {navItems.map(({ href, label, icon }) => {
           const active = pathname === href;
           return (
