@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useApp } from '@/lib/context';
 import NoteCard from '@/components/NoteCard';
 import NoteForm from '@/components/NoteForm';
@@ -15,6 +15,9 @@ export default function NotesPage() {
   const [showUndoneOnly, setShowUndoneOnly] = useState(false);
   const [groupByLocation, setGroupByLocation] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string | undefined>();
+  const [activeLocation, setActiveLocation] = useState<string | undefined>();
+  const listRef = useRef<HTMLDivElement>(null);
 
   const sorted = useMemo(
     () => [...practiceNotes].sort((a, b) => b.date.localeCompare(a.date)),
@@ -22,8 +25,19 @@ export default function NotesPage() {
   );
 
   const filtered = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
     let base = showUndoneOnly ? sorted.filter((n) => n.improvements.some((i) => !i.done)) : sorted;
+
+    // まとめからの絞り込み（優先）
+    if (activeCategory) {
+      base = base.filter((n) => (n.category || '未分類') === activeCategory);
+      if (activeLocation) {
+        base = base.filter((n) => (n.location || '不明') === activeLocation);
+      }
+      return base;
+    }
+
+    // テキスト検索
+    const q = searchQuery.trim().toLowerCase();
     if (!q) return base;
     return base.filter((n) =>
       n.location.toLowerCase().includes(q) ||
@@ -32,11 +46,10 @@ export default function NotesPage() {
       n.goodPoints.toLowerCase().includes(q) ||
       n.improvements.some((i) => i.text.toLowerCase().includes(q))
     );
-  }, [sorted, showUndoneOnly, searchQuery]);
+  }, [sorted, showUndoneOnly, searchQuery, activeCategory, activeLocation]);
 
   const undoneCount = sorted.filter((n) => n.improvements.some((i) => !i.done)).length;
 
-  // group by location
   const grouped = useMemo(() => {
     if (!groupByLocation) return null;
     const map = new Map<string, PracticeNote[]>();
@@ -61,6 +74,41 @@ export default function NotesPage() {
     }
   };
 
+  const scrollToList = () => {
+    setTimeout(() => {
+      listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
+  const handleSelectCategory = (cat: string) => {
+    if (activeCategory === cat && !activeLocation) {
+      setActiveCategory(undefined);
+      setActiveLocation(undefined);
+    } else {
+      setActiveCategory(cat);
+      setActiveLocation(undefined);
+      setSearchQuery('');
+      scrollToList();
+    }
+  };
+
+  const handleSelectLocation = (cat: string, loc: string) => {
+    if (activeCategory === cat && activeLocation === loc) {
+      setActiveCategory(undefined);
+      setActiveLocation(undefined);
+    } else {
+      setActiveCategory(cat);
+      setActiveLocation(loc);
+      setSearchQuery('');
+      scrollToList();
+    }
+  };
+
+  const clearFilter = () => {
+    setActiveCategory(undefined);
+    setActiveLocation(undefined);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24 text-gray-400">
@@ -79,6 +127,8 @@ export default function NotesPage() {
     onToggleImprovement: toggleImprovementItem,
   });
 
+  const hasFilter = !!activeCategory;
+
   return (
     <>
       <header className="mb-5">
@@ -92,8 +142,14 @@ export default function NotesPage() {
       </header>
 
       <section className="mb-5">
-        <h2 className="text-sm font-bold text-gray-700 mb-3">📊 練習参加まとめ</h2>
-        <PracticeStats notes={practiceNotes} />
+        <h2 className="text-sm font-bold text-gray-700 mb-3">📊 練習参加まとめ <span className="text-gray-400 font-normal text-xs">（タップで絞り込み）</span></h2>
+        <PracticeStats
+          notes={practiceNotes}
+          activeCategory={activeCategory}
+          activeLocation={activeLocation}
+          onSelectCategory={handleSelectCategory}
+          onSelectLocation={handleSelectLocation}
+        />
         {practiceNotes.length > 0 && (
           <div className="mt-3 bg-slate-800/80 rounded-2xl p-4 shadow-xl border border-white/10">
             <p className="text-xs font-semibold text-gray-400 mb-2">📅 月別練習回数</p>
@@ -102,74 +158,89 @@ export default function NotesPage() {
         )}
       </section>
 
-      {/* 検索 */}
-      <div className="mb-3">
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="🔍 場所・区分・内容で検索..."
-          className="w-full rounded-xl border-2 border-gray-200 px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none bg-white"
-        />
-        {searchQuery && (
-          <p className="text-xs text-gray-400 mt-1 pl-1">{filtered.length}件ヒット</p>
+      {/* 一覧セクション */}
+      <div ref={listRef}>
+        {/* アクティブフィルター表示 */}
+        {hasFilter && (
+          <div className="mb-3 flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2 border border-blue-200">
+            <span className="text-xs text-blue-700 flex-1">
+              🔍 {activeCategory}{activeLocation ? ` › ${activeLocation}` : ''} で絞り込み中 ({filtered.length}件)
+            </span>
+            <button onClick={clearFilter} className="text-xs text-blue-400 hover:text-blue-600 font-bold">✕ 解除</button>
+          </div>
+        )}
+
+        {/* 検索（フィルター未使用時のみ） */}
+        {!hasFilter && (
+          <div className="mb-3">
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="🔍 場所・区分・内容で検索..."
+              className="w-full rounded-xl border-2 border-gray-200 px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none bg-white"
+            />
+            {searchQuery && (
+              <p className="text-xs text-gray-400 mt-1 pl-1">{filtered.length}件ヒット</p>
+            )}
+          </div>
+        )}
+
+        {/* フィルター & グループ切替 */}
+        <div className="mb-4 flex gap-2">
+          <button
+            onClick={() => setShowUndoneOnly(false)}
+            className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (!showUndoneOnly ? "bg-green-600 border-green-600 text-white" : "bg-white border-gray-200 text-gray-600")}
+          >
+            すべて
+          </button>
+          <button
+            onClick={() => setShowUndoneOnly(true)}
+            className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (showUndoneOnly ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-gray-200 text-gray-600")}
+          >
+            💪 未改善
+            {undoneCount > 0 && (
+              <span className={"ml-1 text-xs px-1.5 py-0.5 rounded-full " + (showUndoneOnly ? "bg-white text-orange-500" : "bg-orange-100 text-orange-600")}>
+                {undoneCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setGroupByLocation((v) => !v)}
+            className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (groupByLocation ? "bg-blue-600 border-blue-600 text-white" : "bg-white border-gray-200 text-gray-600")}
+          >
+            📍 場所別
+          </button>
+        </div>
+
+        {/* 一覧 */}
+        {filtered.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <p className="text-4xl mb-3">{hasFilter || searchQuery ? '🔍' : showUndoneOnly ? '🎉' : '📓'}</p>
+            <p className="text-sm">
+              {hasFilter || searchQuery ? '該当するノートがありません' : showUndoneOnly ? 'すべての改善項目がクリア済みです！' : 'まだ練習ノートがありません'}
+            </p>
+          </div>
+        ) : grouped ? (
+          <div className="space-y-5">
+            {grouped.map(([loc, notes]) => (
+              <div key={loc}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-bold text-gray-500">📍 {loc}</span>
+                  <span className="text-xs text-gray-400">{notes.length}件</span>
+                </div>
+                <div className="space-y-3">
+                  {notes.map((note) => <NoteCard key={note.id} {...noteCardProps(note)} />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filtered.map((note) => <NoteCard key={note.id} {...noteCardProps(note)} />)}
+          </div>
         )}
       </div>
-
-      {/* フィルター & グループ切替 */}
-      <div className="mb-4 flex gap-2">
-        <button
-          onClick={() => setShowUndoneOnly(false)}
-          className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (!showUndoneOnly ? "bg-green-600 border-green-600 text-white" : "bg-white border-gray-200 text-gray-600")}
-        >
-          すべて
-        </button>
-        <button
-          onClick={() => setShowUndoneOnly(true)}
-          className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (showUndoneOnly ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-gray-200 text-gray-600")}
-        >
-          💪 未改善
-          {undoneCount > 0 && (
-            <span className={"ml-1 text-xs px-1.5 py-0.5 rounded-full " + (showUndoneOnly ? "bg-white text-orange-500" : "bg-orange-100 text-orange-600")}>
-              {undoneCount}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setGroupByLocation((v) => !v)}
-          className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (groupByLocation ? "bg-blue-600 border-blue-600 text-white" : "bg-white border-gray-200 text-gray-600")}
-        >
-          📍 場所別
-        </button>
-      </div>
-
-      {/* 一覧 */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <p className="text-4xl mb-3">{searchQuery ? '🔍' : showUndoneOnly ? '🎉' : '📓'}</p>
-          <p className="text-sm">
-            {searchQuery ? '該当するノートがありません' : showUndoneOnly ? 'すべての改善項目がクリア済みです！' : 'まだ練習ノートがありません'}
-          </p>
-        </div>
-      ) : grouped ? (
-        <div className="space-y-5">
-          {grouped.map(([loc, notes]) => (
-            <div key={loc}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-gray-500">📍 {loc}</span>
-                <span className="text-xs text-gray-400">{notes.length}件</span>
-              </div>
-              <div className="space-y-3">
-                {notes.map((note) => <NoteCard key={note.id} {...noteCardProps(note)} />)}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filtered.map((note) => <NoteCard key={note.id} {...noteCardProps(note)} />)}
-        </div>
-      )}
 
       <button
         onClick={() => setShowForm(true)}
