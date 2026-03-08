@@ -38,14 +38,14 @@ export default function LiftingChart({ records, filterPart, filterSide }: Props)
       {
         label: `${filterPart === 'all' ? '全部位' : filterPart} ${filterSide === 'all' ? '全' : filterSide}`,
         data,
-        borderColor: '#2E86C1',
-        backgroundColor: 'rgba(46,134,193,0.15)',
-        pointBackgroundColor: '#E74C3C',
-        pointBorderColor: '#fff',
+        borderColor: '#60a5fa',
+        backgroundColor: 'rgba(96,165,250,0.12)',
+        pointBackgroundColor: '#f472b6',
+        pointBorderColor: '#1e3a5f',
         pointBorderWidth: 2,
-        pointRadius: 6,
+        pointRadius: 5,
         pointHoverRadius: 8,
-        tension: 0.3,
+        tension: 0.4,
         fill: true,
       },
     ],
@@ -57,6 +57,11 @@ export default function LiftingChart({ records, filterPart, filterSide }: Props)
     plugins: {
       legend: { display: false },
       tooltip: {
+        backgroundColor: 'rgba(7,20,40,0.95)',
+        borderColor: 'rgba(96,165,250,0.3)',
+        borderWidth: 1,
+        titleColor: '#93c5fd',
+        bodyColor: '#e2e8f0',
         callbacks: {
           title: (items) => filtered[items[0].dataIndex]?.date ?? '',
           label: (item) => `${item.raw}回`,
@@ -65,27 +70,29 @@ export default function LiftingChart({ records, filterPart, filterSide }: Props)
       datalabels: {
         align: 'top',
         anchor: 'end',
-        color: '#2E86C1',
+        color: '#93c5fd',
         font: { weight: 'bold', size: 11 },
         formatter: (v) => `${v}`,
       },
     },
     scales: {
       x: {
-        grid: { color: 'rgba(0,0,0,0.05)' },
-        ticks: { font: { size: 11 }, maxRotation: 45 },
+        grid: { color: 'rgba(255,255,255,0.06)' },
+        ticks: { color: 'rgba(148,163,184,0.8)', font: { size: 11 }, maxRotation: 45 },
+        border: { color: 'rgba(255,255,255,0.1)' },
       },
       y: {
         beginAtZero: true,
-        grid: { color: 'rgba(0,0,0,0.05)' },
-        ticks: { font: { size: 11 }, callback: (v) => `${v}回` },
+        grid: { color: 'rgba(255,255,255,0.06)' },
+        ticks: { color: 'rgba(148,163,184,0.8)', font: { size: 11 }, callback: (v) => `${v}回` },
+        border: { color: 'rgba(255,255,255,0.1)' },
       },
     },
   };
 
   if (filtered.length === 0) {
     return (
-      <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
+      <div className="h-48 flex items-center justify-center text-slate-400 text-sm">
         データがありません
       </div>
     );

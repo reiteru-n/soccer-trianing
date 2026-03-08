@@ -82,6 +82,11 @@ function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color }: {
           datalabels: { display: false },
           legend: { display: false },
           tooltip: {
+            backgroundColor: 'rgba(7,20,40,0.95)',
+            borderColor: 'rgba(96,165,250,0.3)',
+            borderWidth: 1,
+            titleColor: '#93c5fd',
+            bodyColor: '#e2e8f0',
             filter: (item: any) => !!item.dataset.label,
             callbacks: {
               title: (items: any[]) => `${items[0]?.parsed.x.toFixed(1)}歳`,
@@ -94,7 +99,9 @@ function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color }: {
             type: 'linear' as const,
             min: axisMin,
             max: axisMax,
-            ticks: { font: { size: 9 }, callback: (v: unknown) => String(v) },
+            grid: { color: 'rgba(255,255,255,0.06)' },
+            ticks: { color: 'rgba(148,163,184,0.7)', font: { size: 9 }, callback: (v: unknown) => String(v) },
+            border: { color: 'rgba(255,255,255,0.1)' },
             afterBuildTicks: (axis: Scale) => {
               const ticks = [];
               for (let i = axisMin; i <= axisMax; i++) ticks.push({ value: i });
@@ -102,7 +109,9 @@ function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color }: {
             },
           },
           y: {
-            ticks: { font: { size: 9 }, callback: (v: unknown) => `${v}${unit}` },
+            grid: { color: 'rgba(255,255,255,0.06)' },
+            ticks: { color: 'rgba(148,163,184,0.7)', font: { size: 9 }, callback: (v: unknown) => `${v}${unit}` },
+            border: { color: 'rgba(255,255,255,0.1)' },
           },
         }
       } as any}
