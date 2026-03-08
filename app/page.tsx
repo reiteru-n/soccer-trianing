@@ -53,47 +53,53 @@ export default function DashboardPage() {
     <>
       <ConfettiEffect trigger={!!newMilestoneAchieved} onDone={clearNewMilestone} />
       {newMilestoneAchieved && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-yellow-400 text-yellow-900 font-bold px-6 py-3 rounded-2xl shadow-xl animate-bounce text-center whitespace-nowrap">🎉 {newMilestoneAchieved}回達成おめでとう！</div>}
-      <div className="mb-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl px-4 py-3 text-white shadow-md">
-        <p className="text-xs font-semibold opacity-80 mb-0.5">🎯 目標</p>
+      <header className="mb-5 pt-1">
+        <h1 className="text-2xl font-extrabold text-white drop-shadow">⚽ 拓渡のサッカー記録</h1>
+        <p className="text-sm text-blue-200 mt-0.5">毎日の練習を積み上げよう！💪</p>
+      </header>
+      <div className="mb-5 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 rounded-2xl px-4 py-3.5 text-white shadow-lg shadow-blue-900/40 border border-blue-400/30">
+        <p className="text-xs font-semibold opacity-70 mb-0.5">🎯 目標</p>
         <p className="text-base font-bold">世界一のサッカー選手になる</p>
       </div>
-      <header className="mb-4"><h1 className="text-2xl font-extrabold text-gray-800">⚽ 拓渡のサッカー記録</h1><p className="text-sm text-gray-500 mt-0.5">毎日の練習を積み上げよう！💪</p></header>
       <section className="mb-5">
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-red-50 border border-red-100 rounded-2xl p-3 text-center">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-3 text-center shadow-lg shadow-blue-900/40 border border-blue-400/20">
             <p className="text-xl mb-0.5">🏆</p>
-            <p className="text-[10px] text-gray-400 leading-tight">リフティング<br/>最高</p>
-            <p className="text-xl font-extrabold text-red-600 mt-0.5">{maxCount}<span className="text-xs font-normal">回</span></p>
+            <p className="text-[10px] text-blue-100 leading-tight">リフティング<br/>最高</p>
+            <p className="text-xl font-extrabold text-white mt-0.5">{maxCount}<span className="text-xs font-normal">回</span></p>
           </div>
-          <div className="bg-green-50 border border-green-100 rounded-2xl p-3 text-center">
+          <div className="bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl p-3 text-center shadow-lg shadow-teal-900/40 border border-cyan-400/20">
             <p className="text-xl mb-0.5">📝</p>
-            <p className="text-[10px] text-gray-400 leading-tight">練習ノート<br/>記録数</p>
-            <p className="text-xl font-extrabold text-green-600 mt-0.5">{practiceNotes.length}<span className="text-xs font-normal">回</span></p>
+            <p className="text-[10px] text-cyan-100 leading-tight">練習ノート<br/>記録数</p>
+            <p className="text-xl font-extrabold text-white mt-0.5">{practiceNotes.length}<span className="text-xs font-normal">回</span></p>
           </div>
-          <div className="bg-purple-50 border border-purple-100 rounded-2xl p-3 text-center">
+          <div className="bg-gradient-to-br from-violet-500 to-indigo-700 rounded-2xl p-3 text-center shadow-lg shadow-indigo-900/40 border border-violet-400/20">
             <p className="text-xl mb-0.5">📏</p>
-            <p className="text-[10px] text-gray-400 leading-tight mb-0.5">身長 / 体重</p>
-            <p className="text-sm font-extrabold text-purple-600 leading-tight">{latestH?.height ?? '-'}<span className="text-[10px] font-normal">cm</span></p>
-            <p className="text-sm font-bold text-purple-400 leading-tight">{latestW?.weight ?? '-'}<span className="text-[10px] font-normal">kg</span></p>
+            <p className="text-[10px] text-violet-100 leading-tight mb-0.5">身長 / 体重</p>
+            <p className="text-sm font-extrabold text-white leading-tight">{latestH?.height ?? '-'}<span className="text-[10px] font-normal">cm</span></p>
+            <p className="text-sm font-bold text-violet-200 leading-tight">{latestW?.weight ?? '-'}<span className="text-[10px] font-normal">kg</span></p>
           </div>
         </div>
       </section>
-      <section className="mb-6"><h2 className="text-base font-bold text-gray-700 mb-3">✏️ 今日の記録を追加</h2><div className="flex gap-3">
-        <button onClick={() => setShowLiftingForm(true)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-md"><span className="text-2xl">⚽</span><span className="text-sm">リフティング</span></button>
-        <button onClick={() => setShowNoteForm(true)} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-md"><span className="text-2xl">📝</span><span className="text-sm">練習ノート</span></button>
-        <button onClick={() => setShowBodyForm(true)} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-md"><span className="text-2xl">📏</span><span className="text-sm">身長・体重</span></button>
-      </div></section>
-      <section className="mb-6"><SummaryCards records={liftingRecords} /></section>
-      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-gray-700">🏅 マイルストーン</h2><Link href="/lifting" className="text-xs text-blue-500 font-medium">もっと見る →</Link></div><MilestoneSection milestones={milestones} maxCount={maxCount} /></section>
-      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-gray-700">📈 成長グラフ（インステップ左足）</h2><Link href="/lifting" className="text-xs text-blue-500 font-medium">詳細 →</Link></div><div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><LiftingChart records={liftingRecords} filterPart="インステップ" filterSide="左足" /></div></section>
       <section className="mb-6">
-        <div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-gray-700">📏 体重・身長</h2></div>
-        {sortedBody.length > 0 ? (<div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="flex bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-16 text-center">体重</span><span className="w-16 text-center">身長</span><span className="w-6"></span></div>
+        <h2 className="text-sm font-bold text-blue-200 mb-3 tracking-wide uppercase">✏️ 今日の記録を追加</h2>
+        <div className="flex gap-2">
+          <button onClick={() => setShowLiftingForm(true)} className="flex-1 bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-blue-900/50 border border-blue-400/30 transition-all active:scale-95"><span className="text-2xl">⚽</span><span className="text-xs">リフティング</span></button>
+          <button onClick={() => setShowNoteForm(true)} className="flex-1 bg-gradient-to-b from-teal-500 to-cyan-700 hover:from-teal-400 hover:to-cyan-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-cyan-900/50 border border-teal-400/30 transition-all active:scale-95"><span className="text-2xl">📝</span><span className="text-xs">練習ノート</span></button>
+          <button onClick={() => setShowBodyForm(true)} className="flex-1 bg-gradient-to-b from-violet-500 to-indigo-700 hover:from-violet-400 hover:to-indigo-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-indigo-900/50 border border-violet-400/30 transition-all active:scale-95"><span className="text-2xl">📏</span><span className="text-xs">身長・体重</span></button>
+        </div>
+      </section>
+      <section className="mb-6"><SummaryCards records={liftingRecords} /></section>
+      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">🏅 マイルストーン</h2><Link href="/lifting" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div><MilestoneSection milestones={milestones} maxCount={maxCount} /></section>
+      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📈 成長グラフ（インステップ左足）</h2><Link href="/lifting" className="text-xs text-blue-300 font-medium">詳細 →</Link></div><div className="bg-white/95 rounded-2xl p-4 shadow-xl shadow-blue-900/30 border border-white/20"><LiftingChart records={liftingRecords} filterPart="インステップ" filterSide="左足" /></div></section>
+      <section className="mb-6">
+        <div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📏 体重・身長</h2></div>
+        {sortedBody.length > 0 ? (<div className="bg-white/95 rounded-2xl shadow-xl shadow-blue-900/30 border border-white/20 overflow-hidden">
+          <div className="flex bg-slate-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-16 text-center">体重</span><span className="w-16 text-center">身長</span><span className="w-6"></span></div>
           {sortedBody.slice(0,5).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-16 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-16 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="w-6 text-gray-300 hover:text-red-400 text-lg">×</button></div>))}
-        </div>) : (<p className="text-sm text-gray-400 text-center py-4">まだ記録がありません</p>)}
+        </div>) : (<p className="text-sm text-blue-200/60 text-center py-4">まだ記録がありません</p>)}
         {sortedBody.length >= 1 && (
-          <div className="mt-3 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="mt-3 bg-white/95 rounded-2xl p-4 shadow-xl shadow-blue-900/30 border border-white/20">
             {!childBirthDate ? (
               <div className="mb-3">
                 <p className="text-xs text-gray-500 mb-2">平均・SDを表示するには生年月日を入力してください</p>
@@ -112,8 +118,8 @@ export default function DashboardPage() {
           </div>
         )}
       </section>
-      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-base font-bold text-gray-700">📝 最新の練習ノート</h2><Link href="/notes" className="text-xs text-green-500 font-medium">もっと見る →</Link></div>{latestNotes.length === 0 ? (<p className="text-sm text-gray-400 text-center py-4">まだノートがありません</p>) : (<div className="space-y-3">{latestNotes.map((n) => <NoteCard key={n.id} note={n} />)}</div>)}</section>
-      <section className="mb-2"><h2 className="text-base font-bold text-gray-700 mb-3">💾 データ管理</h2><div className="flex gap-3"><button onClick={exportData} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm">📤 エクスポート</button><label className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2.5 rounded-xl text-sm cursor-pointer text-center">📥 インポート<input type="file" accept=".json" onChange={handleImport} className="hidden" /></label></div></section>
+      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📝 最新の練習ノート</h2><Link href="/notes" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div>{latestNotes.length === 0 ? (<p className="text-sm text-blue-200/60 text-center py-4">まだノートがありません</p>) : (<div className="space-y-3">{latestNotes.map((n) => <NoteCard key={n.id} note={n} />)}</div>)}</section>
+      <section className="mb-2"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase mb-3">💾 データ管理</h2><div className="flex gap-3"><button onClick={exportData} className="flex-1 bg-blue-600/80 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm border border-blue-400/30">📤 エクスポート</button><label className="flex-1 bg-slate-600/80 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-sm cursor-pointer text-center border border-slate-400/30">📥 インポート<input type="file" accept=".json" onChange={handleImport} className="hidden" /></label></div></section>
       {showLiftingForm && <LiftingForm onSave={addLiftingRecord} onClose={() => setShowLiftingForm(false)} pastLocations={pastLocations} />}
       {showNoteForm && <NoteForm onSave={addPracticeNote} onClose={() => setShowNoteForm(false)} pastLocations={pastLocations} pastCategories={pastCategories} />}
       {showBodyForm && (

@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
+  --background: #071428;
   --foreground: #1e293b;
 }
 
 html, body {
   font-family: 'M PLUS Rounded 1c', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif;
-  background-color: #f8fafc;
+  background: linear-gradient(145deg, #071428 0%, #0d2050 50%, #071e47 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
   color: #1e293b;
 }
 

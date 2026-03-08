@@ -14,21 +14,22 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-white/10 shadow-2xl shadow-black/50">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto relative">
-        <span className="absolute top-0.5 right-2 text-[9px] text-gray-300 select-none">202603082240</span>
+        <span className="absolute top-0.5 right-2 text-[9px] text-white/20 select-none">202603082255</span>
         {navItems.map(({ href, label, icon }) => {
           const active = pathname === href;
           return (
             <Link
               key={href}
               href={href}
-              className={"flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-colors " + (active ? "text-blue-600" : "text-gray-500")}
+              className={"flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all " + (active ? "text-blue-400" : "text-slate-500")}
             >
-              <span className="text-xl">{icon}</span>
-              <span className={"text-xs font-medium " + (active ? "text-blue-600" : "text-gray-500")}>
+              <span className={"text-xl transition-transform " + (active ? "scale-110" : "")}>{icon}</span>
+              <span className={"text-xs font-medium " + (active ? "text-blue-400" : "text-slate-500")}>
                 {label}
               </span>
+              {active && <span className="absolute bottom-1 w-8 h-0.5 bg-blue-400 rounded-full" />}
             </Link>
           );
         })}
