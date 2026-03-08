@@ -1,5 +1,5 @@
 import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog } from './types';
-import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU } from './data';
+import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS } from './data';
 
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -30,7 +30,7 @@ export async function fetchAllData(): Promise<AllData> {
     return {
       liftingRecords: INITIAL_LIFTING_RECORDS,
       practiceNotes: INITIAL_PRACTICE_NOTES,
-      bodyRecords: [],
+      bodyRecords: INITIAL_BODY_RECORDS,
       trainingMenu: INITIAL_TRAINING_MENU,
       trainingLogs: [],
       childBirthDate: "",
@@ -42,7 +42,7 @@ export async function fetchAllData(): Promise<AllData> {
     return {
       liftingRecords: data.liftingRecords ?? INITIAL_LIFTING_RECORDS,
       practiceNotes: (data.practiceNotes ?? INITIAL_PRACTICE_NOTES).map(migrateNote),
-      bodyRecords: data.bodyRecords ?? [],
+      bodyRecords: data.bodyRecords ?? INITIAL_BODY_RECORDS,
       trainingMenu: data.trainingMenu ?? INITIAL_TRAINING_MENU,
       trainingLogs: data.trainingLogs ?? [],
       childBirthDate: data.childBirthDate ?? "",
@@ -51,7 +51,7 @@ export async function fetchAllData(): Promise<AllData> {
     return {
       liftingRecords: INITIAL_LIFTING_RECORDS,
       practiceNotes: INITIAL_PRACTICE_NOTES,
-      bodyRecords: [],
+      bodyRecords: INITIAL_BODY_RECORDS,
       trainingMenu: INITIAL_TRAINING_MENU,
       trainingLogs: [],
       childBirthDate: "",

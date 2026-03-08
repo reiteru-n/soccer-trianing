@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU } from '@/lib/data';
+import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS } from '@/lib/data';
 
 interface AppData {
   liftingRecords: unknown[];
@@ -52,7 +52,7 @@ export async function GET() {
     return NextResponse.json({
       liftingRecords: INITIAL_LIFTING_RECORDS,
       practiceNotes: INITIAL_PRACTICE_NOTES,
-      bodyRecords: [],
+      bodyRecords: INITIAL_BODY_RECORDS,
       trainingMenu: INITIAL_TRAINING_MENU,
       trainingLogs: [],
       childBirthDate: "",
@@ -62,7 +62,7 @@ export async function GET() {
   return NextResponse.json({
     liftingRecords: data.liftingRecords ?? INITIAL_LIFTING_RECORDS,
     practiceNotes: data.practiceNotes ?? INITIAL_PRACTICE_NOTES,
-    bodyRecords: data.bodyRecords ?? [],
+    bodyRecords: data.bodyRecords ?? INITIAL_BODY_RECORDS,
     trainingMenu: data.trainingMenu ?? INITIAL_TRAINING_MENU,
     trainingLogs: data.trainingLogs ?? [],
     childBirthDate: (data as any).childBirthDate ?? "",
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   const current = await readData() ?? {
     liftingRecords: INITIAL_LIFTING_RECORDS,
     practiceNotes: INITIAL_PRACTICE_NOTES,
-    bodyRecords: [],
+    bodyRecords: INITIAL_BODY_RECORDS,
     trainingMenu: INITIAL_TRAINING_MENU,
     trainingLogs: [],
     childBirthDate: "",
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
   await writeData({
     liftingRecords: (body.liftingRecords as unknown[] | undefined) ?? current.liftingRecords,
     practiceNotes: (body.practiceNotes as unknown[] | undefined) ?? current.practiceNotes,
-    bodyRecords: (body.bodyRecords as unknown[] | undefined) ?? current.bodyRecords ?? [],
+    bodyRecords: (body.bodyRecords as unknown[] | undefined) ?? current.bodyRecords ?? INITIAL_BODY_RECORDS,
     trainingMenu: (body.trainingMenu as unknown[] | undefined) ?? current.trainingMenu ?? INITIAL_TRAINING_MENU,
     trainingLogs: (body.trainingLogs as unknown[] | undefined) ?? current.trainingLogs ?? [],
     childBirthDate: (typeof body.childBirthDate === "string" ? body.childBirthDate : (typeof (current as any).childBirthDate === "string" ? (current as any).childBirthDate : "")),
