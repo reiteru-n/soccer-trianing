@@ -55,9 +55,10 @@ function sdLabel(sd: number): { text: string; color: string } {
   return { text: sd > 0 ? "かなり大きい" : "かなり小さい", color: "text-red-500" };
 }
 
-function MiniChart({ actual, band, axisMin, axisMax, unit, color }: {
+function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color }: {
   actual: Point[];
   band: { upper: Point[]; lower: Point[] };
+  mean: Point[];
   axisMin: number;
   axisMax: number;
   unit: string;
@@ -67,6 +68,7 @@ function MiniChart({ actual, band, axisMin, axisMax, unit, color }: {
   const datasets = [
     { data: band.upper, fill: '+1', backgroundColor: `rgba(${rgb},0.15)`, borderColor: 'transparent', borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.4, parsing: false, label: '' },
     { data: band.lower, fill: false, borderColor: 'transparent', borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, tension: 0.4, parsing: false, label: '' },
+    { data: mean, fill: false, borderColor: `rgba(${rgb},0.35)`, borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, pointHoverRadius: 0, tension: 0.4, parsing: false, label: '' },
     { data: actual, fill: false, borderColor: `rgb(${rgb})`, backgroundColor: `rgb(${rgb})`, borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, tension: 0.3, parsing: false, label: unit === 'cm' ? '身長' : '体重' },
   ];
   return (
@@ -186,6 +188,7 @@ export default function BodyChart({ records, birthDate }: Props) {
           <MiniChart
             actual={hActual}
             band={{ upper: mkBand(H, 2), lower: mkBand(H, -2) }}
+            mean={mkBand(H, 0)}
             axisMin={axisMin} axisMax={axisMax}
             unit="cm" color="orange"
           />
@@ -199,6 +202,7 @@ export default function BodyChart({ records, birthDate }: Props) {
           <MiniChart
             actual={wActual}
             band={{ upper: mkBand(W, 2), lower: mkBand(W, -2) }}
+            mean={mkBand(W, 0)}
             axisMin={axisMin} axisMax={axisMax}
             unit="kg" color="blue"
           />
