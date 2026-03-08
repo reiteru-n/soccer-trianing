@@ -70,7 +70,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json() as Partial<AppData>;
+  try {
+  const body = await req.json() as Record<string, unknown>;
   const current = await readData() ?? {
     liftingRecords: INITIAL_LIFTING_RECORDS,
     practiceNotes: INITIAL_PRACTICE_NOTES,
@@ -80,12 +81,16 @@ export async function POST(req: Request) {
     childBirthDate: "",
   };
   await writeData({
-    liftingRecords: body.liftingRecords ?? current.liftingRecords,
-    practiceNotes: body.practiceNotes ?? current.practiceNotes,
-    bodyRecords: body.bodyRecords ?? current.bodyRecords ?? [],
-    trainingMenu: body.trainingMenu ?? current.trainingMenu ?? INITIAL_TRAINING_MENU,
-    trainingLogs: body.trainingLogs ?? current.trainingLogs ?? [],
-    childBirthDate: (body as any).childBirthDate ?? (current as any).childBirthDate ?? "",
+    liftingRecords: (body.liftingRecords as unknown[] | undefined) ?? current.liftingRecords,
+    practiceNotes: (body.practiceNotes as unknown[] | undefined) ?? current.practiceNotes,
+    bodyRecords: (body.bodyRecords as unknown[] | undefined) ?? current.bodyRecords ?? [],
+    trainingMenu: (body.trainingMenu as unknown[] | undefined) ?? current.trainingMenu ?? INITIAL_TRAINING_MENU,
+    trainingLogs: (body.trainingLogs as unknown[] | undefined) ?? current.trainingLogs ?? [],
+    childBirthDate: (typeof body.childBirthDate === "string" ? body.childBirthDate : (typeof (current as any).childBirthDate === "string" ? (current as any).childBirthDate : "")),
   });
   return NextResponse.json({ ok: true });
+  } catch(err) {
+    console.error("POST error:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 }
