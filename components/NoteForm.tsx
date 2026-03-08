@@ -49,7 +49,7 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end pb-16 sm:pb-0 sm:items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
