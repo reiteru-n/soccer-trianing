@@ -9,13 +9,19 @@ import { BodyRecord } from "@/lib/types";
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
 type Ref = { mean: number; sd: number };
+// 身長(cm) 男児参照値: 0〜5歳=厚生労働省乳幼児身体発育調査(2010), 6〜17歳=文部科学省学校保健統計
 const H: Record<number, Ref> = {
+  0:{mean:49.0,sd:1.9}, 1:{mean:75.0,sd:2.5}, 2:{mean:87.0,sd:2.8},
+  3:{mean:95.7,sd:3.5}, 4:{mean:103.0,sd:3.7}, 5:{mean:109.9,sd:4.1},
   6:{mean:114.6,sd:4.95}, 7:{mean:120.5,sd:5.14}, 8:{mean:126.3,sd:5.42},
   9:{mean:131.8,sd:5.67}, 10:{mean:137.3,sd:6.07}, 11:{mean:143.4,sd:6.82},
   12:{mean:150.5,sd:7.69}, 13:{mean:157.9,sd:7.79}, 14:{mean:163.8,sd:6.99},
   15:{mean:167.5,sd:6.22}, 16:{mean:169.5,sd:5.85}, 17:{mean:170.5,sd:5.82},
 };
+// 体重(kg) 男児参照値
 const W: Record<number, Ref> = {
+  0:{mean:3.0,sd:0.6}, 1:{mean:9.3,sd:1.0}, 2:{mean:12.0,sd:1.2},
+  3:{mean:13.9,sd:1.5}, 4:{mean:16.1,sd:1.8}, 5:{mean:18.3,sd:2.2},
   6:{mean:21.4,sd:3.3}, 7:{mean:24.0,sd:3.9}, 8:{mean:27.2,sd:4.7},
   9:{mean:30.7,sd:5.9}, 10:{mean:34.3,sd:7.1}, 11:{mean:38.4,sd:8.2},
   12:{mean:44.2,sd:9.7}, 13:{mean:49.7,sd:10.4}, 14:{mean:55.3,sd:10.7},
@@ -60,8 +66,8 @@ export default function BodyChart({ records, birthDate }: Props) {
   const axisMin = Math.floor(dataMinAge);
   const axisMax = Math.ceil(dataMaxAge);
 
-  // 参照データは1年刻み（6〜17歳の範囲内）
-  const refMin = Math.max(6, axisMin);
+  // 参照データは1年刻み（0〜17歳の範囲内）
+  const refMin = Math.max(0, axisMin);
   const refMax = Math.min(17, axisMax + 1);
   const refAges: number[] = [];
   for (let a = refMin; a <= refMax; a++) refAges.push(a);
