@@ -2,7 +2,7 @@
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
-  Tooltip, Legend, Filler
+  Tooltip, Legend, Filler, Scale
 } from "chart.js";
 import { BodyRecord } from "@/lib/types";
 
@@ -55,15 +55,18 @@ export default function BodyChart({ records, birthDate }: Props) {
   }
 
   const allAges = sorted.map(r => ageYears(birthDate, r.date));
-  const minAge = Math.max(6, Math.floor(Math.min(...allAges)));
-  const maxAge = Math.min(17, Math.ceil(Math.max(...allAges)));
+  const dataMinAge = Math.min(...allAges);
+  const dataMaxAge = Math.max(...allAges);
+  const axisMin = Math.floor(dataMinAge);
+  const axisMax = Math.ceil(dataMaxAge);
 
+  // 参照データは1年刻み（6〜17歳の範囲内）
+  const refMin = Math.max(6, axisMin);
+  const refMax = Math.min(17, axisMax + 1);
   const refAges: number[] = [];
-  for (let a = minAge; a <= maxAge + 0.01; a += 0.25) {
-    refAges.push(Math.round(a * 4) / 4);
-  }
+  for (let a = refMin; a <= refMax; a++) refAges.push(a);
 
-  const mk = (ref: Record<number, Ref>, k: number): Point[] =>
+  const mkBand = (ref: Record<number, Ref>, k: number): Point[] =>
     refAges
       .map(a => { const r = interp(ref, a); return r ? {x: a, y: parseFloat((r.mean + k*r.sd).toFixed(1))} : null; })
       .filter(Boolean) as Point[];
@@ -71,16 +74,20 @@ export default function BodyChart({ records, birthDate }: Props) {
   const hActual: Point[] = hRecs.map(r => ({ x: ageYears(birthDate, r.date), y: r.height! }));
   const wActual: Point[] = wRecs.map(r => ({ x: ageYears(birthDate, r.date), y: r.weight! }));
 
+  const band = (data: Point[], yID: string, fill: string | boolean, bg: string) => ({
+    data, yAxisID: yID, fill, backgroundColor: bg,
+    borderColor: 'transparent', borderWidth: 0,
+    pointRadius: 0, pointHoverRadius: 0,
+    tension: 0.4, parsing: false, label: '',
+  });
+
   const datasets = [
-    // 身長バンド (+2SD → -2SD 塗りつぶし)
-    { data: mk(H,  2), yAxisID: 'y',  fill: '+1', backgroundColor: 'rgba(234,88,12,0.13)', borderColor: 'rgba(234,88,12,0.0)', borderWidth: 0, pointRadius: 0, tension: 0.4, parsing: false, label: '' },
-    { data: mk(H, -2), yAxisID: 'y',  fill: false, borderColor: 'rgba(234,88,12,0.0)', borderWidth: 0, pointRadius: 0, tension: 0.4, parsing: false, label: '' },
-    // 体重バンド
-    { data: mk(W,  2), yAxisID: 'y1', fill: '+1', backgroundColor: 'rgba(37,99,235,0.13)', borderColor: 'rgba(37,99,235,0.0)', borderWidth: 0, pointRadius: 0, tension: 0.4, parsing: false, label: '' },
-    { data: mk(W, -2), yAxisID: 'y1', fill: false, borderColor: 'rgba(37,99,235,0.0)', borderWidth: 0, pointRadius: 0, tension: 0.4, parsing: false, label: '' },
-    // 実測値
-    { label: '身長', data: hActual, yAxisID: 'y',  borderColor: '#ea580c', backgroundColor: '#ea580c', borderWidth: 2.5, pointRadius: 3.5, pointHoverRadius: 6, tension: 0.3, parsing: false, fill: false },
-    { label: '体重', data: wActual, yAxisID: 'y1', borderColor: '#2563eb', backgroundColor: '#2563eb', borderWidth: 2.5, pointRadius: 3.5, pointHoverRadius: 6, tension: 0.3, parsing: false, fill: false },
+    band(mkBand(H,  2), 'y',  '+1', 'rgba(234,88,12,0.15)'),
+    band(mkBand(H, -2), 'y',  false, 'transparent'),
+    band(mkBand(W,  2), 'y1', '+1', 'rgba(37,99,235,0.15)'),
+    band(mkBand(W, -2), 'y1', false, 'transparent'),
+    { label: '身長', data: hActual, yAxisID: 'y',  borderColor: '#ea580c', backgroundColor: '#ea580c', borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 6, tension: 0.3, parsing: false, fill: false },
+    { label: '体重', data: wActual, yAxisID: 'y1', borderColor: '#2563eb', backgroundColor: '#2563eb', borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 6, tension: 0.3, parsing: false, fill: false },
   ];
 
   return (
@@ -89,38 +96,38 @@ export default function BodyChart({ records, birthDate }: Props) {
       options={{
         responsive: true,
         parsing: false,
-        interaction: { mode: 'index' as const, intersect: false },
+        interaction: { mode: 'nearest' as const, axis: 'x', intersect: false },
         plugins: {
           legend: {
             position: 'bottom' as const,
-            labels: {
-              font: { size: 11 },
-              boxWidth: 14,
-              padding: 10,
-              filter: (item: any) => !!item.text,
-            }
+            labels: { font: { size: 11 }, boxWidth: 14, padding: 10, filter: (item: any) => !!item.text },
           },
           tooltip: {
+            filter: (item: any) => !!item.dataset.label,
             callbacks: {
+              title: (items: any[]) => `${items[0]?.parsed.x.toFixed(1)}歳`,
               label: (ctx: any) => {
                 if (!ctx.dataset.label) return '';
                 const unit = ctx.dataset.yAxisID === 'y' ? 'cm' : 'kg';
                 return `${ctx.dataset.label}: ${ctx.parsed.y}${unit}`;
-              }
+              },
             }
           }
         },
         scales: {
           x: {
             type: 'linear' as const,
+            min: axisMin,
+            max: axisMax,
             title: { display: true, text: '年齢(歳)', font: { size: 11 } },
+            afterBuildTicks: (axis: Scale) => {
+              const ticks = [];
+              for (let i = axisMin; i <= axisMax; i++) ticks.push({ value: i });
+              axis.ticks = ticks;
+            },
             ticks: {
               font: { size: 10 },
-              stepSize: 1,
-              callback: (v: unknown) => {
-                const n = v as number;
-                return Number.isInteger(n) ? String(n) : '';
-              },
+              callback: (v: unknown) => String(v),
             },
           },
           y: {
