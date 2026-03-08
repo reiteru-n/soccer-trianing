@@ -98,6 +98,7 @@ export default function BodyChart({ records, birthDate }: Props) {
         parsing: false,
         interaction: { mode: 'nearest' as const, axis: 'x', intersect: false },
         plugins: {
+          datalabels: { display: false },
           legend: {
             position: 'bottom' as const,
             labels: { font: { size: 11 }, boxWidth: 14, padding: 10, filter: (item: any) => !!item.text },
