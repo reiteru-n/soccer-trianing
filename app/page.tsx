@@ -30,6 +30,8 @@ export default function DashboardPage() {
   const [birthDateInput, setBirthDateInput] = useState("");
   const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
   const sortedBody = [...bodyRecords].sort((a, b) => b.date.localeCompare(a.date));
+  const latestH = sortedBody.find(r => r.height != null);
+  const latestW = sortedBody.find(r => r.weight != null);
   const pastLocations = [...new Set([...liftingRecords.map((r) => r.location), ...practiceNotes.map((n) => n.location)])];
   const pastCategories = [...new Set(practiceNotes.map((n) => n.category).filter(Boolean) as string[])];
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +57,27 @@ export default function DashboardPage() {
         <p className="text-xs font-semibold opacity-80 mb-0.5">🎯 目標</p>
         <p className="text-base font-bold">世界一のサッカー選手になる</p>
       </div>
-      <header className="mb-5"><h1 className="text-2xl font-extrabold text-gray-800">⚽ 拓渡のサッカー記録</h1><p className="text-sm text-gray-500 mt-0.5">毎日の練習を積み上げよう！💪</p></header>
+      <header className="mb-4"><h1 className="text-2xl font-extrabold text-gray-800">⚽ 拓渡のサッカー記録</h1><p className="text-sm text-gray-500 mt-0.5">毎日の練習を積み上げよう！💪</p></header>
+      <section className="mb-5">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-red-50 border border-red-100 rounded-2xl p-3 text-center">
+            <p className="text-xl mb-0.5">🏆</p>
+            <p className="text-[10px] text-gray-400 leading-tight">リフティング<br/>最高</p>
+            <p className="text-xl font-extrabold text-red-600 mt-0.5">{maxCount}<span className="text-xs font-normal">回</span></p>
+          </div>
+          <div className="bg-green-50 border border-green-100 rounded-2xl p-3 text-center">
+            <p className="text-xl mb-0.5">📝</p>
+            <p className="text-[10px] text-gray-400 leading-tight">練習ノート<br/>記録数</p>
+            <p className="text-xl font-extrabold text-green-600 mt-0.5">{practiceNotes.length}<span className="text-xs font-normal">回</span></p>
+          </div>
+          <div className="bg-purple-50 border border-purple-100 rounded-2xl p-3 text-center">
+            <p className="text-xl mb-0.5">📏</p>
+            <p className="text-[10px] text-gray-400 leading-tight mb-0.5">身長 / 体重</p>
+            <p className="text-sm font-extrabold text-purple-600 leading-tight">{latestH?.height ?? '-'}<span className="text-[10px] font-normal">cm</span></p>
+            <p className="text-sm font-bold text-purple-400 leading-tight">{latestW?.weight ?? '-'}<span className="text-[10px] font-normal">kg</span></p>
+          </div>
+        </div>
+      </section>
       <section className="mb-6"><h2 className="text-base font-bold text-gray-700 mb-3">✏️ 今日の記録を追加</h2><div className="flex gap-3">
         <button onClick={() => setShowLiftingForm(true)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-md"><span className="text-2xl">⚽</span><span className="text-sm">リフティング</span></button>
         <button onClick={() => setShowNoteForm(true)} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-md"><span className="text-2xl">📝</span><span className="text-sm">練習ノート</span></button>
