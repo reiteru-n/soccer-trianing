@@ -5,6 +5,7 @@ import { useApp } from '@/lib/context';
 import NoteCard from '@/components/NoteCard';
 import NoteForm from '@/components/NoteForm';
 import PracticeStats from '@/components/PracticeStats';
+import PracticeBarChart from '@/components/PracticeBarChart';
 import { PracticeNote } from '@/lib/types';
 
 export default function NotesPage() {
@@ -93,6 +94,12 @@ export default function NotesPage() {
       <section className="mb-5">
         <h2 className="text-sm font-bold text-gray-700 mb-3">📊 練習参加まとめ</h2>
         <PracticeStats notes={practiceNotes} />
+        {practiceNotes.length > 0 && (
+          <div className="mt-3 bg-slate-800/80 rounded-2xl p-4 shadow-xl border border-white/10">
+            <p className="text-xs font-semibold text-gray-400 mb-2">📅 月別練習回数</p>
+            <PracticeBarChart notes={practiceNotes} />
+          </div>
+        )}
       </section>
 
       {/* 検索 */}
