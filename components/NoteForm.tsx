@@ -31,7 +31,7 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!location || !goodPoints || !improvementsText.trim()) return;
+    if (!location) return;
 
     const lines = improvementsText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
     const improvements: ImprovementItem[] = lines.map((text) => {
@@ -124,7 +124,6 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
                 value={goodPoints}
                 onChange={(e) => setGoodPoints(e.target.value)}
                 placeholder="今日できたこと、うまくいったことを書こう！"
-                required
                 rows={4}
                 className="w-full rounded-xl border-2 border-green-200 bg-green-50 px-3 py-3 text-base focus:border-green-400 focus:outline-none resize-none"
               />
@@ -137,7 +136,6 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
                 value={improvementsText}
                 onChange={(e) => setImprovementsText(e.target.value)}
                 placeholder={"例:\n周りをもっと見る\nシュートの足を振り切る"}
-                required
                 rows={4}
                 className="w-full rounded-xl border-2 border-orange-200 bg-orange-50 px-3 py-3 text-base focus:border-orange-400 focus:outline-none resize-none"
               />

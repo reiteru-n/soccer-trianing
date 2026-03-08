@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useApp } from '@/lib/context';
 import NoteCard from '@/components/NoteCard';
 import NoteForm from '@/components/NoteForm';
+import PracticeStats from '@/components/PracticeStats';
 import { PracticeNote } from '@/lib/types';
 
 export default function NotesPage() {
@@ -53,6 +54,11 @@ export default function NotesPage() {
           </span>
         </div>
       </header>
+
+      <section className="mb-5">
+        <h2 className="text-sm font-bold text-gray-700 mb-3">📊 練習参加まとめ</h2>
+        <PracticeStats notes={practiceNotes} />
+      </section>
 
       <div className="mb-4 flex gap-2">
         <button
