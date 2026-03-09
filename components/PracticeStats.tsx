@@ -24,18 +24,29 @@ const DEFAULT_COLOR: ColorDef = { bg: 'bg-gray-50', activeBg: 'bg-gray-100', bad
 
 const CATEGORY_ORDER = ['チーム練習', 'スクール', '試合', '自主練', 'セレクション', 'その他'];
 
+// グループキーのフォーマット: "teamName##category"
+export function makeGroupKey(teamName: string | undefined, category: string): string {
+  return `${teamName ?? ''}##${category}`;
+}
+
+export function parseGroupKey(key: string): { teamName: string; category: string } {
+  const sep = key.indexOf('##');
+  if (sep === -1) return { teamName: key, category: key };
+  return { teamName: key.slice(0, sep), category: key.slice(sep + 2) };
+}
+
 export default function PracticeStats({ notes, activeCategory, activeLocation, onSelectCategory, onSelectLocation }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
   if (notes.length === 0) return null;
 
-  type GroupEntry = { primaryCategory: string; locMap: Map<string, { count: number; lastDate: string }> };
+  type GroupEntry = { teamName: string; category: string; locMap: Map<string, { count: number; lastDate: string }> };
   const map = new Map<string, GroupEntry>();
 
   for (const n of notes) {
-    const cat = n.category || '未分類';
-    const key = n.teamName || cat;
-    if (!map.has(key)) map.set(key, { primaryCategory: cat, locMap: new Map() });
+    const cat = n.category || 'その他';
+    const key = makeGroupKey(n.teamName, cat);
+    if (!map.has(key)) map.set(key, { teamName: n.teamName ?? '', category: cat, locMap: new Map() });
     const entry = map.get(key)!;
     const loc = n.location || '不明';
     const cur = entry.locMap.get(loc) ?? { count: 0, lastDate: '' };
@@ -43,8 +54,8 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
   }
 
   const groups = [...map.entries()].sort((a, b) => {
-    const catA = CATEGORY_ORDER.indexOf(a[1].primaryCategory);
-    const catB = CATEGORY_ORDER.indexOf(b[1].primaryCategory);
+    const catA = CATEGORY_ORDER.indexOf(a[1].category);
+    const catB = CATEGORY_ORDER.indexOf(b[1].category);
     const oa = catA === -1 ? CATEGORY_ORDER.length : catA;
     const ob = catB === -1 ? CATEGORY_ORDER.length : catB;
     if (oa !== ob) return oa - ob;
@@ -83,12 +94,13 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
         })}
       </div>
 
-      {groups.map(([key, { primaryCategory, locMap }]) => {
+      {groups.map(([key, { teamName, category, locMap }]) => {
         const total = [...locMap.values()].reduce((s, v) => s + v.count, 0);
-        const color = CATEGORY_COLORS[primaryCategory] ?? DEFAULT_COLOR;
+        const color = CATEGORY_COLORS[category] ?? DEFAULT_COLOR;
         const locs = [...locMap.entries()].sort((a, b) => b[1].count - a[1].count);
         const isCatActive = activeCategory === key && !activeLocation;
-        const isTeamName = key !== primaryCategory;
+        const displayName = teamName || category;
+        const showCategoryBadge = !!teamName;
         const isExpanded = expandedKeys.has(key);
 
         return (
@@ -100,9 +112,9 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
                 onClick={() => onSelectCategory?.(key)}
                 className="flex items-center gap-1.5 flex-1 min-w-0"
               >
-                <span className={`text-white text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${isCatActive ? color.activeBadge : color.badge}`}>{key}</span>
-                {isTeamName && (
-                  <span className="text-xs text-gray-400 bg-white/70 px-1.5 py-0.5 rounded-full flex-shrink-0">{primaryCategory}</span>
+                <span className={`text-white text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${isCatActive ? color.activeBadge : color.badge}`}>{displayName}</span>
+                {showCategoryBadge && (
+                  <span className="text-xs text-gray-400 bg-white/70 px-1.5 py-0.5 rounded-full flex-shrink-0">{category}</span>
                 )}
               </button>
               {/* 右：詳細トグル＋回数 */}

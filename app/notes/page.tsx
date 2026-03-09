@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from 'react';
 import { useApp } from '@/lib/context';
 import NoteCard from '@/components/NoteCard';
 import NoteForm from '@/components/NoteForm';
-import PracticeStats from '@/components/PracticeStats';
+import PracticeStats, { parseGroupKey } from '@/components/PracticeStats';
 import PracticeBarChart from '@/components/PracticeBarChart';
 import { PracticeNote } from '@/lib/types';
 
@@ -30,7 +30,12 @@ export default function NotesPage() {
 
     // まとめからの絞り込み（優先）
     if (activeCategory) {
-      base = base.filter((n) => (n.teamName || n.category || '未分類') === activeCategory);
+      const { teamName: filterTeam, category: filterCat } = parseGroupKey(activeCategory);
+      base = base.filter((n) => {
+        const noteTeam = n.teamName ?? '';
+        const noteCat = n.category || 'その他';
+        return noteTeam === filterTeam && noteCat === filterCat;
+      });
       if (activeLocation) {
         base = base.filter((n) => (n.location || '不明') === activeLocation);
       }
@@ -131,6 +136,11 @@ export default function NotesPage() {
   });
 
   const hasFilter = !!activeCategory;
+  const filterLabel = (() => {
+    if (!activeCategory) return '';
+    const { teamName, category } = parseGroupKey(activeCategory);
+    return teamName ? `${teamName}（${category}）` : category;
+  })();
 
   return (
     <>
@@ -177,7 +187,7 @@ export default function NotesPage() {
         {hasFilter && (
           <div className="mb-3 flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2 border border-blue-200">
             <span className="text-xs text-blue-700 flex-1">
-              🔍 {activeCategory}{activeLocation ? ` › ${activeLocation}` : ''} で絞り込み中 ({filtered.length}件)
+              🔍 {filterLabel}{activeLocation ? ' > ' + activeLocation : ''} で絞り込み中 ({filtered.length}件)
             </span>
             <button onClick={clearFilter} className="text-xs text-blue-400 hover:text-blue-600 font-bold">✕ 解除</button>
           </div>
