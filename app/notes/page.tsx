@@ -17,7 +17,7 @@ export default function NotesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | undefined>();
   const [activeLocation, setActiveLocation] = useState<string | undefined>();
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
 
   const sorted = useMemo(

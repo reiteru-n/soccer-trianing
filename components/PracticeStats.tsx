@@ -25,9 +25,7 @@ const DEFAULT_COLOR: ColorDef = { bg: 'bg-gray-50', activeBg: 'bg-gray-100', bad
 const CATEGORY_ORDER = ['チーム練習', 'スクール', '試合', '自主練', 'セレクション', 'その他'];
 
 export default function PracticeStats({ notes, activeCategory, activeLocation, onSelectCategory, onSelectLocation }: Props) {
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
-    () => new Set(notes.map((n) => n.teamName || n.category || '未分類'))
-  );
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
   if (notes.length === 0) return null;
 
