@@ -25,13 +25,19 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
     <div className={`rounded-2xl border-2 bg-white shadow-sm overflow-hidden ${allDone ? 'border-green-200' : 'border-gray-100'}`}>
       {/* Header */}
       <div className={`flex items-center justify-between px-4 py-2 border-b ${allDone ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>📅 {note.date}</span>
+        <div className="flex items-center gap-2 text-sm text-gray-600 min-w-0">
+          <span className="whitespace-nowrap">📅 {note.date}</span>
           <span>·</span>
-          <span>📍 {note.location}</span>
-          {allDone && <span className="text-green-600 text-xs font-bold">✅ 改善済</span>}
+          {note.teamName && (
+            <>
+              <span className="font-semibold text-blue-700 truncate">🏫 {note.teamName}</span>
+              <span>·</span>
+            </>
+          )}
+          <span className="truncate">📍 {note.location}</span>
+          {allDone && <span className="text-green-600 text-xs font-bold whitespace-nowrap">✅ 改善済</span>}
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 flex-shrink-0">
           {onEdit && (
             <button
               onClick={() => onEdit(note)}

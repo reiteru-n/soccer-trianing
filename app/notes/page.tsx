@@ -29,7 +29,7 @@ export default function NotesPage() {
 
     // まとめからの絞り込み（優先）
     if (activeCategory) {
-      base = base.filter((n) => (n.category || '未分類') === activeCategory);
+      base = base.filter((n) => (n.teamName || n.category || '未分類') === activeCategory);
       if (activeLocation) {
         base = base.filter((n) => (n.location || '不明') === activeLocation);
       }
@@ -41,6 +41,7 @@ export default function NotesPage() {
     if (!q) return base;
     return base.filter((n) =>
       n.location.toLowerCase().includes(q) ||
+      (n.teamName ?? '').toLowerCase().includes(q) ||
       (n.category ?? '').toLowerCase().includes(q) ||
       n.date.includes(q) ||
       n.goodPoints.toLowerCase().includes(q) ||
@@ -66,6 +67,7 @@ export default function NotesPage() {
     ...liftingRecords.map((r) => r.location),
   ])];
   const pastCategories = [...new Set(practiceNotes.map((n) => n.category).filter(Boolean) as string[])];
+  const pastTeamNames = [...new Set(practiceNotes.map((n) => n.teamName).filter(Boolean) as string[])];
 
   const handleEditSave = (data: Omit<PracticeNote, 'id'>) => {
     if (editingNote) {
@@ -256,6 +258,7 @@ export default function NotesPage() {
           onClose={() => setShowForm(false)}
           pastLocations={pastLocations}
           pastCategories={pastCategories}
+          pastTeamNames={pastTeamNames}
         />
       )}
       {editingNote && (
@@ -264,6 +267,7 @@ export default function NotesPage() {
           onClose={() => setEditingNote(null)}
           pastLocations={pastLocations}
           pastCategories={pastCategories}
+          pastTeamNames={pastTeamNames}
           initialValues={editingNote}
         />
       )}

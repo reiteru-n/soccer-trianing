@@ -18,6 +18,7 @@ export interface ImprovementItem {
 export interface PracticeNote {
   id: string;
   date: string; // yyyy/mm/dd
+  teamName?: string; // チーム名/スクール名
   location: string;
   category?: string;
   goodPoints: string;

@@ -17,15 +17,19 @@ interface Props {
   notes: PracticeNote[];
 }
 
-const CATEGORIES = ['チーム練習', 'スクール', '試合', 'セレクション', '自主練', 'その他'];
+const CATEGORIES = ['チーム/スクール', '試合', 'セレクション', '自主練', 'その他'];
 const CATEGORY_COLORS: Record<string, string> = {
-  'チーム練習':   'rgba(59,130,246,0.85)',
-  'スクール':     'rgba(34,197,94,0.85)',
-  '試合':         'rgba(239,68,68,0.85)',
-  'セレクション': 'rgba(168,85,247,0.85)',
-  '自主練':       'rgba(249,115,22,0.85)',
-  'その他':       'rgba(156,163,175,0.85)',
+  'チーム/スクール': 'rgba(59,130,246,0.85)',
+  '試合':            'rgba(239,68,68,0.85)',
+  'セレクション':    'rgba(168,85,247,0.85)',
+  '自主練':          'rgba(249,115,22,0.85)',
+  'その他':          'rgba(156,163,175,0.85)',
 };
+
+function normalizeCategory(c?: string): string {
+  if (c === 'チーム練習' || c === 'スクール') return 'チーム/スクール';
+  return CATEGORIES.includes(c ?? '') ? (c ?? 'その他') : 'その他';
+}
 
 export default function PracticeBarChart({ notes }: Props) {
   if (notes.length === 0) return null;
@@ -40,7 +44,7 @@ export default function PracticeBarChart({ notes }: Props) {
   for (const m of months) data[m] = {};
   for (const n of notes) {
     const m = n.date.slice(0, 7);
-    const cat = CATEGORIES.includes(n.category ?? '') ? (n.category ?? 'その他') : 'その他';
+    const cat = normalizeCategory(n.category);
     data[m][cat] = (data[m][cat] ?? 0) + 1;
   }
 
