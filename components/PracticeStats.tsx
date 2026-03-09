@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { PracticeNote } from '@/lib/types';
 
 interface Props {
@@ -22,6 +23,8 @@ const CATEGORY_COLORS: Record<string, ColorDef> = {
 const DEFAULT_COLOR: ColorDef = { bg: 'bg-gray-50', activeBg: 'bg-gray-100', badge: 'bg-gray-500', activeBadge: 'bg-gray-600', text: 'text-gray-700', ring: 'ring-gray-400' };
 
 export default function PracticeStats({ notes, activeCategory, activeLocation, onSelectCategory, onSelectLocation }: Props) {
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+
   if (notes.length === 0) return null;
 
   type GroupEntry = { primaryCategory: string; locMap: Map<string, { count: number; lastDate: string }> };
@@ -43,45 +46,67 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
     return tb - ta;
   });
 
+  const toggleExpand = (key: string) => {
+    setExpandedKeys((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {groups.map(([key, { primaryCategory, locMap }]) => {
         const total = [...locMap.values()].reduce((s, v) => s + v.count, 0);
         const color = CATEGORY_COLORS[primaryCategory] ?? DEFAULT_COLOR;
         const locs = [...locMap.entries()].sort((a, b) => b[1].count - a[1].count);
         const isCatActive = activeCategory === key && !activeLocation;
         const isTeamName = key !== primaryCategory;
+        const isExpanded = expandedKeys.has(key);
 
         return (
-          <div key={key} className={`rounded-2xl border border-gray-100 p-4 transition-all ${isCatActive ? color.activeBg + ' ring-2 ' + color.ring : color.bg}`}>
-            <button
-              onClick={() => onSelectCategory?.(key)}
-              className="flex items-center justify-between w-full mb-2"
-            >
-              <div className="flex items-center gap-1.5">
-                <span className={`text-white text-xs font-bold px-2 py-0.5 rounded-full ${isCatActive ? color.activeBadge : color.badge}`}>{key}</span>
+          <div key={key} className={`rounded-2xl border border-gray-100 transition-all ${isCatActive ? color.activeBg + ' ring-2 ' + color.ring : color.bg}`}>
+            {/* ヘッダー行 */}
+            <div className="flex items-center px-4 py-3 gap-2">
+              {/* 左：バッジ＋区分 → タップで絞り込み */}
+              <button
+                onClick={() => onSelectCategory?.(key)}
+                className="flex items-center gap-1.5 flex-1 min-w-0"
+              >
+                <span className={`text-white text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${isCatActive ? color.activeBadge : color.badge}`}>{key}</span>
                 {isTeamName && (
-                  <span className="text-xs text-gray-400 bg-white/70 px-1.5 py-0.5 rounded-full">{primaryCategory}</span>
+                  <span className="text-xs text-gray-400 bg-white/70 px-1.5 py-0.5 rounded-full flex-shrink-0">{primaryCategory}</span>
                 )}
-              </div>
-              <span className={`text-base font-extrabold ${color.text}`}>計 {total}回</span>
-            </button>
-            <div className="space-y-1">
-              {locs.map(([loc, { count, lastDate }]) => {
-                const isLocActive = activeCategory === key && activeLocation === loc;
-                return (
-                  <button
-                    key={loc}
-                    onClick={() => onSelectLocation?.(key, loc)}
-                    className={`w-full flex items-center rounded-lg px-3 py-1.5 gap-2 transition-all ${isLocActive ? 'bg-white ring-2 ' + color.ring : 'bg-white/70 hover:bg-white/90'}`}
-                  >
-                    <span className="text-sm text-gray-700 truncate flex-1 text-left">{loc}</span>
-                    <span className="text-xs text-gray-400">{lastDate}</span>
-                    <span className={`text-sm font-bold ${color.text} w-8 text-right`}>{count}回</span>
-                  </button>
-                );
-              })}
+              </button>
+              {/* 右：詳細トグル＋回数 */}
+              <button
+                onClick={() => toggleExpand(key)}
+                className="flex items-center gap-1.5 flex-shrink-0"
+              >
+                <span className={`text-xs font-medium ${color.text}`}>{isExpanded ? '▲' : '▼'} 詳細</span>
+                <span className={`text-base font-extrabold ${color.text}`}>計 {total}回</span>
+              </button>
             </div>
+
+            {/* 展開時：場所一覧 */}
+            {isExpanded && (
+              <div className="px-4 pb-3 space-y-1">
+                {locs.map(([loc, { count, lastDate }]) => {
+                  const isLocActive = activeCategory === key && activeLocation === loc;
+                  return (
+                    <button
+                      key={loc}
+                      onClick={() => onSelectLocation?.(key, loc)}
+                      className={`w-full flex items-center rounded-lg px-3 py-1.5 gap-2 transition-all ${isLocActive ? 'bg-white ring-2 ' + color.ring : 'bg-white/70 hover:bg-white/90'}`}
+                    >
+                      <span className="text-sm text-gray-700 truncate flex-1 text-left">{loc}</span>
+                      <span className="text-xs text-gray-400">{lastDate}</span>
+                      <span className={`text-sm font-bold ${color.text} w-8 text-right`}>{count}回</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}
