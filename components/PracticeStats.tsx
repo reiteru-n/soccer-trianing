@@ -61,8 +61,28 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
     });
   };
 
+  // カテゴリ別合計
+  const catTotals = new Map<string, number>();
+  for (const n of notes) {
+    const cat = n.category || 'その他';
+    catTotals.set(cat, (catTotals.get(cat) ?? 0) + 1);
+  }
+  const catSummary = CATEGORY_ORDER.filter((c) => catTotals.has(c)).map((c) => ({ cat: c, count: catTotals.get(c)! }));
+
   return (
     <div className="space-y-2">
+      {/* カテゴリ別合計サマリー */}
+      <div className="flex flex-wrap gap-2 pb-1">
+        {catSummary.map(({ cat, count }) => {
+          const color = CATEGORY_COLORS[cat] ?? DEFAULT_COLOR;
+          return (
+            <span key={cat} className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${color.badge} text-white`}>
+              {cat} <span className="font-normal opacity-90">{count}回</span>
+            </span>
+          );
+        })}
+      </div>
+
       {groups.map(([key, { primaryCategory, locMap }]) => {
         const total = [...locMap.values()].reduce((s, v) => s + v.count, 0);
         const color = CATEGORY_COLORS[primaryCategory] ?? DEFAULT_COLOR;
