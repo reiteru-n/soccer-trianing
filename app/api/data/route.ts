@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server';
 import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS } from '@/lib/data';
-// cache-bust: 2026-03-08
+
+// キーを種別ごとに分割してサイズ上限を回避
+const KEYS = {
+  notes:    'takuto:notes',
+  lifting:  'takuto:lifting',
+  body:     'takuto:body',
+  menu:     'takuto:menu',
+  logs:     'takuto:logs',
+  config:   'takuto:config',
+} as const;
+
+// 旧キー（初回のみマイグレーション用）
+const LEGACY_KEY = 'takuto_app_data';
 
 interface AppData {
   liftingRecords: unknown[];
@@ -11,17 +23,52 @@ interface AppData {
   childBirthDate: string;
 }
 
-const DATA_KEY = 'takuto_app_data';
+// ----- Redis helpers -----
+async function getRedis() {
+  const { Redis } = await import('@upstash/redis');
+  return new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  });
+}
 
+function hasRedis() {
+  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+}
+
+// ----- 読み込み -----
 async function readData(): Promise<AppData | null> {
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    const { Redis } = await import('@upstash/redis');
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
-    return redis.get<AppData>(DATA_KEY);
+  if (hasRedis()) {
+    const redis = await getRedis();
+
+    // 新キーから一括読み込み
+    const [notes, lifting, body, menu, logs, config] = await redis.mget<unknown[]>(
+      KEYS.notes, KEYS.lifting, KEYS.body, KEYS.menu, KEYS.logs, KEYS.config
+    );
+
+    // いずれかのキーがあれば新形式
+    if (notes || lifting || body || menu || logs || config) {
+      return {
+        practiceNotes:  (notes   as unknown[]) ?? [],
+        liftingRecords: (lifting as unknown[]) ?? [],
+        bodyRecords:    (body    as unknown[]) ?? [],
+        trainingMenu:   (menu    as unknown[]) ?? [],
+        trainingLogs:   (logs    as unknown[]) ?? [],
+        childBirthDate: ((config as any)?.childBirthDate) ?? '',
+      };
+    }
+
+    // 旧キーが残っていればマイグレーション
+    const legacy = await redis.get<AppData>(LEGACY_KEY);
+    if (legacy) {
+      await migrateToSplitKeys(redis, legacy);
+      return legacy;
+    }
+
+    return null;
   }
+
+  // ローカル開発: ファイル読み込み
   try {
     const { readFileSync } = await import('fs');
     const { join } = await import('path');
@@ -32,66 +79,74 @@ async function readData(): Promise<AppData | null> {
   }
 }
 
-async function writeData(data: AppData): Promise<void> {
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    const { Redis } = await import('@upstash/redis');
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
-    await redis.set(DATA_KEY, data);
-    return;
-  }
-  const { writeFileSync } = await import('fs');
-  const { join } = await import('path');
-  writeFileSync(join(process.cwd(), 'dev-data.json'), JSON.stringify(data, null, 2));
+// ----- マイグレーション（旧キー → 分割キー）-----
+async function migrateToSplitKeys(redis: any, data: AppData): Promise<void> {
+  await redis.mset({
+    [KEYS.notes]:   data.practiceNotes  ?? [],
+    [KEYS.lifting]: data.liftingRecords ?? [],
+    [KEYS.body]:    data.bodyRecords    ?? [],
+    [KEYS.menu]:    data.trainingMenu   ?? [],
+    [KEYS.logs]:    data.trainingLogs   ?? [],
+    [KEYS.config]:  { childBirthDate: (data as any).childBirthDate ?? '' },
+  });
+  await redis.del(LEGACY_KEY);
 }
 
+// ----- 書き込み（部分更新対応）-----
+async function writePartial(body: Partial<Record<string, unknown>>): Promise<void> {
+  if (hasRedis()) {
+    const redis = await getRedis();
+    const updates: Record<string, unknown> = {};
+    if ('practiceNotes'  in body) updates[KEYS.notes]   = body.practiceNotes;
+    if ('liftingRecords' in body) updates[KEYS.lifting] = body.liftingRecords;
+    if ('bodyRecords'    in body) updates[KEYS.body]    = body.bodyRecords;
+    if ('trainingMenu'   in body) updates[KEYS.menu]    = body.trainingMenu;
+    if ('trainingLogs'   in body) updates[KEYS.logs]    = body.trainingLogs;
+    if ('childBirthDate' in body) updates[KEYS.config]  = { childBirthDate: body.childBirthDate };
+    if (Object.keys(updates).length > 0) {
+      await redis.mset(updates);
+    }
+    return;
+  }
+  // ローカル開発: ファイル書き込み（全体マージ）
+  const { readFileSync, writeFileSync } = await import('fs');
+  const { join } = await import('path');
+  const path = join(process.cwd(), 'dev-data.json');
+  let current: Record<string, unknown> = {};
+  try { current = JSON.parse(readFileSync(path, 'utf-8')); } catch { /* no file yet */ }
+  writeFileSync(path, JSON.stringify({ ...current, ...body }, null, 2));
+}
+
+// ----- API -----
 export async function GET() {
   const data = await readData();
   if (!data) {
     return NextResponse.json({
       liftingRecords: INITIAL_LIFTING_RECORDS,
-      practiceNotes: INITIAL_PRACTICE_NOTES,
-      bodyRecords: INITIAL_BODY_RECORDS,
-      trainingMenu: INITIAL_TRAINING_MENU,
-      trainingLogs: [],
-      childBirthDate: "",
+      practiceNotes:  INITIAL_PRACTICE_NOTES,
+      bodyRecords:    INITIAL_BODY_RECORDS,
+      trainingMenu:   INITIAL_TRAINING_MENU,
+      trainingLogs:   [],
+      childBirthDate: '',
     });
   }
-  // Fill missing fields for existing data (migration)
   return NextResponse.json({
     liftingRecords: data.liftingRecords ?? INITIAL_LIFTING_RECORDS,
-    practiceNotes: data.practiceNotes ?? INITIAL_PRACTICE_NOTES,
-    bodyRecords: data.bodyRecords ?? INITIAL_BODY_RECORDS,
-    trainingMenu: data.trainingMenu ?? INITIAL_TRAINING_MENU,
-    trainingLogs: data.trainingLogs ?? [],
-    childBirthDate: (data as any).childBirthDate ?? "",
+    practiceNotes:  data.practiceNotes  ?? INITIAL_PRACTICE_NOTES,
+    bodyRecords:    data.bodyRecords    ?? INITIAL_BODY_RECORDS,
+    trainingMenu:   data.trainingMenu   ?? INITIAL_TRAINING_MENU,
+    trainingLogs:   data.trainingLogs   ?? [],
+    childBirthDate: (data as any).childBirthDate ?? '',
   });
 }
 
 export async function POST(req: Request) {
   try {
-  const body = await req.json() as Record<string, unknown>;
-  const current = await readData() ?? {
-    liftingRecords: INITIAL_LIFTING_RECORDS,
-    practiceNotes: INITIAL_PRACTICE_NOTES,
-    bodyRecords: INITIAL_BODY_RECORDS,
-    trainingMenu: INITIAL_TRAINING_MENU,
-    trainingLogs: [],
-    childBirthDate: "",
-  };
-  await writeData({
-    liftingRecords: (body.liftingRecords as unknown[] | undefined) ?? current.liftingRecords,
-    practiceNotes: (body.practiceNotes as unknown[] | undefined) ?? current.practiceNotes,
-    bodyRecords: (body.bodyRecords as unknown[] | undefined) ?? current.bodyRecords ?? INITIAL_BODY_RECORDS,
-    trainingMenu: (body.trainingMenu as unknown[] | undefined) ?? current.trainingMenu ?? INITIAL_TRAINING_MENU,
-    trainingLogs: (body.trainingLogs as unknown[] | undefined) ?? current.trainingLogs ?? [],
-    childBirthDate: (typeof body.childBirthDate === "string" ? body.childBirthDate : (typeof (current as any).childBirthDate === "string" ? (current as any).childBirthDate : "")),
-  });
-  return NextResponse.json({ ok: true });
-  } catch(err) {
-    console.error("POST error:", err);
+    const body = await req.json() as Record<string, unknown>;
+    await writePartial(body);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('POST error:', err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
