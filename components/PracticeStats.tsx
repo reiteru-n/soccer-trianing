@@ -22,8 +22,12 @@ const CATEGORY_COLORS: Record<string, ColorDef> = {
 };
 const DEFAULT_COLOR: ColorDef = { bg: 'bg-gray-50', activeBg: 'bg-gray-100', badge: 'bg-gray-500', activeBadge: 'bg-gray-600', text: 'text-gray-700', ring: 'ring-gray-400' };
 
+const CATEGORY_ORDER = ['チーム練習', 'スクール', '試合', '自主練', 'セレクション', 'その他'];
+
 export default function PracticeStats({ notes, activeCategory, activeLocation, onSelectCategory, onSelectLocation }: Props) {
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
+    () => new Set(notes.map((n) => n.teamName || n.category || '未分類'))
+  );
 
   if (notes.length === 0) return null;
 
@@ -41,6 +45,11 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
   }
 
   const groups = [...map.entries()].sort((a, b) => {
+    const catA = CATEGORY_ORDER.indexOf(a[1].primaryCategory);
+    const catB = CATEGORY_ORDER.indexOf(b[1].primaryCategory);
+    const oa = catA === -1 ? CATEGORY_ORDER.length : catA;
+    const ob = catB === -1 ? CATEGORY_ORDER.length : catB;
+    if (oa !== ob) return oa - ob;
     const ta = [...a[1].locMap.values()].reduce((s, v) => s + v.count, 0);
     const tb = [...b[1].locMap.values()].reduce((s, v) => s + v.count, 0);
     return tb - ta;
