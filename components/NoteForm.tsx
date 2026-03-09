@@ -12,7 +12,7 @@ interface Props {
   initialValues?: PracticeNote;
 }
 
-const PRESET_CATEGORIES = ['チーム/スクール', '試合', '自主練', 'セレクション', 'その他'];
+const PRESET_CATEGORIES = ['チーム練習', 'スクール', '試合', '自主練', 'セレクション', 'その他'];
 
 function todayStr() {
   const d = new Date();
@@ -29,18 +29,10 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
     initialValues?.improvements?.map((i) => i.text).join('\n') ?? ''
   );
 
-  // 既存データの旧カテゴリ名を新カテゴリに寄せてプリセットに追加
-  const normalizeCategory = (c: string) => {
-    if (c === 'チーム練習' || c === 'スクール') return 'チーム/スクール';
-    return c;
-  };
-  const extraCategories = pastCategories
-    .map(normalizeCategory)
-    .filter((c) => !PRESET_CATEGORIES.includes(c));
+  const extraCategories = pastCategories.filter((c) => !PRESET_CATEGORIES.includes(c));
   const allCategories = [...new Set([...PRESET_CATEGORIES, ...extraCategories])];
 
-  const showTeamName = category === 'チーム/スクール' || category === '試合' || category === 'セレクション'
-    || category === 'チーム練習' || category === 'スクール'; // 旧データ互換
+  const showTeamName = ['チーム練習', 'スクール', '試合', 'セレクション', 'チーム/スクール'].includes(category);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -109,7 +101,7 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
               </div>
               <input
                 type="text"
-                value={!PRESET_CATEGORIES.includes(category) && !['チーム練習','スクール'].includes(category) ? category : ''}
+                value={!PRESET_CATEGORIES.includes(category) ? category : ''}
                 onChange={(e) => setCategory(e.target.value)}
                 placeholder="カスタム区分（自由入力）"
                 className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"

@@ -10,18 +10,14 @@ interface Props {
   onSelectLocation?: (cat: string, loc: string) => void;
 }
 
-function normalizeCategory(c?: string): string {
-  if (c === 'チーム練習' || c === 'スクール') return 'チーム/スクール';
-  return c || '未分類';
-}
-
 type ColorDef = { bg: string; activeBg: string; badge: string; activeBadge: string; text: string; ring: string };
 const CATEGORY_COLORS: Record<string, ColorDef> = {
-  'チーム/スクール': { bg: 'bg-blue-50',   activeBg: 'bg-blue-100',   badge: 'bg-blue-600',   activeBadge: 'bg-blue-700',   text: 'text-blue-700',   ring: 'ring-blue-400' },
-  '試合':           { bg: 'bg-red-50',    activeBg: 'bg-red-100',    badge: 'bg-red-600',    activeBadge: 'bg-red-700',    text: 'text-red-700',    ring: 'ring-red-400' },
-  '自主練':         { bg: 'bg-orange-50', activeBg: 'bg-orange-100', badge: 'bg-orange-500', activeBadge: 'bg-orange-600', text: 'text-orange-700', ring: 'ring-orange-400' },
-  'セレクション':   { bg: 'bg-purple-50', activeBg: 'bg-purple-100', badge: 'bg-purple-600', activeBadge: 'bg-purple-700', text: 'text-purple-700', ring: 'ring-purple-400' },
-  'その他':         { bg: 'bg-gray-50',   activeBg: 'bg-gray-100',   badge: 'bg-gray-500',   activeBadge: 'bg-gray-600',   text: 'text-gray-700',   ring: 'ring-gray-400' },
+  'チーム練習':   { bg: 'bg-blue-50',   activeBg: 'bg-blue-100',   badge: 'bg-blue-600',   activeBadge: 'bg-blue-700',   text: 'text-blue-700',   ring: 'ring-blue-400' },
+  'スクール':     { bg: 'bg-green-50',  activeBg: 'bg-green-100',  badge: 'bg-green-600',  activeBadge: 'bg-green-700',  text: 'text-green-700',  ring: 'ring-green-400' },
+  '試合':         { bg: 'bg-red-50',    activeBg: 'bg-red-100',    badge: 'bg-red-600',    activeBadge: 'bg-red-700',    text: 'text-red-700',    ring: 'ring-red-400' },
+  '自主練':       { bg: 'bg-orange-50', activeBg: 'bg-orange-100', badge: 'bg-orange-500', activeBadge: 'bg-orange-600', text: 'text-orange-700', ring: 'ring-orange-400' },
+  'セレクション': { bg: 'bg-purple-50', activeBg: 'bg-purple-100', badge: 'bg-purple-600', activeBadge: 'bg-purple-700', text: 'text-purple-700', ring: 'ring-purple-400' },
+  'その他':       { bg: 'bg-gray-50',   activeBg: 'bg-gray-100',   badge: 'bg-gray-500',   activeBadge: 'bg-gray-600',   text: 'text-gray-700',   ring: 'ring-gray-400' },
 };
 const DEFAULT_COLOR: ColorDef = { bg: 'bg-gray-50', activeBg: 'bg-gray-100', badge: 'bg-gray-500', activeBadge: 'bg-gray-600', text: 'text-gray-700', ring: 'ring-gray-400' };
 
@@ -32,8 +28,8 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
   const map = new Map<string, GroupEntry>();
 
   for (const n of notes) {
-    const key = n.teamName || normalizeCategory(n.category);
-    const cat = normalizeCategory(n.category);
+    const cat = n.category || '未分類';
+    const key = n.teamName || cat;
     if (!map.has(key)) map.set(key, { primaryCategory: cat, locMap: new Map() });
     const entry = map.get(key)!;
     const loc = n.location || '不明';
