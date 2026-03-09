@@ -60,27 +60,28 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
       </div>
 
       {/* Good points */}
-      <div className="px-4 pt-3 pb-2">
-        <div className="flex items-start gap-2">
-          <span className="text-green-500 text-lg mt-0.5">⭐</span>
-          <div>
-            <p className="text-xs font-bold text-green-700 mb-0.5">良かったところ</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{note.goodPoints}</p>
+      {note.goodPoints && (
+        <div className="px-4 pt-3 pb-2">
+          <div className="flex items-start gap-2">
+            <span className="text-green-500 text-lg mt-0.5">⭐</span>
+            <div>
+              <p className="text-xs font-bold text-green-700 mb-0.5">良かったところ</p>
+              <p className="text-sm text-gray-700 leading-relaxed">{note.goodPoints}</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Improvements */}
+      {totalCount > 0 && (
       <div className="px-4 pb-3 pt-1">
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-orange-400 text-lg">💪</span>
           <p className="text-xs font-bold text-orange-600">
             改善したいところ
-            {totalCount > 0 && (
-              <span className="ml-1.5 text-gray-400 font-normal">
-                ({doneCount}/{totalCount})
-              </span>
-            )}
+            <span className="ml-1.5 text-gray-400 font-normal">
+              ({doneCount}/{totalCount})
+            </span>
           </p>
         </div>
         <div className="space-y-1.5 pl-7">
@@ -103,6 +104,7 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 }

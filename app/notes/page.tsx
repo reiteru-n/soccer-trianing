@@ -17,6 +17,7 @@ export default function NotesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | undefined>();
   const [activeLocation, setActiveLocation] = useState<string | undefined>();
+  const [showStats, setShowStats] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   const sorted = useMemo(
@@ -144,19 +145,29 @@ export default function NotesPage() {
       </header>
 
       <section className="mb-5">
-        <h2 className="text-sm font-bold text-gray-700 mb-3">📊 練習参加まとめ <span className="text-gray-400 font-normal text-xs">（タップで絞り込み）</span></h2>
-        <PracticeStats
-          notes={practiceNotes}
-          activeCategory={activeCategory}
-          activeLocation={activeLocation}
-          onSelectCategory={handleSelectCategory}
-          onSelectLocation={handleSelectLocation}
-        />
-        {practiceNotes.length > 0 && (
-          <div className="mt-3 bg-slate-800/80 rounded-2xl p-4 shadow-xl border border-white/10">
-            <p className="text-xs font-semibold text-gray-400 mb-2">📅 月別練習回数</p>
-            <PracticeBarChart notes={practiceNotes} />
-          </div>
+        <button
+          onClick={() => setShowStats((v) => !v)}
+          className="flex items-center justify-between w-full mb-3"
+        >
+          <h2 className="text-sm font-bold text-gray-700">📊 練習参加まとめ <span className="text-gray-400 font-normal text-xs">（タップで絞り込み）</span></h2>
+          <span className="text-xs text-gray-400">{showStats ? '▲ 閉じる' : '▼ 開く'}</span>
+        </button>
+        {showStats && (
+          <>
+            <PracticeStats
+              notes={practiceNotes}
+              activeCategory={activeCategory}
+              activeLocation={activeLocation}
+              onSelectCategory={handleSelectCategory}
+              onSelectLocation={handleSelectLocation}
+            />
+            {practiceNotes.length > 0 && (
+              <div className="mt-3 bg-slate-800/80 rounded-2xl p-4 shadow-xl border border-white/10">
+                <p className="text-xs font-semibold text-gray-400 mb-2">📅 月別練習回数</p>
+                <PracticeBarChart notes={practiceNotes} />
+              </div>
+            )}
+          </>
         )}
       </section>
 
