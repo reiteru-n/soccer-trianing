@@ -192,6 +192,9 @@ export default function NotesPage() {
               activeLocation={activeLocation}
               onSelectCategory={handleSelectCategory}
               onSelectLocation={handleSelectLocation}
+              onDeleteNote={deletePracticeNote}
+              onEditNote={(n) => setEditingNote(n)}
+              onToggleImprovement={toggleImprovementItem}
             />
             {practiceNotes.length > 0 && (
               <div className="mt-3 bg-slate-800/80 rounded-2xl p-4 shadow-xl border border-white/10">
