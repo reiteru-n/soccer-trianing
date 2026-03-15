@@ -89,3 +89,26 @@ export interface SchMember {
   number: number; // jersey number (= parking order)
   name: string;   // hiragana name
 }
+
+export interface SchParkingSlot {
+  memberId: string;
+  status: 'pending' | 'used' | 'skipped';
+  skipComment?: string;
+  isFillIn?: boolean; // true if this person got the spot because someone skipped
+}
+
+export interface SchParkingRecord {
+  eventId: string;
+  eventDate: string;
+  eventType: 'schedule' | 'match';
+  slots: SchParkingSlot[]; // includes skipped entries + 4 active slots
+  rotationStartIndex: number;
+}
+
+export interface SchNearbyParking {
+  id: string;
+  name: string;
+  address?: string;
+  googleMapsUrl?: string;
+  note?: string;
+}

@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
-import { SchSchedule, SchMatch, SchAnnouncement, SchMember } from '@/lib/types';
+import { SchSchedule, SchMatch, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking } from '@/lib/types';
 
 const KEYS = {
-  schedules:     'sch:schedules',
-  matches:       'sch:matches',
-  announcements: 'sch:announcements',
-  members:       'sch:members',
+  schedules:      'sch:schedules',
+  matches:        'sch:matches',
+  announcements:  'sch:announcements',
+  members:        'sch:members',
+  parkingRecords: 'sch:parking_records',
+  parkingRotation:'sch:parking_rotation',
+  nearbyParking:  'sch:nearby_parking',
 } as const;
 
 const DEFAULT_MEMBERS: SchMember[] = [
@@ -24,6 +27,9 @@ const DEFAULT_MEMBERS: SchMember[] = [
   { id: 'm31', number: 31, name: 'しゅう' },
 ];
 
+// Initial rotation index = 5 (after #6,#7,#8,#9[skip]→#10 today)
+const DEFAULT_ROTATION = 5;
+
 async function getRedis() {
   const { Redis } = await import('@upstash/redis');
   return new Redis({
@@ -41,24 +47,40 @@ interface SchData {
   matches: SchMatch[];
   announcements: SchAnnouncement[];
   members: SchMember[];
+  parkingRecords: SchParkingRecord[];
+  parkingRotation: number;
+  nearbyParking: SchNearbyParking[];
 }
 
 async function readSchData(): Promise<SchData> {
   if (hasRedis()) {
     const redis = await getRedis();
-    const [schedules, matches, announcements, membersRaw] = await redis.mget<unknown[]>(
-      KEYS.schedules, KEYS.matches, KEYS.announcements, KEYS.members
-    );
+    const [schedules, matches, announcements, membersRaw, parkingRecordsRaw, parkingRotationRaw, nearbyParkingRaw] =
+      await redis.mget<unknown[]>(
+        KEYS.schedules, KEYS.matches, KEYS.announcements,
+        KEYS.members, KEYS.parkingRecords, KEYS.parkingRotation, KEYS.nearbyParking
+      );
+
     let members = membersRaw as SchMember[] | null;
     if (members === null) {
       members = DEFAULT_MEMBERS;
       await redis.set(KEYS.members, DEFAULT_MEMBERS);
     }
+
+    let parkingRotation = parkingRotationRaw as number | null;
+    if (parkingRotation === null) {
+      parkingRotation = DEFAULT_ROTATION;
+      await redis.set(KEYS.parkingRotation, DEFAULT_ROTATION);
+    }
+
     return {
-      schedules:     (schedules     as SchSchedule[])     ?? [],
-      matches:       (matches       as SchMatch[])         ?? [],
-      announcements: (announcements as SchAnnouncement[]) ?? [],
+      schedules:      (schedules      as SchSchedule[])      ?? [],
+      matches:        (matches        as SchMatch[])          ?? [],
+      announcements:  (announcements  as SchAnnouncement[])  ?? [],
       members,
+      parkingRecords: (parkingRecordsRaw as SchParkingRecord[]) ?? [],
+      parkingRotation,
+      nearbyParking:  (nearbyParkingRaw  as SchNearbyParking[]) ?? [],
     };
   }
   // Local dev: file fallback
@@ -67,9 +89,18 @@ async function readSchData(): Promise<SchData> {
     const { join } = await import('path');
     const txt = readFileSync(join(process.cwd(), 'dev-sch.json'), 'utf-8');
     const data = JSON.parse(txt);
-    return { schedules: [], matches: [], announcements: [], members: DEFAULT_MEMBERS, ...data };
+    return {
+      schedules: [], matches: [], announcements: [],
+      members: DEFAULT_MEMBERS,
+      parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
+      ...data,
+    };
   } catch {
-    return { schedules: [], matches: [], announcements: [], members: DEFAULT_MEMBERS };
+    return {
+      schedules: [], matches: [], announcements: [],
+      members: DEFAULT_MEMBERS,
+      parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
+    };
   }
 }
 
@@ -77,10 +108,13 @@ async function writeSchPartial(body: Partial<Record<string, unknown>>): Promise<
   if (hasRedis()) {
     const redis = await getRedis();
     const updates: Record<string, unknown> = {};
-    if ('schedules'     in body) updates[KEYS.schedules]     = body.schedules;
-    if ('matches'       in body) updates[KEYS.matches]       = body.matches;
-    if ('announcements' in body) updates[KEYS.announcements] = body.announcements;
-    if ('members'       in body) updates[KEYS.members]       = body.members;
+    if ('schedules'      in body) updates[KEYS.schedules]      = body.schedules;
+    if ('matches'        in body) updates[KEYS.matches]        = body.matches;
+    if ('announcements'  in body) updates[KEYS.announcements]  = body.announcements;
+    if ('members'        in body) updates[KEYS.members]        = body.members;
+    if ('parkingRecords' in body) updates[KEYS.parkingRecords] = body.parkingRecords;
+    if ('parkingRotation'in body) updates[KEYS.parkingRotation]= body.parkingRotation;
+    if ('nearbyParking'  in body) updates[KEYS.nearbyParking]  = body.nearbyParking;
     if (Object.keys(updates).length > 0) await redis.mset(updates);
     return;
   }
