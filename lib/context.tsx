@@ -11,7 +11,7 @@ interface AppContextType {
   updateLiftingRecord: (id: string, data: Omit<LiftingRecord, 'id'>) => void;
   deleteLiftingRecord: (id: string) => void;
   practiceNotes: PracticeNote[];
-  addPracticeNote: (note: Omit<PracticeNote, 'id'>) => void;
+  addPracticeNote: (note: Omit<PracticeNote, 'id'>) => string;
   updatePracticeNote: (id: string, data: Omit<PracticeNote, 'id'>) => void;
   deletePracticeNote: (id: string) => void;
   toggleImprovementItem: (noteId: string, index: number) => void;
@@ -100,9 +100,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [liftingRecords]);
 
   const addPracticeNote = useCallback((note: Omit<PracticeNote, 'id'>) => {
-    const updated = [...practiceNotes, { ...note, id: generateId() }];
+    const id = generateId();
+    const updated = [...practiceNotes, { ...note, id }];
     setPracticeNotes(updated);
     savePracticeNotes(updated);
+    return id;
   }, [practiceNotes]);
 
   const updatePracticeNote = useCallback((id: string, data: Omit<PracticeNote, 'id'>) => {
