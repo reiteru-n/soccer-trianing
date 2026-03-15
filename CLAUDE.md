@@ -1,5 +1,17 @@
 # CLAUDE.md
 
+## SCHチーム ロゴ
+
+- ファイル: `public/sch-logo.png`（配置済みであること）
+- 内容: SCHFC（エスシーエイチFC）のエンブレム
+  - 横浜, SINCE 1986, JAPAN
+  - モットー: "CONTINUAR ES PODER"
+  - 緑のシールド型、中央にサッカーボール、SCHFCの文字
+- **SCH関連のUIには必ずこのロゴを使うこと**
+- 使用箇所: `/sch` ページのヘッダー、BottomNavのSCHアイコン等
+
+---
+
 ## デプロイ先
 
 - 本番URL: https://soccer-trianing.vercel.app
