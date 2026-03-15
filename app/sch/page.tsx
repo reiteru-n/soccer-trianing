@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { SchSchedule, SchMatch, SchAnnouncement } from '@/lib/types';
 
 function generateId() {
@@ -452,9 +453,12 @@ export default function SchPage() {
     <>
       <header className="mb-5 pt-1">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-extrabold text-white drop-shadow">⚽ SCH チームページ</h1>
-            <p className="text-sm text-green-300 mt-0.5">保護者専用ページ</p>
+          <div className="flex items-center gap-3">
+            <Image src="/SCHロゴ.png" alt="SCH FC" width={56} height={56} className="object-contain" />
+            <div>
+              <h1 className="text-2xl font-extrabold text-white drop-shadow">SCH チームページ</h1>
+              <p className="text-sm text-green-300 mt-0.5">保護者専用ページ</p>
+            </div>
           </div>
           <button onClick={handleLogout} className="text-xs text-slate-500 hover:text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors">
             ログアウト
