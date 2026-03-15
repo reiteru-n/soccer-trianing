@@ -17,17 +17,16 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
   const [offsetX, setOffsetX] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const touchStartX = useRef<number | null>(null);
-  const isDragging = useRef(false);
+
+  const revealed = offsetX <= -SWIPE_THRESHOLD;
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
-    isDragging.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     const diff = e.touches[0].clientX - touchStartX.current;
-    if (diff < -10) isDragging.current = true;
     if (diff < 0) setOffsetX(Math.max(diff, -DELETE_REVEAL));
   };
 
@@ -36,16 +35,9 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
       setOffsetX(-DELETE_REVEAL);
     } else {
       setOffsetX(0);
+      setConfirmDelete(false);
     }
     touchStartX.current = null;
-  };
-
-  const handleDeleteClick = () => {
-    if (confirmDelete) {
-      onDelete?.(note.id);
-    } else {
-      setConfirmDelete(true);
-    }
   };
 
   const handleClose = () => {
@@ -61,27 +53,42 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
     <div className="relative overflow-hidden rounded-2xl">
       {/* 削除ボタン（背景） */}
       {onDelete && (
-        <div className="absolute inset-y-0 right-0 flex items-center">
-          <button
-            onClick={handleDeleteClick}
-            onBlur={() => setTimeout(() => setConfirmDelete(false), 200)}
-            className={`h-full px-5 flex flex-col items-center justify-center text-white font-bold text-xs transition-colors ${confirmDelete ? 'bg-red-700' : 'bg-red-500'}`}
-            style={{ width: DELETE_REVEAL }}
-          >
-            <span className="text-xl">🗑️</span>
-            <span>{confirmDelete ? '確認' : '削除'}</span>
-          </button>
+        <div className="absolute inset-y-0 right-0 flex" style={{ width: DELETE_REVEAL }}>
+          {confirmDelete ? (
+            <div className="flex flex-col w-full">
+              <button
+                onClick={() => onDelete(note.id)}
+                className="flex-1 bg-red-600 text-white font-bold text-xs flex items-center justify-center"
+              >
+                削除
+              </button>
+              <button
+                onClick={handleClose}
+                className="flex-1 bg-gray-400 text-white font-bold text-xs flex items-center justify-center"
+              >
+                キャンセル
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="w-full bg-red-500 text-white font-bold text-xs flex flex-col items-center justify-center gap-1"
+            >
+              <span className="text-xl">🗑️</span>
+              <span>削除</span>
+            </button>
+          )}
         </div>
       )}
 
       {/* カード本体 */}
       <div
-        className={`relative border-2 bg-white shadow-sm overflow-hidden rounded-2xl transition-transform ${allDone ? 'border-green-200' : 'border-gray-100'}`}
-        style={{ transform: `translateX(${offsetX}px)`, touchAction: 'pan-y' }}
+        className={`relative border-2 bg-white shadow-sm overflow-hidden rounded-2xl ${allDone ? 'border-green-200' : 'border-gray-100'}`}
+        style={{ transform: `translateX(${offsetX}px)`, touchAction: 'pan-y', transition: touchStartX.current ? 'none' : 'transform 0.2s ease' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onClick={() => { if (offsetX < 0) { handleClose(); } }}
+        onClick={() => { if (revealed) handleClose(); }}
       >
         {/* Header */}
         <div className={`flex items-center justify-between px-4 py-2 border-b ${allDone ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
@@ -102,7 +109,6 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(note); }}
                 className="text-blue-300 hover:text-blue-500 text-sm p-1"
-                title="編集"
               >
                 ✏️
               </button>
@@ -111,7 +117,6 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
               <button
                 onClick={(e) => { e.stopPropagation(); setOffsetX(-DELETE_REVEAL); }}
                 className="text-gray-300 hover:text-red-400 text-sm p-1"
-                title="削除"
               >
                 🗑️
               </button>
