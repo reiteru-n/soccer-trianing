@@ -19,7 +19,7 @@ async function hasValidCookie(req: NextRequest, cookieName: string, type: string
   return val === (await makeToken(type));
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Always allow login pages and auth API
