@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+## デプロイ先
+
+- 本番URL: https://soccer-trianing.vercel.app
+- SCHチーム親御さん共有URL: https://soccer-trianing.vercel.app/sch
+
+---
+
 ## GitHub Push 手順
 
 GitHub に push する際は `github` remote を使う:
