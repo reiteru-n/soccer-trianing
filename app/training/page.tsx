@@ -28,6 +28,15 @@ function calcStreak(logs: {date:string;completedItemIds:string[]}[], menu: Train
 interface MenuItemFormData { name: string; targetCount: string; isMinimum: boolean; estimatedMinutes: string; }
 const emptyForm = (): MenuItemFormData => ({ name: "", targetCount: "10", isMinimum: false, estimatedMinutes: "3" });
 
+function speak(text: string) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'ja-JP';
+  utter.rate = 0.9;
+  window.speechSynthesis.speak(utter);
+}
+
 export default function TrainingPage() {
   const { trainingMenu, addTrainingMenuItem, updateTrainingMenuItem, deleteTrainingMenuItem, trainingLogs, toggleTrainingLogItem, isLoading } = useApp();
   const [tab, setTab] = useState<'check'|'edit'|'history'>('check');
@@ -78,15 +87,22 @@ export default function TrainingPage() {
             {sortedMenu.map((item) => {
               const done = completedIds.has(item.id);
               return (
-                <button key={item.id} onClick={() => toggleTrainingLogItem(today, item.id)}
-                  className={"w-full flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-colors " + (done ? "bg-green-50 border-green-300" : "bg-white border-gray-200")}
-                >
-                  <span className="text-2xl">{done ? "✅" : "⬜"}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className={"font-semibold text-sm " + (done ? "line-through text-gray-400" : "text-gray-800")}>{item.name}</p>
-                    <p className="text-xs text-gray-400">{item.targetCount}{item.isMinimum ? "回以上" : "回"}</p>
-                  </div>
-                </button>
+                <div key={item.id} className={"flex items-center gap-2 " + (done ? "" : "")}>
+                  <button onClick={() => toggleTrainingLogItem(today, item.id)}
+                    className={"flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-colors " + (done ? "bg-green-50 border-green-300" : "bg-white border-gray-200")}
+                  >
+                    <span className="text-2xl">{done ? "✅" : "⬜"}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={"font-semibold text-sm " + (done ? "line-through text-gray-400" : "text-gray-800")}>{item.name}</p>
+                      <p className="text-xs text-gray-400">{item.targetCount}{item.isMinimum ? "回以上" : "回"}</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => speak(`${item.name}、${item.targetCount}${item.isMinimum ? "回以上" : "回"}`)}
+                    className="text-2xl p-3 rounded-2xl bg-white border-2 border-gray-200 active:bg-blue-50"
+                    aria-label="読み上げ"
+                  >🔊</button>
+                </div>
               );
             })}
           </div>
