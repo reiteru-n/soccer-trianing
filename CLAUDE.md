@@ -73,6 +73,13 @@
 
 ---
 
+## 作業フロー ルール
+
+- **実装完了後は指示を待たずに master へマージ・push まで行うこと**
+- claude/* ブランチで開発 → 完成したら master にマージ → `git push github master` でデプロイ
+
+---
+
 ## GitHub Push 手順
 
 ```bash
