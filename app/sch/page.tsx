@@ -115,7 +115,18 @@ function ParkingEventCard({
               {slot.isFillIn && (
                 <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-full">補欠</span>
               )}
-              {slot.status === 'used' && (
+              {slot.status === 'used' && !isPast && (
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full">✓ 使用</span>
+                  <button
+                    onClick={() => onUnskip(plan.id, slot.memberId)}
+                    className="text-[10px] text-slate-400 hover:text-white px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors"
+                  >
+                    取消
+                  </button>
+                </div>
+              )}
+              {slot.status === 'used' && isPast && (
                 <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full">✓ 使用</span>
               )}
               {slot.status === 'pending' && !isPast && (
@@ -146,10 +157,10 @@ function ParkingEventCard({
             const member = getMember(slot.memberId);
             return (
               <div key={slot.memberId} className="flex items-center gap-2 text-xs">
-                <span className="text-slate-600 line-through">#{member?.number} {member?.name}</span>
-                {slot.skipComment && <span className="text-slate-600">「{slot.skipComment}」</span>}
+                <span className="text-slate-500 line-through">#{member?.number} {member?.name}</span>
+                {slot.skipComment && <span className="text-slate-500 italic">「{slot.skipComment}」</span>}
                 {!isPast && (
-                  <button onClick={() => onUnskip(plan.id, slot.memberId)} className="ml-auto text-slate-600 hover:text-slate-400 text-[10px]">取消</button>
+                  <button onClick={() => onUnskip(plan.id, slot.memberId)} className="ml-auto text-slate-400 hover:text-white text-[10px] px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors">取消</button>
                 )}
               </div>
             );
