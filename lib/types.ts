@@ -53,3 +53,33 @@ export interface Milestone {
   target: number;
   status: MilestoneStatus;
 }
+
+// SCH チーム共有データ
+export interface SchSchedule {
+  id: string;
+  date: string; // yyyy/mm/dd
+  startTime?: string; // HH:MM
+  endTime?: string;   // HH:MM
+  location: string;
+  note?: string;
+}
+
+export interface SchMatch {
+  id: string;
+  date: string; // yyyy/mm/dd
+  startTime?: string; // HH:MM
+  opponent?: string;
+  location?: string;
+  homeScore?: number;
+  awayScore?: number;
+  isHome?: boolean;
+  note?: string;
+}
+
+export interface SchAnnouncement {
+  id: string;
+  date: string; // yyyy/mm/dd
+  title: string;
+  content: string;
+  important?: boolean;
+}
