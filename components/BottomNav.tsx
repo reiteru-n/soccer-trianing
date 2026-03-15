@@ -5,10 +5,10 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
-  { href: '/',         label: 'ホーム',       icon: '🏠' },
-  { href: '/lifting',  label: 'リフティング',  icon: '⚽' },
-  { href: '/notes',    label: 'ノート',        icon: '📝' },
-  { href: '/training', label: '自主練メニュー', icon: '🏃' },
+  { href: '/',         label: 'ホーム',      icon: '🏠' },
+  { href: '/lifting',  label: 'リフティング', icon: '⚽' },
+  { href: '/notes',    label: 'ノート',       icon: '📝' },
+  { href: '/training', label: 'training',    icon: '🏃' },
 ];
 
 export default function BottomNav() {
@@ -27,9 +27,16 @@ export default function BottomNav() {
               className={"flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all " + (active ? "text-blue-400" : "text-slate-500")}
             >
               <span className={"text-xl transition-transform " + (active ? "scale-110" : "")}>{icon}</span>
-              <span className={"text-xs font-medium " + (active ? "text-blue-400" : "text-slate-500")}>
-                {label}
-              </span>
+              {label === 'training' ? (
+                <span className={"font-medium text-center leading-tight " + (active ? "text-blue-400" : "text-slate-500")}>
+                  <span className="block text-[9px]">自主練</span>
+                  <span className="block text-xs">メニュー</span>
+                </span>
+              ) : (
+                <span className={"text-xs font-medium " + (active ? "text-blue-400" : "text-slate-500")}>
+                  {label}
+                </span>
+              )}
               {active && <span className="absolute bottom-1 w-8 h-0.5 bg-blue-400 rounded-full" />}
             </Link>
           );
