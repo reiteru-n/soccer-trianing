@@ -39,11 +39,11 @@ export default function BottomNav() {
           className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all"
         >
           <Image
-            src="/SCHロゴ.png"
+            src="/sch-logo.png"
             alt="SCH"
-            width={40}
-            height={30}
-            className={"object-contain transition-transform " + (pathname === '/sch' ? "scale-110" : "opacity-60")}
+            width={175}
+            height={215}
+            className={"object-contain transition-transform " + (pathname === '/sch' ? "scale-110 h-8 w-auto" : "opacity-60 h-8 w-auto")}
           />
           <span className={"text-xs font-medium " + (pathname === '/sch' ? "text-blue-400" : "text-slate-500")}>
             SCHチーム
