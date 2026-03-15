@@ -38,7 +38,7 @@ function speak(text: string) {
 }
 
 export default function TrainingPage() {
-  const { trainingMenu, addTrainingMenuItem, updateTrainingMenuItem, deleteTrainingMenuItem, trainingLogs, toggleTrainingLogItem, isLoading } = useApp();
+  const { trainingMenu, addTrainingMenuItem, updateTrainingMenuItem, deleteTrainingMenuItem, trainingLogs, toggleTrainingLogItem, practiceNotes, addPracticeNote, isLoading } = useApp();
   const [tab, setTab] = useState<'check'|'edit'|'history'>('check');
   const [editingId, setEditingId] = useState<string|null>(null);
   const [form, setForm] = useState<MenuItemFormData>(emptyForm());
@@ -88,7 +88,29 @@ export default function TrainingPage() {
               const done = completedIds.has(item.id);
               return (
                 <div key={item.id} className={"flex items-center gap-2 " + (done ? "" : "")}>
-                  <button onClick={() => toggleTrainingLogItem(today, item.id)}
+                  <button onClick={() => {
+                    const newDone = !done;
+                    toggleTrainingLogItem(today, item.id);
+                    if (newDone) {
+                      const newCompletedIds = new Set([...completedIds, item.id]);
+                      const allCompleted = sortedMenu.every(m => newCompletedIds.has(m.id));
+                      if (allCompleted) {
+                        const alreadyRecorded = practiceNotes.some(
+                          n => n.date === today && n.category === '自主練'
+                        );
+                        if (!alreadyRecorded) {
+                          addPracticeNote({
+                            date: today,
+                            location: '家',
+                            category: '自主練',
+                            teamName: '',
+                            goodPoints: '自主練メニューを全部できた！',
+                            improvements: [],
+                          });
+                        }
+                      }
+                    }
+                  }}
                     className={"flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-colors " + (done ? "bg-green-50 border-green-300" : "bg-white border-gray-200")}
                   >
                     <span className="text-2xl">{done ? "✅" : "⬜"}</span>
