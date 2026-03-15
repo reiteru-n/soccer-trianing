@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { PracticeNote } from '@/lib/types';
+import NoteCard from './NoteCard';
 
 interface Props {
   notes: PracticeNote[];
@@ -9,6 +10,9 @@ interface Props {
   activeLocation?: string;
   onSelectCategory?: (cat: string) => void;
   onSelectLocation?: (cat: string, loc: string) => void;
+  onDeleteNote?: (id: string) => void;
+  onEditNote?: (note: PracticeNote) => void;
+  onToggleImprovement?: (noteId: string, index: number) => void;
 }
 
 type ColorDef = { bg: string; activeBg: string; badge: string; activeBadge: string; text: string; ring: string };
@@ -24,7 +28,6 @@ const DEFAULT_COLOR: ColorDef = { bg: 'bg-gray-50', activeBg: 'bg-gray-100', bad
 
 const CATEGORY_ORDER = ['チーム練習', 'スクール', '試合', '自主練', 'セレクション', 'その他'];
 
-// グループキーのフォーマット: "teamName##category"
 export function makeGroupKey(teamName: string | undefined, category: string): string {
   return `${teamName ?? ''}##${category}`;
 }
@@ -35,22 +38,19 @@ export function parseGroupKey(key: string): { teamName: string; category: string
   return { teamName: key.slice(0, sep), category: key.slice(sep + 2) };
 }
 
-export default function PracticeStats({ notes, activeCategory, activeLocation, onSelectCategory, onSelectLocation }: Props) {
+export default function PracticeStats({ notes, onDeleteNote, onEditNote, onToggleImprovement }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
   if (notes.length === 0) return null;
 
-  type GroupEntry = { teamName: string; category: string; locMap: Map<string, { count: number; lastDate: string }> };
+  type GroupEntry = { teamName: string; category: string; notes: PracticeNote[] };
   const map = new Map<string, GroupEntry>();
 
   for (const n of notes) {
     const cat = n.category || 'その他';
     const key = makeGroupKey(n.teamName, cat);
-    if (!map.has(key)) map.set(key, { teamName: n.teamName ?? '', category: cat, locMap: new Map() });
-    const entry = map.get(key)!;
-    const loc = n.location || '不明';
-    const cur = entry.locMap.get(loc) ?? { count: 0, lastDate: '' };
-    entry.locMap.set(loc, { count: cur.count + 1, lastDate: n.date > cur.lastDate ? n.date : cur.lastDate });
+    if (!map.has(key)) map.set(key, { teamName: n.teamName ?? '', category: cat, notes: [] });
+    map.get(key)!.notes.push(n);
   }
 
   const groups = [...map.entries()].sort((a, b) => {
@@ -59,18 +59,8 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
     const oa = catA === -1 ? CATEGORY_ORDER.length : catA;
     const ob = catB === -1 ? CATEGORY_ORDER.length : catB;
     if (oa !== ob) return oa - ob;
-    const ta = [...a[1].locMap.values()].reduce((s, v) => s + v.count, 0);
-    const tb = [...b[1].locMap.values()].reduce((s, v) => s + v.count, 0);
-    return tb - ta;
+    return b[1].notes.length - a[1].notes.length;
   });
-
-  const toggleExpand = (key: string) => {
-    setExpandedKeys((prev) => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
-    });
-  };
 
   // カテゴリ別合計
   const catTotals = new Map<string, number>();
@@ -79,6 +69,14 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
     catTotals.set(cat, (catTotals.get(cat) ?? 0) + 1);
   }
   const catSummary = CATEGORY_ORDER.filter((c) => catTotals.has(c)).map((c) => ({ cat: c, count: catTotals.get(c)! }));
+
+  const toggleExpand = (key: string) => {
+    setExpandedKeys((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-2">
@@ -94,56 +92,41 @@ export default function PracticeStats({ notes, activeCategory, activeLocation, o
         })}
       </div>
 
-      {groups.map(([key, { teamName, category, locMap }]) => {
-        const total = [...locMap.values()].reduce((s, v) => s + v.count, 0);
+      {groups.map(([key, { teamName, category, notes: groupNotes }]) => {
+        const total = groupNotes.length;
         const color = CATEGORY_COLORS[category] ?? DEFAULT_COLOR;
-        const locs = [...locMap.entries()].sort((a, b) => b[1].count - a[1].count);
-        const isCatActive = activeCategory === key && !activeLocation;
         const displayName = teamName || category;
         const showCategoryBadge = !!teamName;
         const isExpanded = expandedKeys.has(key);
+        const sorted = [...groupNotes].sort((a, b) => b.date.localeCompare(a.date));
 
         return (
-          <div key={key} className={`rounded-2xl border border-gray-100 transition-all ${isCatActive ? color.activeBg + ' ring-2 ' + color.ring : color.bg}`}>
+          <div key={key} className={`rounded-2xl border border-gray-100 overflow-hidden ${color.bg}`}>
             {/* ヘッダー行 */}
-            <div className="flex items-center px-4 py-3 gap-2">
-              {/* 左：バッジ＋区分 → タップで絞り込み */}
-              <button
-                onClick={() => onSelectCategory?.(key)}
-                className="flex items-center gap-1.5 flex-1 min-w-0"
-              >
-                <span className={`text-white text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${isCatActive ? color.activeBadge : color.badge}`}>{displayName}</span>
-                {showCategoryBadge && (
-                  <span className="text-xs text-gray-400 bg-white/70 px-1.5 py-0.5 rounded-full flex-shrink-0">{category}</span>
-                )}
-              </button>
-              {/* 右：詳細トグル＋回数 */}
-              <button
-                onClick={() => toggleExpand(key)}
-                className="flex items-center gap-1.5 flex-shrink-0"
-              >
-                <span className={`text-xs font-medium ${color.text}`}>{isExpanded ? '▲' : '▼'} 詳細</span>
-                <span className={`text-base font-extrabold ${color.text}`}>計 {total}回</span>
-              </button>
-            </div>
+            <button
+              onClick={() => toggleExpand(key)}
+              className="w-full flex items-center px-4 py-3 gap-2"
+            >
+              <span className={`text-white text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${color.badge}`}>{displayName}</span>
+              {showCategoryBadge && (
+                <span className="text-xs text-gray-400 bg-white/70 px-1.5 py-0.5 rounded-full flex-shrink-0">{category}</span>
+              )}
+              <span className={`text-base font-extrabold ${color.text} ml-auto`}>計 {total}回</span>
+              <span className={`text-xs font-medium ${color.text}`}>{isExpanded ? '▲' : '▼'}</span>
+            </button>
 
-            {/* 展開時：場所一覧 */}
+            {/* 展開時：NoteCard一覧 */}
             {isExpanded && (
-              <div className="px-4 pb-3 space-y-1">
-                {locs.map(([loc, { count, lastDate }]) => {
-                  const isLocActive = activeCategory === key && activeLocation === loc;
-                  return (
-                    <button
-                      key={loc}
-                      onClick={() => onSelectLocation?.(key, loc)}
-                      className={`w-full flex items-center rounded-lg px-3 py-1.5 gap-2 transition-all ${isLocActive ? 'bg-white ring-2 ' + color.ring : 'bg-white/70 hover:bg-white/90'}`}
-                    >
-                      <span className="text-sm text-gray-700 truncate flex-1 text-left">{loc}</span>
-                      <span className="text-xs text-gray-400">{lastDate}</span>
-                      <span className={`text-sm font-bold ${color.text} w-8 text-right`}>{count}回</span>
-                    </button>
-                  );
-                })}
+              <div className="px-3 pb-3 space-y-2">
+                {sorted.map((note) => (
+                  <NoteCard
+                    key={note.id}
+                    note={note}
+                    onDelete={onDeleteNote}
+                    onEdit={onEditNote}
+                    onToggleImprovement={onToggleImprovement}
+                  />
+                ))}
               </div>
             )}
           </div>
