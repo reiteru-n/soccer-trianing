@@ -98,7 +98,7 @@ export default function TrainingPage() {
                         const alreadyRecorded = practiceNotes.some(
                           n => n.date === today && n.category === '自主練'
                         );
-                        if (!alreadyRecorded) {
+                        if (!alreadyRecorded && window.confirm('練習ノートに自主練を記録しますか？')) {
                           addPracticeNote({
                             date: today,
                             location: '家',
