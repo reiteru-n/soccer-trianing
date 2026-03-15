@@ -83,3 +83,9 @@ export interface SchAnnouncement {
   content: string;
   important?: boolean;
 }
+
+export interface SchMember {
+  id: string;
+  number: number; // jersey number (= parking order)
+  name: string;   // hiragana name
+}
