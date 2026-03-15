@@ -2,7 +2,7 @@
 
 ## SCHチーム ロゴ
 
-- ファイル: `public/sch-logo.png`（配置済みであること）
+- ファイル: `public/SCHロゴ.png`（配置済み）
 - 内容: SCHFC（エスシーエイチFC）のエンブレム
   - 横浜, SINCE 1986, JAPAN
   - モットー: "CONTINUAR ES PODER"
