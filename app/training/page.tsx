@@ -45,6 +45,7 @@ export default function TrainingPage() {
   const [editingId, setEditingId] = useState<string|null>(null);
   const [form, setForm] = useState<MenuItemFormData>(emptyForm());
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showNoteConfirm, setShowNoteConfirm] = useState(false);
   const today = todayStr();
   const sortedMenu = [...trainingMenu].sort((a,b) => a.order - b.order);
   const todayLog = trainingLogs.find(l => l.date === today);
@@ -60,6 +61,19 @@ export default function TrainingPage() {
     if (editingId) { updateTrainingMenuItem(editingId, data); setEditingId(null); }
     else { addTrainingMenuItem(data); }
     setForm(emptyForm()); setShowAddForm(false);
+  };
+
+  const handleNoteConfirm = () => {
+    setShowNoteConfirm(false);
+    const id = addPracticeNote({
+      date: today,
+      location: '家',
+      category: '自主練',
+      teamName: '',
+      goodPoints: '自主練メニューを全部できた！',
+      improvements: [],
+    });
+    router.push(`/notes?scroll=${id}`);
   };
 
   const TABS: Array<[typeof tab, string]> = [['check','今日のチェック'],['edit','メニュー編集'],['history','履歴']];
@@ -100,16 +114,8 @@ export default function TrainingPage() {
                         const alreadyRecorded = practiceNotes.some(
                           n => n.date === today && n.category === '自主練'
                         );
-                        if (!alreadyRecorded && window.confirm('練習ノートに自主練を記録しますか？')) {
-                          const id = addPracticeNote({
-                            date: today,
-                            location: '家',
-                            category: '自主練',
-                            teamName: '',
-                            goodPoints: '自主練メニューを全部できた！',
-                            improvements: [],
-                          });
-                          router.push(`/notes?scroll=${id}`);
+                        if (!alreadyRecorded) {
+                          setShowNoteConfirm(true);
                         }
                       }
                     }
@@ -203,6 +209,19 @@ export default function TrainingPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+      {showNoteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <p className="text-4xl mb-3">📝</p>
+            <p className="font-bold text-gray-800 text-lg mb-1">練習ノートに記録する？</p>
+            <p className="text-sm text-gray-500 mb-6">自主練メニューを全部できた！として記録します</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowNoteConfirm(false)} className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-600 font-bold text-sm">やめる</button>
+              <button onClick={handleNoteConfirm} className="flex-1 py-3 rounded-2xl bg-blue-500 text-white font-bold text-sm">記録する</button>
+            </div>
           </div>
         </div>
       )}
