@@ -1,8 +1,28 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/lib/context';
+
+function ScrollToNote() {
+  const searchParams = useSearchParams();
+  const scrollToId = searchParams.get('scroll');
+  useEffect(() => {
+    if (!scrollToId) return;
+    const tryScroll = () => {
+      const el = document.getElementById(`note-${scrollToId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2'), 2000);
+      } else {
+        setTimeout(tryScroll, 200);
+      }
+    };
+    setTimeout(tryScroll, 300);
+  }, [scrollToId]);
+  return null;
+}
 import NoteCard from '@/components/NoteCard';
 import NoteForm from '@/components/NoteForm';
 import PracticeStats, { parseGroupKey } from '@/components/PracticeStats';
@@ -20,18 +40,6 @@ export default function NotesPage() {
   const [activeLocation, setActiveLocation] = useState<string | undefined>();
   const [showStats, setShowStats] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
-  const searchParams = useSearchParams();
-  const scrollToId = searchParams.get('scroll');
-
-  useEffect(() => {
-    if (!scrollToId || isLoading) return;
-    const el = document.getElementById(`note-${scrollToId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2');
-      setTimeout(() => el.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2'), 2000);
-    }
-  }, [scrollToId, isLoading]);
 
   const sorted = useMemo(
     () => [...practiceNotes].sort((a, b) => b.date.localeCompare(a.date)),
@@ -157,6 +165,7 @@ export default function NotesPage() {
 
   return (
     <>
+      <Suspense fallback={null}><ScrollToNote /></Suspense>
       <header className="mb-5">
         <h1 className="text-2xl font-extrabold text-gray-800">📝 練習ノート</h1>
         <div className="flex items-center gap-3 mt-1">
