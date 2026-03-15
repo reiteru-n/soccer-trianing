@@ -41,8 +41,8 @@ export default function BottomNav() {
           <Image
             src="/SCHロゴ.png"
             alt="SCH"
-            width={32}
-            height={32}
+            width={40}
+            height={30}
             className={"object-contain transition-transform " + (pathname === '/sch' ? "scale-110" : "opacity-60")}
           />
           <span className={"text-xs font-medium " + (pathname === '/sch' ? "text-blue-400" : "text-slate-500")}>
