@@ -25,9 +25,16 @@ interface Props {
 }
 
 export default function LiftingChart({ records, filterPart, filterSide }: Props) {
-  const filtered = records
+  const sorted = records
     .filter((r) => (filterPart === 'all' || r.part === filterPart) && (filterSide === 'all' || r.side === filterSide))
     .sort((a, b) => a.date.localeCompare(b.date));
+
+  // 最高記録更新時のみ残す
+  let max = -Infinity;
+  const filtered = sorted.filter((r) => {
+    if (r.count > max) { max = r.count; return true; }
+    return false;
+  });
 
   const labels = filtered.map((r) => r.date.slice(5)); // mm/dd
   const data = filtered.map((r) => r.count);
