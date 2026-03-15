@@ -1,14 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
-  { href: '/',         label: 'ホーム',     icon: '🏠' },
-  { href: '/lifting',  label: 'リフティング', icon: '⚽' },
-  { href: '/notes',    label: 'ノート',     icon: '📝' },
-  { href: '/training', label: '自主練メニュー',     icon: '🏃' },
-  { href: '/sch',      label: 'SCHチーム',  icon: '👥' },
+  { href: '/',         label: 'ホーム',       icon: '🏠' },
+  { href: '/lifting',  label: 'リフティング',  icon: '⚽' },
+  { href: '/notes',    label: 'ノート',        icon: '📝' },
+  { href: '/training', label: '自主練メニュー', icon: '🏃' },
 ];
 
 export default function BottomNav() {
@@ -34,6 +34,22 @@ export default function BottomNav() {
             </Link>
           );
         })}
+        <Link
+          href="/sch"
+          className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all"
+        >
+          <Image
+            src="/SCHロゴ.png"
+            alt="SCH"
+            width={32}
+            height={32}
+            className={"object-contain transition-transform " + (pathname === '/sch' ? "scale-110" : "opacity-60")}
+          />
+          <span className={"text-xs font-medium " + (pathname === '/sch' ? "text-blue-400" : "text-slate-500")}>
+            SCHチーム
+          </span>
+          {pathname === '/sch' && <span className="absolute bottom-1 w-8 h-0.5 bg-blue-400 rounded-full" />}
+        </Link>
       </div>
     </nav>
   );
