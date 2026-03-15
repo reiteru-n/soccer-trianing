@@ -17,7 +17,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-white/10 shadow-2xl shadow-black/50">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto relative">
-        <span className="absolute top-0.5 right-2 text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
+        <span className="absolute top-0.5 left-2 text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
         {navItems.map(({ href, label, icon }) => {
           const active = pathname === href;
           return (
