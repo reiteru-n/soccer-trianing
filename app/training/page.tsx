@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { TrainingMenuItem } from '@/lib/types';
 
@@ -38,6 +39,7 @@ function speak(text: string) {
 }
 
 export default function TrainingPage() {
+  const router = useRouter();
   const { trainingMenu, addTrainingMenuItem, updateTrainingMenuItem, deleteTrainingMenuItem, trainingLogs, toggleTrainingLogItem, practiceNotes, addPracticeNote, isLoading } = useApp();
   const [tab, setTab] = useState<'check'|'edit'|'history'>('check');
   const [editingId, setEditingId] = useState<string|null>(null);
@@ -99,7 +101,7 @@ export default function TrainingPage() {
                           n => n.date === today && n.category === '自主練'
                         );
                         if (!alreadyRecorded && window.confirm('練習ノートに自主練を記録しますか？')) {
-                          addPracticeNote({
+                          const id = addPracticeNote({
                             date: today,
                             location: '家',
                             category: '自主練',
@@ -107,6 +109,7 @@ export default function TrainingPage() {
                             goodPoints: '自主練メニューを全部できた！',
                             improvements: [],
                           });
+                          router.push(`/notes?scroll=${id}`);
                         }
                       }
                     }

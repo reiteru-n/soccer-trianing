@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import NoteCard from '@/components/NoteCard';
 import NoteForm from '@/components/NoteForm';
@@ -19,6 +20,18 @@ export default function NotesPage() {
   const [activeLocation, setActiveLocation] = useState<string | undefined>();
   const [showStats, setShowStats] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const scrollToId = searchParams.get('scroll');
+
+  useEffect(() => {
+    if (!scrollToId || isLoading) return;
+    const el = document.getElementById(`note-${scrollToId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-blue-400', 'ring-offset-2');
+      setTimeout(() => el.classList.remove('ring-2', 'ring-blue-400', 'ring-offset-2'), 2000);
+    }
+  }, [scrollToId, isLoading]);
 
   const sorted = useMemo(
     () => [...practiceNotes].sort((a, b) => b.date.localeCompare(a.date)),
@@ -253,14 +266,14 @@ export default function NotesPage() {
                   <span className="text-xs text-gray-400">{notes.length}件</span>
                 </div>
                 <div className="space-y-3">
-                  {notes.map((note) => <NoteCard key={note.id} {...noteCardProps(note)} />)}
+                  {notes.map((note) => <div key={note.id} id={`note-${note.id}`}><NoteCard {...noteCardProps(note)} /></div>)}
                 </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="space-y-4">
-            {filtered.map((note) => <NoteCard key={note.id} {...noteCardProps(note)} />)}
+            {filtered.map((note) => <div key={note.id} id={`note-${note.id}`}><NoteCard {...noteCardProps(note)} /></div>)}
           </div>
         )}
       </div>
