@@ -454,7 +454,7 @@ export default function SchPage() {
       <header className="mb-5 pt-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image src="/SCHロゴ.png" alt="SCH FC" width={56} height={56} className="object-contain" />
+            <Image src="/sch-logo.png" alt="SCH FC" width={175} height={215} className="object-contain h-14 w-auto" />
             <div>
               <h1 className="text-2xl font-extrabold text-white drop-shadow">SCH チームページ</h1>
               <p className="text-sm text-green-300 mt-0.5">保護者専用ページ</p>
