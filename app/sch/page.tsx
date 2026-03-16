@@ -1429,32 +1429,6 @@ function MemberSection({
   teamLogo: string | null;
   onSaveTeamLogo: (logo: string | null) => void;
 }) {
-  const [unlocked, setUnlocked] = useState(() =>
-    typeof window !== 'undefined' && sessionStorage.getItem('member_unlocked') === '1'
-  );
-  const [pwInput, setPwInput] = useState('');
-  const [pwError, setPwError] = useState('');
-  const [pwLoading, setPwLoading] = useState(false);
-
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPwLoading(true);
-    setPwError('');
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'member', password: pwInput }),
-    });
-    setPwLoading(false);
-    if (res.ok) {
-      sessionStorage.setItem('member_unlocked', '1');
-      setUnlocked(true);
-    } else {
-      const d = await res.json();
-      setPwError(d.error ?? 'パスワードが違います');
-    }
-  };
-
   const [viewingMember, setViewingMember] = useState<SchMember | null>(null);
   const [showMemberForm, setShowMemberForm] = useState(false);
   const [editingMember, setEditingMember] = useState<SchMember | null>(null);
@@ -1520,34 +1494,6 @@ function MemberSection({
 
   const sorted = [...members].sort((a, b) => a.number - b.number);
   const nextMember = sorted[parkingRotation % Math.max(sorted.length, 1)];
-
-  if (!unlocked) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 px-6">
-        <div className="text-4xl mb-4">🔒</div>
-        <p className="text-sm font-semibold text-white mb-1">メンバー情報</p>
-        <p className="text-xs text-slate-400 mb-6 text-center">個人情報を含むため、パスワードが必要です</p>
-        <form onSubmit={handleUnlock} className="w-full max-w-xs space-y-3">
-          <input
-            type="password"
-            value={pwInput}
-            onChange={e => setPwInput(e.target.value)}
-            placeholder="パスワード"
-            autoFocus
-            className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-4 py-3 text-sm text-center tracking-widest focus:border-blue-400 focus:outline-none placeholder-slate-500"
-          />
-          {pwError && <p className="text-xs text-red-400 text-center">{pwError}</p>}
-          <button
-            type="submit"
-            disabled={pwLoading || !pwInput}
-            className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-bold py-3 rounded-xl text-sm transition-colors"
-          >
-            {pwLoading ? '確認中...' : '解除'}
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
