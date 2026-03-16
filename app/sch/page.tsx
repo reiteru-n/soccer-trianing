@@ -1076,10 +1076,146 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
   );
 }
 
+// ---- ParkingHistorySection ----
+function ParkingHistorySection({
+  pastEvents, sortedMembers, parkingRecords, onSaveHistory,
+}: {
+  pastEvents: SchEvent[];
+  sortedMembers: SchMember[];
+  parkingRecords: SchParkingRecord[];
+  onSaveHistory: (eventId: string, slots: SchParkingSlot[]) => void;
+}) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  // draft: memberId -> 'used' | 'pending' | 'skipped'
+  const [draft, setDraft] = useState<Record<string, 'used' | 'pending' | 'skipped'>>({});
+
+  const openEdit = (ev: SchEvent) => {
+    const record = parkingRecords.find(r => r.eventId === ev.id);
+    const init: Record<string, 'used' | 'pending' | 'skipped'> = {};
+    if (record) {
+      record.slots.forEach(s => { init[s.memberId] = s.status; });
+    }
+    setDraft(init);
+    setEditingId(ev.id);
+  };
+
+  const setStatus = (memberId: string, status: 'used' | 'pending' | 'skipped') => {
+    setDraft(prev => ({ ...prev, [memberId]: status }));
+  };
+
+  const saveEdit = (eventId: string) => {
+    const slots: SchParkingSlot[] = Object.entries(draft)
+      .filter(([, s]) => s !== 'pending')
+      .map(([memberId, status]) => ({ memberId, status }));
+    onSaveHistory(eventId, slots);
+    setEditingId(null);
+  };
+
+  const evLabel = (ev: SchEvent) =>
+    ev.type === 'match' ? (ev.opponentName ? `vs ${ev.opponentName}` : '試合') : (ev.label || ev.location || tc(ev.type).label);
+
+  return (
+    <details className="group">
+      <summary className="text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer list-none flex items-center gap-1.5 select-none">
+        <span className="transition-transform group-open:rotate-90 inline-block">▶</span>
+        🕐 駐車場利用履歴
+      </summary>
+      <div className="mt-2 space-y-2">
+        {pastEvents.map(ev => {
+          const record = parkingRecords.find(r => r.eventId === ev.id);
+          const isEditing = editingId === ev.id;
+          const usedSlots = record?.slots.filter(s => s.status === 'used') ?? [];
+          const skippedSlots = record?.slots.filter(s => s.status === 'skipped') ?? [];
+          const hasRecord = !!record && record.slots.length > 0;
+
+          return (
+            <div key={ev.id} className="bg-slate-800/60 border border-white/5 rounded-xl overflow-hidden">
+              {/* Header */}
+              <div className="px-3 py-2 bg-slate-700/40 flex items-center gap-2">
+                <span className="text-[10px] text-slate-400">{ev.date.slice(5).replace('/', '/')}({dayLabel(ev.date)})</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tc(ev.type).badge}`}>{tc(ev.type).icon}</span>
+                <span className="text-xs text-white font-medium truncate flex-1">{evLabel(ev)}</span>
+                {isEditing ? (
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button onClick={() => saveEdit(ev.id)} className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded font-bold">保存</button>
+                    <button onClick={() => setEditingId(null)} className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded border border-slate-600">取消</button>
+                  </div>
+                ) : (
+                  <button onClick={() => openEdit(ev)} className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded border border-slate-600 hover:border-slate-400 flex-shrink-0">編集</button>
+                )}
+              </div>
+
+              {/* Body */}
+              {isEditing ? (
+                <div className="px-3 py-2 space-y-1">
+                  {sortedMembers.map(m => {
+                    const st = draft[m.id] ?? 'pending';
+                    return (
+                      <div key={m.id} className="flex items-center gap-2 text-xs">
+                        <span className="text-blue-300 w-8 text-center font-bold">#{m.number}</span>
+                        <span className="text-slate-300 flex-1">{m.name}</span>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setStatus(m.id, 'used')}
+                            className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${st === 'used' ? 'bg-green-500/30 text-green-300 border-green-500/50' : 'text-slate-500 border-slate-700 hover:border-green-500/40 hover:text-green-400'}`}
+                          >✓ 使用</button>
+                          <button
+                            onClick={() => setStatus(m.id, 'skipped')}
+                            className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${st === 'skipped' ? 'bg-amber-500/30 text-amber-300 border-amber-500/50' : 'text-slate-500 border-slate-700 hover:border-amber-500/40 hover:text-amber-400'}`}
+                          >スキップ</button>
+                          <button
+                            onClick={() => setStatus(m.id, 'pending')}
+                            className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${st === 'pending' ? 'bg-slate-600/50 text-slate-300 border-slate-500' : 'text-slate-600 border-slate-700 hover:border-slate-500 hover:text-slate-400'}`}
+                          >─</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : hasRecord ? (
+                <div className="px-3 py-1.5 space-y-1">
+                  {usedSlots.map((slot, i) => {
+                    const m = sortedMembers.find(mb => mb.id === slot.memberId);
+                    if (!m) return null;
+                    return (
+                      <div key={slot.memberId} className="flex items-center gap-2 text-xs">
+                        <span className="text-slate-500 w-3 text-right">{i + 1}</span>
+                        <span className="text-blue-300 w-8 text-center font-bold">#{m.number}</span>
+                        <span className="text-slate-300 flex-1">{m.name}</span>
+                        <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full">✓ 使用</span>
+                      </div>
+                    );
+                  })}
+                  {skippedSlots.map(slot => {
+                    const m = sortedMembers.find(mb => mb.id === slot.memberId);
+                    if (!m) return null;
+                    return (
+                      <div key={slot.memberId} className="flex items-center gap-2 text-xs opacity-60">
+                        <span className="text-slate-500 w-3">─</span>
+                        <span className="text-slate-400 w-8 text-center">#{m.number}</span>
+                        <span className="text-slate-400 flex-1">{m.name}</span>
+                        <span className="text-amber-500/80 text-[10px]">スキップ{slot.skipComment ? `（${slot.skipComment}）` : ''}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="px-3 py-2">
+                  <span className="text-[11px] text-slate-600 italic">未記録 — 「編集」から入力できます</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
 // ---- HomeSection ----
 function HomeSection({
   events, members, parkingRecords, parkingRotation, nearbyParking,
-  onSkip, onUnskip, onMarkUsed, onMarkPending, onUpdateMaxSlots,
+  onSkip, onUnskip, onMarkUsed, onMarkPending, onSaveHistory, onUpdateMaxSlots,
 }: {
   events: SchEvent[];
   members: SchMember[];
@@ -1090,6 +1226,7 @@ function HomeSection({
   onUnskip: (eventId: string, memberId: string) => void;
   onMarkUsed: (eventId: string, memberId: string) => void;
   onMarkPending: (eventId: string, memberId: string) => void;
+  onSaveHistory: (eventId: string, slots: SchParkingSlot[]) => void;
   onUpdateMaxSlots: (eventId: string, maxSlots: number) => void;
 }) {
   const today = todayStr();
@@ -1114,18 +1251,12 @@ function HomeSection({
     [upcomingEvents]
   );
 
-  // 全イベント（過去含む）を日付順でビルドして履歴用に使う
-  const allSortedEventItems: EventItem[] = useMemo(
-    () => [...events].sort((a, b) => a.date.localeCompare(b.date)).map(toEventItem),
-    [events]
-  );
-  const allParkingPlan = useMemo(
-    () => buildParkingPlan(sortedMembers, allSortedEventItems, parkingRotation, parkingRecords),
-    [sortedMembers, allSortedEventItems, parkingRotation, parkingRecords]
-  );
-  const pastPlans = useMemo(
-    () => allParkingPlan.filter(p => p.date < today).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10),
-    [allParkingPlan, today]
+  const pastEvents = useMemo(
+    () => [...events]
+      .filter(e => e.date < today)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 10),
+    [events, today]
   );
 
   const parkingPlan = useMemo(
@@ -1208,64 +1339,13 @@ function HomeSection({
       )}
 
       {/* Parking history */}
-      {pastPlans.length > 0 && (
-        <details className="group">
-          <summary className="text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer list-none flex items-center gap-1.5 select-none">
-            <span className="transition-transform group-open:rotate-90 inline-block">▶</span>
-            🕐 駐車場利用履歴
-          </summary>
-          <div className="mt-2 space-y-2">
-            {pastPlans.map(plan => {
-              const activeSlots = plan.slots.filter(s => s.status !== 'skipped');
-              const skippedSlots = plan.slots.filter(s => s.status === 'skipped');
-              return (
-                <div key={plan.id} className="bg-slate-800/60 border border-white/5 rounded-xl overflow-hidden">
-                  <div className="px-3 py-2 bg-slate-700/40 flex items-center gap-2">
-                    <span className="text-[10px] text-slate-400">{plan.date.slice(5).replace('/', '/')}({dayLabel(plan.date)})</span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tc(plan.type).badge}`}>{tc(plan.type).icon}</span>
-                    <span className="text-xs text-white font-medium truncate flex-1">{plan.label}</span>
-                  </div>
-                  <div className="px-3 py-1.5 space-y-1">
-                    {activeSlots.map((slot, i) => {
-                      const m = sortedMembers.find(mb => mb.id === slot.memberId);
-                      if (!m) return null;
-                      const isUsed = slot.status === 'used';
-                      return (
-                        <div key={slot.memberId} className="flex items-center gap-2 text-xs">
-                          <span className="text-slate-500 w-3 text-right">{i + 1}</span>
-                          <span className="text-blue-300 w-8 text-center font-bold">#{m.number}</span>
-                          <span className="text-slate-300 flex-1">{m.name}</span>
-                          <button
-                            onClick={() => isUsed ? onMarkPending(plan.id, slot.memberId) : onMarkUsed(plan.id, slot.memberId)}
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors ${isUsed ? 'bg-green-500/20 text-green-300 border-green-500/30 hover:bg-green-500/10' : 'text-slate-500 border-slate-600 hover:text-green-400 hover:border-green-500/50'}`}
-                          >
-                            {isUsed ? '✓ 使用' : '─ 未使用'}
-                          </button>
-                        </div>
-                      );
-                    })}
-                    {skippedSlots.map(slot => {
-                      const m = sortedMembers.find(mb => mb.id === slot.memberId);
-                      if (!m) return null;
-                      return (
-                        <div key={slot.memberId} className="flex items-center gap-2 text-xs opacity-60">
-                          <span className="text-slate-500 w-3">─</span>
-                          <span className="text-slate-400 w-8 text-center">#{m.number}</span>
-                          <span className="text-slate-400 flex-1">{m.name}</span>
-                          <span className="text-amber-500/80 text-[10px]">スキップ{slot.skipComment ? `（${slot.skipComment}）` : ''}</span>
-                          <button
-                            onClick={() => onUnskip(plan.id, slot.memberId)}
-                            className="text-[10px] text-slate-500 hover:text-white px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors"
-                          >取消</button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </details>
+      {pastEvents.length > 0 && (
+        <ParkingHistorySection
+          pastEvents={pastEvents}
+          sortedMembers={sortedMembers}
+          parkingRecords={parkingRecords}
+          onSaveHistory={onSaveHistory}
+        />
       )}
     </div>
   );
@@ -1648,6 +1728,10 @@ export default function SchPage() {
     });
   }, [upsertParkingRecord]);
 
+  const handleSaveFullRecord = useCallback((eventId: string, slots: SchParkingSlot[]) => {
+    upsertParkingRecord(eventId, () => slots);
+  }, [upsertParkingRecord]);
+
   const handleUpdateMaxSlots = useCallback((eventId: string, maxSlots: number) => {
     setEvents(prev => {
       const updated = prev.map(e => e.id === eventId ? { ...e, maxParkingSlots: maxSlots } : e);
@@ -1717,6 +1801,7 @@ export default function SchPage() {
           parkingRecords={parkingRecords} parkingRotation={parkingRotation}
           nearbyParking={nearbyParking}
           onSkip={handleSkip} onUnskip={handleUnskip} onMarkUsed={handleMarkUsed} onMarkPending={handleMarkPending}
+          onSaveHistory={handleSaveFullRecord}
           onUpdateMaxSlots={handleUpdateMaxSlots}
         />
       )}
