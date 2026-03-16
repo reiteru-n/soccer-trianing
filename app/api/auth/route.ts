@@ -48,6 +48,14 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
+  if (type === 'member') {
+    const expected = process.env.MEMBER_PASSWORD ?? 'SCH26';
+    if (password !== expected) {
+      return NextResponse.json({ error: 'パスワードが違います' }, { status: 401 });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   return NextResponse.json({ error: '不正なリクエスト' }, { status: 400 });
 }
 
