@@ -1098,15 +1098,31 @@ function HomeSection({
   );
   const nextEvent = upcomingEvents[0];
 
+  const toEventItem = (e: SchEvent): EventItem => ({
+    id: e.id,
+    date: e.date,
+    type: e.type,
+    label: e.type === 'match' ? (e.opponentName ? `🆚 ${e.opponentName}` : '相手未定') : (e.label || e.location || tc(e.type).label),
+    maxSlots: e.maxParkingSlots ?? DEFAULT_MAX_SLOTS,
+  });
+
   const eventItems: EventItem[] = useMemo(
-    () => upcomingEvents.slice(0, 6).map(e => ({
-      id: e.id,
-      date: e.date,
-      type: e.type,
-      label: e.type === 'match' ? (e.opponentName ? `🆚 ${e.opponentName}` : '相手未定') : (e.label || e.location || tc(e.type).label),
-      maxSlots: e.maxParkingSlots ?? DEFAULT_MAX_SLOTS,
-    })),
+    () => upcomingEvents.slice(0, 6).map(toEventItem),
     [upcomingEvents]
+  );
+
+  // 全イベント（過去含む）を日付順でビルドして履歴用に使う
+  const allSortedEventItems: EventItem[] = useMemo(
+    () => [...events].sort((a, b) => a.date.localeCompare(b.date)).map(toEventItem),
+    [events]
+  );
+  const allParkingPlan = useMemo(
+    () => buildParkingPlan(sortedMembers, allSortedEventItems, parkingRotation, parkingRecords),
+    [sortedMembers, allSortedEventItems, parkingRotation, parkingRecords]
+  );
+  const pastPlans = useMemo(
+    () => allParkingPlan.filter(p => p.date < today).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10),
+    [allParkingPlan, today]
   );
 
   const parkingPlan = useMemo(
@@ -1189,76 +1205,65 @@ function HomeSection({
       )}
 
       {/* Parking history */}
-      {(() => {
-        const pastRecords = parkingRecords
-          .filter(r => r.eventDate < today)
-          .sort((a, b) => b.eventDate.localeCompare(a.eventDate))
-          .slice(0, 10);
-        if (pastRecords.length === 0) return null;
-        return (
-          <details className="group">
-            <summary className="text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer list-none flex items-center gap-1.5 select-none">
-              <span className="transition-transform group-open:rotate-90 inline-block">▶</span>
-              🕐 駐車場利用履歴
-            </summary>
-            <div className="mt-2 space-y-2">
-              {pastRecords.map(record => {
-                const ev = events.find(e => e.id === record.eventId);
-                const evLabel = ev
-                  ? (ev.type === 'match' ? (ev.opponentName ? `vs ${ev.opponentName}` : '試合') : (ev.label || ev.location || tc(ev.type).label))
-                  : record.eventType;
-                const activeSlots = record.slots.filter(s => s.status !== 'skipped');
-                const skippedSlots = record.slots.filter(s => s.status === 'skipped');
-                return (
-                  <div key={record.eventId} className="bg-slate-800/60 border border-white/5 rounded-xl overflow-hidden">
-                    <div className="px-3 py-2 bg-slate-700/40 flex items-center gap-2">
-                      <span className="text-[10px] text-slate-400">{record.eventDate.slice(5).replace('/', '/')}({dayLabel(record.eventDate)})</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tc(record.eventType).badge}`}>{tc(record.eventType).icon}</span>
-                      <span className="text-xs text-white font-medium truncate flex-1">{evLabel}</span>
-                    </div>
-                    <div className="px-3 py-1.5 space-y-1">
-                      {activeSlots.map((slot, i) => {
-                        const m = sortedMembers.find(mb => mb.id === slot.memberId);
-                        if (!m) return null;
-                        const isUsed = slot.status === 'used';
-                        return (
-                          <div key={slot.memberId} className="flex items-center gap-2 text-xs">
-                            <span className="text-slate-500 w-3 text-right">{i + 1}</span>
-                            <span className="text-blue-300 w-8 text-center font-bold">#{m.number}</span>
-                            <span className="text-slate-300 flex-1">{m.name}</span>
-                            <button
-                              onClick={() => isUsed ? onMarkPending(record.eventId, slot.memberId) : onMarkUsed(record.eventId, slot.memberId)}
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors ${isUsed ? 'bg-green-500/20 text-green-300 border-green-500/30 hover:bg-green-500/10' : 'text-slate-500 border-slate-600 hover:text-green-400 hover:border-green-500/50'}`}
-                            >
-                              {isUsed ? '✓ 使用' : '─ 未使用'}
-                            </button>
-                          </div>
-                        );
-                      })}
-                      {skippedSlots.map(slot => {
-                        const m = sortedMembers.find(mb => mb.id === slot.memberId);
-                        if (!m) return null;
-                        return (
-                          <div key={slot.memberId} className="flex items-center gap-2 text-xs opacity-60">
-                            <span className="text-slate-500 w-3">─</span>
-                            <span className="text-slate-400 w-8 text-center">#{m.number}</span>
-                            <span className="text-slate-400 flex-1">{m.name}</span>
-                            <span className="text-amber-500/80 text-[10px]">スキップ{slot.skipComment ? `（${slot.skipComment}）` : ''}</span>
-                            <button
-                              onClick={() => onUnskip(record.eventId, slot.memberId)}
-                              className="text-[10px] text-slate-500 hover:text-white px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors"
-                            >取消</button>
-                          </div>
-                        );
-                      })}
-                    </div>
+      {pastPlans.length > 0 && (
+        <details className="group">
+          <summary className="text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer list-none flex items-center gap-1.5 select-none">
+            <span className="transition-transform group-open:rotate-90 inline-block">▶</span>
+            🕐 駐車場利用履歴
+          </summary>
+          <div className="mt-2 space-y-2">
+            {pastPlans.map(plan => {
+              const activeSlots = plan.slots.filter(s => s.status !== 'skipped');
+              const skippedSlots = plan.slots.filter(s => s.status === 'skipped');
+              return (
+                <div key={plan.id} className="bg-slate-800/60 border border-white/5 rounded-xl overflow-hidden">
+                  <div className="px-3 py-2 bg-slate-700/40 flex items-center gap-2">
+                    <span className="text-[10px] text-slate-400">{plan.date.slice(5).replace('/', '/')}({dayLabel(plan.date)})</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tc(plan.type).badge}`}>{tc(plan.type).icon}</span>
+                    <span className="text-xs text-white font-medium truncate flex-1">{plan.label}</span>
                   </div>
-                );
-              })}
-            </div>
-          </details>
-        );
-      })()}
+                  <div className="px-3 py-1.5 space-y-1">
+                    {activeSlots.map((slot, i) => {
+                      const m = sortedMembers.find(mb => mb.id === slot.memberId);
+                      if (!m) return null;
+                      const isUsed = slot.status === 'used';
+                      return (
+                        <div key={slot.memberId} className="flex items-center gap-2 text-xs">
+                          <span className="text-slate-500 w-3 text-right">{i + 1}</span>
+                          <span className="text-blue-300 w-8 text-center font-bold">#{m.number}</span>
+                          <span className="text-slate-300 flex-1">{m.name}</span>
+                          <button
+                            onClick={() => isUsed ? onMarkPending(plan.id, slot.memberId) : onMarkUsed(plan.id, slot.memberId)}
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors ${isUsed ? 'bg-green-500/20 text-green-300 border-green-500/30 hover:bg-green-500/10' : 'text-slate-500 border-slate-600 hover:text-green-400 hover:border-green-500/50'}`}
+                          >
+                            {isUsed ? '✓ 使用' : '─ 未使用'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    {skippedSlots.map(slot => {
+                      const m = sortedMembers.find(mb => mb.id === slot.memberId);
+                      if (!m) return null;
+                      return (
+                        <div key={slot.memberId} className="flex items-center gap-2 text-xs opacity-60">
+                          <span className="text-slate-500 w-3">─</span>
+                          <span className="text-slate-400 w-8 text-center">#{m.number}</span>
+                          <span className="text-slate-400 flex-1">{m.name}</span>
+                          <span className="text-amber-500/80 text-[10px]">スキップ{slot.skipComment ? `（${slot.skipComment}）` : ''}</span>
+                          <button
+                            onClick={() => onUnskip(plan.id, slot.memberId)}
+                            className="text-[10px] text-slate-500 hover:text-white px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors"
+                          >取消</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </details>
+      )}
     </div>
   );
 }
