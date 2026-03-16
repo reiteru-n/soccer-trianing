@@ -1478,7 +1478,7 @@ function ParkingHistorySection({
 
 // ---- HomeSection ----
 function HomeSection({
-  events, members, parkingRecords, parkingRotation, nearbyParking,
+  events, members, parkingRecords, parkingRotation, nearbyParking, announcements, onGoToAnnounce,
   onSkip, onUnskip, onMarkUsed, onMarkPending, onSaveHistory, onUpdateMaxSlots,
 }: {
   events: SchEvent[];
@@ -1486,6 +1486,8 @@ function HomeSection({
   parkingRecords: SchParkingRecord[];
   parkingRotation: number;
   nearbyParking: SchNearbyParking[];
+  announcements: SchAnnouncement[];
+  onGoToAnnounce: () => void;
   onSkip: (eventId: string, memberId: string, comment: string) => void;
   onUnskip: (eventId: string, memberId: string) => void;
   onMarkUsed: (eventId: string, memberId: string) => void;
@@ -1643,6 +1645,51 @@ function HomeSection({
           onSaveHistory={onSaveHistory}
         />
       )}
+
+      {/* 最近のお知らせ（過去7日以内・最大3件） */}
+      {(() => {
+        const sevenDaysAgo = (() => {
+          const d = new Date(today.replace(/\//g, '-'));
+          d.setDate(d.getDate() - 7);
+          return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+        })();
+        const recent = [...announcements]
+          .filter(a => a.date >= sevenDaysAgo)
+          .sort((a, b) => b.date.localeCompare(a.date));
+        if (recent.length === 0) return null;
+        const shown = recent.slice(0, 3);
+        const hasMore = recent.length > 3;
+        return (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">📢 最近のお知らせ</h2>
+              {hasMore && (
+                <button onClick={onGoToAnnounce} className="text-[10px] text-purple-400 hover:text-purple-300">
+                  すべて見る →
+                </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              {shown.map(a => (
+                <div key={a.id} className={`rounded-xl px-4 py-3 border ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    {a.important && <span className="text-[10px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded-full">重要</span>}
+                    <span className="text-[10px] text-slate-400">{a.date}</span>
+                  </div>
+                  <p className="text-sm font-bold text-white">{a.title}</p>
+                  <p className="text-xs text-slate-300 mt-0.5 line-clamp-2 whitespace-pre-wrap">{a.content}</p>
+                </div>
+              ))}
+              {hasMore && (
+                <button onClick={onGoToAnnounce}
+                  className="w-full text-xs py-2.5 rounded-xl border border-dashed border-slate-600 text-slate-400 hover:text-purple-300 hover:border-purple-500/50 transition-colors">
+                  他 {recent.length - 3} 件のお知らせを見る
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -2214,6 +2261,7 @@ export default function SchPage() {
           events={events} members={members}
           parkingRecords={parkingRecords} parkingRotation={parkingRotation}
           nearbyParking={nearbyParking}
+          announcements={announcements} onGoToAnnounce={() => setTab('announce')}
           onSkip={handleSkip} onUnskip={handleUnskip} onMarkUsed={handleMarkUsed} onMarkPending={handleMarkPending}
           onSaveHistory={handleSaveFullRecord}
           onUpdateMaxSlots={handleUpdateMaxSlots}
