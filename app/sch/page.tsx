@@ -1429,6 +1429,7 @@ function MemberSection({
   teamLogo: string | null;
   onSaveTeamLogo: (logo: string | null) => void;
 }) {
+  const [viewingMember, setViewingMember] = useState<SchMember | null>(null);
   const [showMemberForm, setShowMemberForm] = useState(false);
   const [editingMember, setEditingMember] = useState<SchMember | null>(null);
   const [mNumber, setMNumber] = useState('');
@@ -1508,31 +1509,17 @@ function MemberSection({
         ) : (
           <div className="bg-slate-800/60 border border-white/10 rounded-xl overflow-hidden">
             {sorted.map((m, i) => (
-              <div key={m.id} className={`px-4 py-3 ${i < sorted.length - 1 ? 'border-b border-white/5' : ''}`}>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-500 text-xs w-5 text-right font-mono">{i + 1}</span>
-                  <span className="w-10 text-center text-sm font-extrabold text-blue-300 bg-blue-900/30 rounded-lg py-0.5">#{m.number}</span>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-white text-sm font-medium">{m.name}</span>
-                    {m.nameKana && <span className="text-slate-500 text-xs ml-2">（{m.nameKana}）</span>}
-                  </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => openEditMember(m)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
-                    <button onClick={() => deleteMember(m.id)} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button>
-                  </div>
+              <div key={m.id} className={`flex items-center gap-3 px-4 py-3 ${i < sorted.length - 1 ? 'border-b border-white/5' : ''}`}>
+                <span className="text-slate-500 text-xs w-5 text-right font-mono">{i + 1}</span>
+                <span className="w-10 text-center text-sm font-extrabold text-blue-300 bg-blue-900/30 rounded-lg py-0.5">#{m.number}</span>
+                <button onClick={() => setViewingMember(m)} className="flex-1 min-w-0 text-left">
+                  <span className="text-white text-sm font-medium">{m.name}</span>
+                  {m.nameKana && <span className="text-slate-500 text-xs ml-2">（{m.nameKana}）</span>}
+                </button>
+                <div className="flex gap-1">
+                  <button onClick={() => openEditMember(m)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
+                  <button onClick={() => deleteMember(m.id)} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button>
                 </div>
-                {(m.birthDate || (m.parents && m.parents.length > 0)) && (
-                  <div className="mt-1.5 ml-8 space-y-0.5">
-                    {m.birthDate && (
-                      <p className="text-xs text-slate-500">🎂 {m.birthDate.replace(/-/g, '/')}</p>
-                    )}
-                    {m.parents && m.parents.length > 0 && (
-                      <p className="text-xs text-slate-500">
-                        {m.parents.map(p => `${p.role}: ${p.name}`).join('　')}
-                      </p>
-                    )}
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -1635,6 +1622,62 @@ function MemberSection({
           </div>
         </div>
       </div>
+
+      {/* Member detail modal */}
+      {viewingMember && (() => {
+        const m = viewingMember;
+        const age = m.birthDate ? (() => {
+          const b = new Date(m.birthDate!);
+          const today = new Date();
+          let a = today.getFullYear() - b.getFullYear();
+          if (today.getMonth() < b.getMonth() || (today.getMonth() === b.getMonth() && today.getDate() < b.getDate())) a--;
+          return a;
+        })() : null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setViewingMember(null)}>
+            <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md border border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="px-5 pt-5 pb-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-extrabold text-blue-300 bg-blue-900/30 rounded-xl px-3 py-1">#{m.number}</span>
+                    <div>
+                      <p className="text-base font-bold text-white">{m.name}</p>
+                      {m.nameKana && <p className="text-xs text-slate-400">{m.nameKana}</p>}
+                    </div>
+                  </div>
+                  <button onClick={() => setViewingMember(null)} className="text-slate-400 text-2xl">&times;</button>
+                </div>
+                <div className="space-y-2">
+                  {m.birthDate && (
+                    <div className="flex items-center gap-3 bg-slate-700/40 rounded-xl px-4 py-2.5">
+                      <span className="text-lg">🎂</span>
+                      <div>
+                        <p className="text-[10px] text-slate-400">生年月日</p>
+                        <p className="text-sm text-white">{m.birthDate.replace(/-/g, '/')}
+                          {age !== null && <span className="text-slate-400 text-xs ml-2">（{age}歳）</span>}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {m.parents && m.parents.length > 0 && m.parents.map((p, i) => (
+                    <div key={i} className="flex items-center gap-3 bg-slate-700/40 rounded-xl px-4 py-2.5">
+                      <span className="text-lg">{p.role === '父' ? '👨' : p.role === '母' ? '👩' : '👤'}</span>
+                      <div>
+                        <p className="text-[10px] text-slate-400">保護者（{p.role}）</p>
+                        <p className="text-sm text-white">{p.name}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {!m.birthDate && (!m.parents || m.parents.length === 0) && (
+                    <p className="text-sm text-slate-500 text-center py-2">詳細情報なし</p>
+                  )}
+                </div>
+                <button onClick={() => { setViewingMember(null); openEditMember(m); }} className="w-full text-xs text-slate-400 border border-slate-600 hover:border-slate-400 hover:text-white py-2 rounded-xl transition-colors">編集</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Member form modal */}
       {showMemberForm && (
