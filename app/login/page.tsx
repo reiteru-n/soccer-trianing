@@ -81,12 +81,6 @@ function LoginForm() {
           </button>
         </form>
 
-        {isTeam && (
-          <p className="text-center mt-4 text-xs text-slate-500">
-            個人ページへは{' '}
-            <a href="/login?type=family" className="text-blue-400 underline">こちら</a>
-          </p>
-        )}
       </div>
     </div>
   );

@@ -1153,7 +1153,7 @@ function ParkingHistorySection({
                     return (
                       <div key={m.id} className="flex items-center gap-2 text-xs">
                         <span className="text-blue-300 w-8 text-center font-bold">#{m.number}</span>
-                        <span className="text-slate-300 flex-1">{m.name}</span>
+                        <span className="text-slate-300 flex-1">{m.nameKana || m.name}</span>
                         <div className="flex gap-1">
                           <button
                             onClick={() => setStatus(m.id, 'used')}
@@ -1181,7 +1181,7 @@ function ParkingHistorySection({
                       <div key={slot.memberId} className="flex items-center gap-2 text-xs">
                         <span className="text-slate-500 w-3 text-right">{i + 1}</span>
                         <span className="text-blue-300 w-8 text-center font-bold">#{m.number}</span>
-                        <span className="text-slate-300 flex-1">{m.name}</span>
+                        <span className="text-slate-300 flex-1">{m.nameKana || m.name}</span>
                         <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full">✓ 使用</span>
                       </div>
                     );
@@ -1193,7 +1193,7 @@ function ParkingHistorySection({
                       <div key={slot.memberId} className="flex items-center gap-2 text-xs opacity-60">
                         <span className="text-slate-500 w-3">─</span>
                         <span className="text-slate-400 w-8 text-center">#{m.number}</span>
-                        <span className="text-slate-400 flex-1">{m.name}</span>
+                        <span className="text-slate-400 flex-1">{m.nameKana || m.name}</span>
                         <span className="text-amber-500/80 text-[10px]">スキップ{slot.skipComment ? `（${slot.skipComment}）` : ''}</span>
                       </div>
                     );
@@ -1295,14 +1295,14 @@ function HomeSection({
 
       {/* Parking forecast */}
       <div>
-        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">🅿️ 駐車場予測</h2>
+        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">🅿️ 駐車場予定</h2>
         {sortedMembers.length === 0 ? (
           <p className="text-center text-slate-400 text-sm py-4">メンバーを登録してください</p>
         ) : parkingPlan.length === 0 ? (
           <p className="text-center text-slate-400 text-sm py-4">予定がありません</p>
         ) : (
           <div className="space-y-3">
-            {parkingPlan.map(plan => (
+            {parkingPlan.slice(0, 3).map(plan => (
               <ParkingEventCard
                 key={plan.id}
                 plan={plan}
@@ -1313,6 +1313,27 @@ function HomeSection({
                 onUpdateMaxSlots={onUpdateMaxSlots}
               />
             ))}
+            {parkingPlan.length > 3 && (
+              <details className="group">
+                <summary className="text-xs text-slate-400 hover:text-slate-300 cursor-pointer list-none flex items-center gap-1 select-none">
+                  <span className="transition-transform group-open:rotate-90 inline-block">▶</span>
+                  さらに {parkingPlan.length - 3} 件を表示
+                </summary>
+                <div className="mt-3 space-y-3">
+                  {parkingPlan.slice(3).map(plan => (
+                    <ParkingEventCard
+                      key={plan.id}
+                      plan={plan}
+                      members={sortedMembers}
+                      onSkip={onSkip}
+                      onUnskip={onUnskip}
+                      onMarkUsed={onMarkUsed}
+                      onUpdateMaxSlots={onUpdateMaxSlots}
+                    />
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
         )}
       </div>
