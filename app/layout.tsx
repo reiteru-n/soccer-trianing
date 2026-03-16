@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '⚽ 拓渡のサッカー記録',
-  description: '拓渡くんのサッカー成長記録サイト',
+  title: '⚽ サッカー記録',
+  description: 'サッカー成長記録サイト',
 };
 
 export const viewport: Viewport = {

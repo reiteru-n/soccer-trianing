@@ -84,7 +84,7 @@ export default function DashboardPage() {
       <ConfettiEffect trigger={!!newMilestoneAchieved} onDone={clearNewMilestone} />
       {newMilestoneAchieved && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-yellow-400 text-yellow-900 font-bold px-6 py-3 rounded-2xl shadow-xl animate-bounce text-center whitespace-nowrap">🎉 {newMilestoneAchieved}回達成おめでとう！</div>}
       <header className="mb-5 pt-1">
-        <h1 className="text-2xl font-extrabold text-white drop-shadow">⚽ 拓渡のサッカー記録</h1>
+        <h1 className="text-2xl font-extrabold text-white drop-shadow">⚽ サッカー記録</h1>
         <p className="text-sm text-blue-200 mt-0.5">毎日の練習を積み上げよう！💪</p>
       </header>
       <div className="mb-5 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 rounded-2xl px-4 py-3.5 text-white shadow-lg shadow-blue-900/40 border border-blue-400/30">
