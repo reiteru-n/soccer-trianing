@@ -54,6 +54,11 @@ function computeEventParking(
 ): { slots: SchParkingSlot[]; consumedCount: number } {
   const n = sortedMembers.length;
   if (n === 0) return { slots: [], consumedCount: 0 };
+  // maxSlots === -1 means unlimited: all members can park, no rotation consumed
+  if (maxSlots === -1) {
+    const slots: SchParkingSlot[] = sortedMembers.map(m => ({ memberId: m.id, status: 'used' as const }));
+    return { slots, consumedCount: 0 };
+  }
   const skipped = new Set(skippedMemberIds);
   const slots: SchParkingSlot[] = [];
   let offset = 0;
@@ -87,7 +92,10 @@ function buildParkingPlan(
       return persisted ? { ...slot, ...persisted } : slot;
     });
     const startRi = ri;
-    ri = (ri + consumedCount) % Math.max(sortedMembers.length, 1);
+    // unlimited events don't advance the rotation
+    if (event.maxSlots !== -1) {
+      ri = (ri + consumedCount) % Math.max(sortedMembers.length, 1);
+    }
     return { ...event, slots: mergedSlots, rotationStartIndex: startRi, consumedCount };
   });
 }
@@ -140,6 +148,8 @@ function ParkingEventCard({
           </div>
         ) : plan.maxSlots === 0 ? (
           <span className="text-[10px] text-red-400/70 whitespace-nowrap">🚫 駐車場なし</span>
+        ) : plan.maxSlots === -1 ? (
+          <span className="text-[10px] text-emerald-400/80 whitespace-nowrap">🅿️ 制限なし</span>
         ) : (
           <button onClick={() => { setEditingSlots(true); setSlotsInput(String(plan.maxSlots)); }} className="text-[10px] text-slate-500 hover:text-slate-300 whitespace-nowrap">
             🅿️ {plan.maxSlots}台
@@ -148,7 +158,7 @@ function ParkingEventCard({
       </div>
 
       {/* Active slots */}
-      {plan.maxSlots > 0 && <div className="bg-slate-800/60">
+      {(plan.maxSlots > 0 || plan.maxSlots === -1) && <div className="bg-slate-800/60">
         {activeSlots.map((slot, i) => {
           const member = getMember(slot.memberId);
           if (!member) return null;
@@ -186,7 +196,7 @@ function ParkingEventCard({
       </div>}
 
       {/* Skipped */}
-      {plan.maxSlots > 0 && skippedSlots.length > 0 && (
+      {(plan.maxSlots > 0 || plan.maxSlots === -1) && skippedSlots.length > 0 && (
         <div className="bg-slate-800/30 border-t border-white/5 px-4 py-2 space-y-1">
           {skippedSlots.map(slot => {
             const member = getMember(slot.memberId);
@@ -247,7 +257,8 @@ function EventForm({
   const [label, setLabel] = useState(initialEvent?.label ?? '');
   const [note, setNote] = useState(initialEvent?.note ?? '');
   const initialParking = initialEvent?.maxParkingSlots ?? DEFAULT_MAX_SLOTS;
-  const [parkingAvailable, setParkingAvailable] = useState(initialParking > 0);
+  const [parkingAvailable, setParkingAvailable] = useState(initialParking !== 0);
+  const [parkingUnlimited, setParkingUnlimited] = useState(initialParking === -1);
   const [maxParkingSlots, setMaxParkingSlots] = useState(initialParking > 0 ? initialParking : DEFAULT_MAX_SLOTS);
 
   // Match fields
@@ -311,7 +322,7 @@ function EventForm({
       location: location || undefined,
       label: label || undefined,
       note: note || undefined,
-      maxParkingSlots: parkingAvailable ? (maxParkingSlots !== DEFAULT_MAX_SLOTS ? maxParkingSlots : undefined) : 0,
+      maxParkingSlots: parkingAvailable ? (parkingUnlimited ? -1 : (maxParkingSlots !== DEFAULT_MAX_SLOTS ? maxParkingSlots : undefined)) : 0,
     };
     if (type === 'match') {
       Object.assign(base, {
@@ -404,11 +415,25 @@ function EventForm({
                 </button>
               </div>
               {parkingAvailable && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400">何台？</span>
-                  <input type="number" min="1" max="20" value={maxParkingSlots} onChange={e => setMaxParkingSlots(Number(e.target.value))} className="w-20 rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none text-center" />
-                  <span className="text-xs text-slate-400">台</span>
-                </div>
+                <>
+                  <div className="flex gap-2 mb-2">
+                    <button type="button" onClick={() => setParkingUnlimited(false)}
+                      className={`flex-1 text-xs py-1.5 rounded-lg font-semibold border transition-colors ${!parkingUnlimited ? 'bg-amber-600/40 text-amber-200 border-amber-500/50' : 'text-slate-400 border-slate-600 hover:border-slate-500'}`}>
+                      制限あり
+                    </button>
+                    <button type="button" onClick={() => setParkingUnlimited(true)}
+                      className={`flex-1 text-xs py-1.5 rounded-lg font-semibold border transition-colors ${parkingUnlimited ? 'bg-emerald-600/40 text-emerald-200 border-emerald-500/50' : 'text-slate-400 border-slate-600 hover:border-slate-500'}`}>
+                      制限なし
+                    </button>
+                  </div>
+                  {!parkingUnlimited && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400">何台？</span>
+                      <input type="number" min="1" max="20" value={maxParkingSlots} onChange={e => setMaxParkingSlots(Number(e.target.value))} className="w-20 rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none text-center" />
+                      <span className="text-xs text-slate-400">台</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
