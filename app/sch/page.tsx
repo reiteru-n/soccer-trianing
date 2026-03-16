@@ -465,148 +465,156 @@ function EventForm({
               <div className="space-y-3 border-t border-white/10 pt-4">
                 <p className="text-xs font-bold text-red-400 uppercase tracking-wider">試合情報</p>
 
-                <div>
-                  <label className={labelCls}>試合区分</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {MATCH_TYPES.map(mt => (
-                      <button key={mt} type="button" onClick={() => setMatchType(mt)}
-                        className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${matchType === mt ? 'bg-red-600/40 text-red-300 border-transparent' : 'text-slate-400 border-slate-600'}`}>
-                        {mt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelCls}>大会形式</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {MATCH_FORMATS.map(mf => (
-                      <button key={mf.value} type="button" onClick={() => setMatchFormat(mf.value)}
-                        className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${matchFormat === mf.value ? 'bg-orange-600/40 text-orange-300 border-transparent' : 'text-slate-400 border-slate-600'}`}>
-                        {mf.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {(matchFormat === 'tournament' || matchFormat === 'league_tournament') && (
-                  <div><label className={labelCls}>ラウンド名</label><input type="text" value={roundName} onChange={e => setRoundName(e.target.value)} placeholder="例: グループA / 準決勝" className={inputCls} /></div>
-                )}
-
+                {/* Primary: opponent + final score */}
                 <div><label className={labelCls}>🆚 対戦相手</label><input type="text" value={opponentName} onChange={e => setOpponentName(e.target.value)} placeholder="例: ○○FC" className={inputCls} /></div>
 
-                <div className="flex gap-2 items-center">
-                  <span className="text-xs text-slate-400 font-semibold">ホーム/アウェー:</span>
-                  <button type="button" onClick={() => setIsHome(true)} className={`px-3 py-1 rounded-lg text-xs font-bold ${isHome ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}>ホーム</button>
-                  <button type="button" onClick={() => setIsHome(false)} className={`px-3 py-1 rounded-lg text-xs font-bold ${!isHome ? 'bg-orange-600 text-white' : 'bg-slate-700 text-slate-400'}`}>アウェー</button>
-                </div>
-
-                {/* Score */}
                 <div>
-                  <label className={labelCls}>スコア</label>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400 w-10">前半</span>
-                      <input type="number" min="0" value={htHome} onChange={e => setHtHome(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
-                      <span className="text-slate-400 font-bold">−</span>
-                      <input type="number" min="0" value={htAway} onChange={e => setHtAway(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400 w-10">合計</span>
-                      <input type="number" min="0" value={homeScore} onChange={e => setHomeScore(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
-                      <span className="text-slate-400 font-bold">−</span>
-                      <input type="number" min="0" value={awayScore} onChange={e => setAwayScore(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
-                      <span className="text-xs text-slate-500">(90分時点)</span>
-                    </div>
+                  <label className={labelCls}>最終スコア（SCH − 相手）</label>
+                  <div className="flex items-center gap-3">
+                    <input type="number" min="0" value={homeScore} onChange={e => setHomeScore(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
+                    <span className="text-slate-400 font-bold text-lg">−</span>
+                    <input type="number" min="0" value={awayScore} onChange={e => setAwayScore(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
                   </div>
                 </div>
 
-                {/* Extra time */}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={hasExtraTime} onChange={e => setHasExtraTime(e.target.checked)} className="w-4 h-4 accent-orange-500" />
-                  <span className="text-sm text-slate-300">延長戦あり</span>
-                </label>
-                {hasExtraTime && (
-                  <div className="flex items-center gap-2 pl-6">
-                    <span className="text-xs text-slate-400 w-10">延長</span>
-                    <input type="number" min="0" value={etHome} onChange={e => setEtHome(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
-                    <span className="text-slate-400 font-bold">−</span>
-                    <input type="number" min="0" value={etAway} onChange={e => setEtAway(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
-                  </div>
-                )}
-
-                {/* PK */}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={hasPK} onChange={e => setHasPK(e.target.checked)} className="w-4 h-4 accent-yellow-500" />
-                  <span className="text-sm text-slate-300">PKあり</span>
-                </label>
-                {hasPK && (
-                  <div className="flex items-center gap-2 pl-6">
-                    <span className="text-xs text-slate-400 w-10">PK</span>
-                    <input type="number" min="0" value={pkHome} onChange={e => setPkHome(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
-                    <span className="text-slate-400 font-bold">−</span>
-                    <input type="number" min="0" value={pkAway} onChange={e => setPkAway(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
-                  </div>
-                )}
-
-                {/* Scorers */}
-                {sortedMembers.length > 0 && (
-                  <div>
-                    <label className={labelCls}>⚽ 得点者</label>
-                    <div className="flex gap-2 mb-2">
-                      <select value={scorerMid} onChange={e => setScorerMid(e.target.value)} className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
-                        <option value="">選手を選択</option>
-                        {sortedMembers.map(m => <option key={m.id} value={m.id}>#{m.number} {m.name}</option>)}
-                      </select>
-                      <input type="number" min="1" max="9" value={scorerCnt} onChange={e => setScorerCnt(Number(e.target.value))} className="w-14 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs text-center focus:outline-none" />
-                      <button type="button" onClick={addScorer} className="bg-blue-600/40 text-blue-300 text-xs px-3 py-1.5 rounded-lg border border-blue-500/40 hover:bg-blue-600/60">追加</button>
+                {/* Detail section */}
+                <details className="group" open={!!(scorers.length || assists.length || hasPK || hasExtraTime || htHome || htAway || matchType !== MATCH_TYPES[0] || matchFormat !== 'friendly')}>
+                  <summary className="text-xs text-slate-400 cursor-pointer select-none hover:text-slate-200 flex items-center gap-1 py-1">
+                    <span className="group-open:rotate-90 inline-block transition-transform">▶</span> 詳細情報（得点者・PK・試合区分など）
+                  </summary>
+                  <div className="space-y-3 mt-3 pl-1">
+                    <div>
+                      <label className={labelCls}>試合区分</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {MATCH_TYPES.map(mt => (
+                          <button key={mt} type="button" onClick={() => setMatchType(mt)}
+                            className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${matchType === mt ? 'bg-red-600/40 text-red-300 border-transparent' : 'text-slate-400 border-slate-600'}`}>
+                            {mt}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    {scorers.length > 0 && (
-                      <div className="space-y-1">
-                        {scorers.map(s => {
-                          const m = sortedMembers.find(x => x.id === s.memberId);
-                          return (
-                            <div key={s.memberId} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-1.5">
-                              <span className="text-xs text-white flex-1">#{m?.number} {m?.name} × {s.count}</span>
-                              <button type="button" onClick={() => setScorers(prev => prev.filter(x => x.memberId !== s.memberId))} className="text-slate-400 hover:text-red-400 text-xs">削除</button>
-                            </div>
-                          );
-                        })}
+
+                    <div>
+                      <label className={labelCls}>大会形式</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {MATCH_FORMATS.map(mf => (
+                          <button key={mf.value} type="button" onClick={() => setMatchFormat(mf.value)}
+                            className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${matchFormat === mf.value ? 'bg-orange-600/40 text-orange-300 border-transparent' : 'text-slate-400 border-slate-600'}`}>
+                            {mf.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {(matchFormat === 'tournament' || matchFormat === 'league_tournament') && (
+                      <div><label className={labelCls}>ラウンド名</label><input type="text" value={roundName} onChange={e => setRoundName(e.target.value)} placeholder="例: グループA / 準決勝" className={inputCls} /></div>
+                    )}
+
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs text-slate-400 font-semibold">ホーム/アウェー:</span>
+                      <button type="button" onClick={() => setIsHome(true)} className={`px-3 py-1 rounded-lg text-xs font-bold ${isHome ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}>ホーム</button>
+                      <button type="button" onClick={() => setIsHome(false)} className={`px-3 py-1 rounded-lg text-xs font-bold ${!isHome ? 'bg-orange-600 text-white' : 'bg-slate-700 text-slate-400'}`}>アウェー</button>
+                    </div>
+
+                    {/* Half-time score */}
+                    <div>
+                      <label className={labelCls}>前半スコア</label>
+                      <div className="flex items-center gap-2">
+                        <input type="number" min="0" value={htHome} onChange={e => setHtHome(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
+                        <span className="text-slate-400 font-bold">−</span>
+                        <input type="number" min="0" value={htAway} onChange={e => setHtAway(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
+                      </div>
+                    </div>
+
+                    {/* Extra time */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={hasExtraTime} onChange={e => setHasExtraTime(e.target.checked)} className="w-4 h-4 accent-orange-500" />
+                      <span className="text-sm text-slate-300">延長戦あり</span>
+                    </label>
+                    {hasExtraTime && (
+                      <div className="flex items-center gap-2 pl-6">
+                        <span className="text-xs text-slate-400 w-10">延長</span>
+                        <input type="number" min="0" value={etHome} onChange={e => setEtHome(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
+                        <span className="text-slate-400 font-bold">−</span>
+                        <input type="number" min="0" value={etAway} onChange={e => setEtAway(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
                       </div>
                     )}
-                  </div>
-                )}
 
-                {/* Assists */}
-                {sortedMembers.length > 0 && (
-                  <div>
-                    <label className={labelCls}>🎯 アシスト</label>
-                    <div className="flex gap-2 mb-2">
-                      <select value={assistMid} onChange={e => setAssistMid(e.target.value)} className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
-                        <option value="">選手を選択</option>
-                        {sortedMembers.map(m => <option key={m.id} value={m.id}>#{m.number} {m.name}</option>)}
-                      </select>
-                      <input type="number" min="1" max="9" value={assistCnt} onChange={e => setAssistCnt(Number(e.target.value))} className="w-14 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs text-center focus:outline-none" />
-                      <button type="button" onClick={addAssist} className="bg-blue-600/40 text-blue-300 text-xs px-3 py-1.5 rounded-lg border border-blue-500/40 hover:bg-blue-600/60">追加</button>
-                    </div>
-                    {assists.length > 0 && (
-                      <div className="space-y-1">
-                        {assists.map(s => {
-                          const m = sortedMembers.find(x => x.id === s.memberId);
-                          return (
-                            <div key={s.memberId} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-1.5">
-                              <span className="text-xs text-white flex-1">#{m?.number} {m?.name} × {s.count}</span>
-                              <button type="button" onClick={() => setAssists(prev => prev.filter(x => x.memberId !== s.memberId))} className="text-slate-400 hover:text-red-400 text-xs">削除</button>
-                            </div>
-                          );
-                        })}
+                    {/* PK */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={hasPK} onChange={e => setHasPK(e.target.checked)} className="w-4 h-4 accent-yellow-500" />
+                      <span className="text-sm text-slate-300">PKあり</span>
+                    </label>
+                    {hasPK && (
+                      <div className="flex items-center gap-2 pl-6">
+                        <span className="text-xs text-slate-400 w-10">PK</span>
+                        <input type="number" min="0" value={pkHome} onChange={e => setPkHome(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
+                        <span className="text-slate-400 font-bold">−</span>
+                        <input type="number" min="0" value={pkAway} onChange={e => setPkAway(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
                       </div>
                     )}
-                  </div>
-                )}
 
-                {/* Memo */}
-                <div><label className={labelCls}>💬 一言メモ</label><input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="試合の感想・特記事項" className={inputCls} /></div>
+                    {/* Scorers */}
+                    {sortedMembers.length > 0 && (
+                      <div>
+                        <label className={labelCls}>⚽ 得点者</label>
+                        <div className="flex gap-2 mb-2">
+                          <select value={scorerMid} onChange={e => setScorerMid(e.target.value)} className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                            <option value="">選手を選択</option>
+                            {sortedMembers.map(m => <option key={m.id} value={m.id}>#{m.number} {m.name}</option>)}
+                          </select>
+                          <input type="number" min="1" max="9" value={scorerCnt} onChange={e => setScorerCnt(Number(e.target.value))} className="w-14 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs text-center focus:outline-none" />
+                          <button type="button" onClick={addScorer} className="bg-blue-600/40 text-blue-300 text-xs px-3 py-1.5 rounded-lg border border-blue-500/40 hover:bg-blue-600/60">追加</button>
+                        </div>
+                        {scorers.length > 0 && (
+                          <div className="space-y-1">
+                            {scorers.map(s => {
+                              const m = sortedMembers.find(x => x.id === s.memberId);
+                              return (
+                                <div key={s.memberId} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-1.5">
+                                  <span className="text-xs text-white flex-1">#{m?.number} {m?.name} × {s.count}</span>
+                                  <button type="button" onClick={() => setScorers(prev => prev.filter(x => x.memberId !== s.memberId))} className="text-slate-400 hover:text-red-400 text-xs">削除</button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Assists */}
+                    {sortedMembers.length > 0 && (
+                      <div>
+                        <label className={labelCls}>🎯 アシスト</label>
+                        <div className="flex gap-2 mb-2">
+                          <select value={assistMid} onChange={e => setAssistMid(e.target.value)} className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                            <option value="">選手を選択</option>
+                            {sortedMembers.map(m => <option key={m.id} value={m.id}>#{m.number} {m.name}</option>)}
+                          </select>
+                          <input type="number" min="1" max="9" value={assistCnt} onChange={e => setAssistCnt(Number(e.target.value))} className="w-14 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs text-center focus:outline-none" />
+                          <button type="button" onClick={addAssist} className="bg-blue-600/40 text-blue-300 text-xs px-3 py-1.5 rounded-lg border border-blue-500/40 hover:bg-blue-600/60">追加</button>
+                        </div>
+                        {assists.length > 0 && (
+                          <div className="space-y-1">
+                            {assists.map(s => {
+                              const m = sortedMembers.find(x => x.id === s.memberId);
+                              return (
+                                <div key={s.memberId} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-1.5">
+                                  <span className="text-xs text-white flex-1">#{m?.number} {m?.name} × {s.count}</span>
+                                  <button type="button" onClick={() => setAssists(prev => prev.filter(x => x.memberId !== s.memberId))} className="text-slate-400 hover:text-red-400 text-xs">削除</button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Memo */}
+                    <div><label className={labelCls}>💬 一言メモ</label><input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="試合の感想・特記事項" className={inputCls} /></div>
+                  </div>
+                </details>
               </div>
             )}
 
