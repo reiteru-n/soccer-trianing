@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import {
   SchEvent, SchEventType, SchMatchType, SchMatchFormat, SchScorer,
-  SchAnnouncement, SchMember, SchParkingRecord, SchParkingSlot, SchNearbyParking,
+  SchAnnouncement, SchMember, SchMemberParent, SchParkingRecord, SchParkingSlot, SchNearbyParking,
 } from '@/lib/types';
 
 // ---- Utilities ----
@@ -1433,6 +1433,9 @@ function MemberSection({
   const [editingMember, setEditingMember] = useState<SchMember | null>(null);
   const [mNumber, setMNumber] = useState('');
   const [mName, setMName] = useState('');
+  const [mFullName, setMFullName] = useState('');
+  const [mBirthDate, setMBirthDate] = useState('');
+  const [mParents, setMParents] = useState<SchMemberParent[]>([]);
 
   const [showParkingForm, setShowParkingForm] = useState(false);
   const [editingParking, setEditingParking] = useState<SchNearbyParking | null>(null);
@@ -1443,16 +1446,27 @@ function MemberSection({
 
   const [logoWarning, setLogoWarning] = useState('');
 
-  const resetMemberForm = () => { setMNumber(''); setMName(''); setEditingMember(null); setShowMemberForm(false); };
-  const openEditMember = (m: SchMember) => { setEditingMember(m); setMNumber(String(m.number)); setMName(m.name); setShowMemberForm(true); };
+  const resetMemberForm = () => { setMNumber(''); setMName(''); setMFullName(''); setMBirthDate(''); setMParents([]); setEditingMember(null); setShowMemberForm(false); };
+  const openEditMember = (m: SchMember) => { setEditingMember(m); setMNumber(String(m.number)); setMName(m.name); setMFullName(m.fullName ?? ''); setMBirthDate(m.birthDate ?? ''); setMParents(m.parents ? [...m.parents] : []); setShowMemberForm(true); };
   const handleMemberSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!mName || !mNumber) return;
-    const entry: SchMember = { id: editingMember?.id ?? generateId(), number: Number(mNumber), name: mName };
+    const entry: SchMember = {
+      id: editingMember?.id ?? generateId(),
+      number: Number(mNumber),
+      name: mName,
+      ...(mFullName && { fullName: mFullName }),
+      ...(mBirthDate && { birthDate: mBirthDate }),
+      ...(mParents.length > 0 && { parents: mParents.filter(p => p.name.trim()) }),
+    };
     const updated = editingMember ? members.map(m => m.id === editingMember.id ? entry : m) : [...members, entry];
     onSaveMember(updated.sort((a, b) => a.number - b.number));
     resetMemberForm();
   };
+  const addParent = () => { if (mParents.length < 2) setMParents(prev => [...prev, { role: '父', name: '' }]); };
+  const removeParent = (i: number) => setMParents(prev => prev.filter((_, idx) => idx !== i));
+  const updateParent = (i: number, field: keyof SchMemberParent, val: string) =>
+    setMParents(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: val } : p));
   const deleteMember = (id: string) => { if (window.confirm('削除しますか？')) onSaveMember(members.filter(m => m.id !== id)); };
 
   const resetParkingForm = () => { setPName(''); setPAddress(''); setPMapsUrl(''); setPNote(''); setEditingParking(null); setShowParkingForm(false); };
@@ -1494,14 +1508,31 @@ function MemberSection({
         ) : (
           <div className="bg-slate-800/60 border border-white/10 rounded-xl overflow-hidden">
             {sorted.map((m, i) => (
-              <div key={m.id} className={`flex items-center gap-3 px-4 py-3 ${i < sorted.length - 1 ? 'border-b border-white/5' : ''}`}>
-                <span className="text-slate-500 text-xs w-5 text-right font-mono">{i + 1}</span>
-                <span className="w-10 text-center text-sm font-extrabold text-blue-300 bg-blue-900/30 rounded-lg py-0.5">#{m.number}</span>
-                <span className="text-white text-sm font-medium flex-1">{m.name}</span>
-                <div className="flex gap-1">
-                  <button onClick={() => openEditMember(m)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
-                  <button onClick={() => deleteMember(m.id)} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button>
+              <div key={m.id} className={`px-4 py-3 ${i < sorted.length - 1 ? 'border-b border-white/5' : ''}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-slate-500 text-xs w-5 text-right font-mono">{i + 1}</span>
+                  <span className="w-10 text-center text-sm font-extrabold text-blue-300 bg-blue-900/30 rounded-lg py-0.5">#{m.number}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-white text-sm font-medium">{m.name}</span>
+                    {m.fullName && <span className="text-slate-400 text-xs ml-2">{m.fullName}</span>}
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={() => openEditMember(m)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
+                    <button onClick={() => deleteMember(m.id)} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button>
+                  </div>
                 </div>
+                {(m.birthDate || (m.parents && m.parents.length > 0)) && (
+                  <div className="mt-1.5 ml-8 space-y-0.5">
+                    {m.birthDate && (
+                      <p className="text-xs text-slate-500">🎂 {m.birthDate.replace(/-/g, '/')}</p>
+                    )}
+                    {m.parents && m.parents.length > 0 && (
+                      <p className="text-xs text-slate-500">
+                        {m.parents.map(p => `${p.role}: ${p.name}`).join('　')}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1613,7 +1644,27 @@ function MemberSection({
               <div className="flex items-center justify-between"><h3 className="text-base font-bold text-white">{editingMember ? 'メンバーを編集' : 'メンバーを追加'}</h3><button onClick={resetMemberForm} className="text-slate-400 text-2xl">&times;</button></div>
               <form onSubmit={handleMemberSubmit} className="space-y-3">
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1"># 背番号</label><input type="number" min="1" max="99" value={mNumber} onChange={e => setMNumber(e.target.value)} required className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none" /></div>
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1">👤 名前</label><input type="text" value={mName} onChange={e => setMName(e.target.value)} required placeholder="例: たくと" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1">👤 よみがな</label><input type="text" value={mName} onChange={e => setMName(e.target.value)} required placeholder="例: たくと" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1">🪪 本名（漢字）</label><input type="text" value={mFullName} onChange={e => setMFullName(e.target.value)} placeholder="例: 田中 拓渡" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1">🎂 生年月日</label><input type="date" value={mBirthDate} onChange={e => setMBirthDate(e.target.value)} className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none" /></div>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-slate-400">👨‍👩‍👦 保護者</label>
+                    {mParents.length < 2 && <button type="button" onClick={addParent} className="text-xs text-blue-400 hover:text-blue-300">＋ 追加</button>}
+                  </div>
+                  <div className="space-y-2">
+                    {mParents.map((p, i) => (
+                      <div key={i} className="flex gap-2 items-center">
+                        <select value={p.role} onChange={e => updateParent(i, 'role', e.target.value)} className="rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-xs focus:border-blue-400 focus:outline-none w-20">
+                          <option>父</option><option>母</option><option>その他</option>
+                        </select>
+                        <input type="text" value={p.name} onChange={e => updateParent(i, 'name', e.target.value)} placeholder="氏名" className="flex-1 rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" />
+                        <button type="button" onClick={() => removeParent(i)} className="text-slate-400 hover:text-red-400 text-lg px-1">×</button>
+                      </div>
+                    ))}
+                    {mParents.length === 0 && <p className="text-xs text-slate-500">保護者情報なし</p>}
+                  </div>
+                </div>
                 <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-sm">保存</button>
               </form>
             </div>
