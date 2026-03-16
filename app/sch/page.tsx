@@ -1048,27 +1048,32 @@ function SchCalendar({ events, today, onSelectDate }: {
   const [viewYear, setViewYear] = useState(() => parseInt(today.split('/')[0]));
   const [viewMonth, setViewMonth] = useState(() => parseInt(today.split('/')[1]));
 
-  const eventMap = useMemo(() => {
+  // Single-day events → dots
+  const dotMap = useMemo(() => {
     const map: Record<string, SchEvent[]> = {};
-    const addToMap = (dateStr: string, e: SchEvent) => {
-      if (!map[dateStr]) map[dateStr] = [];
-      if (!map[dateStr].find(x => x.id === e.id)) map[dateStr].push(e);
-    };
     events.forEach(e => {
-      addToMap(e.date, e);
-      if (e.endDate && e.endDate > e.date) {
-        const cur = new Date(e.date.replace(/\//g, '-') + 'T00:00:00');
-        const end = new Date(e.endDate.replace(/\//g, '-') + 'T00:00:00');
-        cur.setDate(cur.getDate() + 1);
-        while (cur <= end) {
-          const ds = `${cur.getFullYear()}/${String(cur.getMonth() + 1).padStart(2, '0')}/${String(cur.getDate()).padStart(2, '0')}`;
-          addToMap(ds, e);
-          cur.setDate(cur.getDate() + 1);
-        }
+      if (!e.endDate || e.endDate <= e.date) {
+        if (!map[e.date]) map[e.date] = [];
+        map[e.date].push(e);
       }
     });
     return map;
   }, [events]);
+
+  // Multi-day events per date in view → horizontal bars
+  const multiDayEvs = useMemo(
+    () => events.filter(e => e.endDate && e.endDate > e.date),
+    [events]
+  );
+  const spanMap = useMemo(() => {
+    const dim = new Date(viewYear, viewMonth, 0).getDate();
+    const map: Record<string, SchEvent[]> = {};
+    for (let d = 1; d <= dim; d++) {
+      const ds = `${viewYear}/${String(viewMonth).padStart(2, '0')}/${String(d).padStart(2, '0')}`;
+      map[ds] = multiDayEvs.filter(e => e.date <= ds && e.endDate! >= ds);
+    }
+    return map;
+  }, [multiDayEvs, viewYear, viewMonth]);
 
   const prevMonth = () => { if (viewMonth === 1) { setViewYear(y => y - 1); setViewMonth(12); } else setViewMonth(m => m - 1); };
   const nextMonth = () => { if (viewMonth === 12) { setViewYear(y => y + 1); setViewMonth(1); } else setViewMonth(m => m + 1); };
@@ -1090,24 +1095,52 @@ function SchCalendar({ events, today, onSelectDate }: {
           <div key={d} className={`text-center text-[10px] font-semibold py-0.5 ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-slate-500'}`}>{d}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-y-0.5">
+      <div className="grid grid-cols-7">
         {cells.map((day, i) => {
-          if (!day) return <div key={i} />;
+          if (!day) return <div key={i} className="h-11" />;
           const dateStr = `${viewYear}/${String(viewMonth).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
-          const dayEvs = eventMap[dateStr] ?? [];
+          const dots = dotMap[dateStr] ?? [];
+          const spanning = spanMap[dateStr] ?? [];
           const isToday = dateStr === today;
           const dow = i % 7;
           return (
-            <button key={i} onClick={() => onSelectDate(dateStr)}
-              className={`relative flex flex-col items-center py-0.5 rounded-lg transition-colors ${isToday ? 'bg-blue-600/30 ring-1 ring-blue-400/50' : 'hover:bg-slate-700/60'}`}
+            <button
+              key={i}
+              onClick={() => onSelectDate(dateStr)}
+              className={`relative flex flex-col items-center pt-1 h-11 transition-colors ${isToday ? 'bg-blue-600/30 ring-1 ring-blue-400/50 rounded-lg' : 'hover:bg-slate-700/60 rounded-lg'}`}
             >
-              <span className={`text-xs font-semibold leading-tight ${isToday ? 'text-blue-300' : dow === 0 ? 'text-red-400/80' : dow === 6 ? 'text-blue-400/80' : 'text-slate-300'}`}>{day}</span>
-              <div className="flex gap-0.5 min-h-[6px] items-center flex-wrap justify-center max-w-full px-0.5">
-                {dayEvs.slice(0, 3).map((e, j) => (
-                  <span key={j} className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${EVENT_DOT[e.type] ?? 'bg-slate-400'}`} />
-                ))}
-                {dayEvs.length > 3 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
-              </div>
+              <span className={`text-xs font-semibold leading-none z-10 ${isToday ? 'text-blue-300' : dow === 0 ? 'text-red-400/80' : dow === 6 ? 'text-blue-400/80' : 'text-slate-300'}`}>{day}</span>
+              {/* Multi-day event bars — bleed to edges to connect with adjacent cells */}
+              {spanning.slice(0, 3).map((e, j) => {
+                const isStart = e.date === dateStr;
+                const isEnd = e.endDate === dateStr;
+                const isRowStart = dow === 0;
+                const isRowEnd = dow === 6;
+                const roundL = isStart || isRowStart;
+                const roundR = isEnd || isRowEnd;
+                const color = EVENT_DOT[e.type] ?? 'bg-slate-400';
+                return (
+                  <div
+                    key={e.id}
+                    className={`absolute h-1 ${color} opacity-75`}
+                    style={{
+                      top: `${20 + j * 5}px`,
+                      left: isStart && !isRowStart ? '50%' : 0,
+                      right: isEnd && !isRowEnd ? '50%' : 0,
+                      borderRadius: `${roundL ? '9999px' : '0'} ${roundR ? '9999px' : '0'} ${roundR ? '9999px' : '0'} ${roundL ? '9999px' : '0'}`,
+                    }}
+                  />
+                );
+              })}
+              {/* Single-day event dots */}
+              {dots.length > 0 && (
+                <div className="absolute bottom-1 flex gap-0.5 items-center justify-center z-10">
+                  {dots.slice(0, 3).map((e, j) => (
+                    <span key={j} className={`w-1 h-1 rounded-full flex-shrink-0 ${EVENT_DOT[e.type] ?? 'bg-slate-400'}`} />
+                  ))}
+                  {dots.length > 3 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
+                </div>
+              )}
             </button>
           );
         })}
