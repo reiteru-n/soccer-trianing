@@ -1981,14 +1981,17 @@ export default function SchPage() {
             )}
             <h1 className="text-2xl font-extrabold text-white drop-shadow">SCH Info</h1>
           </div>
-          {isAdmin && (
-            <a
-              href="/sch/admin"
-              className="text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
-            >
-              🔍 管理
-            </a>
-          )}
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
+            {isAdmin && (
+              <a
+                href="/sch/admin"
+                className="text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                🔍 管理
+              </a>
+            )}
+          </div>
         </div>
       </header>
 
