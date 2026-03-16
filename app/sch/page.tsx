@@ -413,7 +413,15 @@ function EventForm({
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">🚩 集合情報（任意）</p>
                 <div className="flex gap-2">
                   <div className="flex-1">
-                    <label className={labelCls}>⏰ 集合時間</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className={labelCls} style={{marginBottom:0}}>⏰ 集合時間</label>
+                      {startTime && (
+                        <button type="button" onClick={() => setMeetingTime(startTime)}
+                          className="text-[10px] px-2 py-0.5 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">
+                          開始時間と同じ
+                        </button>
+                      )}
+                    </div>
                     <input type="time" value={meetingTime} onChange={e => setMeetingTime(e.target.value)} className={inputCls} />
                   </div>
                   <div className="flex-1">
