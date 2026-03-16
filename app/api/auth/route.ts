@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   if (type === 'member') {
     const expected = process.env.MEMBER_PASSWORD ?? 'SCH26';
-    if (password !== expected) {
+    if (password.toLowerCase() !== expected.toLowerCase()) {
       return NextResponse.json({ error: 'パスワードが違います' }, { status: 401 });
     }
     return NextResponse.json({ ok: true });

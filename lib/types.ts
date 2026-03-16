@@ -133,6 +133,7 @@ export interface SchAnnouncement {
 export interface SchMemberParent {
   role: '父' | '母' | 'その他';
   name: string;
+  nameKana?: string;
 }
 
 export interface SchMember {

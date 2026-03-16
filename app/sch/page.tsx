@@ -1567,8 +1567,14 @@ function MemberSection({
                 <span className="text-slate-500 text-xs w-5 text-right font-mono">{i + 1}</span>
                 <span className="w-10 text-center text-sm font-extrabold text-blue-300 bg-blue-900/30 rounded-lg py-0.5">#{m.number}</span>
                 <button onClick={() => setViewingMember(m)} className="flex-1 min-w-0 text-left">
-                  <span className="text-white text-sm font-medium">{m.name}</span>
-                  {m.nameKana && <span className="text-slate-500 text-xs ml-2">（{m.nameKana}）</span>}
+                  {m.nameKana ? (
+                    <>
+                      <span className="text-white text-sm font-medium">{m.nameKana}</span>
+                      <span className="text-slate-500 text-xs ml-1.5">（{m.name}）</span>
+                    </>
+                  ) : (
+                    <span className="text-white text-sm font-medium">{m.name}</span>
+                  )}
                 </button>
                 <div className="flex gap-1">
                   <button onClick={() => openEditMember(m)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
@@ -1691,41 +1697,47 @@ function MemberSection({
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setViewingMember(null)}>
             <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md border border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="px-5 pt-5 pb-6 space-y-4">
+                {/* ヘッダー: 番号 + 閉じるボタン */}
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-extrabold text-blue-300 bg-blue-900/30 rounded-xl px-3 py-1">#{m.number}</span>
-                    <div>
-                      <p className="text-base font-bold text-white">{m.name}</p>
-                      {m.nameKana && <p className="text-xs text-slate-400">{m.nameKana}</p>}
-                    </div>
-                  </div>
+                  <span className="text-xl font-extrabold text-blue-300 bg-blue-900/30 rounded-xl px-3 py-1">#{m.number}</span>
                   <button onClick={() => setViewingMember(null)} className="text-slate-400 text-2xl">&times;</button>
                 </div>
-                <div className="space-y-2">
-                  {m.birthDate && (
-                    <div className="flex items-center gap-3 bg-slate-700/40 rounded-xl px-4 py-2.5">
-                      <span className="text-lg">🎂</span>
-                      <div>
-                        <p className="text-[10px] text-slate-400">生年月日</p>
-                        <p className="text-sm text-white">{m.birthDate.replace(/-/g, '/')}
-                          {age !== null && <span className="text-slate-400 text-xs ml-2">（{age}歳）</span>}
-                        </p>
-                      </div>
-                    </div>
+                {/* 本人情報メイン */}
+                <div className="space-y-1">
+                  {m.nameKana ? (
+                    <>
+                      <p className="text-2xl font-extrabold text-white">{m.nameKana}</p>
+                      <p className="text-sm text-slate-400">{m.name}</p>
+                    </>
+                  ) : (
+                    <p className="text-2xl font-extrabold text-white">{m.name}</p>
                   )}
-                  {m.parents && m.parents.length > 0 && m.parents.map((p, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-slate-700/40 rounded-xl px-4 py-2.5">
-                      <span className="text-lg">{p.role === '父' ? '👨' : p.role === '母' ? '👩' : '👤'}</span>
-                      <div>
-                        <p className="text-[10px] text-slate-400">保護者（{p.role}）</p>
-                        <p className="text-sm text-white">{p.name}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {!m.birthDate && (!m.parents || m.parents.length === 0) && (
-                    <p className="text-sm text-slate-500 text-center py-2">詳細情報なし</p>
+                  {m.birthDate && (
+                    <p className="text-sm text-slate-300 pt-1">
+                      🎂 {m.birthDate.replace(/-/g, '/')}生まれ
+                      {age !== null && <span className="text-slate-500 text-xs ml-2">（{age}歳）</span>}
+                    </p>
                   )}
                 </div>
+                {/* 保護者（サブ情報） */}
+                {m.parents && m.parents.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-t border-white/10 pt-3">保護者</p>
+                    {m.parents.map((p, i) => (
+                      <div key={i} className="flex items-start gap-3 bg-slate-700/40 rounded-xl px-4 py-2.5">
+                        <span className="text-lg mt-0.5">{p.role === '父' ? '👨' : p.role === '母' ? '👩' : '👤'}</span>
+                        <div>
+                          <p className="text-[10px] text-slate-500">{p.role}</p>
+                          <p className="text-sm text-white">{p.name}</p>
+                          {p.nameKana && <p className="text-xs text-slate-400">{p.nameKana}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!m.birthDate && (!m.parents || m.parents.length === 0) && (
+                  <p className="text-sm text-slate-500 text-center py-2">詳細情報なし</p>
+                )}
                 <button onClick={() => { setViewingMember(null); openEditMember(m); }} className="w-full text-xs text-slate-400 border border-slate-600 hover:border-slate-400 hover:text-white py-2 rounded-xl transition-colors">編集</button>
               </div>
             </div>
@@ -1751,12 +1763,15 @@ function MemberSection({
                   </div>
                   <div className="space-y-2">
                     {mParents.map((p, i) => (
-                      <div key={i} className="flex gap-2 items-center">
-                        <select value={p.role} onChange={e => updateParent(i, 'role', e.target.value)} className="rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-xs focus:border-blue-400 focus:outline-none w-20">
-                          <option>父</option><option>母</option><option>その他</option>
-                        </select>
-                        <input type="text" value={p.name} onChange={e => updateParent(i, 'name', e.target.value)} placeholder="氏名" className="flex-1 rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" />
-                        <button type="button" onClick={() => removeParent(i)} className="text-slate-400 hover:text-red-400 text-lg px-1">×</button>
+                      <div key={i} className="space-y-1.5">
+                        <div className="flex gap-2 items-center">
+                          <select value={p.role} onChange={e => updateParent(i, 'role', e.target.value)} className="rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-xs focus:border-blue-400 focus:outline-none w-20">
+                            <option>父</option><option>母</option><option>その他</option>
+                          </select>
+                          <input type="text" value={p.name} onChange={e => updateParent(i, 'name', e.target.value)} placeholder="氏名" className="flex-1 rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" />
+                          <button type="button" onClick={() => removeParent(i)} className="text-slate-400 hover:text-red-400 text-lg px-1">×</button>
+                        </div>
+                        <input type="text" value={p.nameKana ?? ''} onChange={e => updateParent(i, 'nameKana', e.target.value)} placeholder="よみがな（任意）" className="w-full rounded-xl border border-slate-600 bg-slate-900 text-white px-3 py-1.5 text-xs focus:border-blue-400 focus:outline-none placeholder-slate-500" />
                       </div>
                     ))}
                     {mParents.length === 0 && <p className="text-xs text-slate-500">保護者情報なし</p>}
