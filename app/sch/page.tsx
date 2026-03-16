@@ -156,7 +156,7 @@ function ParkingEventCard({
             <div key={slot.memberId} className={`flex items-center gap-3 px-4 py-2.5 ${i < activeSlots.length - 1 ? 'border-b border-white/5' : ''}`}>
               <span className="text-slate-500 text-xs w-4 text-right">{i + 1}</span>
               <span className="w-9 text-center text-xs font-bold text-blue-300 bg-blue-900/30 rounded py-0.5">#{member.number}</span>
-              <span className="text-white text-sm flex-1">{member.name}</span>
+              <span className="text-white text-sm flex-1">{member.nameKana || member.name}</span>
               {(slot.status === 'used' || slot.status === 'pending') && !isPast && (
                 <div className="flex items-center gap-1">
                   {slot.status === 'used'
@@ -192,7 +192,7 @@ function ParkingEventCard({
             const member = getMember(slot.memberId);
             return (
               <div key={slot.memberId} className="flex items-center gap-2 text-xs">
-                <span className="text-slate-500 line-through">#{member?.number} {member?.name}</span>
+                <span className="text-slate-500 line-through">#{member?.number} {member?.nameKana || member?.name}</span>
                 {slot.skipComment && <span className="text-slate-500 italic">「{slot.skipComment}」</span>}
                 {!isPast && (
                   <button onClick={() => onUnskip(plan.id, slot.memberId)} className="ml-auto text-slate-400 hover:text-white text-[10px] px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors">取消</button>
@@ -1593,7 +1593,7 @@ function MemberSection({
           <div>
             <p className="text-xs text-slate-400">次の割当開始</p>
             {nextMember ? (
-              <p className="text-sm font-bold text-white mt-0.5">#{nextMember.number} {nextMember.name} から</p>
+              <p className="text-sm font-bold text-white mt-0.5">#{nextMember.number} {nextMember.nameKana || nextMember.name} から</p>
             ) : (
               <p className="text-sm text-slate-500 mt-0.5">メンバーなし</p>
             )}
