@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   if (type === 'family') {
     const expected = process.env.FAMILY_PASSWORD;
-    if (!expected || password !== expected) {
+    if (!expected || password.toLowerCase() !== expected.toLowerCase()) {
       return NextResponse.json({ error: 'パスワードが違います' }, { status: 401 });
     }
     const res = NextResponse.json({ ok: true });
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   if (type === 'team') {
     const expected = process.env.TEAM_PASSWORD;
-    if (!expected || password !== expected) {
+    if (!expected || password.toLowerCase() !== expected.toLowerCase()) {
       return NextResponse.json({ error: 'パスワードが違います' }, { status: 401 });
     }
     const res = NextResponse.json({ ok: true });
