@@ -64,7 +64,7 @@ function computeEventParking(
     if (skipped.has(member.id)) {
       slots.push({ memberId: member.id, status: 'skipped' });
     } else {
-      slots.push({ memberId: member.id, status: 'pending', isFillIn: offset > maxSlots });
+      slots.push({ memberId: member.id, status: 'used', isFillIn: offset > maxSlots });
       filled++;
     }
   }
@@ -157,29 +157,28 @@ function ParkingEventCard({
               <span className="text-slate-500 text-xs w-4 text-right">{i + 1}</span>
               <span className="w-9 text-center text-xs font-bold text-blue-300 bg-blue-900/30 rounded py-0.5">#{member.number}</span>
               <span className="text-white text-sm flex-1">{member.name}</span>
-              {slot.status === 'used' && !isPast && (
+              {(slot.status === 'used' || slot.status === 'pending') && !isPast && (
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full">✓ 使用</span>
-                  <button
-                    onClick={() => onUnskip(plan.id, slot.memberId)}
-                    className="text-[10px] text-slate-400 hover:text-white px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors"
-                  >取消</button>
-                </div>
-              )}
-              {slot.status === 'used' && isPast && (
-                <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full">✓ 使用</span>
-              )}
-              {slot.status === 'pending' && !isPast && (
-                <div className="flex gap-1">
+                  {slot.status === 'used'
+                    ? <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full">✓ 使用</span>
+                    : <span className="text-[10px] text-slate-500 px-1.5 py-0.5">─ 未使用</span>
+                  }
+                  {slot.status === 'pending' && (
+                    <button
+                      onClick={() => onMarkUsed(plan.id, slot.memberId)}
+                      className="text-[10px] text-slate-500 hover:text-green-400 px-2 py-0.5 rounded border border-slate-700 hover:border-green-500/50 transition-colors"
+                    >使用</button>
+                  )}
                   <button
                     onClick={() => setSkipTarget(slot.memberId)}
                     className="text-[10px] text-slate-500 hover:text-amber-400 px-2 py-0.5 rounded border border-slate-700 hover:border-amber-500/50 transition-colors"
                   >スキップ</button>
-                  <button
-                    onClick={() => onMarkUsed(plan.id, slot.memberId)}
-                    className="text-[10px] text-slate-500 hover:text-green-400 px-2 py-0.5 rounded border border-slate-700 hover:border-green-500/50 transition-colors"
-                  >使用</button>
                 </div>
+              )}
+              {(slot.status === 'used' || slot.status === 'pending') && isPast && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${slot.status === 'used' ? 'bg-green-500/20 text-green-300' : 'text-slate-500'}`}>
+                  {slot.status === 'used' ? '✓ 使用' : '─ 未使用'}
+                </span>
               )}
             </div>
           );
@@ -829,7 +828,7 @@ function EventSection({ events, members, onSave }: {
 
       {/* Past */}
       {past.length > 0 && (
-        <details className="mt-2">
+        <details className="mt-2" open>
           <summary className="text-xs text-slate-500 cursor-pointer mb-2 select-none">過去の予定 ({past.length}件)</summary>
           <div className="space-y-2 mt-2">
             {past.map(ev => (
@@ -1077,7 +1076,7 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
 // ---- HomeSection ----
 function HomeSection({
   events, members, parkingRecords, parkingRotation, nearbyParking,
-  onSkip, onUnskip, onMarkUsed, onUpdateMaxSlots,
+  onSkip, onUnskip, onMarkUsed, onMarkPending, onUpdateMaxSlots,
 }: {
   events: SchEvent[];
   members: SchMember[];
@@ -1087,6 +1086,7 @@ function HomeSection({
   onSkip: (eventId: string, memberId: string, comment: string) => void;
   onUnskip: (eventId: string, memberId: string) => void;
   onMarkUsed: (eventId: string, memberId: string) => void;
+  onMarkPending: (eventId: string, memberId: string) => void;
   onUpdateMaxSlots: (eventId: string, maxSlots: number) => void;
 }) {
   const today = todayStr();
@@ -1220,15 +1220,18 @@ function HomeSection({
                       {activeSlots.map((slot, i) => {
                         const m = sortedMembers.find(mb => mb.id === slot.memberId);
                         if (!m) return null;
+                        const isUsed = slot.status === 'used';
                         return (
                           <div key={slot.memberId} className="flex items-center gap-2 text-xs">
                             <span className="text-slate-500 w-3 text-right">{i + 1}</span>
                             <span className="text-blue-300 w-8 text-center font-bold">#{m.number}</span>
                             <span className="text-slate-300 flex-1">{m.name}</span>
-                            {slot.status === 'used'
-                              ? <span className="text-green-400 font-semibold">✓ 使用</span>
-                              : <span className="text-slate-500">─</span>
-                            }
+                            <button
+                              onClick={() => isUsed ? onMarkPending(record.eventId, slot.memberId) : onMarkUsed(record.eventId, slot.memberId)}
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors ${isUsed ? 'bg-green-500/20 text-green-300 border-green-500/30 hover:bg-green-500/10' : 'text-slate-500 border-slate-600 hover:text-green-400 hover:border-green-500/50'}`}
+                            >
+                              {isUsed ? '✓ 使用' : '─ 未使用'}
+                            </button>
                           </div>
                         );
                       })}
@@ -1236,11 +1239,15 @@ function HomeSection({
                         const m = sortedMembers.find(mb => mb.id === slot.memberId);
                         if (!m) return null;
                         return (
-                          <div key={slot.memberId} className="flex items-center gap-2 text-xs opacity-50">
+                          <div key={slot.memberId} className="flex items-center gap-2 text-xs opacity-60">
                             <span className="text-slate-500 w-3">─</span>
                             <span className="text-slate-400 w-8 text-center">#{m.number}</span>
                             <span className="text-slate-400 flex-1">{m.name}</span>
-                            <span className="text-amber-500">スキップ{slot.skipComment ? `（${slot.skipComment}）` : ''}</span>
+                            <span className="text-amber-500/80 text-[10px]">スキップ{slot.skipComment ? `（${slot.skipComment}）` : ''}</span>
+                            <button
+                              onClick={() => onUnskip(record.eventId, slot.memberId)}
+                              className="text-[10px] text-slate-500 hover:text-white px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors"
+                            >取消</button>
                           </div>
                         );
                       })}
@@ -1626,6 +1633,13 @@ export default function SchPage() {
     });
   }, [upsertParkingRecord]);
 
+  const handleMarkPending = useCallback((eventId: string, memberId: string) => {
+    upsertParkingRecord(eventId, slots => {
+      const without = slots.filter(s => s.memberId !== memberId);
+      return [...without, { memberId, status: 'pending' }];
+    });
+  }, [upsertParkingRecord]);
+
   const handleUpdateMaxSlots = useCallback((eventId: string, maxSlots: number) => {
     setEvents(prev => {
       const updated = prev.map(e => e.id === eventId ? { ...e, maxParkingSlots: maxSlots } : e);
@@ -1694,7 +1708,7 @@ export default function SchPage() {
           events={events} members={members}
           parkingRecords={parkingRecords} parkingRotation={parkingRotation}
           nearbyParking={nearbyParking}
-          onSkip={handleSkip} onUnskip={handleUnskip} onMarkUsed={handleMarkUsed}
+          onSkip={handleSkip} onUnskip={handleUnskip} onMarkUsed={handleMarkUsed} onMarkPending={handleMarkPending}
           onUpdateMaxSlots={handleUpdateMaxSlots}
         />
       )}
