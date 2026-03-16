@@ -326,8 +326,8 @@ function EventForm({
       location: location || undefined,
       label: label || undefined,
       note: note || undefined,
-      meetingTime: (type === 'match' || type === 'camp') && meetingTime ? meetingTime : undefined,
-      meetingPlace: (type === 'match' || type === 'camp') && meetingPlace ? meetingPlace : undefined,
+      meetingTime: (type === 'match' || type === 'camp' || type === 'other') && meetingTime ? meetingTime : undefined,
+      meetingPlace: (type === 'match' || type === 'camp' || type === 'other') && meetingPlace ? meetingPlace : undefined,
       maxParkingSlots: parkingAvailable ? (parkingUnlimited ? -1 : (maxParkingSlots !== DEFAULT_MAX_SLOTS ? maxParkingSlots : undefined)) : 0,
     };
     if (type === 'match') {
@@ -407,8 +407,8 @@ function EventForm({
             <div><label className={labelCls}>📋 イベント名{type === 'match' ? '・大会名' : ''}</label><input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={type === 'match' ? '例: 神奈川カップ2026' : '例: 通常練習'} className={inputCls} /></div>
             <div><label className={labelCls}>📝 メモ</label><input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="持ち物・備考など" className={inputCls} /></div>
 
-            {/* Meeting info (match / camp only) */}
-            {(type === 'match' || type === 'camp') && (
+            {/* Meeting info (match / camp / other) */}
+            {(type === 'match' || type === 'camp' || type === 'other') && (
               <div className="space-y-3 border-t border-white/10 pt-3">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">🚩 集合情報（任意）</p>
                 <div className="flex gap-2">
