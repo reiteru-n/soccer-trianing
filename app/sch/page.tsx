@@ -635,6 +635,9 @@ function EventCard({
             </p>
             {event.type === 'match' && event.label && <p className="text-xs text-slate-400 truncate">{event.label}</p>}
             {hasScore && <p className="text-xl font-extrabold text-white leading-tight">{event.homeScore} <span className="text-slate-400 text-sm font-normal">−</span> {event.awayScore}</p>}
+            {!hasScore && isPast && event.type === 'match' && (
+              <p className="text-[11px] text-amber-400/80 italic mt-0.5">🙏 誰か戦績を入力して頂けるとありがたいです</p>
+            )}
             {!hasScore && event.type === 'match' && event.startTime && <p className="text-xs text-slate-400">⏰ {event.startTime} K.O.</p>}
             {event.type !== 'match' && (event.startTime || event.endTime) && (
               <p className="text-xs text-slate-400">⏰ {event.startTime ?? ''}{event.startTime && event.endTime ? ' 〜 ' : ''}{event.endTime ?? ''}</p>
