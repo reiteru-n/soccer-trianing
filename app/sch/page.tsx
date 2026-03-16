@@ -34,7 +34,7 @@ const TYPE_CFG: Record<string, TypeCfg> = {
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
 
-const MATCH_TYPES: SchMatchType[] = ['トレマ', '公式戦', 'CUP戦', 'その他'];
+const MATCH_TYPES: SchMatchType[] = ['公式戦', 'CUP戦', 'トレマ', 'その他'];
 const MATCH_FORMATS: { value: SchMatchFormat; label: string }[] = [
   { value: 'friendly',          label: 'フレンドリー' },
   { value: 'tournament',        label: 'トーナメント' },
@@ -465,7 +465,7 @@ function EventForm({
               <div className="space-y-3 border-t border-white/10 pt-4">
                 <p className="text-xs font-bold text-red-400 uppercase tracking-wider">試合情報</p>
 
-                {/* Primary: opponent + final score */}
+                {/* Primary: opponent + score + match type */}
                 <div><label className={labelCls}>🆚 対戦相手</label><input type="text" value={opponentName} onChange={e => setOpponentName(e.target.value)} placeholder="例: ○○FC" className={inputCls} /></div>
 
                 <div>
@@ -477,24 +477,24 @@ function EventForm({
                   </div>
                 </div>
 
+                <div>
+                  <label className={labelCls}>試合区分</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {MATCH_TYPES.map(mt => (
+                      <button key={mt} type="button" onClick={() => setMatchType(mt)}
+                        className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${matchType === mt ? 'bg-red-600/40 text-red-300 border-transparent' : 'text-slate-400 border-slate-600'}`}>
+                        {mt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Detail section */}
-                <details className="group" open={!!(scorers.length || assists.length || hasPK || hasExtraTime || htHome || htAway || matchType !== MATCH_TYPES[0] || matchFormat !== 'friendly')}>
+                <details className="group" open={!!(scorers.length || assists.length || hasPK || hasExtraTime || htHome || htAway || matchFormat !== 'friendly')}>
                   <summary className="text-xs text-slate-400 cursor-pointer select-none hover:text-slate-200 flex items-center gap-1 py-1">
-                    <span className="group-open:rotate-90 inline-block transition-transform">▶</span> 詳細情報（得点者・PK・試合区分など）
+                    <span className="group-open:rotate-90 inline-block transition-transform">▶</span> 詳細情報（得点者・PK・大会形式など）
                   </summary>
                   <div className="space-y-3 mt-3 pl-1">
-                    <div>
-                      <label className={labelCls}>試合区分</label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {MATCH_TYPES.map(mt => (
-                          <button key={mt} type="button" onClick={() => setMatchType(mt)}
-                            className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${matchType === mt ? 'bg-red-600/40 text-red-300 border-transparent' : 'text-slate-400 border-slate-600'}`}>
-                            {mt}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
                     <div>
                       <label className={labelCls}>大会形式</label>
                       <div className="flex flex-wrap gap-1.5">
