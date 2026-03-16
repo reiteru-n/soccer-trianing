@@ -160,7 +160,7 @@ function ParkingEventCard({
               {(slot.status === 'used' || slot.status === 'pending') && !isPast && (
                 <div className="flex items-center gap-1">
                   {slot.status === 'used'
-                    ? <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full">✓ 使用</span>
+                    ? <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded-full">📅 使用予定</span>
                     : <span className="text-[10px] text-slate-500 px-1.5 py-0.5">─ 未使用</span>
                   }
                   {slot.status === 'pending' && (
@@ -1115,7 +1115,7 @@ function ParkingHistorySection({
     ev.type === 'match' ? (ev.opponentName ? `vs ${ev.opponentName}` : '試合') : (ev.label || ev.location || tc(ev.type).label);
 
   return (
-    <details className="group">
+    <details className="group" open>
       <summary className="text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer list-none flex items-center gap-1.5 select-none">
         <span className="transition-transform group-open:rotate-90 inline-block">▶</span>
         🕐 駐車場利用履歴
