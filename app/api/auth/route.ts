@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logChange, getIp, getUa } from '@/lib/logger';
 
 async function makeToken(type: string): Promise<string> {
   const secret = process.env.AUTH_SECRET ?? 'dev-secret';
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: COOKIE_MAX_AGE,
     });
+    logChange({ ts: new Date().toISOString(), action: 'login', detail: 'type=family', ip: getIp(req), ua: getUa(req) });
     return res;
   }
 
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: COOKIE_MAX_AGE,
     });
+    logChange({ ts: new Date().toISOString(), action: 'login', detail: 'type=team', ip: getIp(req), ua: getUa(req) });
     return res;
   }
 

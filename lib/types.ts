@@ -167,3 +167,20 @@ export interface SchNearbyParking {
   googleMapsUrl?: string;
   note?: string;
 }
+
+// Admin logs
+export interface AccessLogEntry {
+  ts: string;   // ISO timestamp
+  type: string; // 'family' | 'team' | 'login'
+  page: string; // '/sch' | '/family' | 'login'
+  ip: string;
+  ua: string;
+}
+
+export interface ChangeLogEntry {
+  ts: string;
+  action: string; // 'events' | 'announcements' | 'members' | 'parkingRecords' | 'login' | etc.
+  detail: string;
+  ip: string;
+  ua: string;
+}

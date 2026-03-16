@@ -43,6 +43,26 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Admin logs API: requires family session
+  if (pathname.startsWith('/api/admin/logs')) {
+    if (!(await hasValidCookie(req, 'family_session', 'family'))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
+  // SCH admin page: requires family session (管理者は家族パスワードでアクセス)
+  if (pathname.startsWith('/sch/admin')) {
+    if (!(await hasValidCookie(req, 'family_session', 'family'))) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('type', 'family');
+      url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
   // SCH page: requires team session
   if (pathname.startsWith('/sch')) {
     if (!(await hasValidCookie(req, 'team_session', 'team'))) {

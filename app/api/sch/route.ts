@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { SchSchedule, SchMatch, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent } from '@/lib/types';
+import { logAccess, logChange, getIp, getUa } from '@/lib/logger';
 
 const KEYS = {
   events:         'sch:events',
@@ -194,15 +195,36 @@ async function writeSchPartial(body: Partial<Record<string, unknown>>): Promise<
   writeFileSync(path, JSON.stringify({ ...current, ...body }, null, 2));
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const data = await readSchData();
+  logAccess({ ts: new Date().toISOString(), type: 'team', page: '/sch', ip: getIp(req), ua: getUa(req) });
   return NextResponse.json(data);
 }
+
+const ACTION_LABELS: Record<string, string> = {
+  events: 'イベント保存',
+  announcements: 'お知らせ保存',
+  members: 'メンバー変更',
+  parkingRecords: '駐車場記録',
+  parkingRotation: '駐車場ローテーション更新',
+  nearbyParking: '近隣駐車場変更',
+  teamLogo: 'チームロゴ変更',
+};
 
 export async function POST(req: Request) {
   try {
     const body = await req.json() as Record<string, unknown>;
     await writeSchPartial(body);
+    const actions = Object.keys(body).filter(k => k in ACTION_LABELS);
+    if (actions.length > 0) {
+      logChange({
+        ts: new Date().toISOString(),
+        action: actions[0],
+        detail: actions.map(a => ACTION_LABELS[a] ?? a).join(', '),
+        ip: getIp(req),
+        ua: getUa(req),
+      });
+    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
