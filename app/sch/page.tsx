@@ -1785,6 +1785,11 @@ export default function SchPage() {
   const [nearbyParking, setNearbyParking] = useState<SchNearbyParking[]>([]);
   const [teamLogo, setTeamLogo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/logs?limit=1').then(r => { if (r.ok) setIsAdmin(true); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/sch').then(r => r.json()).then(d => {
@@ -1902,6 +1907,14 @@ export default function SchPage() {
             )}
             <h1 className="text-2xl font-extrabold text-white drop-shadow">SCH Info</h1>
           </div>
+          {isAdmin && (
+            <a
+              href="/sch/admin"
+              className="text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
+            >
+              🔍 管理
+            </a>
+          )}
         </div>
       </header>
 
