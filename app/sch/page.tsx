@@ -1433,7 +1433,7 @@ function MemberSection({
   const [editingMember, setEditingMember] = useState<SchMember | null>(null);
   const [mNumber, setMNumber] = useState('');
   const [mName, setMName] = useState('');
-  const [mFullName, setMFullName] = useState('');
+  const [mNameKana, setMNameKana] = useState('');
   const [mBirthDate, setMBirthDate] = useState('');
   const [mParents, setMParents] = useState<SchMemberParent[]>([]);
 
@@ -1446,8 +1446,8 @@ function MemberSection({
 
   const [logoWarning, setLogoWarning] = useState('');
 
-  const resetMemberForm = () => { setMNumber(''); setMName(''); setMFullName(''); setMBirthDate(''); setMParents([]); setEditingMember(null); setShowMemberForm(false); };
-  const openEditMember = (m: SchMember) => { setEditingMember(m); setMNumber(String(m.number)); setMName(m.name); setMFullName(m.fullName ?? ''); setMBirthDate(m.birthDate ?? ''); setMParents(m.parents ? [...m.parents] : []); setShowMemberForm(true); };
+  const resetMemberForm = () => { setMNumber(''); setMName(''); setMNameKana(''); setMBirthDate(''); setMParents([]); setEditingMember(null); setShowMemberForm(false); };
+  const openEditMember = (m: SchMember) => { setEditingMember(m); setMNumber(String(m.number)); setMName(m.name); setMNameKana(m.nameKana ?? ''); setMBirthDate(m.birthDate ?? ''); setMParents(m.parents ? [...m.parents] : []); setShowMemberForm(true); };
   const handleMemberSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!mName || !mNumber) return;
@@ -1455,7 +1455,7 @@ function MemberSection({
       id: editingMember?.id ?? generateId(),
       number: Number(mNumber),
       name: mName,
-      ...(mFullName && { fullName: mFullName }),
+      ...(mNameKana && { nameKana: mNameKana }),
       ...(mBirthDate && { birthDate: mBirthDate }),
       ...(mParents.length > 0 && { parents: mParents.filter(p => p.name.trim()) }),
     };
@@ -1514,7 +1514,7 @@ function MemberSection({
                   <span className="w-10 text-center text-sm font-extrabold text-blue-300 bg-blue-900/30 rounded-lg py-0.5">#{m.number}</span>
                   <div className="flex-1 min-w-0">
                     <span className="text-white text-sm font-medium">{m.name}</span>
-                    {m.fullName && <span className="text-slate-400 text-xs ml-2">{m.fullName}</span>}
+                    {m.nameKana && <span className="text-slate-500 text-xs ml-2">（{m.nameKana}）</span>}
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => openEditMember(m)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
@@ -1644,8 +1644,8 @@ function MemberSection({
               <div className="flex items-center justify-between"><h3 className="text-base font-bold text-white">{editingMember ? 'メンバーを編集' : 'メンバーを追加'}</h3><button onClick={resetMemberForm} className="text-slate-400 text-2xl">&times;</button></div>
               <form onSubmit={handleMemberSubmit} className="space-y-3">
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1"># 背番号</label><input type="number" min="1" max="99" value={mNumber} onChange={e => setMNumber(e.target.value)} required className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none" /></div>
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1">👤 よみがな</label><input type="text" value={mName} onChange={e => setMName(e.target.value)} required placeholder="例: たくと" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1">🪪 本名（漢字）</label><input type="text" value={mFullName} onChange={e => setMFullName(e.target.value)} placeholder="例: 田中 拓渡" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1">👤 名前（漢字）</label><input type="text" value={mName} onChange={e => setMName(e.target.value)} required placeholder="例: 西本拓渡" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1">📖 ふりがな</label><input type="text" value={mNameKana} onChange={e => setMNameKana(e.target.value)} placeholder="例: にしもとたくと" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">🎂 生年月日</label><input type="date" value={mBirthDate} onChange={e => setMBirthDate(e.target.value)} className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none" /></div>
                 <div>
                   <div className="flex items-center justify-between mb-1.5">

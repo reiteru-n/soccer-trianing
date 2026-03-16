@@ -137,9 +137,9 @@ export interface SchMemberParent {
 
 export interface SchMember {
   id: string;
-  number: number;   // jersey number (= parking order)
-  name: string;     // hiragana name
-  fullName?: string;  // 本名（漢字）
+  number: number;    // jersey number (= parking order)
+  name: string;      // 表示名（漢字）
+  nameKana?: string; // ふりがな
   birthDate?: string; // 生年月日 YYYY-MM-DD
   parents?: SchMemberParent[];
 }
