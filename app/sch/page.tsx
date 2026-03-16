@@ -28,8 +28,8 @@ const TYPE_CFG: Record<string, TypeCfg> = {
   practice:   { label: '練習',   icon: '⚽', badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
   schedule:   { label: '練習',   icon: '⚽', badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
   match:      { label: '試合',   icon: '🏆', badge: 'bg-red-600/40 text-red-300',      border: 'border-red-500/30',    bg: 'bg-red-900/20'    },
-  camp:       { label: '合宿',   icon: '🏕️', badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
-  expedition: { label: '遠征',   icon: '✈️', badge: 'bg-blue-600/40 text-blue-300',    border: 'border-blue-500/30',   bg: 'bg-blue-900/20'   },
+  camp:       { label: '合宿/遠征', icon: '🏕️', badge: 'bg-amber-600/40 text-amber-300', border: 'border-amber-500/30', bg: 'bg-amber-900/20' },
+  expedition: { label: '合宿/遠征', icon: '🏕️', badge: 'bg-amber-600/40 text-amber-300', border: 'border-amber-500/30', bg: 'bg-amber-900/20' },
   other:      { label: 'その他', icon: '📌', badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
@@ -138,6 +138,8 @@ function ParkingEventCard({
             >保存</button>
             <button onClick={() => { setEditingSlots(false); setSlotsInput(String(plan.maxSlots)); }} className="text-[10px] text-slate-400">✕</button>
           </div>
+        ) : plan.maxSlots === 0 ? (
+          <span className="text-[10px] text-red-400/70 whitespace-nowrap">🚫 駐車場なし</span>
         ) : (
           <button onClick={() => { setEditingSlots(true); setSlotsInput(String(plan.maxSlots)); }} className="text-[10px] text-slate-500 hover:text-slate-300 whitespace-nowrap">
             🅿️ {plan.maxSlots}台
@@ -146,7 +148,7 @@ function ParkingEventCard({
       </div>
 
       {/* Active slots */}
-      <div className="bg-slate-800/60">
+      {plan.maxSlots > 0 && <div className="bg-slate-800/60">
         {activeSlots.map((slot, i) => {
           const member = getMember(slot.memberId);
           if (!member) return null;
@@ -182,10 +184,10 @@ function ParkingEventCard({
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* Skipped */}
-      {skippedSlots.length > 0 && (
+      {plan.maxSlots > 0 && skippedSlots.length > 0 && (
         <div className="bg-slate-800/30 border-t border-white/5 px-4 py-2 space-y-1">
           {skippedSlots.map(slot => {
             const member = getMember(slot.memberId);
@@ -239,12 +241,15 @@ function EventForm({
 }) {
   const [type, setType] = useState<SchEventType>(initialEvent?.type ?? 'practice');
   const [date, setDate] = useState(initialEvent?.date ?? todayStr());
+  const [endDate, setEndDate] = useState(initialEvent?.endDate ?? '');
   const [startTime, setStartTime] = useState(initialEvent?.startTime ?? '');
   const [endTime, setEndTime] = useState(initialEvent?.endTime ?? '');
   const [location, setLocation] = useState(initialEvent?.location ?? '');
   const [label, setLabel] = useState(initialEvent?.label ?? '');
   const [note, setNote] = useState(initialEvent?.note ?? '');
-  const [maxParkingSlots, setMaxParkingSlots] = useState(initialEvent?.maxParkingSlots ?? DEFAULT_MAX_SLOTS);
+  const initialParking = initialEvent?.maxParkingSlots ?? DEFAULT_MAX_SLOTS;
+  const [parkingAvailable, setParkingAvailable] = useState(initialParking > 0);
+  const [maxParkingSlots, setMaxParkingSlots] = useState(initialParking > 0 ? initialParking : DEFAULT_MAX_SLOTS);
 
   // Match fields
   const [matchType, setMatchType] = useState<SchMatchType>(initialEvent?.matchType ?? 'トレマ');
@@ -301,12 +306,13 @@ function EventForm({
     const base: SchEvent = {
       id: initialEvent?.id ?? generateId(),
       date, type,
+      endDate: (type === 'match' || type === 'camp') && endDate ? endDate : undefined,
       startTime: startTime || undefined,
       endTime: endTime || undefined,
       location: location || undefined,
       label: label || undefined,
       note: note || undefined,
-      maxParkingSlots: maxParkingSlots !== DEFAULT_MAX_SLOTS ? maxParkingSlots : undefined,
+      maxParkingSlots: parkingAvailable ? (maxParkingSlots !== DEFAULT_MAX_SLOTS ? maxParkingSlots : undefined) : 0,
     };
     if (type === 'match') {
       Object.assign(base, {
@@ -353,7 +359,7 @@ function EventForm({
             <div>
               <label className={labelCls}>種別</label>
               <div className="flex flex-wrap gap-1.5">
-                {(['practice','match','camp','expedition','other'] as SchEventType[]).map(t => (
+                {(['practice','match','camp','other'] as SchEventType[]).map(t => (
                   <button key={t} type="button" onClick={() => setType(t)}
                     className={`text-xs px-3 py-1.5 rounded-lg font-semibold border transition-colors ${type === t ? `${tc(t).badge} border-transparent` : 'text-slate-400 border-slate-600 hover:border-slate-500'}`}>
                     {tc(t).icon} {tc(t).label}
@@ -363,9 +369,17 @@ function EventForm({
             </div>
 
             {/* Date & Time */}
-            <div>
-              <label className={labelCls}>📅 日付</label>
-              <input type="date" value={toInputDate(date)} onChange={e => setDate(fromInputDate(e.target.value))} required className={inputCls} />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className={labelCls}>📅 開始日</label>
+                <input type="date" value={toInputDate(date)} onChange={e => setDate(fromInputDate(e.target.value))} required className={inputCls} />
+              </div>
+              {(type === 'match' || type === 'camp') && (
+                <div className="flex-1">
+                  <label className={labelCls}>📅 終了日（複数日）</label>
+                  <input type="date" value={endDate ? toInputDate(endDate) : ''} onChange={e => setEndDate(e.target.value ? fromInputDate(e.target.value) : '')} className={inputCls} />
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <div className="flex-1"><label className={labelCls}>⏰ 開始</label><input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className={inputCls} /></div>
@@ -377,10 +391,26 @@ function EventForm({
             <div><label className={labelCls}>📋 イベント名{type === 'match' ? '・大会名' : ''}</label><input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={type === 'match' ? '例: 神奈川カップ2026' : '例: 通常練習'} className={inputCls} /></div>
             <div><label className={labelCls}>📝 メモ</label><input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="持ち物・備考など" className={inputCls} /></div>
 
-            {/* Parking slots */}
+            {/* Parking */}
             <div>
-              <label className={labelCls}>🅿️ 駐車場台数（デフォルト: {DEFAULT_MAX_SLOTS}台）</label>
-              <input type="number" min="1" max="20" value={maxParkingSlots} onChange={e => setMaxParkingSlots(Number(e.target.value))} className={inputCls} />
+              <label className={labelCls}>🅿️ 駐車場</label>
+              <div className="flex gap-2 mb-2">
+                <button type="button" onClick={() => setParkingAvailable(true)}
+                  className={`flex-1 text-xs py-2 rounded-xl font-semibold border transition-colors ${parkingAvailable ? 'bg-blue-600/40 text-blue-200 border-blue-500/50' : 'text-slate-400 border-slate-600 hover:border-slate-500'}`}>
+                  あり
+                </button>
+                <button type="button" onClick={() => setParkingAvailable(false)}
+                  className={`flex-1 text-xs py-2 rounded-xl font-semibold border transition-colors ${!parkingAvailable ? 'bg-red-600/40 text-red-300 border-red-500/50' : 'text-slate-400 border-slate-600 hover:border-slate-500'}`}>
+                  なし
+                </button>
+              </div>
+              {parkingAvailable && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">何台？</span>
+                  <input type="number" min="1" max="20" value={maxParkingSlots} onChange={e => setMaxParkingSlots(Number(e.target.value))} className="w-20 rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none text-center" />
+                  <span className="text-xs text-slate-400">台</span>
+                </div>
+              )}
             </div>
 
             {/* Match-specific fields */}
@@ -560,7 +590,7 @@ function EventCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const today = todayStr();
-  const isPast = event.date < today;
+  const isPast = (event.endDate ?? event.date) < today;
   const cfg = tc(event.type);
   const hasScore = event.homeScore != null && event.awayScore != null;
   const isWin = hasScore && event.homeScore! > event.awayScore!;
@@ -572,8 +602,11 @@ function EventCard({
       <div className={`${isPast ? 'bg-slate-800/40' : cfg.bg} px-3 py-3`}>
         <div className="flex items-start gap-2">
           {/* Date badge */}
-          <div className={`text-center px-2 py-1.5 rounded-lg min-w-[44px] flex-shrink-0 ${isPast ? 'bg-slate-700 text-slate-400' : 'bg-black/20 text-white'}`}>
-            <p className="text-[10px] leading-tight">{event.date.slice(5).replace('/', '/')}</p>
+          <div className={`text-center px-2 py-1.5 rounded-lg flex-shrink-0 ${event.endDate ? 'min-w-[60px]' : 'min-w-[44px]'} ${isPast ? 'bg-slate-700 text-slate-400' : 'bg-black/20 text-white'}`}>
+            {event.endDate
+              ? <p className="text-[9px] leading-tight">{event.date.slice(5)}〜<br/>{event.endDate.slice(5)}</p>
+              : <p className="text-[10px] leading-tight">{event.date.slice(5).replace('/', '/')}</p>
+            }
             <p className="text-sm font-bold leading-tight">{dayLabel(event.date)}</p>
           </div>
           {/* Main info */}
@@ -742,17 +775,21 @@ function EventSection({ events, members, onSave }: {
   };
   const openEdit = (ev: SchEvent) => { setEditing(ev); setShowForm(true); };
 
-  const filtered = events.filter(e => filter === 'all' || e.type === filter || (filter === 'practice' && (e.type as string) === 'schedule'));
-  const upcoming = filtered.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-  const past = filtered.filter(e => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
+  const filtered = events.filter(e =>
+    filter === 'all' ||
+    e.type === filter ||
+    (filter === 'practice' && (e.type as string) === 'schedule') ||
+    (filter === 'camp' && e.type === 'expedition')
+  );
+  const upcoming = filtered.filter(e => (e.endDate ?? e.date) >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const past = filtered.filter(e => (e.endDate ?? e.date) < today).sort((a, b) => b.date.localeCompare(a.date));
 
   const filterBtns: { key: EventFilter; icon: string; label: string }[] = [
-    { key: 'all',        icon: '📅', label: '全て' },
-    { key: 'practice',   icon: '⚽', label: '練習' },
-    { key: 'match',      icon: '🏆', label: '試合' },
-    { key: 'camp',       icon: '🏕️', label: '合宿' },
-    { key: 'expedition', icon: '✈️', label: '遠征' },
-    { key: 'other',      icon: '📌', label: 'その他' },
+    { key: 'all',      icon: '📅', label: '全て' },
+    { key: 'practice', icon: '⚽', label: '練習' },
+    { key: 'match',    icon: '🏆', label: '試合' },
+    { key: 'camp',     icon: '🏕️', label: '合宿/遠征' },
+    { key: 'other',    icon: '📌', label: 'その他' },
   ];
 
   return (
@@ -1150,6 +1187,71 @@ function HomeSection({
           </div>
         </div>
       )}
+
+      {/* Parking history */}
+      {(() => {
+        const pastRecords = parkingRecords
+          .filter(r => r.eventDate < today)
+          .sort((a, b) => b.eventDate.localeCompare(a.eventDate))
+          .slice(0, 10);
+        if (pastRecords.length === 0) return null;
+        return (
+          <details className="group">
+            <summary className="text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer list-none flex items-center gap-1.5 select-none">
+              <span className="transition-transform group-open:rotate-90 inline-block">▶</span>
+              🕐 駐車場利用履歴
+            </summary>
+            <div className="mt-2 space-y-2">
+              {pastRecords.map(record => {
+                const ev = events.find(e => e.id === record.eventId);
+                const evLabel = ev
+                  ? (ev.type === 'match' ? (ev.opponentName ? `vs ${ev.opponentName}` : '試合') : (ev.label || ev.location || tc(ev.type).label))
+                  : record.eventType;
+                const activeSlots = record.slots.filter(s => s.status !== 'skipped');
+                const skippedSlots = record.slots.filter(s => s.status === 'skipped');
+                return (
+                  <div key={record.eventId} className="bg-slate-800/60 border border-white/5 rounded-xl overflow-hidden">
+                    <div className="px-3 py-2 bg-slate-700/40 flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400">{record.eventDate.slice(5).replace('/', '/')}({dayLabel(record.eventDate)})</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tc(record.eventType).badge}`}>{tc(record.eventType).icon}</span>
+                      <span className="text-xs text-white font-medium truncate flex-1">{evLabel}</span>
+                    </div>
+                    <div className="px-3 py-1.5 space-y-1">
+                      {activeSlots.map((slot, i) => {
+                        const m = sortedMembers.find(mb => mb.id === slot.memberId);
+                        if (!m) return null;
+                        return (
+                          <div key={slot.memberId} className="flex items-center gap-2 text-xs">
+                            <span className="text-slate-500 w-3 text-right">{i + 1}</span>
+                            <span className="text-blue-300 w-8 text-center font-bold">#{m.number}</span>
+                            <span className="text-slate-300 flex-1">{m.name}</span>
+                            {slot.status === 'used'
+                              ? <span className="text-green-400 font-semibold">✓ 使用</span>
+                              : <span className="text-slate-500">─</span>
+                            }
+                          </div>
+                        );
+                      })}
+                      {skippedSlots.map(slot => {
+                        const m = sortedMembers.find(mb => mb.id === slot.memberId);
+                        if (!m) return null;
+                        return (
+                          <div key={slot.memberId} className="flex items-center gap-2 text-xs opacity-50">
+                            <span className="text-slate-500 w-3">─</span>
+                            <span className="text-slate-400 w-8 text-center">#{m.number}</span>
+                            <span className="text-slate-400 flex-1">{m.name}</span>
+                            <span className="text-amber-500">スキップ{slot.skipComment ? `（${slot.skipComment}）` : ''}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        );
+      })()}
     </div>
   );
 }

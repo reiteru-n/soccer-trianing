@@ -88,7 +88,8 @@ export interface SchScorer {
 
 export interface SchEvent {
   id: string;
-  date: string; // yyyy/mm/dd
+  date: string;     // yyyy/mm/dd（開始日）
+  endDate?: string; // yyyy/mm/dd（終了日・複数日イベントのみ）
   startTime?: string;
   endTime?: string;
   location?: string;
