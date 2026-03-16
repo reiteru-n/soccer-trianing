@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { SchSchedule, SchMatch, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking } from '@/lib/types';
+import { SchSchedule, SchMatch, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent } from '@/lib/types';
 
 const KEYS = {
+  events:         'sch:events',
   schedules:      'sch:schedules',
   matches:        'sch:matches',
   announcements:  'sch:announcements',
@@ -9,6 +10,7 @@ const KEYS = {
   parkingRecords: 'sch:parking_records',
   parkingRotation:'sch:parking_rotation',
   nearbyParking:  'sch:nearby_parking',
+  teamLogo:       'sch:team_logo',
 } as const;
 
 const DEFAULT_MEMBERS: SchMember[] = [
@@ -27,7 +29,6 @@ const DEFAULT_MEMBERS: SchMember[] = [
   { id: 'm31', number: 31, name: 'しゅう' },
 ];
 
-// Initial rotation index = 5 (after #6,#7,#8,#9[skip]→#10 today)
 const DEFAULT_ROTATION = 5;
 
 async function getRedis() {
@@ -43,22 +44,53 @@ function hasRedis() {
 }
 
 interface SchData {
-  schedules: SchSchedule[];
-  matches: SchMatch[];
+  events: SchEvent[];
   announcements: SchAnnouncement[];
   members: SchMember[];
   parkingRecords: SchParkingRecord[];
   parkingRotation: number;
   nearbyParking: SchNearbyParking[];
+  teamLogo: string | null;
+  // Legacy (kept for backward compat read)
+  schedules: SchSchedule[];
+  matches: SchMatch[];
+}
+
+/** Migrate old schedules + matches into unified events array */
+function migrateToEvents(schedules: SchSchedule[], matches: SchMatch[]): SchEvent[] {
+  const fromSchedules: SchEvent[] = schedules.map(s => ({
+    id: s.id,
+    date: s.date,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    location: s.location,
+    note: s.note,
+    type: 'practice' as const,
+  }));
+  const fromMatches: SchEvent[] = matches.map(m => ({
+    id: m.id,
+    date: m.date,
+    startTime: m.startTime,
+    location: m.location,
+    note: m.note,
+    type: 'match' as const,
+    opponentName: m.opponent,
+    isHome: m.isHome,
+    homeScore: m.homeScore,
+    awayScore: m.awayScore,
+  }));
+  return [...fromSchedules, ...fromMatches].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 async function readSchData(): Promise<SchData> {
   if (hasRedis()) {
     const redis = await getRedis();
-    const [schedules, matches, announcements, membersRaw, parkingRecordsRaw, parkingRotationRaw, nearbyParkingRaw] =
+    const [eventsRaw, schedulesRaw, matchesRaw, announcements, membersRaw,
+           parkingRecordsRaw, parkingRotationRaw, nearbyParkingRaw, teamLogoRaw] =
       await redis.mget<unknown[]>(
-        KEYS.schedules, KEYS.matches, KEYS.announcements,
-        KEYS.members, KEYS.parkingRecords, KEYS.parkingRotation, KEYS.nearbyParking
+        KEYS.events, KEYS.schedules, KEYS.matches, KEYS.announcements,
+        KEYS.members, KEYS.parkingRecords, KEYS.parkingRotation,
+        KEYS.nearbyParking, KEYS.teamLogo
       );
 
     let members = membersRaw as SchMember[] | null;
@@ -73,33 +105,55 @@ async function readSchData(): Promise<SchData> {
       await redis.set(KEYS.parkingRotation, DEFAULT_ROTATION);
     }
 
+    // Migration: if events is null but old schedules/matches exist, migrate
+    let events = eventsRaw as SchEvent[] | null;
+    if (events === null) {
+      const schedules = (schedulesRaw as SchSchedule[]) ?? [];
+      const matches = (matchesRaw as SchMatch[]) ?? [];
+      events = migrateToEvents(schedules, matches);
+      if (events.length > 0) {
+        await redis.set(KEYS.events, events);
+      } else {
+        events = [];
+      }
+    }
+
     return {
-      schedules:      (schedules      as SchSchedule[])      ?? [],
-      matches:        (matches        as SchMatch[])          ?? [],
-      announcements:  (announcements  as SchAnnouncement[])  ?? [],
+      events,
+      announcements:  (announcements  as SchAnnouncement[]) ?? [],
       members,
       parkingRecords: (parkingRecordsRaw as SchParkingRecord[]) ?? [],
       parkingRotation,
-      nearbyParking:  (nearbyParkingRaw  as SchNearbyParking[]) ?? [],
+      nearbyParking:  (nearbyParkingRaw as SchNearbyParking[]) ?? [],
+      teamLogo:       (teamLogoRaw as string | null) ?? null,
+      schedules:      (schedulesRaw as SchSchedule[]) ?? [],
+      matches:        (matchesRaw as SchMatch[]) ?? [],
     };
   }
+
   // Local dev: file fallback
   try {
     const { readFileSync } = await import('fs');
     const { join } = await import('path');
     const txt = readFileSync(join(process.cwd(), 'dev-sch.json'), 'utf-8');
     const data = JSON.parse(txt);
+    // Migrate if needed
+    if (!data.events) {
+      data.events = migrateToEvents(data.schedules ?? [], data.matches ?? []);
+    }
     return {
-      schedules: [], matches: [], announcements: [],
+      events: [], announcements: [],
       members: DEFAULT_MEMBERS,
       parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
+      teamLogo: null, schedules: [], matches: [],
       ...data,
     };
   } catch {
     return {
-      schedules: [], matches: [], announcements: [],
+      events: [], announcements: [],
       members: DEFAULT_MEMBERS,
       parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
+      teamLogo: null, schedules: [], matches: [],
     };
   }
 }
@@ -108,13 +162,16 @@ async function writeSchPartial(body: Partial<Record<string, unknown>>): Promise<
   if (hasRedis()) {
     const redis = await getRedis();
     const updates: Record<string, unknown> = {};
-    if ('schedules'      in body) updates[KEYS.schedules]      = body.schedules;
-    if ('matches'        in body) updates[KEYS.matches]        = body.matches;
+    if ('events'         in body) updates[KEYS.events]         = body.events;
     if ('announcements'  in body) updates[KEYS.announcements]  = body.announcements;
     if ('members'        in body) updates[KEYS.members]        = body.members;
     if ('parkingRecords' in body) updates[KEYS.parkingRecords] = body.parkingRecords;
     if ('parkingRotation'in body) updates[KEYS.parkingRotation]= body.parkingRotation;
     if ('nearbyParking'  in body) updates[KEYS.nearbyParking]  = body.nearbyParking;
+    if ('teamLogo'       in body) updates[KEYS.teamLogo]       = body.teamLogo;
+    // Legacy keys (still writable for backward compat)
+    if ('schedules'      in body) updates[KEYS.schedules]      = body.schedules;
+    if ('matches'        in body) updates[KEYS.matches]        = body.matches;
     if (Object.keys(updates).length > 0) await redis.mset(updates);
     return;
   }

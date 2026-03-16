@@ -76,6 +76,51 @@ export interface SchMatch {
   note?: string;
 }
 
+// Unified event type (replaces SchSchedule + SchMatch)
+export type SchEventType = 'practice' | 'match' | 'camp' | 'expedition' | 'other';
+export type SchMatchType = 'トレマ' | '公式戦' | 'CUP戦' | 'その他';
+export type SchMatchFormat = 'tournament' | 'league_tournament' | 'friendly';
+
+export interface SchScorer {
+  memberId: string;
+  count: number;
+}
+
+export interface SchEvent {
+  id: string;
+  date: string; // yyyy/mm/dd
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  label?: string; // event name / tournament name
+  note?: string;
+  type: SchEventType;
+  maxParkingSlots?: number; // default 4
+
+  // Match only
+  matchType?: SchMatchType;
+  matchFormat?: SchMatchFormat;
+  roundName?: string;
+  opponentName?: string;
+  isHome?: boolean;
+  homeScore?: number;
+  awayScore?: number;
+  halfTimeHomeScore?: number;
+  halfTimeAwayScore?: number;
+  hasExtraTime?: boolean;
+  extraTimeHomeScore?: number;
+  extraTimeAwayScore?: number;
+  hasPK?: boolean;
+  pkHomeScore?: number;
+  pkAwayScore?: number;
+  scorers?: SchScorer[];
+  assists?: SchScorer[];
+  memo?: string;
+
+  // Camp / expedition only
+  mapQuery?: string; // Google Maps embed query
+}
+
 export interface SchAnnouncement {
   id: string;
   date: string; // yyyy/mm/dd
@@ -100,8 +145,8 @@ export interface SchParkingSlot {
 export interface SchParkingRecord {
   eventId: string;
   eventDate: string;
-  eventType: 'schedule' | 'match';
-  slots: SchParkingSlot[]; // includes skipped entries + 4 active slots
+  eventType: SchEventType | 'schedule'; // 'schedule' is legacy alias for 'practice'
+  slots: SchParkingSlot[]; // includes skipped entries + N active slots
   rotationStartIndex: number;
 }
 
