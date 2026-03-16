@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: '⚽ サッカー記録',
-  description: 'サッカー成長記録サイト',
+  description: 'サッカー記録サイト',
 };
 
 export const viewport: Viewport = {
