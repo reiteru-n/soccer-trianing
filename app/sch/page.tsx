@@ -155,9 +155,6 @@ function ParkingEventCard({
               <span className="text-slate-500 text-xs w-4 text-right">{i + 1}</span>
               <span className="w-9 text-center text-xs font-bold text-blue-300 bg-blue-900/30 rounded py-0.5">#{member.number}</span>
               <span className="text-white text-sm flex-1">{member.name}</span>
-              {slot.isFillIn && (
-                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-full">補欠</span>
-              )}
               {slot.status === 'used' && !isPast && (
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full">✓ 使用</span>
