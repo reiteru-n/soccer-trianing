@@ -1740,10 +1740,6 @@ export default function SchPage() {
     });
   }, [post]);
 
-  const handleLogout = async () => {
-    await fetch('/api/auth', { method: 'DELETE' });
-    window.location.href = '/login?type=team';
-  };
 
   const tabs = [
     { key: 'home'    as Tab, label: 'ホーム',   icon: '🏠' },
@@ -1776,9 +1772,6 @@ export default function SchPage() {
             )}
             <h1 className="text-2xl font-extrabold text-white drop-shadow">SCH Info</h1>
           </div>
-          <button onClick={handleLogout} className="text-xs text-slate-500 hover:text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors">
-            ログアウト
-          </button>
         </div>
       </header>
 
