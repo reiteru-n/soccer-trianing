@@ -21,6 +21,7 @@ const DEFAULT_MEMBERS: SchMember[] = [
   { id: 'm10', number: 10, name: '嶋津然',     nameKana: 'しまづぜん', parents: [{ role: '父', name: '嶋津勝也' }, { role: '母', name: '嶋津佳奈' }] },
   { id: 'm11', number: 11, name: '小野沢朔',   nameKana: 'さく', parents: [{ role: '父', name: '小野沢太郎' }, { role: '母', name: '小野沢友香里' }] },
   { id: 'm14', number: 14, name: '鳥谷海翔',   nameKana: 'とりやかいと', parents: [{ role: '父', name: '鳥谷浩之' }, { role: '母', name: '鳥谷香織' }] },
+  { id: 'm15', number: 15, name: '小笠原快',   nameKana: 'かい',         parents: [{ role: '父', name: '小笠原亮' }, { role: '母', name: '小笠原晴菜' }] },
   { id: 'm17', number: 17, name: '村岡晟旺',   nameKana: 'むらおかせお', parents: [{ role: '母', name: '村岡祥子' }, { role: '父', name: '村岡慶男' }] },
   { id: 'm19', number: 19, name: '西本拓渡',   parents: [{ role: '父', name: '西本励照' }, { role: '母', name: '西本倫実' }] },
   { id: 'm20', number: 20, name: '宮﨑朔太郎', parents: [{ role: '父', name: '竜史郎' }, { role: '母', name: '有子' }] },
@@ -96,6 +97,17 @@ async function readSchData(): Promise<SchData> {
     if (members === null) {
       members = DEFAULT_MEMBERS;
       await redis.set(KEYS.members, DEFAULT_MEMBERS);
+    } else {
+      // 保護者データが未設定のメンバーにDEFAULT_MEMBERSのデータを補完
+      const needsUpdate = members.some(m => !m.parents || m.parents.length === 0);
+      if (needsUpdate) {
+        members = members.map(m => {
+          if (m.parents && m.parents.length > 0) return m;
+          const def = DEFAULT_MEMBERS.find(d => d.number === m.number);
+          return def ? { ...def, ...m, name: def.name, nameKana: m.nameKana || def.nameKana, parents: def.parents } : m;
+        });
+        await redis.set(KEYS.members, members);
+      }
     }
 
     let parkingRotation = parkingRotationRaw as number | null;
