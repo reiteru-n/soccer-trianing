@@ -1,3 +1,9 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '⚽ サッカー記録',
+};
+
 export default function SchLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="max-w-lg mx-auto px-4 pt-4 pb-8 min-h-screen">
