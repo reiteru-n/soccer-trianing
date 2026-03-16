@@ -158,7 +158,7 @@ function ParkingEventCard({
       </div>
 
       {/* Active slots */}
-      {(plan.maxSlots > 0 || plan.maxSlots === -1) && <div className="bg-slate-800/60">
+      {plan.maxSlots > 0 && <div className="bg-slate-800/60">
         {activeSlots.map((slot, i) => {
           const member = getMember(slot.memberId);
           if (!member) return null;
@@ -196,7 +196,7 @@ function ParkingEventCard({
       </div>}
 
       {/* Skipped */}
-      {(plan.maxSlots > 0 || plan.maxSlots === -1) && skippedSlots.length > 0 && (
+      {plan.maxSlots > 0 && skippedSlots.length > 0 && (
         <div className="bg-slate-800/30 border-t border-white/5 px-4 py-2 space-y-1">
           {skippedSlots.map(slot => {
             const member = getMember(slot.memberId);
