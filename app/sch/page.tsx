@@ -21,6 +21,15 @@ function dayLabel(dateStr: string) {
 }
 function toInputDate(s: string) { return s.split('/').join('-'); }
 function fromInputDate(s: string) { return s.split('-').join('/'); }
+function relativeDayLabel(dateStr: string, today: string): { label: string; color: string } {
+  const diff = Math.round((new Date(dateStr.replace(/\//g, '-')).getTime() - new Date(today.replace(/\//g, '-')).getTime()) / 86400000);
+  if (diff === 0) return { label: '今日',        color: 'text-yellow-300' };
+  if (diff === 1) return { label: '明日',        color: 'text-green-300'  };
+  if (diff === 2) return { label: '明後日',      color: 'text-emerald-300' };
+  if (diff <= 6)  return { label: `${diff}日後`, color: 'text-slate-300'  };
+  if (diff === 7) return { label: '一週間後',    color: 'text-slate-300'  };
+  return { label: '一週間以上後', color: 'text-slate-400' };
+}
 
 // ---- Event type config ----
 type TypeCfg = { label: string; icon: string; badge: string; border: string; bg: string };
@@ -33,6 +42,13 @@ const TYPE_CFG: Record<string, TypeCfg> = {
   other:      { label: 'その他', icon: '📌', badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
+// Calendar dot colors per event type
+const EVENT_DOT: Record<string, string> = {
+  practice: 'bg-green-400', schedule: 'bg-green-400',
+  match: 'bg-red-400',
+  camp: 'bg-amber-400', expedition: 'bg-amber-400',
+  other: 'bg-slate-400',
+};
 
 const MATCH_TYPES: SchMatchType[] = ['公式戦', 'CUP戦', 'トレマ', 'その他'];
 const MATCH_FORMATS: { value: SchMatchFormat; label: string }[] = [
@@ -455,31 +471,25 @@ function ParkingEventCard({
           const member = getMember(slot.memberId);
           if (!member) return null;
           return (
-            <div key={slot.memberId} className={`flex items-center gap-3 px-4 py-2.5 ${i < activeSlots.length - 1 ? 'border-b border-white/5' : ''}`}>
-              <span className="text-slate-500 text-xs w-4 text-right">{i + 1}</span>
-              <span className="w-9 text-center text-xs font-bold text-blue-300 bg-blue-900/30 rounded py-0.5">#{member.number}</span>
-              <span className="text-white text-sm flex-1">{member.nameKana || member.name}</span>
+            <div key={slot.memberId} className={`flex items-center gap-2 px-3 py-1 ${i < activeSlots.length - 1 ? 'border-b border-white/5' : ''}`}>
+              <span className="text-slate-500 text-[10px] w-3 text-right">{i + 1}</span>
+              <span className="w-7 text-center text-[10px] font-bold text-blue-300 bg-blue-900/30 rounded py-0.5">#{member.number}</span>
+              <span className="text-white text-xs flex-1">{member.nameKana || member.name}</span>
               {(slot.status === 'used' || slot.status === 'pending') && !isPast && (
                 <div className="flex items-center gap-1">
                   {slot.status === 'used'
-                    ? <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded-full">📅 使用予定</span>
-                    : <span className="text-[10px] text-slate-500 px-1.5 py-0.5">─ 未使用</span>
+                    ? <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1 py-0.5 rounded-full">使用予定</span>
+                    : <span className="text-[9px] text-slate-500">─</span>
                   }
                   {slot.status === 'pending' && (
-                    <button
-                      onClick={() => onMarkUsed(plan.id, slot.memberId)}
-                      className="text-[10px] text-slate-500 hover:text-green-400 px-2 py-0.5 rounded border border-slate-700 hover:border-green-500/50 transition-colors"
-                    >使用</button>
+                    <button onClick={() => onMarkUsed(plan.id, slot.memberId)} className="text-[9px] text-slate-500 hover:text-green-400 px-1.5 py-0.5 rounded border border-slate-700 hover:border-green-500/50 transition-colors">使用</button>
                   )}
-                  <button
-                    onClick={() => setSkipTarget(slot.memberId)}
-                    className="text-[10px] text-slate-500 hover:text-amber-400 px-2 py-0.5 rounded border border-slate-700 hover:border-amber-500/50 transition-colors"
-                  >スキップ</button>
+                  <button onClick={() => setSkipTarget(slot.memberId)} className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded border border-slate-700 hover:border-amber-500/50 transition-colors">スキップ</button>
                 </div>
               )}
               {(slot.status === 'used' || slot.status === 'pending') && isPast && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${slot.status === 'used' ? 'bg-green-500/20 text-green-300' : 'text-slate-500'}`}>
-                  {slot.status === 'used' ? '✓ 使用' : '─ 未使用'}
+                <span className={`text-[9px] px-1 py-0.5 rounded-full ${slot.status === 'used' ? 'bg-green-500/20 text-green-300' : 'text-slate-500'}`}>
+                  {slot.status === 'used' ? '✓' : '─'}
                 </span>
               )}
             </div>
@@ -489,15 +499,15 @@ function ParkingEventCard({
 
       {/* Skipped */}
       {plan.maxSlots > 0 && skippedSlots.length > 0 && (
-        <div className="bg-slate-800/30 border-t border-white/5 px-4 py-2 space-y-1">
+        <div className="bg-slate-800/30 border-t border-white/5 px-3 py-1.5 space-y-0.5">
           {skippedSlots.map(slot => {
             const member = getMember(slot.memberId);
             return (
-              <div key={slot.memberId} className="flex items-center gap-2 text-xs">
+              <div key={slot.memberId} className="flex items-center gap-2 text-[10px]">
                 <span className="text-slate-500 line-through">#{member?.number} {member?.nameKana || member?.name}</span>
                 {slot.skipComment && <span className="text-slate-500 italic">「{slot.skipComment}」</span>}
                 {!isPast && (
-                  <button onClick={() => onUnskip(plan.id, slot.memberId)} className="ml-auto text-slate-400 hover:text-white text-[10px] px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors">取消</button>
+                  <button onClick={() => onUnskip(plan.id, slot.memberId)} className="ml-auto text-slate-400 hover:text-white text-[9px] px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors">取消</button>
                 )}
               </div>
             );
@@ -531,17 +541,19 @@ function ParkingEventCard({
 // ---- EventForm ----
 function EventForm({
   initialEvent,
+  initialDate,
   members,
   onSave,
   onClose,
 }: {
   initialEvent?: SchEvent;
+  initialDate?: string;
   members: SchMember[];
   onSave: (event: SchEvent) => void;
   onClose: () => void;
 }) {
   const [type, setType] = useState<SchEventType>(initialEvent?.type ?? 'practice');
-  const [date, setDate] = useState(initialEvent?.date ?? todayStr());
+  const [date, setDate] = useState(initialEvent?.date ?? initialDate ?? todayStr());
   const [endDate, setEndDate] = useState(initialEvent?.endDate ?? '');
   const [startTime, setStartTime] = useState(initialEvent?.startTime ?? '');
   const [endTime, setEndTime] = useState(initialEvent?.endTime ?? '');
@@ -999,6 +1011,99 @@ function EventCard({
   );
 }
 
+// ---- MiniEventCard (カレンダー直下の次の予定プレビュー用) ----
+function MiniEventCard({ event, members, onClick }: { event: SchEvent; members: SchMember[]; onClick: () => void }) {
+  const today = todayStr();
+  const isPast = (event.endDate ?? event.date) < today;
+  const cfg = tc(event.type);
+  return (
+    <button onClick={onClick} className={`w-full text-left rounded-xl border overflow-hidden transition-colors hover:brightness-110 ${isPast ? 'opacity-60 border-white/5' : cfg.border} ${cfg.bg}`}>
+      <div className="px-2.5 py-2">
+        <div className="flex items-start gap-1.5">
+          <div className="text-center px-1.5 py-1 rounded-lg flex-shrink-0 min-w-[36px] bg-black/20 text-white">
+            <p className="text-[9px] leading-tight">{event.date.slice(5)}</p>
+            <p className="text-xs font-bold leading-tight">{dayLabel(event.date)}</p>
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${cfg.badge}`}>{cfg.icon} {cfg.label}</span>
+            <p className="text-xs font-bold text-white mt-0.5 truncate">
+              {event.type === 'match'
+                ? (() => { const ms = getMatches(event); return ms.length > 1 ? `🆚 ${ms[0]?.opponentName ?? '?'} 他${ms.length - 1}試合` : (ms[0]?.opponentName ? `🆚 ${ms[0].opponentName}` : '相手未定'); })()
+                : (event.label || event.location || '詳細未定')}
+            </p>
+            {event.startTime && <p className="text-[10px] text-slate-400 leading-tight">⏰ {event.startTime}</p>}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ---- SchCalendar ----
+function SchCalendar({ events, today, onSelectDate }: {
+  events: SchEvent[];
+  today: string;
+  onSelectDate: (date: string) => void;
+}) {
+  const [viewYear, setViewYear] = useState(() => parseInt(today.split('/')[0]));
+  const [viewMonth, setViewMonth] = useState(() => parseInt(today.split('/')[1]));
+
+  const eventMap = useMemo(() => {
+    const map: Record<string, SchEvent[]> = {};
+    events.forEach(e => {
+      if (!map[e.date]) map[e.date] = [];
+      map[e.date].push(e);
+    });
+    return map;
+  }, [events]);
+
+  const prevMonth = () => { if (viewMonth === 1) { setViewYear(y => y - 1); setViewMonth(12); } else setViewMonth(m => m - 1); };
+  const nextMonth = () => { if (viewMonth === 12) { setViewYear(y => y + 1); setViewMonth(1); } else setViewMonth(m => m + 1); };
+
+  const firstDow = new Date(viewYear, viewMonth - 1, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+  const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return (
+    <div className="bg-slate-800/60 border border-white/10 rounded-xl p-3">
+      <div className="flex items-center justify-between mb-2">
+        <button onClick={prevMonth} className="text-slate-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-700">‹</button>
+        <p className="text-sm font-bold text-white">{viewYear}年{viewMonth}月</p>
+        <button onClick={nextMonth} className="text-slate-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-700">›</button>
+      </div>
+      <div className="grid grid-cols-7 mb-1">
+        {['日', '月', '火', '水', '木', '金', '土'].map((d, i) => (
+          <div key={d} className={`text-center text-[10px] font-semibold py-0.5 ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-slate-500'}`}>{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-y-0.5">
+        {cells.map((day, i) => {
+          if (!day) return <div key={i} />;
+          const dateStr = `${viewYear}/${String(viewMonth).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
+          const dayEvs = eventMap[dateStr] ?? [];
+          const isToday = dateStr === today;
+          const dow = i % 7;
+          return (
+            <button key={i} onClick={() => onSelectDate(dateStr)}
+              className={`relative flex flex-col items-center py-0.5 rounded-lg transition-colors ${isToday ? 'bg-blue-600/30 ring-1 ring-blue-400/50' : 'hover:bg-slate-700/60'}`}
+            >
+              <span className={`text-xs font-semibold leading-tight ${isToday ? 'text-blue-300' : dow === 0 ? 'text-red-400/80' : dow === 6 ? 'text-blue-400/80' : 'text-slate-300'}`}>{day}</span>
+              <div className="flex gap-0.5 min-h-[6px] items-center flex-wrap justify-center max-w-full px-0.5">
+                {dayEvs.slice(0, 3).map((e, j) => (
+                  <span key={j} className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${EVENT_DOT[e.type] ?? 'bg-slate-400'}`} />
+                ))}
+                {dayEvs.length > 3 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[10px] text-slate-500 text-center mt-2">日付をタップして予定を追加</p>
+    </div>
+  );
+}
+
 // ---- EventSection ----
 type EventFilter = 'all' | SchEventType;
 
@@ -1010,6 +1115,7 @@ function EventSection({ events, members, onSave }: {
   const [filter, setFilter] = useState<EventFilter>('all');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SchEvent | null>(null);
+  const [calendarDate, setCalendarDate] = useState<string | null>(null);
   const today = todayStr();
 
   const handleSave = (ev: SchEvent) => {
@@ -1062,22 +1168,58 @@ function EventSection({ events, members, onSave }: {
         ))}
       </div>
 
-      {upcoming.length === 0 && past.length === 0 && (
-        <p className="text-center text-slate-400 text-sm py-8">予定がありません</p>
-      )}
-
-      {/* Upcoming */}
+      {/* ── 次の予定プレビュー（最大3件） ── */}
       {upcoming.length > 0 && (
-        <div className="space-y-2">
-          {upcoming.map(ev => (
-            <EventCard key={ev.id} event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
-          ))}
+        <div>
+          {/* 1件目：フルサイズ */}
+          <EventCard
+            event={upcoming[0]}
+            members={members}
+            onEdit={() => openEdit(upcoming[0])}
+            onDelete={() => handleDelete(upcoming[0].id)}
+          />
+          {/* 2・3件目：ミニカード横並び */}
+          {upcoming.length >= 2 && (
+            <div className="flex gap-2 mt-2">
+              {upcoming.slice(1, 3).map(ev => (
+                <div key={ev.id} className="flex-1 min-w-0">
+                  <MiniEventCard event={ev} members={members} onClick={() => openEdit(ev)} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Past */}
+      {/* ── カレンダー ── */}
+      <SchCalendar
+        events={events}
+        today={today}
+        onSelectDate={(date) => {
+          setCalendarDate(date);
+          setEditing(null);
+          setShowForm(true);
+        }}
+      />
+
+      {/* ── 全予定リスト ── */}
+      {upcoming.length === 0 && past.length === 0 && (
+        <p className="text-center text-slate-400 text-sm py-4">予定がありません</p>
+      )}
+      {upcoming.length > 0 && (
+        <details open>
+          <summary className="text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer select-none mb-2 list-none flex items-center gap-1">
+            <span>📅 全予定 ({upcoming.length}件)</span>
+          </summary>
+          <div className="space-y-2 mt-2">
+            {upcoming.map(ev => (
+              <EventCard key={ev.id} event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
+            ))}
+          </div>
+        </details>
+      )}
       {past.length > 0 && (
-        <details className="mt-2" open>
+        <details className="mt-2">
           <summary className="text-xs text-slate-500 cursor-pointer mb-2 select-none">過去の予定 ({past.length}件)</summary>
           <div className="space-y-2 mt-2">
             {past.map(ev => (
@@ -1090,9 +1232,10 @@ function EventSection({ events, members, onSave }: {
       {showForm && (
         <EventForm
           initialEvent={editing ?? undefined}
+          initialDate={editing ? undefined : (calendarDate ?? undefined)}
           members={members}
           onSave={handleSave}
-          onClose={() => { setShowForm(false); setEditing(null); }}
+          onClose={() => { setShowForm(false); setEditing(null); setCalendarDate(null); }}
         />
       )}
     </div>
@@ -1538,10 +1681,16 @@ function HomeSection({
         {nextEvent ? (
           <div className={`rounded-2xl p-4 border ${tc(nextEvent.type).border} ${tc(nextEvent.type).bg}`}>
             <div className="flex items-start gap-3">
-              <div className={`text-center px-3 py-2 rounded-xl min-w-[54px] bg-black/20 text-white`}>
-                <p className="text-[11px]">{nextEvent.date.slice(5).replace('/', '/')}</p>
-                <p className="text-xl font-extrabold leading-tight">{dayLabel(nextEvent.date)}</p>
-              </div>
+              {(() => {
+                const rel = relativeDayLabel(nextEvent.date, today);
+                return (
+                  <div className="text-center px-3 py-2 rounded-xl min-w-[56px] bg-black/20 text-white flex-shrink-0">
+                    <p className="text-[10px] leading-tight text-slate-300">{nextEvent.date.slice(5)}</p>
+                    <p className="text-lg font-extrabold leading-tight">{dayLabel(nextEvent.date)}</p>
+                    <p className={`text-[10px] font-bold leading-tight mt-0.5 ${rel.color}`}>{rel.label}</p>
+                  </div>
+                );
+              })()}
               <div className="flex-1 min-w-0">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tc(nextEvent.type).badge}`}>
                   {tc(nextEvent.type).icon} {tc(nextEvent.type).label}
