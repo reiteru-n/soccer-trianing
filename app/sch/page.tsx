@@ -290,6 +290,10 @@ function EventForm({
   // Camp/expedition
   const [mapQuery, setMapQuery] = useState(initialEvent?.mapQuery ?? '');
 
+  // Meeting info (match + camp)
+  const [meetingTime, setMeetingTime] = useState(initialEvent?.meetingTime ?? '');
+  const [meetingPlace, setMeetingPlace] = useState(initialEvent?.meetingPlace ?? '');
+
   const sortedMembers = useMemo(() => [...members].sort((a, b) => a.number - b.number), [members]);
 
   const addScorer = () => {
@@ -322,6 +326,8 @@ function EventForm({
       location: location || undefined,
       label: label || undefined,
       note: note || undefined,
+      meetingTime: (type === 'match' || type === 'camp') && meetingTime ? meetingTime : undefined,
+      meetingPlace: (type === 'match' || type === 'camp') && meetingPlace ? meetingPlace : undefined,
       maxParkingSlots: parkingAvailable ? (parkingUnlimited ? -1 : (maxParkingSlots !== DEFAULT_MAX_SLOTS ? maxParkingSlots : undefined)) : 0,
     };
     if (type === 'match') {
@@ -400,6 +406,23 @@ function EventForm({
             <div><label className={labelCls}>📍 場所</label><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="例: ○○グラウンド" className={inputCls} /></div>
             <div><label className={labelCls}>📋 イベント名{type === 'match' ? '・大会名' : ''}</label><input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={type === 'match' ? '例: 神奈川カップ2026' : '例: 通常練習'} className={inputCls} /></div>
             <div><label className={labelCls}>📝 メモ</label><input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="持ち物・備考など" className={inputCls} /></div>
+
+            {/* Meeting info (match / camp only) */}
+            {(type === 'match' || type === 'camp') && (
+              <div className="space-y-3 border-t border-white/10 pt-3">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">🚩 集合情報（任意）</p>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className={labelCls}>⏰ 集合時間</label>
+                    <input type="time" value={meetingTime} onChange={e => setMeetingTime(e.target.value)} className={inputCls} />
+                  </div>
+                  <div className="flex-1">
+                    <label className={labelCls}>📍 集合場所</label>
+                    <input type="text" value={meetingPlace} onChange={e => setMeetingPlace(e.target.value)} placeholder="例: 正門前" className={inputCls} />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Parking */}
             <div>
@@ -668,6 +691,11 @@ function EventCard({
               <p className="text-xs text-slate-400">⏰ {event.startTime ?? ''}{event.startTime && event.endTime ? ' 〜 ' : ''}{event.endTime ?? ''}</p>
             )}
             {event.location && <p className="text-xs text-slate-400 truncate">📍 {event.location}</p>}
+            {(event.meetingTime || event.meetingPlace) && (
+              <p className="text-xs text-amber-300/90 mt-0.5">
+                🚩 集合{event.meetingTime ? ` ${event.meetingTime}` : ''}{event.meetingPlace ? ` ${event.meetingPlace}` : ''}
+              </p>
+            )}
           </div>
           {/* Actions */}
           <div className="flex flex-col gap-1 flex-shrink-0">
@@ -1310,6 +1338,11 @@ function HomeSection({
                 </p>
                 {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
                 {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
+                {(nextEvent.meetingTime || nextEvent.meetingPlace) && (
+                  <p className="text-sm font-semibold text-amber-300 mt-1">
+                    🚩 集合{nextEvent.meetingTime ? ` ${nextEvent.meetingTime}` : ''}{nextEvent.meetingPlace ? ` ${nextEvent.meetingPlace}` : ''}
+                  </p>
+                )}
               </div>
             </div>
           </div>

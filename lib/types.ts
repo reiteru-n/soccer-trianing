@@ -96,6 +96,8 @@ export interface SchEvent {
   label?: string; // event name / tournament name
   note?: string;
   type: SchEventType;
+  meetingTime?: string;  // 集合時間 HH:MM
+  meetingPlace?: string; // 集合場所
   maxParkingSlots?: number; // default 4
 
   // Match only
