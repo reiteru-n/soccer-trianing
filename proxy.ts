@@ -27,8 +27,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // SCH API: no auth required (SCH page is public)
+  // SCH API: requires team session
   if (pathname.startsWith('/api/sch')) {
+    if (!(await hasValidCookie(req, 'team_session', 'team'))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.next();
   }
 
@@ -40,8 +43,15 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // SCH page: public, no auth required
+  // SCH page: requires team session
   if (pathname.startsWith('/sch')) {
+    if (!(await hasValidCookie(req, 'team_session', 'team'))) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('type', 'team');
+      url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url);
+    }
     return NextResponse.next();
   }
 
