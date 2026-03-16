@@ -64,18 +64,6 @@ export interface SchSchedule {
   note?: string;
 }
 
-export interface SchMatch {
-  id: string;
-  date: string; // yyyy/mm/dd
-  startTime?: string; // HH:MM
-  opponent?: string;
-  location?: string;
-  homeScore?: number;
-  awayScore?: number;
-  isHome?: boolean;
-  note?: string;
-}
-
 // Unified event type (replaces SchSchedule + SchMatch)
 export type SchEventType = 'practice' | 'match' | 'camp' | 'expedition' | 'other';
 export type SchMatchType = 'トレマ' | '公式戦' | 'CUP戦' | 'その他';
@@ -84,6 +72,28 @@ export type SchMatchFormat = 'tournament' | 'league_tournament' | 'friendly';
 export interface SchScorer {
   memberId: string;
   count: number;
+}
+
+export interface SchMatch {
+  id: string;
+  opponentName?: string;
+  roundName?: string;       // "予選A" / "第1試合" / "準決勝"
+  dayNumber?: number;       // 複数日イベント: 1=1日目, 2=2日目（省略時は1日目扱い）
+  isHome?: boolean;
+  homeScore?: number;       // SCH側
+  awayScore?: number;       // 相手側
+  halfTimeHomeScore?: number;
+  halfTimeAwayScore?: number;
+  hasExtraTime?: boolean;
+  extraTimeHomeScore?: number;
+  extraTimeAwayScore?: number;
+  hasPK?: boolean;
+  pkHomeScore?: number;
+  pkAwayScore?: number;
+  scorers?: SchScorer[];
+  assists?: SchScorer[];
+  memo?: string;
+  videoUrl?: string;        // BAND / YouTube など
 }
 
 export interface SchEvent {
@@ -101,6 +111,7 @@ export interface SchEvent {
   maxParkingSlots?: number; // default 4
 
   // Match only
+  matches?: SchMatch[];     // 複数試合（新形式）。未設定のときは下記レガシーフィールドを参照
   matchType?: SchMatchType;
   matchFormat?: SchMatchFormat;
   roundName?: string;

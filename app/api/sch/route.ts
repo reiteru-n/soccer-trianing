@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import { SchSchedule, SchMatch, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent } from '@/lib/types';
+import { SchSchedule, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent } from '@/lib/types';
+
+// Legacy SchMatch shape (from sch:matches Redis key) — kept only for migration
+type LegacySchMatch = { id: string; date: string; startTime?: string; opponent?: string; location?: string; homeScore?: number; awayScore?: number; isHome?: boolean; note?: string; };
 import { logAccess, logChange, getIp, getUa } from '@/lib/logger';
 
 const KEYS = {
@@ -54,11 +57,11 @@ interface SchData {
   teamLogo: string | null;
   // Legacy (kept for backward compat read)
   schedules: SchSchedule[];
-  matches: SchMatch[];
+  matches: LegacySchMatch[];
 }
 
 /** Migrate old schedules + matches into unified events array */
-function migrateToEvents(schedules: SchSchedule[], matches: SchMatch[]): SchEvent[] {
+function migrateToEvents(schedules: SchSchedule[], matches: LegacySchMatch[]): SchEvent[] {
   const fromSchedules: SchEvent[] = schedules.map(s => ({
     id: s.id,
     date: s.date,
@@ -121,7 +124,7 @@ async function readSchData(): Promise<SchData> {
     let events = eventsRaw as SchEvent[] | null;
     if (events === null) {
       const schedules = (schedulesRaw as SchSchedule[]) ?? [];
-      const matches = (matchesRaw as SchMatch[]) ?? [];
+      const matches = (matchesRaw as LegacySchMatch[]) ?? [];
       events = migrateToEvents(schedules, matches);
       if (events.length > 0) {
         await redis.set(KEYS.events, events);
@@ -139,7 +142,7 @@ async function readSchData(): Promise<SchData> {
       nearbyParking:  (nearbyParkingRaw as SchNearbyParking[]) ?? [],
       teamLogo:       (teamLogoRaw as string | null) ?? null,
       schedules:      (schedulesRaw as SchSchedule[]) ?? [],
-      matches:        (matchesRaw as SchMatch[]) ?? [],
+      matches:        (matchesRaw as LegacySchMatch[]) ?? [],
     };
   }
 

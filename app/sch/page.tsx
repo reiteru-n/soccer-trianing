@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import {
-  SchEvent, SchEventType, SchMatchType, SchMatchFormat, SchScorer,
+  SchEvent, SchEventType, SchMatchType, SchMatchFormat, SchScorer, SchMatch,
   SchAnnouncement, SchMember, SchMemberParent, SchParkingRecord, SchParkingSlot, SchNearbyParking,
 } from '@/lib/types';
 
@@ -41,6 +41,298 @@ const MATCH_FORMATS: { value: SchMatchFormat; label: string }[] = [
   { value: 'league_tournament', label: '予選+決勝T' },
 ];
 const DEFAULT_MAX_SLOTS = 4;
+
+// ---- Match helpers ----
+/** レガシー単一試合 or 新形式複数試合を統一して返す */
+function getMatches(event: SchEvent): SchMatch[] {
+  if (event.matches && event.matches.length > 0) return event.matches;
+  if (event.type === 'match') {
+    return [{
+      id: event.id + '_0',
+      opponentName: event.opponentName,
+      roundName: event.roundName,
+      isHome: event.isHome,
+      homeScore: event.homeScore,
+      awayScore: event.awayScore,
+      halfTimeHomeScore: event.halfTimeHomeScore,
+      halfTimeAwayScore: event.halfTimeAwayScore,
+      hasExtraTime: event.hasExtraTime,
+      extraTimeHomeScore: event.extraTimeHomeScore,
+      extraTimeAwayScore: event.extraTimeAwayScore,
+      hasPK: event.hasPK,
+      pkHomeScore: event.pkHomeScore,
+      pkAwayScore: event.pkAwayScore,
+      scorers: event.scorers,
+      assists: event.assists,
+      memo: event.memo,
+    }];
+  }
+  return [];
+}
+
+// Form-local state for one match entry
+type MatchFormState = {
+  id: string;
+  opponentName: string;
+  roundName: string;
+  dayNumber: string;
+  isHome: boolean;
+  homeScore: string;
+  awayScore: string;
+  htHome: string; htAway: string;
+  hasExtraTime: boolean;
+  etHome: string; etAway: string;
+  hasPK: boolean;
+  pkHome: string; pkAway: string;
+  scorers: SchScorer[];
+  assists: SchScorer[];
+  memo: string;
+  videoUrl: string;
+};
+function emptyMatchState(): MatchFormState {
+  return { id: generateId(), opponentName: '', roundName: '', dayNumber: '1', isHome: true, homeScore: '', awayScore: '', htHome: '', htAway: '', hasExtraTime: false, etHome: '', etAway: '', hasPK: false, pkHome: '', pkAway: '', scorers: [], assists: [], memo: '', videoUrl: '' };
+}
+function matchToFormState(m: SchMatch): MatchFormState {
+  return {
+    id: m.id,
+    opponentName: m.opponentName ?? '',
+    roundName: m.roundName ?? '',
+    dayNumber: m.dayNumber != null ? String(m.dayNumber) : '1',
+    isHome: m.isHome ?? true,
+    homeScore: m.homeScore != null ? String(m.homeScore) : '',
+    awayScore: m.awayScore != null ? String(m.awayScore) : '',
+    htHome: m.halfTimeHomeScore != null ? String(m.halfTimeHomeScore) : '',
+    htAway: m.halfTimeAwayScore != null ? String(m.halfTimeAwayScore) : '',
+    hasExtraTime: m.hasExtraTime ?? false,
+    etHome: m.extraTimeHomeScore != null ? String(m.extraTimeHomeScore) : '',
+    etAway: m.extraTimeAwayScore != null ? String(m.extraTimeAwayScore) : '',
+    hasPK: m.hasPK ?? false,
+    pkHome: m.pkHomeScore != null ? String(m.pkHomeScore) : '',
+    pkAway: m.pkAwayScore != null ? String(m.pkAwayScore) : '',
+    scorers: m.scorers ?? [],
+    assists: m.assists ?? [],
+    memo: m.memo ?? '',
+    videoUrl: m.videoUrl ?? '',
+  };
+}
+function formStateToMatch(s: MatchFormState): SchMatch {
+  return {
+    id: s.id,
+    opponentName: s.opponentName || undefined,
+    roundName: s.roundName || undefined,
+    dayNumber: s.dayNumber && s.dayNumber !== '1' ? Number(s.dayNumber) : undefined,
+    isHome: s.isHome,
+    homeScore: s.homeScore !== '' ? Number(s.homeScore) : undefined,
+    awayScore: s.awayScore !== '' ? Number(s.awayScore) : undefined,
+    halfTimeHomeScore: s.htHome !== '' ? Number(s.htHome) : undefined,
+    halfTimeAwayScore: s.htAway !== '' ? Number(s.htAway) : undefined,
+    hasExtraTime: s.hasExtraTime || undefined,
+    extraTimeHomeScore: s.hasExtraTime && s.etHome !== '' ? Number(s.etHome) : undefined,
+    extraTimeAwayScore: s.hasExtraTime && s.etAway !== '' ? Number(s.etAway) : undefined,
+    hasPK: s.hasPK || undefined,
+    pkHomeScore: s.hasPK && s.pkHome !== '' ? Number(s.pkHome) : undefined,
+    pkAwayScore: s.hasPK && s.pkAway !== '' ? Number(s.pkAway) : undefined,
+    scorers: s.scorers.length > 0 ? s.scorers : undefined,
+    assists: s.assists.length > 0 ? s.assists : undefined,
+    memo: s.memo || undefined,
+    videoUrl: s.videoUrl || undefined,
+  };
+}
+
+// ---- MatchEntry (1試合分の入力フォーム) ----
+function MatchEntry({
+  value, onChange, onRemove, members, index, isMultiDay, dayCount,
+}: {
+  value: MatchFormState;
+  onChange: (updated: MatchFormState) => void;
+  onRemove?: () => void;
+  members: SchMember[];
+  index: number;
+  isMultiDay: boolean;
+  dayCount: number;
+}) {
+  const [scorerMid, setScorerMid] = useState('');
+  const [scorerCnt, setScorerCnt] = useState(1);
+  const [assistMid, setAssistMid] = useState('');
+  const [assistCnt, setAssistCnt] = useState(1);
+  const sortedMembers = useMemo(() => [...members].sort((a, b) => a.number - b.number), [members]);
+  const upd = (partial: Partial<MatchFormState>) => onChange({ ...value, ...partial });
+
+  const addScorer = () => {
+    if (!scorerMid) return;
+    const existing = value.scorers.find(s => s.memberId === scorerMid);
+    upd({ scorers: existing ? value.scorers.map(s => s.memberId === scorerMid ? { ...s, count: s.count + scorerCnt } : s) : [...value.scorers, { memberId: scorerMid, count: scorerCnt }] });
+    setScorerMid(''); setScorerCnt(1);
+  };
+  const addAssist = () => {
+    if (!assistMid) return;
+    const existing = value.assists.find(s => s.memberId === assistMid);
+    upd({ assists: existing ? value.assists.map(s => s.memberId === assistMid ? { ...s, count: s.count + assistCnt } : s) : [...value.assists, { memberId: assistMid, count: assistCnt }] });
+    setAssistMid(''); setAssistCnt(1);
+  };
+
+  const inputCls = 'w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500';
+  const labelCls = 'block text-xs font-semibold text-slate-400 mb-1';
+  const hasDetail = !!(value.scorers.length || value.assists.length || value.hasPK || value.hasExtraTime || value.htHome || value.htAway || value.memo || value.videoUrl);
+
+  return (
+    <div className="border border-slate-600/50 rounded-xl p-3 space-y-3 bg-slate-800/30">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold text-red-300">試合 {index + 1}</p>
+        {onRemove && (
+          <button type="button" onClick={onRemove} className="text-xs text-slate-500 hover:text-red-400 px-2 py-0.5 rounded hover:bg-slate-700">× 削除</button>
+        )}
+      </div>
+
+      {/* 相手チーム */}
+      <div><label className={labelCls}>🆚 相手チーム</label><input type="text" value={value.opponentName} onChange={e => upd({ opponentName: e.target.value })} placeholder="例: ○○FC" className={inputCls} /></div>
+
+      {/* ラウンド名 */}
+      <div><label className={labelCls}>試合名・ラウンド</label><input type="text" value={value.roundName} onChange={e => upd({ roundName: e.target.value })} placeholder="例: 予選A / 第2試合 / 準決勝" className={inputCls} /></div>
+
+      {/* 何日目 (複数日のときのみ) */}
+      {isMultiDay && dayCount > 1 && (
+        <div>
+          <label className={labelCls}>何日目？</label>
+          <div className="flex flex-wrap gap-1.5">
+            {Array.from({ length: dayCount }, (_, i) => String(i + 1)).map(d => (
+              <button key={d} type="button" onClick={() => upd({ dayNumber: d })}
+                className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${value.dayNumber === d ? 'bg-blue-600/40 text-blue-300 border-transparent' : 'text-slate-400 border-slate-600'}`}>
+                {d}日目
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* スコア */}
+      <div>
+        <label className={labelCls}>最終スコア（SCH − 相手）</label>
+        <div className="flex items-center gap-3">
+          <input type="number" min="0" value={value.homeScore} onChange={e => upd({ homeScore: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
+          <span className="text-slate-400 font-bold text-lg">−</span>
+          <input type="number" min="0" value={value.awayScore} onChange={e => upd({ awayScore: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
+        </div>
+      </div>
+
+      {/* 詳細 */}
+      <details className="group" open={hasDetail}>
+        <summary className="text-xs text-slate-400 cursor-pointer select-none hover:text-slate-200 flex items-center gap-1 py-1">
+          <span className="group-open:rotate-90 inline-block transition-transform">▶</span> 詳細（前半/延長/PK/得点者/動画URL）
+        </summary>
+        <div className="space-y-3 mt-3 pl-1">
+
+          {/* ホーム/アウェー */}
+          <div className="flex gap-2 items-center">
+            <span className="text-xs text-slate-400 font-semibold">ホーム/アウェー:</span>
+            <button type="button" onClick={() => upd({ isHome: true })} className={`px-3 py-1 rounded-lg text-xs font-bold ${value.isHome ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}>ホーム</button>
+            <button type="button" onClick={() => upd({ isHome: false })} className={`px-3 py-1 rounded-lg text-xs font-bold ${!value.isHome ? 'bg-orange-600 text-white' : 'bg-slate-700 text-slate-400'}`}>アウェー</button>
+          </div>
+
+          {/* 前半スコア */}
+          <div>
+            <label className={labelCls}>前半スコア</label>
+            <div className="flex items-center gap-2">
+              <input type="number" min="0" value={value.htHome} onChange={e => upd({ htHome: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
+              <span className="text-slate-400 font-bold">−</span>
+              <input type="number" min="0" value={value.htAway} onChange={e => upd({ htAway: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
+            </div>
+          </div>
+
+          {/* 延長 */}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={value.hasExtraTime} onChange={e => upd({ hasExtraTime: e.target.checked })} className="w-4 h-4 accent-orange-500" />
+            <span className="text-sm text-slate-300">延長戦あり</span>
+          </label>
+          {value.hasExtraTime && (
+            <div className="flex items-center gap-2 pl-6">
+              <span className="text-xs text-slate-400 w-10">延長</span>
+              <input type="number" min="0" value={value.etHome} onChange={e => upd({ etHome: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
+              <span className="text-slate-400 font-bold">−</span>
+              <input type="number" min="0" value={value.etAway} onChange={e => upd({ etAway: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
+            </div>
+          )}
+
+          {/* PK */}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={value.hasPK} onChange={e => upd({ hasPK: e.target.checked })} className="w-4 h-4 accent-yellow-500" />
+            <span className="text-sm text-slate-300">PKあり</span>
+          </label>
+          {value.hasPK && (
+            <div className="flex items-center gap-2 pl-6">
+              <span className="text-xs text-slate-400 w-10">PK</span>
+              <input type="number" min="0" value={value.pkHome} onChange={e => upd({ pkHome: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
+              <span className="text-slate-400 font-bold">−</span>
+              <input type="number" min="0" value={value.pkAway} onChange={e => upd({ pkAway: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
+            </div>
+          )}
+
+          {/* 得点者 */}
+          {sortedMembers.length > 0 && (
+            <div>
+              <label className={labelCls}>⚽ 得点者</label>
+              <div className="flex gap-2 mb-2">
+                <select value={scorerMid} onChange={e => setScorerMid(e.target.value)} className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                  <option value="">選手を選択</option>
+                  {sortedMembers.map(m => <option key={m.id} value={m.id}>#{m.number} {m.name}</option>)}
+                </select>
+                <input type="number" min="1" max="9" value={scorerCnt} onChange={e => setScorerCnt(Number(e.target.value))} className="w-14 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs text-center focus:outline-none" />
+                <button type="button" onClick={addScorer} className="bg-blue-600/40 text-blue-300 text-xs px-3 py-1.5 rounded-lg border border-blue-500/40 hover:bg-blue-600/60">追加</button>
+              </div>
+              {value.scorers.length > 0 && (
+                <div className="space-y-1">
+                  {value.scorers.map(s => {
+                    const m = sortedMembers.find(x => x.id === s.memberId);
+                    return (
+                      <div key={s.memberId} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-1.5">
+                        <span className="text-xs text-white flex-1">#{m?.number} {m?.name} × {s.count}</span>
+                        <button type="button" onClick={() => upd({ scorers: value.scorers.filter(x => x.memberId !== s.memberId) })} className="text-slate-400 hover:text-red-400 text-xs">削除</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* アシスト */}
+          {sortedMembers.length > 0 && (
+            <div>
+              <label className={labelCls}>🎯 アシスト</label>
+              <div className="flex gap-2 mb-2">
+                <select value={assistMid} onChange={e => setAssistMid(e.target.value)} className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
+                  <option value="">選手を選択</option>
+                  {sortedMembers.map(m => <option key={m.id} value={m.id}>#{m.number} {m.name}</option>)}
+                </select>
+                <input type="number" min="1" max="9" value={assistCnt} onChange={e => setAssistCnt(Number(e.target.value))} className="w-14 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs text-center focus:outline-none" />
+                <button type="button" onClick={addAssist} className="bg-blue-600/40 text-blue-300 text-xs px-3 py-1.5 rounded-lg border border-blue-500/40 hover:bg-blue-600/60">追加</button>
+              </div>
+              {value.assists.length > 0 && (
+                <div className="space-y-1">
+                  {value.assists.map(s => {
+                    const m = sortedMembers.find(x => x.id === s.memberId);
+                    return (
+                      <div key={s.memberId} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-1.5">
+                        <span className="text-xs text-white flex-1">#{m?.number} {m?.name} × {s.count}</span>
+                        <button type="button" onClick={() => upd({ assists: value.assists.filter(x => x.memberId !== s.memberId) })} className="text-slate-400 hover:text-red-400 text-xs">削除</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* メモ */}
+          <div><label className={labelCls}>💬 一言メモ</label><input type="text" value={value.memo} onChange={e => upd({ memo: e.target.value })} placeholder="試合の感想・特記事項" className={inputCls} /></div>
+
+          {/* 動画URL */}
+          <div><label className={labelCls}>🎬 動画URL（BAND / YouTube など）</label><input type="url" value={value.videoUrl} onChange={e => upd({ videoUrl: e.target.value })} placeholder="https://..." className={inputCls} /></div>
+        </div>
+      </details>
+    </div>
+  );
+}
 
 // ---- Parking Logic ----
 type EventItem = { id: string; date: string; type: string; label: string; maxSlots: number };
@@ -264,28 +556,13 @@ function EventForm({
   // Match fields
   const [matchType, setMatchType] = useState<SchMatchType>(initialEvent?.matchType ?? 'トレマ');
   const [matchFormat, setMatchFormat] = useState<SchMatchFormat>(initialEvent?.matchFormat ?? 'friendly');
-  const [roundName, setRoundName] = useState(initialEvent?.roundName ?? '');
-  const [opponentName, setOpponentName] = useState(initialEvent?.opponentName ?? '');
-  const [isHome, setIsHome] = useState(initialEvent?.isHome ?? true);
-  const [htHome, setHtHome] = useState(initialEvent?.halfTimeHomeScore != null ? String(initialEvent.halfTimeHomeScore) : '');
-  const [htAway, setHtAway] = useState(initialEvent?.halfTimeAwayScore != null ? String(initialEvent.halfTimeAwayScore) : '');
-  const [homeScore, setHomeScore] = useState(initialEvent?.homeScore != null ? String(initialEvent.homeScore) : '');
-  const [awayScore, setAwayScore] = useState(initialEvent?.awayScore != null ? String(initialEvent.awayScore) : '');
-  const [hasExtraTime, setHasExtraTime] = useState(initialEvent?.hasExtraTime ?? false);
-  const [etHome, setEtHome] = useState(initialEvent?.extraTimeHomeScore != null ? String(initialEvent.extraTimeHomeScore) : '');
-  const [etAway, setEtAway] = useState(initialEvent?.extraTimeAwayScore != null ? String(initialEvent.extraTimeAwayScore) : '');
-  const [hasPK, setHasPK] = useState(initialEvent?.hasPK ?? false);
-  const [pkHome, setPkHome] = useState(initialEvent?.pkHomeScore != null ? String(initialEvent.pkHomeScore) : '');
-  const [pkAway, setPkAway] = useState(initialEvent?.pkAwayScore != null ? String(initialEvent.pkAwayScore) : '');
-  const [scorers, setScorers] = useState<SchScorer[]>(initialEvent?.scorers ?? []);
-  const [assists, setAssists] = useState<SchScorer[]>(initialEvent?.assists ?? []);
-  const [memo, setMemo] = useState(initialEvent?.memo ?? '');
-
-  // Scorer/assist input state
-  const [scorerMid, setScorerMid] = useState('');
-  const [scorerCnt, setScorerCnt] = useState(1);
-  const [assistMid, setAssistMid] = useState('');
-  const [assistCnt, setAssistCnt] = useState(1);
+  const [matches, setMatches] = useState<MatchFormState[]>(() => {
+    if (initialEvent?.type === 'match') {
+      const ms = getMatches(initialEvent);
+      return ms.length > 0 ? ms.map(matchToFormState) : [emptyMatchState()];
+    }
+    return [emptyMatchState()];
+  });
 
   // Camp/expedition
   const [mapQuery, setMapQuery] = useState(initialEvent?.mapQuery ?? '');
@@ -293,27 +570,6 @@ function EventForm({
   // Meeting info (match + camp)
   const [meetingTime, setMeetingTime] = useState(initialEvent?.meetingTime ?? '');
   const [meetingPlace, setMeetingPlace] = useState(initialEvent?.meetingPlace ?? '');
-
-  const sortedMembers = useMemo(() => [...members].sort((a, b) => a.number - b.number), [members]);
-
-  const addScorer = () => {
-    if (!scorerMid) return;
-    setScorers(prev => {
-      const ex = prev.find(s => s.memberId === scorerMid);
-      if (ex) return prev.map(s => s.memberId === scorerMid ? { ...s, count: s.count + scorerCnt } : s);
-      return [...prev, { memberId: scorerMid, count: scorerCnt }];
-    });
-    setScorerMid(''); setScorerCnt(1);
-  };
-  const addAssist = () => {
-    if (!assistMid) return;
-    setAssists(prev => {
-      const ex = prev.find(s => s.memberId === assistMid);
-      if (ex) return prev.map(s => s.memberId === assistMid ? { ...s, count: s.count + assistCnt } : s);
-      return [...prev, { memberId: assistMid, count: assistCnt }];
-    });
-    setAssistMid(''); setAssistCnt(1);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -333,22 +589,7 @@ function EventForm({
     if (type === 'match') {
       Object.assign(base, {
         matchType, matchFormat,
-        roundName: roundName || undefined,
-        opponentName: opponentName || undefined,
-        isHome,
-        homeScore:  homeScore  !== '' ? Number(homeScore)  : undefined,
-        awayScore:  awayScore  !== '' ? Number(awayScore)  : undefined,
-        halfTimeHomeScore: htHome !== '' ? Number(htHome) : undefined,
-        halfTimeAwayScore: htAway !== '' ? Number(htAway) : undefined,
-        hasExtraTime,
-        extraTimeHomeScore: hasExtraTime && etHome !== '' ? Number(etHome) : undefined,
-        extraTimeAwayScore: hasExtraTime && etAway !== '' ? Number(etAway) : undefined,
-        hasPK,
-        pkHomeScore: hasPK && pkHome !== '' ? Number(pkHome) : undefined,
-        pkAwayScore: hasPK && pkAway !== '' ? Number(pkAway) : undefined,
-        scorers: scorers.length > 0 ? scorers : undefined,
-        assists: assists.length > 0 ? assists : undefined,
-        memo: memo || undefined,
+        matches: matches.map(formStateToMatch),
       });
     }
     if (type === 'camp' || type === 'expedition') {
@@ -473,18 +714,7 @@ function EventForm({
               <div className="space-y-3 border-t border-white/10 pt-4">
                 <p className="text-xs font-bold text-red-400 uppercase tracking-wider">試合情報</p>
 
-                {/* Primary: opponent + score + match type */}
-                <div><label className={labelCls}>🆚 対戦相手</label><input type="text" value={opponentName} onChange={e => setOpponentName(e.target.value)} placeholder="例: ○○FC" className={inputCls} /></div>
-
-                <div>
-                  <label className={labelCls}>最終スコア（SCH − 相手）</label>
-                  <div className="flex items-center gap-3">
-                    <input type="number" min="0" value={homeScore} onChange={e => setHomeScore(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
-                    <span className="text-slate-400 font-bold text-lg">−</span>
-                    <input type="number" min="0" value={awayScore} onChange={e => setAwayScore(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
-                  </div>
-                </div>
-
+                {/* 試合区分 */}
                 <div>
                   <label className={labelCls}>試合区分</label>
                   <div className="flex flex-wrap gap-1.5">
@@ -497,132 +727,44 @@ function EventForm({
                   </div>
                 </div>
 
-                {/* Detail section */}
-                <details className="group" open={!!(scorers.length || assists.length || hasPK || hasExtraTime || htHome || htAway || matchFormat !== 'friendly')}>
-                  <summary className="text-xs text-slate-400 cursor-pointer select-none hover:text-slate-200 flex items-center gap-1 py-1">
-                    <span className="group-open:rotate-90 inline-block transition-transform">▶</span> 詳細情報（得点者・PK・大会形式など）
-                  </summary>
-                  <div className="space-y-3 mt-3 pl-1">
-                    <div>
-                      <label className={labelCls}>大会形式</label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {MATCH_FORMATS.map(mf => (
-                          <button key={mf.value} type="button" onClick={() => setMatchFormat(mf.value)}
-                            className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${matchFormat === mf.value ? 'bg-orange-600/40 text-orange-300 border-transparent' : 'text-slate-400 border-slate-600'}`}>
-                            {mf.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {(matchFormat === 'tournament' || matchFormat === 'league_tournament') && (
-                      <div><label className={labelCls}>ラウンド名</label><input type="text" value={roundName} onChange={e => setRoundName(e.target.value)} placeholder="例: グループA / 準決勝" className={inputCls} /></div>
-                    )}
-
-                    <div className="flex gap-2 items-center">
-                      <span className="text-xs text-slate-400 font-semibold">ホーム/アウェー:</span>
-                      <button type="button" onClick={() => setIsHome(true)} className={`px-3 py-1 rounded-lg text-xs font-bold ${isHome ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}>ホーム</button>
-                      <button type="button" onClick={() => setIsHome(false)} className={`px-3 py-1 rounded-lg text-xs font-bold ${!isHome ? 'bg-orange-600 text-white' : 'bg-slate-700 text-slate-400'}`}>アウェー</button>
-                    </div>
-
-                    {/* Half-time score */}
-                    <div>
-                      <label className={labelCls}>前半スコア</label>
-                      <div className="flex items-center gap-2">
-                        <input type="number" min="0" value={htHome} onChange={e => setHtHome(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
-                        <span className="text-slate-400 font-bold">−</span>
-                        <input type="number" min="0" value={htAway} onChange={e => setHtAway(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:border-red-400 focus:outline-none" />
-                      </div>
-                    </div>
-
-                    {/* Extra time */}
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={hasExtraTime} onChange={e => setHasExtraTime(e.target.checked)} className="w-4 h-4 accent-orange-500" />
-                      <span className="text-sm text-slate-300">延長戦あり</span>
-                    </label>
-                    {hasExtraTime && (
-                      <div className="flex items-center gap-2 pl-6">
-                        <span className="text-xs text-slate-400 w-10">延長</span>
-                        <input type="number" min="0" value={etHome} onChange={e => setEtHome(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
-                        <span className="text-slate-400 font-bold">−</span>
-                        <input type="number" min="0" value={etAway} onChange={e => setEtAway(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
-                      </div>
-                    )}
-
-                    {/* PK */}
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={hasPK} onChange={e => setHasPK(e.target.checked)} className="w-4 h-4 accent-yellow-500" />
-                      <span className="text-sm text-slate-300">PKあり</span>
-                    </label>
-                    {hasPK && (
-                      <div className="flex items-center gap-2 pl-6">
-                        <span className="text-xs text-slate-400 w-10">PK</span>
-                        <input type="number" min="0" value={pkHome} onChange={e => setPkHome(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
-                        <span className="text-slate-400 font-bold">−</span>
-                        <input type="number" min="0" value={pkAway} onChange={e => setPkAway(e.target.value)} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-sm text-center focus:outline-none" />
-                      </div>
-                    )}
-
-                    {/* Scorers */}
-                    {sortedMembers.length > 0 && (
-                      <div>
-                        <label className={labelCls}>⚽ 得点者</label>
-                        <div className="flex gap-2 mb-2">
-                          <select value={scorerMid} onChange={e => setScorerMid(e.target.value)} className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
-                            <option value="">選手を選択</option>
-                            {sortedMembers.map(m => <option key={m.id} value={m.id}>#{m.number} {m.name}</option>)}
-                          </select>
-                          <input type="number" min="1" max="9" value={scorerCnt} onChange={e => setScorerCnt(Number(e.target.value))} className="w-14 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs text-center focus:outline-none" />
-                          <button type="button" onClick={addScorer} className="bg-blue-600/40 text-blue-300 text-xs px-3 py-1.5 rounded-lg border border-blue-500/40 hover:bg-blue-600/60">追加</button>
-                        </div>
-                        {scorers.length > 0 && (
-                          <div className="space-y-1">
-                            {scorers.map(s => {
-                              const m = sortedMembers.find(x => x.id === s.memberId);
-                              return (
-                                <div key={s.memberId} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-1.5">
-                                  <span className="text-xs text-white flex-1">#{m?.number} {m?.name} × {s.count}</span>
-                                  <button type="button" onClick={() => setScorers(prev => prev.filter(x => x.memberId !== s.memberId))} className="text-slate-400 hover:text-red-400 text-xs">削除</button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Assists */}
-                    {sortedMembers.length > 0 && (
-                      <div>
-                        <label className={labelCls}>🎯 アシスト</label>
-                        <div className="flex gap-2 mb-2">
-                          <select value={assistMid} onChange={e => setAssistMid(e.target.value)} className="flex-1 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400">
-                            <option value="">選手を選択</option>
-                            {sortedMembers.map(m => <option key={m.id} value={m.id}>#{m.number} {m.name}</option>)}
-                          </select>
-                          <input type="number" min="1" max="9" value={assistCnt} onChange={e => setAssistCnt(Number(e.target.value))} className="w-14 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-1.5 text-xs text-center focus:outline-none" />
-                          <button type="button" onClick={addAssist} className="bg-blue-600/40 text-blue-300 text-xs px-3 py-1.5 rounded-lg border border-blue-500/40 hover:bg-blue-600/60">追加</button>
-                        </div>
-                        {assists.length > 0 && (
-                          <div className="space-y-1">
-                            {assists.map(s => {
-                              const m = sortedMembers.find(x => x.id === s.memberId);
-                              return (
-                                <div key={s.memberId} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-1.5">
-                                  <span className="text-xs text-white flex-1">#{m?.number} {m?.name} × {s.count}</span>
-                                  <button type="button" onClick={() => setAssists(prev => prev.filter(x => x.memberId !== s.memberId))} className="text-slate-400 hover:text-red-400 text-xs">削除</button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Memo */}
-                    <div><label className={labelCls}>💬 一言メモ</label><input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="試合の感想・特記事項" className={inputCls} /></div>
+                {/* 大会形式 */}
+                <div>
+                  <label className={labelCls}>大会形式</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {MATCH_FORMATS.map(mf => (
+                      <button key={mf.value} type="button" onClick={() => setMatchFormat(mf.value)}
+                        className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${matchFormat === mf.value ? 'bg-orange-600/40 text-orange-300 border-transparent' : 'text-slate-400 border-slate-600'}`}>
+                        {mf.label}
+                      </button>
+                    ))}
                   </div>
-                </details>
+                </div>
+
+                {/* 各試合エントリ */}
+                {matches.map((m, i) => {
+                  const isMultiDay = !!(endDate && endDate !== date);
+                  const dayCount = isMultiDay
+                    ? Math.max(2, Math.round((new Date(endDate.replace(/\//g, '-')).getTime() - new Date(date.replace(/\//g, '-')).getTime()) / 86400000) + 1)
+                    : 1;
+                  return (
+                    <MatchEntry
+                      key={m.id}
+                      value={m}
+                      index={i}
+                      onChange={updated => setMatches(prev => prev.map((x, j) => j === i ? updated : x))}
+                      onRemove={matches.length > 1 ? () => setMatches(prev => prev.filter((_, j) => j !== i)) : undefined}
+                      members={members}
+                      isMultiDay={isMultiDay}
+                      dayCount={dayCount}
+                    />
+                  );
+                })}
+
+                {/* 試合追加ボタン */}
+                <button type="button" onClick={() => setMatches(prev => [...prev, emptyMatchState()])}
+                  className="w-full text-xs py-2.5 rounded-xl border border-dashed border-slate-500 text-slate-400 hover:text-white hover:border-slate-400 transition-colors">
+                  + 試合を追加
+                </button>
               </div>
             )}
 
@@ -655,10 +797,21 @@ function EventCard({
   const today = todayStr();
   const isPast = (event.endDate ?? event.date) < today;
   const cfg = tc(event.type);
-  const hasScore = event.homeScore != null && event.awayScore != null;
-  const isWin = hasScore && event.homeScore! > event.awayScore!;
-  const isLoss = hasScore && event.homeScore! < event.awayScore!;
   const getMember = (id: string) => members.find(m => m.id === id);
+
+  // 複数試合対応
+  const eventMatches = event.type === 'match' ? getMatches(event) : [];
+  const scoredMatches = eventMatches.filter(m => m.homeScore != null && m.awayScore != null);
+  const matchCount = eventMatches.length;
+  // 全試合の勝敗サマリー
+  const mW = scoredMatches.filter(m => m.homeScore! > m.awayScore!).length;
+  const mD = scoredMatches.filter(m => m.homeScore! === m.awayScore!).length;
+  const mL = scoredMatches.filter(m => m.homeScore! < m.awayScore!).length;
+  // 単試合用
+  const firstMatch = eventMatches[0];
+  const hasScore = scoredMatches.length > 0;
+  const isWin = mW > 0 && mD === 0 && mL === 0;
+  const isLoss = mL > 0 && mW === 0 && mD === 0;
 
   return (
     <div className={`rounded-xl border overflow-hidden ${isPast ? 'opacity-70 border-white/5' : cfg.border}`}>
@@ -684,25 +837,40 @@ function EventCard({
                   {MATCH_FORMATS.find(f => f.value === event.matchFormat)?.label}
                 </span>
               )}
-              {event.roundName && (
-                <span className="text-[10px] bg-slate-700/60 text-slate-400 px-1.5 py-0.5 rounded-full">{event.roundName}</span>
-              )}
               {hasScore && (
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isWin ? 'bg-green-600/30 text-green-300' : isLoss ? 'bg-red-600/30 text-red-300' : 'bg-slate-600/30 text-slate-300'}`}>
-                  {isWin ? '勝' : isLoss ? '負' : '分'}
+                  {matchCount > 1 ? `${mW}勝${mD}分${mL}敗` : (isWin ? '勝' : isLoss ? '負' : '分')}
                 </span>
               )}
             </div>
             {/* Title */}
-            <p className="text-sm font-semibold text-white mt-1 truncate">
-              {event.type === 'match' ? (event.opponentName ? `🆚 ${event.opponentName}` : '相手未定') : (event.label || event.location || '（タイトルなし）')}
-            </p>
+            {event.type === 'match' ? (
+              matchCount > 1 ? (
+                <p className="text-sm font-semibold text-white mt-1 truncate">
+                  {firstMatch?.opponentName ? `🆚 ${firstMatch.opponentName} ほか${matchCount - 1}試合` : `🏆 ${matchCount}試合`}
+                </p>
+              ) : (
+                <p className="text-sm font-semibold text-white mt-1 truncate">
+                  {firstMatch?.opponentName ? `🆚 ${firstMatch.opponentName}` : '相手未定'}
+                </p>
+              )
+            ) : (
+              <p className="text-sm font-semibold text-white mt-1 truncate">{event.label || event.location || '（タイトルなし）'}</p>
+            )}
             {event.type === 'match' && event.label && <p className="text-xs text-slate-400 truncate">{event.label}</p>}
-            {hasScore && <p className="text-xl font-extrabold text-white leading-tight">{event.homeScore} <span className="text-slate-400 text-sm font-normal">−</span> {event.awayScore}</p>}
-            {!hasScore && isPast && event.type === 'match' && (
+            {/* スコア表示 */}
+            {event.type === 'match' && matchCount === 1 && firstMatch && firstMatch.homeScore != null && firstMatch.awayScore != null && (
+              <p className="text-xl font-extrabold text-white leading-tight">{firstMatch.homeScore} <span className="text-slate-400 text-sm font-normal">−</span> {firstMatch.awayScore}</p>
+            )}
+            {event.type === 'match' && matchCount > 1 && scoredMatches.length > 0 && (
+              <p className="text-xs text-slate-300 mt-0.5 truncate">
+                {scoredMatches.map(m => `${m.homeScore}−${m.awayScore}`).join(' / ')}
+              </p>
+            )}
+            {event.type === 'match' && !hasScore && isPast && (
               <p className="text-[11px] text-amber-400/80 italic mt-0.5">🙏 誰か戦績を入力して頂けるとありがたいです</p>
             )}
-            {!hasScore && event.type === 'match' && event.startTime && <p className="text-xs text-slate-400">⏰ {event.startTime} K.O.</p>}
+            {event.type === 'match' && !hasScore && event.startTime && <p className="text-xs text-slate-400">⏰ {event.startTime} K.O.</p>}
             {event.type !== 'match' && (event.startTime || event.endTime) && (
               <p className="text-xs text-slate-400">⏰ {event.startTime ?? ''}{event.startTime && event.endTime ? ' 〜 ' : ''}{event.endTime ?? ''}</p>
             )}
@@ -724,73 +892,82 @@ function EventCard({
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="bg-slate-800/80 border-t border-white/10 px-4 py-3 space-y-3">
-          {/* Score breakdown */}
-          {event.type === 'match' && (event.halfTimeHomeScore != null || event.halfTimeAwayScore != null || event.hasExtraTime || event.hasPK) && (
-            <div className="space-y-1 text-xs">
-              {(event.halfTimeHomeScore != null || event.halfTimeAwayScore != null) && (
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 w-12">前半</span>
-                  <span className="text-white font-semibold">{event.halfTimeHomeScore ?? '-'} − {event.halfTimeAwayScore ?? '-'}</span>
+        <div className="bg-slate-800/80 border-t border-white/10 px-4 py-3 space-y-4">
+          {/* 各試合の詳細 */}
+          {event.type === 'match' && eventMatches.map((m, i) => (
+            <div key={m.id} className={i > 0 ? 'border-t border-white/10 pt-3' : ''}>
+              {(matchCount > 1 || m.roundName) && (
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  {matchCount > 1 ? `試合 ${i + 1}${m.dayNumber && m.dayNumber > 1 ? ` (${m.dayNumber}日目)` : ''}` : ''}
+                  {m.roundName ? `${matchCount > 1 ? ' — ' : ''}${m.roundName}` : ''}
+                </p>
+              )}
+              {m.opponentName && matchCount > 1 && (
+                <p className="text-sm font-semibold text-white mb-1">🆚 {m.opponentName}</p>
+              )}
+              {/* スコア内訳 */}
+              {(m.homeScore != null || m.halfTimeHomeScore != null || m.hasExtraTime || m.hasPK) && (
+                <div className="space-y-1 text-xs mb-2">
+                  {(m.halfTimeHomeScore != null || m.halfTimeAwayScore != null) && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 w-12">前半</span>
+                      <span className="text-white font-semibold">{m.halfTimeHomeScore ?? '-'} − {m.halfTimeAwayScore ?? '-'}</span>
+                    </div>
+                  )}
+                  {m.homeScore != null && m.awayScore != null && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 w-12">合計</span>
+                      <span className="text-white font-semibold">{m.homeScore} − {m.awayScore}</span>
+                    </div>
+                  )}
+                  {m.hasExtraTime && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 w-12">延長</span>
+                      <span className="text-white font-semibold">{m.extraTimeHomeScore ?? '-'} − {m.extraTimeAwayScore ?? '-'}</span>
+                    </div>
+                  )}
+                  {m.hasPK && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 w-12">PK</span>
+                      <span className="text-white font-semibold">{m.pkHomeScore ?? '-'} − {m.pkAwayScore ?? '-'}</span>
+                    </div>
+                  )}
                 </div>
               )}
-              {hasScore && (
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 w-12">合計</span>
-                  <span className="text-white font-semibold">{event.homeScore} − {event.awayScore}</span>
+              {/* 得点者 */}
+              {m.scorers && m.scorers.length > 0 && (
+                <div className="mb-1.5">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">⚽ 得点者</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.scorers.map(s => {
+                      const mem = getMember(s.memberId);
+                      return <span key={s.memberId} className="text-xs bg-green-600/20 text-green-300 px-2 py-0.5 rounded-full">#{mem?.number} {mem?.name} {s.count > 1 ? `×${s.count}` : ''}</span>;
+                    })}
+                  </div>
                 </div>
               )}
-              {event.hasExtraTime && (
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 w-12">延長</span>
-                  <span className="text-white font-semibold">{event.extraTimeHomeScore ?? '-'} − {event.extraTimeAwayScore ?? '-'}</span>
+              {/* アシスト */}
+              {m.assists && m.assists.length > 0 && (
+                <div className="mb-1.5">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">🎯 アシスト</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.assists.map(s => {
+                      const mem = getMember(s.memberId);
+                      return <span key={s.memberId} className="text-xs bg-blue-600/20 text-blue-300 px-2 py-0.5 rounded-full">#{mem?.number} {mem?.name} {s.count > 1 ? `×${s.count}` : ''}</span>;
+                    })}
+                  </div>
                 </div>
               )}
-              {event.hasPK && (
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 w-12">PK</span>
-                  <span className="text-white font-semibold">{event.pkHomeScore ?? '-'} − {event.pkAwayScore ?? '-'}</span>
-                </div>
+              {m.memo && <p className="text-xs text-slate-300 italic">💬 {m.memo}</p>}
+              {/* 動画URL */}
+              {m.videoUrl && (
+                <a href={m.videoUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-1 text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2">
+                  🎬 動画を見る
+                </a>
               )}
             </div>
-          )}
-
-          {/* Scorers */}
-          {event.scorers && event.scorers.length > 0 && (
-            <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">⚽ 得点者</p>
-              <div className="flex flex-wrap gap-1.5">
-                {event.scorers.map(s => {
-                  const m = getMember(s.memberId);
-                  return (
-                    <span key={s.memberId} className="text-xs bg-green-600/20 text-green-300 px-2 py-0.5 rounded-full">
-                      #{m?.number} {m?.name} {s.count > 1 ? `×${s.count}` : ''}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Assists */}
-          {event.assists && event.assists.length > 0 && (
-            <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">🎯 アシスト</p>
-              <div className="flex flex-wrap gap-1.5">
-                {event.assists.map(s => {
-                  const m = getMember(s.memberId);
-                  return (
-                    <span key={s.memberId} className="text-xs bg-blue-600/20 text-blue-300 px-2 py-0.5 rounded-full">
-                      #{m?.number} {m?.name} {s.count > 1 ? `×${s.count}` : ''}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Memo */}
-          {event.memo && <p className="text-xs text-slate-300 italic">💬 {event.memo}</p>}
+          ))}
 
           {/* Note */}
           {event.note && <p className="text-xs text-slate-400">📝 {event.note}</p>}
@@ -928,50 +1105,68 @@ type StatTab = 'overall' | 'byType' | 'byOpponent' | 'byPeriod';
 function StatsSection({ events, members }: { events: SchEvent[]; members: SchMember[] }) {
   const [statTab, setStatTab] = useState<StatTab>('overall');
 
-  const matchEvents = useMemo(
-    () => events.filter(e => e.type === 'match' && e.homeScore != null && e.awayScore != null),
+  // 全試合（SchMatch）を収集
+  const allMatches = useMemo(
+    () => events.filter(e => e.type === 'match').flatMap(e => getMatches(e)),
     [events]
   );
+  const scoredMatches = useMemo(
+    () => allMatches.filter(m => m.homeScore != null && m.awayScore != null),
+    [allMatches]
+  );
 
-  const calcRecord = (evs: SchEvent[]) => {
-    const w = evs.filter(e => e.homeScore! > e.awayScore!).length;
-    const d = evs.filter(e => e.homeScore! === e.awayScore!).length;
-    const l = evs.filter(e => e.homeScore! < e.awayScore!).length;
-    const gf = evs.reduce((sum, e) => sum + (e.homeScore ?? 0), 0);
-    const ga = evs.reduce((sum, e) => sum + (e.awayScore ?? 0), 0);
-    return { w, d, l, gf, ga, total: evs.length };
+  const calcRecord = (ms: SchMatch[]) => {
+    const scored = ms.filter(m => m.homeScore != null && m.awayScore != null);
+    const w = scored.filter(m => m.homeScore! > m.awayScore!).length;
+    const d = scored.filter(m => m.homeScore! === m.awayScore!).length;
+    const l = scored.filter(m => m.homeScore! < m.awayScore!).length;
+    const gf = scored.reduce((sum, m) => sum + (m.homeScore ?? 0), 0);
+    const ga = scored.reduce((sum, m) => sum + (m.awayScore ?? 0), 0);
+    return { w, d, l, gf, ga, total: scored.length };
   };
 
-  const overall = useMemo(() => calcRecord(matchEvents), [matchEvents]);
+  const overall = useMemo(() => calcRecord(scoredMatches), [scoredMatches]);
 
-  const byType = useMemo(() => MATCH_TYPES.map(mt => ({
-    type: mt,
-    ...calcRecord(matchEvents.filter(e => (e.matchType ?? 'その他') === mt)),
-  })), [matchEvents]);
+  // byType: イベントのmatchTypeで試合を分類
+  const byType = useMemo(() => MATCH_TYPES.map(mt => {
+    const evIds = new Set(events.filter(e => e.type === 'match' && (e.matchType ?? 'その他') === mt).map(e => e.id));
+    const ms = scoredMatches.filter(m => {
+      // SchMatchのidはeventId+'_0'(レガシー) or 独立id。eventsで引き当て
+      const ev = events.find(e => e.type === 'match' && (e.matches?.some(x => x.id === m.id) || m.id === e.id + '_0'));
+      return ev && evIds.has(ev.id);
+    });
+    return { type: mt, ...calcRecord(ms) };
+  }), [events, scoredMatches]);
 
+  // byOpponent
   const byOpponent = useMemo(() => {
-    const opponents = [...new Set(matchEvents.map(e => e.opponentName).filter((x): x is string => !!x))].sort();
+    const opponents = [...new Set(scoredMatches.map(m => m.opponentName).filter((x): x is string => !!x))].sort();
     return opponents.map(opp => ({
       opp,
-      ...calcRecord(matchEvents.filter(e => e.opponentName === opp)),
+      ...calcRecord(scoredMatches.filter(m => m.opponentName === opp)),
     }));
-  }, [matchEvents]);
+  }, [scoredMatches]);
 
+  // byPeriod: イベントの日付で分類
   const byPeriod = useMemo(() => {
     const year = new Date().getFullYear();
     return Array.from({ length: 12 }, (_, i) => {
       const month = String(i + 1).padStart(2, '0');
       const prefix = `${year}/${month}`;
-      const evs = matchEvents.filter(e => e.date.startsWith(prefix));
-      return { month: `${i + 1}月`, ...calcRecord(evs) };
+      const evIds = new Set(events.filter(e => e.type === 'match' && e.date.startsWith(prefix)).map(e => e.id));
+      const ms = scoredMatches.filter(m => {
+        const ev = events.find(e => e.type === 'match' && (e.matches?.some(x => x.id === m.id) || m.id === e.id + '_0'));
+        return ev && evIds.has(ev.id);
+      });
+      return { month: `${i + 1}月`, ...calcRecord(ms) };
     }).filter(m => m.total > 0);
-  }, [matchEvents]);
+  }, [events, scoredMatches]);
 
   // Top scorers
   const topScorers = useMemo(() => {
     const counts: Record<string, number> = {};
-    events.filter(e => e.type === 'match').forEach(e => {
-      (e.scorers ?? []).forEach(s => {
+    allMatches.forEach(m => {
+      (m.scorers ?? []).forEach(s => {
         counts[s.memberId] = (counts[s.memberId] ?? 0) + s.count;
       });
     });
@@ -980,7 +1175,7 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
       .filter(x => x.member)
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
-  }, [events, members]);
+  }, [allMatches, members]);
 
   const statTabs: { key: StatTab; label: string }[] = [
     { key: 'overall',    label: '通算' },
@@ -989,7 +1184,7 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
     { key: 'byPeriod',   label: '期間別' },
   ];
 
-  if (matchEvents.length === 0) {
+  if (scoredMatches.length === 0) {
     return (
       <div className="text-center py-12 text-slate-400">
         <p className="text-3xl mb-3">🏆</p>
@@ -1350,7 +1545,13 @@ function HomeSection({
                   {tc(nextEvent.type).icon} {tc(nextEvent.type).label}
                 </span>
                 <p className="text-base font-bold text-white mt-1.5 truncate">
-                  {nextEvent.type === 'match' ? (nextEvent.opponentName ? `🆚 ${nextEvent.opponentName}` : '相手未定') : (nextEvent.label || nextEvent.location || '詳細未定')}
+                  {nextEvent.type === 'match' ? (() => {
+                    const ms = getMatches(nextEvent);
+                    const first = ms[0];
+                    return ms.length > 1
+                      ? (first?.opponentName ? `🆚 ${first.opponentName} ほか${ms.length - 1}試合` : `🏆 ${ms.length}試合`)
+                      : (first?.opponentName ? `🆚 ${first.opponentName}` : '相手未定');
+                  })() : (nextEvent.label || nextEvent.location || '詳細未定')}
                 </p>
                 {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
                 {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
