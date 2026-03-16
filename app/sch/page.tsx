@@ -1050,9 +1050,22 @@ function SchCalendar({ events, today, onSelectDate }: {
 
   const eventMap = useMemo(() => {
     const map: Record<string, SchEvent[]> = {};
+    const addToMap = (dateStr: string, e: SchEvent) => {
+      if (!map[dateStr]) map[dateStr] = [];
+      if (!map[dateStr].find(x => x.id === e.id)) map[dateStr].push(e);
+    };
     events.forEach(e => {
-      if (!map[e.date]) map[e.date] = [];
-      map[e.date].push(e);
+      addToMap(e.date, e);
+      if (e.endDate && e.endDate > e.date) {
+        const cur = new Date(e.date.replace(/\//g, '-') + 'T00:00:00');
+        const end = new Date(e.endDate.replace(/\//g, '-') + 'T00:00:00');
+        cur.setDate(cur.getDate() + 1);
+        while (cur <= end) {
+          const ds = `${cur.getFullYear()}/${String(cur.getMonth() + 1).padStart(2, '0')}/${String(cur.getDate()).padStart(2, '0')}`;
+          addToMap(ds, e);
+          cur.setDate(cur.getDate() + 1);
+        }
+      }
     });
     return map;
   }, [events]);
@@ -1099,7 +1112,7 @@ function SchCalendar({ events, today, onSelectDate }: {
           );
         })}
       </div>
-      <p className="text-[10px] text-slate-500 text-center mt-2">日付をタップして予定を追加</p>
+      <p className="text-[10px] text-slate-500 text-center mt-2">予定あり→スクロール　空白日→予定を追加</p>
     </div>
   );
 }
@@ -1156,14 +1169,15 @@ function EventSection({ events, members, onSave }: {
       </button>
 
       {/* Filter tags */}
-      <div className="flex gap-1.5 flex-wrap">
+      <div className="flex gap-1">
         {filterBtns.map(({ key, icon, label }) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`text-xs px-3 py-1.5 rounded-full border font-semibold transition-colors ${filter === key ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white'}`}
+            className={`flex-1 py-1.5 rounded-lg border font-semibold transition-colors text-center ${filter === key ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white'}`}
           >
-            {icon} {label}
+            <div className="text-sm leading-none">{icon}</div>
+            <div className="text-[9px] leading-tight mt-0.5">{label}</div>
           </button>
         ))}
       </div>
@@ -1196,9 +1210,25 @@ function EventSection({ events, members, onSave }: {
         events={events}
         today={today}
         onSelectDate={(date) => {
-          setCalendarDate(date);
-          setEditing(null);
-          setShowForm(true);
+          const eventsOnDate = events.filter(e =>
+            e.date === date || (e.endDate && e.date <= date && e.endDate >= date)
+          );
+          if (eventsOnDate.length > 0) {
+            const firstEv = eventsOnDate.sort((a, b) => a.date.localeCompare(b.date))[0];
+            const isUpcoming = (firstEv.endDate ?? firstEv.date) >= today;
+            if (!isUpcoming) {
+              const pastDetails = document.getElementById('past-events-details') as HTMLDetailsElement | null;
+              if (pastDetails) pastDetails.open = true;
+            }
+            setTimeout(() => {
+              const el = document.getElementById(`event-card-${firstEv.id}`);
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 50);
+          } else {
+            setCalendarDate(date);
+            setEditing(null);
+            setShowForm(true);
+          }
         }}
       />
 
@@ -1213,17 +1243,21 @@ function EventSection({ events, members, onSave }: {
           </summary>
           <div className="space-y-2 mt-2">
             {upcoming.map(ev => (
-              <EventCard key={ev.id} event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
+              <div key={ev.id} id={`event-card-${ev.id}`}>
+                <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
+              </div>
             ))}
           </div>
         </details>
       )}
       {past.length > 0 && (
-        <details className="mt-2">
+        <details className="mt-2" id="past-events-details">
           <summary className="text-xs text-slate-500 cursor-pointer mb-2 select-none">過去の予定 ({past.length}件)</summary>
           <div className="space-y-2 mt-2">
             {past.map(ev => (
-              <EventCard key={ev.id} event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
+              <div key={ev.id} id={`event-card-${ev.id}`}>
+                <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
+              </div>
             ))}
           </div>
         </details>
@@ -1479,6 +1513,52 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
           ))}
         </div>
       )}
+
+      {/* ── 試合結果サマリー一覧 ── */}
+      <div>
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">📋 試合結果一覧</p>
+        <div className="space-y-2">
+          {events
+            .filter(e => e.type === 'match')
+            .sort((a, b) => b.date.localeCompare(a.date))
+            .map(ev => {
+              const matches = getMatches(ev);
+              const scored = matches.filter(m => m.homeScore != null && m.awayScore != null);
+              if (scored.length === 0) return null;
+              return (
+                <div key={ev.id} className="bg-slate-800/60 border border-white/10 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs text-slate-400">{ev.date}</span>
+                    {ev.matchType && (
+                      <span className="text-[10px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{ev.matchType}</span>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    {scored.map(m => {
+                      const won = m.homeScore! > m.awayScore!;
+                      const drew = m.homeScore! === m.awayScore!;
+                      return (
+                        <div key={m.id} className="flex items-center gap-2">
+                          <span className={`text-[10px] font-bold w-5 text-center px-1 py-0.5 rounded ${won ? 'bg-green-500/20 text-green-400' : drew ? 'bg-slate-600/50 text-slate-400' : 'bg-red-500/20 text-red-400'}`}>
+                            {won ? '勝' : drew ? '分' : '負'}
+                          </span>
+                          <span className="text-sm font-bold text-white tabular-nums">{m.homeScore} − {m.awayScore}</span>
+                          {m.opponentName && <span className="text-xs text-slate-400 truncate">vs {m.opponentName}</span>}
+                          {m.roundName && <span className="text-[10px] text-slate-500 shrink-0">({m.roundName})</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })
+            .filter(Boolean)
+          }
+          {events.filter(e => e.type === 'match' && getMatches(e).some(m => m.homeScore != null)).length === 0 && (
+            <p className="text-center text-slate-400 text-sm py-4">試合結果がありません</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
