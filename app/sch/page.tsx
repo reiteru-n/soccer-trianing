@@ -2037,13 +2037,17 @@ function HomeSection({
                   return next;
                 });
                 const hasDetail = (a.content && a.content.length > 60) || !!a.url;
+                const isExpandedInstagram = isExpanded && !!a.url && isInstagramUrl(a.url);
                 return (
-                  <div key={a.id} className={`rounded-xl border overflow-hidden ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
-                    <div className="flex">
+                  <div key={a.id} className={`rounded-xl border ${isExpandedInstagram ? '' : 'overflow-hidden'} ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
+                    <div className={isExpandedInstagram ? '' : 'flex'}>
                       <div className="flex-1 px-4 py-3 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           {a.important && <span className="text-[10px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded-full">重要</span>}
                           <span className="text-[10px] text-slate-400">{a.date}</span>
+                          {isExpandedInstagram && (
+                            <button onClick={toggleExpand} className="ml-auto text-xs font-bold text-slate-400 hover:text-white px-2 py-0.5 rounded-lg hover:bg-white/10 transition-colors">閉じる ×</button>
+                          )}
                         </div>
                         <p className="text-sm font-bold text-white">{a.title}</p>
                         {a.content && <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>}
@@ -2051,7 +2055,7 @@ function HomeSection({
                         {isExpanded && a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
                         {!isExpanded && a.url && isInstagramUrl(a.url) && <p className="text-xs text-indigo-400 mt-0.5">📸 Instagram投稿あり</p>}
                       </div>
-                      {hasDetail && (
+                      {hasDetail && !isExpandedInstagram && (
                         <button
                           onClick={toggleExpand}
                           className="w-10 flex-shrink-0 grid place-items-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
