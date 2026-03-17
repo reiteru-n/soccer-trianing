@@ -43,8 +43,8 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Admin logs API: requires family session
-  if (pathname.startsWith('/api/admin/logs')) {
+  // Admin APIs: requires family session
+  if (pathname.startsWith('/api/admin/')) {
     if (!(await hasValidCookie(req, 'family_session', 'family'))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
