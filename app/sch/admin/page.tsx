@@ -322,6 +322,71 @@ function ExcludedIpsPanel({
   );
 }
 
+// ─── Recent IP summary (last 1 hour) ─────────────────────
+
+function RecentIpSummary({
+  entries,
+  excludedIps,
+  onExclude,
+}: {
+  entries: AccessLogEntry[];
+  excludedIps: string[];
+  onExclude: (ip: string) => void;
+}) {
+  const oneHourAgo = Date.now() - 60 * 60 * 1000;
+  const recent = entries.filter(e => new Date(e.ts).getTime() > oneHourAgo);
+  if (recent.length === 0) return null;
+
+  const byIp: Record<string, { count: number; lastTs: string }> = {};
+  for (const e of recent) {
+    if (!byIp[e.ip]) byIp[e.ip] = { count: 0, lastTs: e.ts };
+    byIp[e.ip].count++;
+    if (new Date(e.ts) > new Date(byIp[e.ip].lastTs)) byIp[e.ip].lastTs = e.ts;
+  }
+
+  const sorted = Object.entries(byIp).sort((a, b) => b[1].count - a[1].count);
+
+  return (
+    <div className="bg-slate-800/60 border border-white/5 rounded-xl px-4 py-3 mb-4">
+      <h2 className="text-xs font-bold text-slate-300 mb-2">🕐 1時間以内のアクセス（IP別）</h2>
+      <div className="space-y-1.5">
+        {sorted.map(([ip, data]) => {
+          const excluded = isIpExcluded(ip, excludedIps);
+          const subnetPattern = isIPv4(ip) ? toSubnetPattern(ip) : null;
+          const subnetAlreadyExcluded = subnetPattern ? excludedIps.includes(subnetPattern) : false;
+          return (
+            <div key={ip} className={`flex items-center gap-2 bg-slate-700/30 rounded-lg px-3 py-2 ${excluded ? 'opacity-40' : ''}`}>
+              <span className="text-[11px] font-mono text-slate-300 flex-1">{ip}</span>
+              <span className="text-[11px] text-amber-300 font-bold tabular-nums">{data.count}回</span>
+              <span className="text-[10px] text-slate-500">{formatTs(data.lastTs)}</span>
+              {excluded ? (
+                <span className="text-[9px] text-slate-600 px-1.5 py-0.5 rounded bg-slate-700/40">除外中</span>
+              ) : (
+                <>
+                  <button
+                    onClick={() => onExclude(ip)}
+                    className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors"
+                  >
+                    除外
+                  </button>
+                  {subnetPattern && !subnetAlreadyExcluded && (
+                    <button
+                      onClick={() => onExclude(subnetPattern)}
+                      className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap"
+                    >
+                      {subnetPattern}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ───────────────────────────────────────────
 
 export default function AdminPage() {
@@ -437,6 +502,15 @@ export default function AdminPage() {
             {changeEntries.length > 0 && <span className="ml-1.5 text-[10px] bg-slate-600 px-1.5 py-0.5 rounded-full">{changeEntries.length}</span>}
           </button>
         </div>
+
+        {/* Recent IP summary */}
+        {tab === 'access' && (
+          <RecentIpSummary
+            entries={accessEntries}
+            excludedIps={excludedIps}
+            onExclude={addExcludedPattern}
+          />
+        )}
 
         {/* Access log */}
         {tab === 'access' && (
