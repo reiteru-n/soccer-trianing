@@ -1823,52 +1823,53 @@ function HomeSection({
       <div>
         <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">次の予定</h2>
         {nextEvent ? (
-          <div className={`rounded-2xl p-4 border ${tc(nextEvent.type).border} ${tc(nextEvent.type).bg}`}>
-            <div className="flex items-start gap-3">
-              {(() => {
-                const rel = relativeDayLabel(nextEvent.date, today);
-                return (
-                  <div className="text-center px-3 py-2 rounded-xl min-w-[56px] bg-black/20 text-white flex-shrink-0">
-                    <p className="text-[10px] leading-tight text-slate-300">{nextEvent.date.slice(5)}</p>
-                    <p className="text-lg font-extrabold leading-tight">{dayLabel(nextEvent.date)}</p>
-                    <p className={`text-[10px] font-bold leading-tight mt-0.5 ${rel.color}`}>{rel.label}</p>
-                  </div>
-                );
-              })()}
-              <div className="flex-1 min-w-0">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tc(nextEvent.type).badge}`}>
-                  {tc(nextEvent.type).icon} {tc(nextEvent.type).label}
-                </span>
-                <p className="text-base font-bold text-white mt-1.5 truncate">
-                  {nextEvent.type === 'match' ? (() => {
-                    const ms = getMatches(nextEvent);
-                    const first = ms[0];
-                    return ms.length > 1
-                      ? (first?.opponentName ? `🆚 ${first.opponentName} ほか${ms.length - 1}試合` : `🏆 ${ms.length}試合`)
-                      : (first?.opponentName ? `🆚 ${first.opponentName}` : '相手未定');
-                  })() : (nextEvent.label || nextEvent.location || '詳細未定')}
-                </p>
-                {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
-                {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
-                {(nextEvent.meetingTime || nextEvent.meetingPlace) && (
-                  <p className="text-sm font-semibold text-amber-300 mt-1">
-                    🚩 集合{nextEvent.meetingTime ? ` ${nextEvent.meetingTime}` : ''}{nextEvent.meetingPlace ? ` ${nextEvent.meetingPlace}` : ''}
+          <div className={`rounded-2xl border ${tc(nextEvent.type).border} ${tc(nextEvent.type).bg} overflow-hidden`}>
+            <div className="flex">
+              {/* メインコンテンツ */}
+              <div className="flex-1 p-4 flex items-start gap-3 min-w-0">
+                {(() => {
+                  const rel = relativeDayLabel(nextEvent.date, today);
+                  return (
+                    <div className="text-center px-3 py-2 rounded-xl min-w-[56px] bg-black/20 text-white flex-shrink-0">
+                      <p className="text-[10px] leading-tight text-slate-300">{nextEvent.date.slice(5)}</p>
+                      <p className="text-lg font-extrabold leading-tight">{dayLabel(nextEvent.date)}</p>
+                      <p className={`text-[10px] font-bold leading-tight mt-0.5 ${rel.color}`}>{rel.label}</p>
+                    </div>
+                  );
+                })()}
+                <div className="flex-1 min-w-0">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tc(nextEvent.type).badge}`}>
+                    {tc(nextEvent.type).icon} {tc(nextEvent.type).label}
+                  </span>
+                  <p className="text-base font-bold text-white mt-1.5 truncate">
+                    {nextEvent.type === 'match' ? (() => {
+                      const ms = getMatches(nextEvent);
+                      const first = ms[0];
+                      return ms.length > 1
+                        ? (first?.opponentName ? `🆚 ${first.opponentName} ほか${ms.length - 1}試合` : `🏆 ${ms.length}試合`)
+                        : (first?.opponentName ? `🆚 ${first.opponentName}` : '相手未定');
+                    })() : (nextEvent.label || nextEvent.location || '詳細未定')}
                   </p>
-                )}
+                  {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
+                  {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
+                  {(nextEvent.meetingTime || nextEvent.meetingPlace) && (
+                    <p className="text-sm font-semibold text-amber-300 mt-1">
+                      🚩 集合{nextEvent.meetingTime ? ` ${nextEvent.meetingTime}` : ''}{nextEvent.meetingPlace ? ` ${nextEvent.meetingPlace}` : ''}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-            {/* 詳細ボタン */}
-            <div className="mt-3 flex justify-end">
+              {/* 縦長詳細ボタン */}
               <button
                 onClick={() => setNextExpanded(p => !p)}
-                className="text-sm font-bold text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-black/20 hover:bg-black/40 border border-white/10 transition-colors"
+                className="w-10 flex-shrink-0 flex items-center justify-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors [writing-mode:vertical-rl]"
               >
                 {nextExpanded ? '閉じる' : '詳細'}
               </button>
             </div>
             {/* 展開エリア */}
             {nextExpanded && (
-              <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+              <div className="px-4 py-3 border-t border-white/10 space-y-2">
                 {nextEvent.type === 'match' && (() => {
                   const ms = getMatches(nextEvent);
                   if (ms.length <= 1) return null;
@@ -2013,19 +2014,27 @@ function HomeSection({
                   isExpanded ? next.delete(a.id) : next.add(a.id);
                   return next;
                 });
+                const hasDetail = a.content && a.content.length > 60;
                 return (
-                  <div key={a.id} className={`rounded-xl px-4 py-3 border ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      {a.important && <span className="text-[10px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded-full">重要</span>}
-                      <span className="text-[10px] text-slate-400">{a.date}</span>
+                  <div key={a.id} className={`rounded-xl border overflow-hidden ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
+                    <div className="flex">
+                      <div className="flex-1 px-4 py-3 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          {a.important && <span className="text-[10px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded-full">重要</span>}
+                          <span className="text-[10px] text-slate-400">{a.date}</span>
+                        </div>
+                        <p className="text-sm font-bold text-white">{a.title}</p>
+                        <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>
+                      </div>
+                      {hasDetail && (
+                        <button
+                          onClick={toggleExpand}
+                          className="w-10 flex-shrink-0 flex items-center justify-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors [writing-mode:vertical-rl]"
+                        >
+                          {isExpanded ? '閉じる' : '詳細'}
+                        </button>
+                      )}
                     </div>
-                    <p className="text-sm font-bold text-white">{a.title}</p>
-                    <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>
-                    {a.content && a.content.length > 60 && (
-                      <button onClick={toggleExpand} className="mt-1.5 text-sm font-bold text-slate-300 hover:text-white px-3 py-1 rounded-lg bg-slate-700/50 hover:bg-slate-600 border border-white/10 transition-colors">
-                        {isExpanded ? '閉じる' : '詳細'}
-                      </button>
-                    )}
                   </div>
                 );
               })}
