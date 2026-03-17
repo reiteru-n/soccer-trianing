@@ -214,9 +214,103 @@ const ACTION_LABELS: Record<string, string> = {
   teamLogo: 'チームロゴ変更',
 };
 
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+function matchEventChanged(a: SchEvent, b: SchEvent): boolean {
+  return (
+    a.date !== b.date ||
+    a.endDate !== b.endDate ||
+    a.startTime !== b.startTime ||
+    a.location !== b.location ||
+    a.matchType !== b.matchType ||
+    a.label !== b.label ||
+    a.meetingTime !== b.meetingTime ||
+    a.meetingPlace !== b.meetingPlace ||
+    a.opponentName !== b.opponentName ||
+    JSON.stringify(a.matches) !== JSON.stringify(b.matches)
+  );
+}
+
+function formatMatchAnnouncement(event: SchEvent): { title: string; content: string } | null {
+  const d = event.date;
+  const dateObj = new Date(d.replace(/\//g, '-') + 'T00:00:00');
+  let dateStr = `${d}（${WEEKDAYS[dateObj.getDay()]}）`;
+  if (event.endDate && event.endDate !== event.date) {
+    const endObj = new Date(event.endDate.replace(/\//g, '-') + 'T00:00:00');
+    dateStr += ` 〜 ${event.endDate}（${WEEKDAYS[endObj.getDay()]}）`;
+  }
+
+  const lines: string[] = [];
+  lines.push(`📅 日時：${dateStr}${event.startTime ? ' ' + event.startTime : ''}`);
+  if (event.location)     lines.push(`📍 場所：${event.location}`);
+  if (event.matchType)    lines.push(`⚽ 種別：${event.matchType}`);
+  if (event.label)        lines.push(`🏆 大会名：${event.label}`);
+  if (event.meetingTime)  lines.push(`⏰ 集合：${event.meetingTime}${event.meetingPlace ? ' ' + event.meetingPlace : ''}`);
+
+  const ms = event.matches;
+  if (ms && ms.length > 0) {
+    if (ms.length === 1) {
+      const m = ms[0];
+      const homeAway = m.isHome !== undefined ? (m.isHome ? '（ホーム）' : '（アウェイ）') : '';
+      lines.push(`🆚 相手：${m.opponentName || '相手未定'}${homeAway}`);
+    } else {
+      lines.push('🆚 試合：');
+      ms.forEach(m => {
+        const label = m.roundName || (m.dayNumber != null ? `${m.dayNumber}日目` : '');
+        lines.push(`　${label ? label + ' ' : ''}vs ${m.opponentName || '相手未定'}`);
+      });
+    }
+  } else if (event.opponentName) {
+    const homeAway = event.isHome !== undefined ? (event.isHome ? '（ホーム）' : '（アウェイ）') : '';
+    lines.push(`🆚 相手：${event.opponentName}${homeAway}`);
+  }
+
+  const opponents = ms && ms.length > 0
+    ? ms.map(m => m.opponentName || '相手未定').join('・')
+    : (event.opponentName || '');
+  const title = `⚽ 試合のお知らせ：${d}${opponents ? ' vs ' + opponents : ''}`;
+
+  return { title, content: lines.join('\n') };
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json() as Record<string, unknown>;
+
+    // 試合イベント保存時、新規追加 or 日時/場所/相手が変わったら自動でお知らせを生成
+    if ('events' in body) {
+      const newEvents = body.events as SchEvent[];
+      const existing = await readSchData();
+      const oldEventMap = new Map(existing.events.map(e => [e.id, e]));
+
+      const toAnnounce: SchAnnouncement[] = [];
+      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+
+      for (const ev of newEvents.filter(e => e.type === 'match')) {
+        const old = oldEventMap.get(ev.id);
+        if (!old || matchEventChanged(old, ev)) {
+          const fmt = formatMatchAnnouncement(ev);
+          if (fmt) {
+            toAnnounce.push({
+              id: `auto-match-${ev.id}`,
+              date: today,
+              title: fmt.title,
+              content: fmt.content,
+              important: true,
+            });
+          }
+        }
+      }
+
+      if (toAnnounce.length > 0) {
+        const upsertIds = new Set(toAnnounce.map(a => a.id));
+        body.announcements = [
+          ...existing.announcements.filter(a => !upsertIds.has(a.id)),
+          ...toAnnounce,
+        ].sort((a, b) => b.date.localeCompare(a.date));
+      }
+    }
+
     await writeSchPartial(body);
     const actions = Object.keys(body).filter(k => k in ACTION_LABELS);
     if (actions.length > 0) {
