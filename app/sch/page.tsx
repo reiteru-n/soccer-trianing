@@ -1868,12 +1868,20 @@ function HomeSection({
               </button>
             </div>
             {/* 展開エリア */}
-            {nextExpanded && (
-              <div className="px-4 py-3 border-t border-white/10 space-y-2">
-                {nextEvent.type === 'match' && (() => {
-                  const ms = getMatches(nextEvent);
-                  if (ms.length <= 1) return null;
-                  return (
+            {nextExpanded && (() => {
+              const ms = nextEvent.type === 'match' ? getMatches(nextEvent) : [];
+              const multiMatch = ms.length > 1;
+              const hasNote = !!nextEvent.note;
+              const hasMap = (nextEvent.type === 'camp' || nextEvent.type === 'expedition') && !!nextEvent.mapQuery;
+              const nextPlan = parkingPlan[0];
+              const activeSlots = nextPlan?.slots.filter(s => s.status !== 'skipped') ?? [];
+              const skippedSlots = nextPlan?.slots.filter(s => s.status === 'skipped') ?? [];
+              const hasParking = activeSlots.length > 0 || skippedSlots.length > 0;
+              const showParking = !multiMatch && !hasNote && !hasMap && hasParking;
+
+              return (
+                <div className="px-4 py-3 border-t border-white/10 space-y-2">
+                  {multiMatch && (
                     <div className="space-y-1">
                       {ms.map((m, i) => (
                         <p key={m.id} className="text-xs text-slate-300">
@@ -1881,26 +1889,49 @@ function HomeSection({
                         </p>
                       ))}
                     </div>
-                  );
-                })()}
-                {nextEvent.note && <p className="text-xs text-slate-300">📝 {nextEvent.note}</p>}
-                {(nextEvent.type === 'camp' || nextEvent.type === 'expedition') && nextEvent.mapQuery && (
-                  <div>
-                    <iframe
-                      src={`https://maps.google.com/maps?q=${encodeURIComponent(nextEvent.mapQuery)}&output=embed&hl=ja&z=8`}
-                      width="100%" height="160"
-                      className="rounded-xl border border-white/10"
-                      loading="lazy"
-                    />
-                    <a href={`https://www.google.co.jp/maps/search/${encodeURIComponent(nextEvent.mapQuery)}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 mt-1 text-xs text-blue-400 hover:text-blue-300">
-                      🗺️ Google マップで開く
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                  {hasNote && <p className="text-xs text-slate-300">📝 {nextEvent.note}</p>}
+                  {hasMap && (
+                    <div>
+                      <iframe
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(nextEvent.mapQuery!)}&output=embed&hl=ja&z=8`}
+                        width="100%" height="160"
+                        className="rounded-xl border border-white/10"
+                        loading="lazy"
+                      />
+                      <a href={`https://www.google.co.jp/maps/search/${encodeURIComponent(nextEvent.mapQuery!)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 mt-1 text-xs text-blue-400 hover:text-blue-300">
+                        🗺️ Google マップで開く
+                      </a>
+                    </div>
+                  )}
+                  {showParking && (
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">🅿️ 駐車場当番</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {activeSlots.map(s => {
+                          const mem = sortedMembers.find(m => m.id === s.memberId);
+                          return (
+                            <span key={s.memberId} className="text-xs bg-slate-700/60 text-slate-300 px-2 py-0.5 rounded-full">
+                              🚗 {mem?.name ?? '?'}
+                            </span>
+                          );
+                        })}
+                        {skippedSlots.map(s => {
+                          const mem = sortedMembers.find(m => m.id === s.memberId);
+                          return (
+                            <span key={s.memberId} className="text-xs bg-slate-800/60 text-slate-500 line-through px-2 py-0.5 rounded-full">
+                              {mem?.name ?? '?'}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         ) : (
           <div className="rounded-2xl p-5 border bg-slate-800/40 border-white/5 text-center text-slate-400 text-sm">予定がありません</div>
