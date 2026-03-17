@@ -1752,6 +1752,10 @@ function ParkingHistorySection({
                     );
                   })}
                 </div>
+              ) : ev.maxParkingSlots === -1 ? (
+                <div className="px-3 py-2">
+                  <span className="text-[11px] text-emerald-700 italic">上限なし — 記録不要</span>
+                </div>
               ) : (
                 <div className="px-3 py-2">
                   <span className="text-[11px] text-slate-600 italic">未記録 — 「編集」から入力できます</span>
@@ -1810,7 +1814,7 @@ function HomeSection({
 
   const pastEvents = useMemo(
     () => [...events]
-      .filter(e => e.date < today)
+      .filter(e => e.date < today && e.maxParkingSlots !== 0)
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 10),
     [events, today]
