@@ -894,10 +894,17 @@ function EventCard({
             )}
           </div>
           {/* Actions */}
-          <div className="flex flex-col gap-1 flex-shrink-0">
-            <button onClick={onEdit} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
-            <button onClick={onDelete} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button>
-            <button onClick={() => setExpanded(p => !p)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">{expanded ? '閉じる' : '詳細'}</button>
+          <div className="flex flex-col gap-2 flex-shrink-0 items-end">
+            <div className="flex flex-col gap-0.5">
+              <button onClick={onEdit} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
+              <button onClick={onDelete} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button>
+            </div>
+            <button
+              onClick={() => setExpanded(p => !p)}
+              className="text-sm font-bold text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-600 border border-white/10 transition-colors whitespace-nowrap"
+            >
+              {expanded ? '閉じる' : '詳細'}
+            </button>
           </div>
         </div>
       </div>
@@ -2487,7 +2494,7 @@ export default function SchPage() {
     { key: 'events'  as Tab, label: '予定',     icon: '📅' },
     { key: 'stats'   as Tab, label: '戦績',     icon: '🏆' },
     { key: 'announce'as Tab, label: '連絡',     icon: '📢' },
-    { key: 'member'  as Tab, label: 'メンバー', icon: '👥' },
+    { key: 'member'  as Tab, label: 'メンバー', icon: '🪪' },
   ];
 
   const logoSrc = teamLogo ?? '/sch-logo.png';
