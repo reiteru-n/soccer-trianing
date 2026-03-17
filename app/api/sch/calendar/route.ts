@@ -37,22 +37,21 @@ function nextDay(dateStr: string): string {
 
 function eventSummary(e: SchEvent): string {
   switch (e.type) {
-    case 'practice':   return e.label ?? '練習';
-    case 'camp':       return e.label ?? '合宿';
-    case 'expedition': return e.label ?? '遠征';
-    case 'other':      return e.label ?? 'その他';
+    case 'practice':   return e.label ? `SCH 練習-${e.label}` : 'SCH 練習';
+    case 'camp':       return e.label ? `SCH 合宿-${e.label}` : 'SCH 合宿';
+    case 'expedition': return e.label ? `SCH 遠征-${e.label}` : 'SCH 遠征';
+    case 'other':      return e.label ? `SCH その他-${e.label}` : 'SCH その他';
     case 'match': {
-      const parts: string[] = ['試合'];
-      if (e.matchType) parts.push(`(${e.matchType})`);
+      const base = e.matchType ? `SCH 試合-${e.matchType}` : 'SCH 試合';
+      const opponents: string[] = [];
       if (e.matches && e.matches.length > 0) {
-        const opponents = e.matches.map(m => m.opponentName).filter(Boolean);
-        if (opponents.length) parts.push(`vs ${opponents.join('・')}`);
+        e.matches.map(m => m.opponentName).filter(Boolean).forEach(o => opponents.push(o!));
       } else if (e.opponentName) {
-        parts.push(`vs ${e.opponentName}`);
+        opponents.push(e.opponentName);
       }
-      return parts.join(' ');
+      return opponents.length ? `${base} vs ${opponents.join('・')}` : base;
     }
-    default: return e.label ?? 'SCH予定';
+    default: return e.label ? `SCH その他-${e.label}` : 'SCH 予定';
   }
 }
 
