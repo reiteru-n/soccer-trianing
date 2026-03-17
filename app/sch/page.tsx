@@ -1862,9 +1862,9 @@ function HomeSection({
               {/* 縦長詳細ボタン */}
               <button
                 onClick={() => setNextExpanded(p => !p)}
-                className="w-10 flex-shrink-0 flex items-center justify-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors [writing-mode:vertical-rl]"
+                className="w-10 flex-shrink-0 flex items-center justify-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
               >
-                {nextExpanded ? '閉じる' : '詳細'}
+                <span className="[writing-mode:vertical-rl]">{nextExpanded ? '閉じる' : '詳細'}</span>
               </button>
             </div>
             {/* 展開エリア */}
@@ -2029,9 +2029,9 @@ function HomeSection({
                       {hasDetail && (
                         <button
                           onClick={toggleExpand}
-                          className="w-10 flex-shrink-0 flex items-center justify-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors [writing-mode:vertical-rl]"
+                          className="w-10 flex-shrink-0 flex items-center justify-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
                         >
-                          {isExpanded ? '閉じる' : '詳細'}
+                          <span className="[writing-mode:vertical-rl]">{isExpanded ? '閉じる' : '詳細'}</span>
                         </button>
                       )}
                     </div>
