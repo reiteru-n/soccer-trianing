@@ -1864,7 +1864,7 @@ function HomeSection({
                 onClick={() => setNextExpanded(p => !p)}
                 className="w-10 flex-shrink-0 grid place-items-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
               >
-                <span className="[writing-mode:vertical-rl]">{nextExpanded ? '閉じる' : '詳細'}</span>
+                <span className="flex flex-col items-center leading-tight">{(nextExpanded ? '閉じる' : '詳細').split('').map((c, i) => <span key={i}>{c}</span>)}</span>
               </button>
             </div>
             {/* 展開エリア */}
@@ -2049,7 +2049,7 @@ function HomeSection({
                           onClick={toggleExpand}
                           className="w-10 flex-shrink-0 grid place-items-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
                         >
-                          <span className="[writing-mode:vertical-rl]">{isExpanded ? '閉じる' : '詳細'}</span>
+                          <span className="flex flex-col items-center leading-tight">{(isExpanded ? '閉じる' : '詳細').split('').map((c, i) => <span key={i}>{c}</span>)}</span>
                         </button>
                       )}
                     </div>
