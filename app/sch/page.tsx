@@ -2654,14 +2654,31 @@ export default function SchPage() {
           </div>
           <div className="flex flex-col items-end gap-1">
             <span className="text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
-            {isAdmin && (
-              <a
-                href="/sch/admin"
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  const calUrl = 'https://soccer-trianing.vercel.app/api/sch/calendar';
+                  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                  if (isIOS) {
+                    window.location.href = calUrl.replace('https://', 'webcal://');
+                  } else {
+                    window.open(`https://calendar.google.com/calendar/r?cid=${encodeURIComponent('webcal://soccer-trianing.vercel.app/api/sch/calendar')}`, '_blank');
+                  }
+                }}
                 className="text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
+                title="予定をカレンダーに追加"
               >
-                🔍 管理
-              </a>
-            )}
+                📅 カレンダー追加
+              </button>
+              {isAdmin && (
+                <a
+                  href="/sch/admin"
+                  className="text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
+                >
+                  🔍 管理
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </header>
