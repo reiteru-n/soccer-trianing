@@ -42,12 +42,34 @@ function shortUa(ua: string): string {
   return ua.slice(0, 20);
 }
 
+// ワイルドカード対応マッチング（"203.0.113.*" → 203.0.113.x を全て除外）
+function isIpExcluded(ip: string, excludedList: string[]): boolean {
+  return excludedList.some(pattern => {
+    if (pattern.endsWith('.*')) {
+      return ip.startsWith(pattern.slice(0, -1)); // "203.0.113.*" → "203.0.113." で前方一致
+    }
+    return ip === pattern;
+  });
+}
+
+// IPv4かどうか（サブネット除外ボタン表示判定）
+function isIPv4(ip: string): boolean {
+  return !ip.includes(':') && /^\d/.test(ip);
+}
+
+// IPの第4オクテットをワイルドカードに変換（"203.0.113.45" → "203.0.113.*"）
+function toSubnetPattern(ip: string): string {
+  const parts = ip.split('.');
+  if (parts.length === 4) return `${parts[0]}.${parts[1]}.${parts[2]}.*`;
+  return ip;
+}
+
 // ─── Chart ───────────────────────────────────────────────
 
 type ChartDay = { date: string; family: number; team: number; login: number; total: number };
 
 function buildChartData(entries: AccessLogEntry[], excludedIps: string[]): ChartDay[] {
-  const filtered = entries.filter(e => !excludedIps.includes(e.ip));
+  const filtered = entries.filter(e => !isIpExcluded(e.ip, excludedIps));
   const counts: Record<string, ChartDay> = {};
   for (const e of filtered) {
     const d = new Date(e.ts);
@@ -78,7 +100,7 @@ function AccessChart({ entries, excludedIps }: { entries: AccessLogEntry[]; excl
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xs font-bold text-slate-300">📊 アクセス頻度</h2>
         {excludedIps.length > 0 && (
-          <span className="text-[10px] text-slate-500">{excludedIps.length}件のIPを除外中</span>
+          <span className="text-[10px] text-slate-500">{excludedIps.length}件を除外中</span>
         )}
       </div>
       <div className="flex items-end gap-1" style={{ height: `${MAX_H + 32}px` }}>
@@ -91,11 +113,8 @@ function AccessChart({ entries, excludedIps }: { entries: AccessLogEntry[]; excl
             <div key={d.date} className="flex-1 flex flex-col items-center min-w-0">
               <span className="text-[9px] text-slate-400 leading-none mb-0.5">{d.total}</span>
               <div className="relative w-full rounded-t-sm overflow-hidden" style={{ height: `${barH}px` }}>
-                {/* family: blue, bottom */}
                 <div className="absolute bottom-0 left-0 right-0 bg-blue-500/70" style={{ height: `${familyH}px` }} />
-                {/* team: green, middle */}
                 <div className="absolute left-0 right-0 bg-green-500/70" style={{ bottom: `${familyH}px`, height: `${teamH}px` }} />
-                {/* login: amber, top */}
                 <div className="absolute left-0 right-0 bg-amber-500/70" style={{ bottom: `${familyH + teamH}px`, height: `${loginH}px` }} />
               </div>
               <span className="text-[8px] text-slate-500 truncate w-full text-center mt-0.5">{d.date}</span>
@@ -117,10 +136,12 @@ function AccessChart({ entries, excludedIps }: { entries: AccessLogEntry[]; excl
 function ExcludedIpsPanel({
   ips,
   saving,
+  entries,
   onUpdate,
 }: {
   ips: string[];
   saving: boolean;
+  entries: AccessLogEntry[];
   onUpdate: (newIps: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -130,12 +151,29 @@ function ExcludedIpsPanel({
     onUpdate(ips.filter(x => x !== ip));
   }
 
-  function add() {
+  function addPattern(pattern: string) {
+    if (!pattern || ips.includes(pattern)) return;
+    onUpdate([...ips, pattern]);
+  }
+
+  function addManual() {
     const v = input.trim();
     if (!v || ips.includes(v)) return;
     onUpdate([...ips, v]);
     setInput('');
   }
+
+  // 未除外IPのアクセス回数トップ5
+  const topUnexcluded: { ip: string; count: number }[] = (() => {
+    const counts: Record<string, number> = {};
+    for (const e of entries) {
+      if (!isIpExcluded(e.ip, ips)) counts[e.ip] = (counts[e.ip] ?? 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([ip, count]) => ({ ip, count }));
+  })();
 
   return (
     <div className="bg-slate-800/60 border border-white/5 rounded-xl mb-4 overflow-hidden">
@@ -149,6 +187,8 @@ function ExcludedIpsPanel({
 
       {open && (
         <div className="px-4 pb-4 border-t border-white/5">
+
+          {/* 登録済みリスト */}
           {ips.length === 0 ? (
             <p className="text-[11px] text-slate-500 py-3">
               除外IPなし。アクセス履歴のIPの横にある「除外」ボタンで登録できます。
@@ -158,6 +198,9 @@ function ExcludedIpsPanel({
               {ips.map(ip => (
                 <div key={ip} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-2">
                   <span className="text-xs font-mono text-slate-300 flex-1">{ip}</span>
+                  {ip.endsWith('.*') && (
+                    <span className="text-[9px] text-blue-400 bg-blue-900/30 px-1.5 py-0.5 rounded">🔀 サブネット</span>
+                  )}
                   <button
                     onClick={() => remove(ip)}
                     className="text-[10px] text-red-400 hover:text-red-300 px-2 py-0.5 rounded bg-red-900/20 hover:bg-red-900/40 transition-colors"
@@ -169,18 +212,47 @@ function ExcludedIpsPanel({
             </div>
           )}
 
-          {/* Manual input */}
-          <div className="flex gap-2 mt-2">
+          {/* 最近よく来るIP（未除外トップ5） */}
+          {topUnexcluded.length > 0 && (
+            <div className="mt-3 mb-3">
+              <p className="text-[10px] text-slate-500 mb-2">最近のアクセス（未除外・多い順）</p>
+              <div className="space-y-1">
+                {topUnexcluded.map(({ ip, count }) => (
+                  <div key={ip} className="flex items-center gap-2 bg-slate-700/20 rounded-lg px-3 py-2">
+                    <span className="text-[11px] font-mono text-slate-400 flex-1">{ip}</span>
+                    <span className="text-[10px] text-slate-600">{count}回</span>
+                    <button
+                      onClick={() => addPattern(ip)}
+                      className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors"
+                    >
+                      除外
+                    </button>
+                    {isIPv4(ip) && (
+                      <button
+                        onClick={() => addPattern(toSubnetPattern(ip))}
+                        className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap"
+                      >
+                        {toSubnetPattern(ip)}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 手動入力 */}
+          <div className="flex gap-2 mt-2 pt-2 border-t border-white/5">
             <input
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="IPアドレスを直接入力"
+              placeholder="直接入力（例: 203.0.113.*）"
               className="flex-1 text-xs font-mono bg-slate-700/60 border border-white/10 rounded-lg px-3 py-2 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-slate-500"
-              onKeyDown={e => { if (e.key === 'Enter') add(); }}
+              onKeyDown={e => { if (e.key === 'Enter') addManual(); }}
             />
             <button
-              onClick={add}
+              onClick={addManual}
               disabled={!input.trim()}
               className="text-xs bg-slate-600 hover:bg-slate-500 disabled:opacity-40 text-white px-3 py-2 rounded-lg transition-colors"
             >
@@ -237,15 +309,15 @@ export default function AdminPage() {
         body: JSON.stringify({ ips: newIps }),
       });
     } catch {
-      // silent — local state is already updated
+      // silent
     } finally {
       setSaving(false);
     }
   }
 
-  async function addExcludedIp(ip: string) {
-    if (excludedIps.includes(ip)) return;
-    await saveExcludedIps([...excludedIps, ip]);
+  async function addExcludedPattern(pattern: string) {
+    if (excludedIps.includes(pattern)) return;
+    await saveExcludedIps([...excludedIps, pattern]);
   }
 
   return (
@@ -273,14 +345,19 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Chart (access tab only) */}
+        {/* Chart */}
         {tab === 'access' && accessEntries.length > 0 && (
           <AccessChart entries={accessEntries} excludedIps={excludedIps} />
         )}
 
         {/* Excluded IPs panel */}
         {tab === 'access' && (
-          <ExcludedIpsPanel ips={excludedIps} saving={saving} onUpdate={saveExcludedIps} />
+          <ExcludedIpsPanel
+            ips={excludedIps}
+            saving={saving}
+            entries={accessEntries}
+            onUpdate={saveExcludedIps}
+          />
         )}
 
         {/* Tabs */}
@@ -308,31 +385,41 @@ export default function AdminPage() {
               <div className="text-center text-slate-500 text-sm py-12">記録がありません</div>
             )}
             {accessEntries.map((e, i) => {
-              const isExcluded = excludedIps.includes(e.ip);
+              const excluded = isIpExcluded(e.ip, excludedIps);
+              const subnetPattern = isIPv4(e.ip) ? toSubnetPattern(e.ip) : null;
+              const subnetAlreadyExcluded = subnetPattern ? excludedIps.includes(subnetPattern) : false;
               return (
-                <div key={i} className={`bg-slate-800/60 border border-white/5 rounded-xl px-4 py-3 flex items-start gap-3 ${isExcluded ? 'opacity-40' : ''}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] text-slate-400 font-mono">{formatTs(e.ts)}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${TYPE_BADGE[e.type] ?? 'bg-slate-600/40 text-slate-400'}`}>
-                        {e.type}
-                      </span>
-                      <span className="text-xs text-white font-medium">{e.page}</span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] text-slate-500 font-mono">{e.ip}</span>
-                      <span className="text-[10px] text-slate-500">{shortUa(e.ua)}</span>
-                      {isExcluded ? (
-                        <span className="text-[9px] text-slate-600 px-1.5 py-0.5 rounded bg-slate-700/40">除外中</span>
-                      ) : (
+                <div key={i} className={`bg-slate-800/60 border border-white/5 rounded-xl px-4 py-3 ${excluded ? 'opacity-40' : ''}`}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] text-slate-400 font-mono">{formatTs(e.ts)}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${TYPE_BADGE[e.type] ?? 'bg-slate-600/40 text-slate-400'}`}>
+                      {e.type}
+                    </span>
+                    <span className="text-xs text-white font-medium">{e.page}</span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] text-slate-500 font-mono">{e.ip}</span>
+                    <span className="text-[10px] text-slate-500">{shortUa(e.ua)}</span>
+                    {excluded ? (
+                      <span className="text-[9px] text-slate-600 px-1.5 py-0.5 rounded bg-slate-700/40">除外中</span>
+                    ) : (
+                      <>
                         <button
-                          onClick={() => addExcludedIp(e.ip)}
+                          onClick={() => addExcludedPattern(e.ip)}
                           className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors"
                         >
                           除外
                         </button>
-                      )}
-                    </div>
+                        {subnetPattern && !subnetAlreadyExcluded && (
+                          <button
+                            onClick={() => addExcludedPattern(subnetPattern)}
+                            className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap"
+                          >
+                            {subnetPattern}
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               );
