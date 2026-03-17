@@ -1097,7 +1097,7 @@ function SchCalendar({ events, today, onSelectDate }: {
       </div>
       <div className="grid grid-cols-7">
         {cells.map((day, i) => {
-          if (!day) return <div key={i} className="h-11" />;
+          if (!day) return <div key={i} className="h-12" />;
           const dateStr = `${viewYear}/${String(viewMonth).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
           const dots = dotMap[dateStr] ?? [];
           const spanning = spanMap[dateStr] ?? [];
@@ -1107,10 +1107,19 @@ function SchCalendar({ events, today, onSelectDate }: {
             <button
               key={i}
               onClick={() => onSelectDate(dateStr)}
-              className={`relative flex flex-col items-center pt-1 h-11 transition-colors ${isToday ? 'bg-blue-600/30 ring-1 ring-blue-400/50 rounded-lg' : 'hover:bg-slate-700/60 rounded-lg'}`}
+              className={`relative flex flex-col items-center pt-1 h-12 transition-colors ${isToday ? 'bg-blue-600/30 ring-1 ring-blue-400/50 rounded-lg' : 'hover:bg-slate-700/60 rounded-lg'}`}
             >
               <span className={`text-xs font-semibold leading-none z-10 ${isToday ? 'text-blue-300' : dow === 0 ? 'text-red-400/80' : dow === 6 ? 'text-blue-400/80' : 'text-slate-300'}`}>{day}</span>
-              {/* Multi-day event bars — bleed to edges to connect with adjacent cells */}
+              {/* Single-day dots — directly below the number */}
+              {dots.length > 0 && (
+                <div className="flex gap-0.5 items-center justify-center mt-1 z-10">
+                  {dots.slice(0, 3).map((e, j) => (
+                    <span key={j} className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${EVENT_DOT[e.type] ?? 'bg-slate-400'}`} />
+                  ))}
+                  {dots.length > 3 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
+                </div>
+              )}
+              {/* Multi-day bars — thick, at bottom, spanning across adjacent cells */}
               {spanning.slice(0, 3).map((e, j) => {
                 const isStart = e.date === dateStr;
                 const isEnd = e.endDate === dateStr;
@@ -1122,9 +1131,9 @@ function SchCalendar({ events, today, onSelectDate }: {
                 return (
                   <div
                     key={e.id}
-                    className={`absolute h-1 ${color} opacity-75`}
+                    className={`absolute h-[4px] ${color}`}
                     style={{
-                      top: `${20 + j * 5}px`,
+                      bottom: `${3 + j * 6}px`,
                       left: isStart && !isRowStart ? '50%' : 0,
                       right: isEnd && !isRowEnd ? '50%' : 0,
                       borderRadius: `${roundL ? '9999px' : '0'} ${roundR ? '9999px' : '0'} ${roundR ? '9999px' : '0'} ${roundL ? '9999px' : '0'}`,
@@ -1132,15 +1141,6 @@ function SchCalendar({ events, today, onSelectDate }: {
                   />
                 );
               })}
-              {/* Single-day event dots */}
-              {dots.length > 0 && (
-                <div className="absolute bottom-1 flex gap-0.5 items-center justify-center z-10">
-                  {dots.slice(0, 3).map((e, j) => (
-                    <span key={j} className={`w-1 h-1 rounded-full flex-shrink-0 ${EVENT_DOT[e.type] ?? 'bg-slate-400'}`} />
-                  ))}
-                  {dots.length > 3 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
-                </div>
-              )}
             </button>
           );
         })}
