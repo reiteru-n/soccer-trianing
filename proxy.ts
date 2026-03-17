@@ -27,6 +27,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // SCH calendar ICS: public (Apple/Google Calendar が cookie なしでアクセスするため)
+  if (pathname === '/api/sch/calendar') {
+    return NextResponse.next();
+  }
+
   // SCH API: requires team session
   if (pathname.startsWith('/api/sch')) {
     if (!(await hasValidCookie(req, 'team_session', 'team'))) {
