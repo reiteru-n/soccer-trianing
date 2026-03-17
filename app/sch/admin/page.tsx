@@ -131,6 +131,63 @@ function AccessChart({ entries, excludedIps }: { entries: AccessLogEntry[]; excl
   );
 }
 
+// ─── Unique users line chart ─────────────────────────────
+
+function UniqueUsersChart({ entries, excludedIps }: { entries: AccessLogEntry[]; excludedIps: string[] }) {
+  const filtered = entries.filter(e => !isIpExcluded(e.ip, excludedIps));
+  const dayIps: Record<string, Set<string>> = {};
+  for (const e of filtered) {
+    const d = new Date(e.ts);
+    const key = `${d.getMonth() + 1}/${d.getDate()}`;
+    if (!dayIps[key]) dayIps[key] = new Set();
+    dayIps[key].add(e.ip);
+  }
+  const data = Object.entries(dayIps)
+    .map(([date, ips]) => ({ date, count: ips.size }))
+    .sort((a, b) => {
+      const [am, ad] = a.date.split('/').map(Number);
+      const [bm, bd] = b.date.split('/').map(Number);
+      return am !== bm ? am - bm : ad - bd;
+    })
+    .slice(-14);
+
+  if (data.length === 0) return null;
+
+  const PAD = { top: 14, right: 8, bottom: 18, left: 8 };
+  const VW = 300;
+  const CH = 50; // chart area height
+  const totalH = PAD.top + CH + PAD.bottom;
+  const chartW = VW - PAD.left - PAD.right;
+  const maxCount = Math.max(...data.map(d => d.count), 1);
+
+  const xPos = (i: number) =>
+    data.length === 1 ? PAD.left + chartW / 2 : PAD.left + (i / (data.length - 1)) * chartW;
+  const yPos = (c: number) => PAD.top + CH - (c / maxCount) * CH;
+
+  const linePath = data.map((d, i) => `${i === 0 ? 'M' : 'L'}${xPos(i)},${yPos(d.count)}`).join(' ');
+  const areaPath = `${linePath} L${xPos(data.length - 1)},${PAD.top + CH} L${xPos(0)},${PAD.top + CH} Z`;
+
+  return (
+    <div className="bg-slate-800/60 border border-white/5 rounded-xl px-4 py-4 mb-4">
+      <h2 className="text-xs font-bold text-slate-300 mb-2">👥 ユニークユーザー数（IP別）</h2>
+      <svg viewBox={`0 0 ${VW} ${totalH}`} className="w-full overflow-visible">
+        {/* area fill */}
+        <path d={areaPath} fill="rgba(99,102,241,0.12)" />
+        {/* line */}
+        <path d={linePath} fill="none" stroke="rgba(99,102,241,0.75)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+        {/* dots + value labels + date labels */}
+        {data.map((d, i) => (
+          <g key={d.date}>
+            <circle cx={xPos(i)} cy={yPos(d.count)} r="2.5" fill="rgb(99,102,241)" />
+            <text x={xPos(i)} y={yPos(d.count) - 5} textAnchor="middle" fontSize="8" fill="rgb(148,163,184)">{d.count}</text>
+            <text x={xPos(i)} y={totalH - 2} textAnchor="middle" fontSize="7" fill="rgb(100,116,139)">{d.date}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 // ─── Excluded IPs panel ──────────────────────────────────
 
 function ExcludedIpsPanel({
@@ -345,9 +402,12 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Chart */}
+        {/* Charts */}
         {tab === 'access' && accessEntries.length > 0 && (
-          <AccessChart entries={accessEntries} excludedIps={excludedIps} />
+          <>
+            <AccessChart entries={accessEntries} excludedIps={excludedIps} />
+            <UniqueUsersChart entries={accessEntries} excludedIps={excludedIps} />
+          </>
         )}
 
         {/* Excluded IPs panel */}
