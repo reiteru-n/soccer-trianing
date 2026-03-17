@@ -141,6 +141,7 @@ export interface SchAnnouncement {
   title: string;
   content: string;
   important?: boolean;
+  url?: string; // 投稿URL（InstagramなどのSNSリンク）
 }
 
 export interface SchMemberParent {

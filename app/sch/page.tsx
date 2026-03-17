@@ -31,6 +31,10 @@ function relativeDayLabel(dateStr: string, today: string): { label: string; colo
   return { label: '一週間以上後', color: 'text-slate-400' };
 }
 
+function isInstagramUrl(url: string): boolean {
+  return /instagram\.com\/(p|reel|tv)\/[^/]+/.test(url);
+}
+
 // ---- Event type config ----
 type TypeCfg = { label: string; icon: string; badge: string; border: string; bg: string };
 const TYPE_CFG: Record<string, TypeCfg> = {
@@ -2032,7 +2036,7 @@ function HomeSection({
                   isExpanded ? next.delete(a.id) : next.add(a.id);
                   return next;
                 });
-                const hasDetail = a.content && a.content.length > 60;
+                const hasDetail = (a.content && a.content.length > 60) || !!a.url;
                 return (
                   <div key={a.id} className={`rounded-xl border overflow-hidden ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
                     <div className="flex">
@@ -2042,7 +2046,10 @@ function HomeSection({
                           <span className="text-[10px] text-slate-400">{a.date}</span>
                         </div>
                         <p className="text-sm font-bold text-white">{a.title}</p>
-                        <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>
+                        {a.content && <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>}
+                        {isExpanded && a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
+                        {isExpanded && a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
+                        {!isExpanded && a.url && isInstagramUrl(a.url) && <p className="text-xs text-indigo-400 mt-0.5">📸 Instagram投稿あり</p>}
                       </div>
                       {hasDetail && (
                         <button
@@ -2070,6 +2077,38 @@ function HomeSection({
   );
 }
 
+// ---- InstagramEmbed ----
+function InstagramEmbed({ url }: { url: string }) {
+  useEffect(() => {
+    const process = () => (window as any).instgrm?.Embeds.process();
+    if ((window as any).instgrm) {
+      process();
+    } else {
+      const existing = document.getElementById('instagram-embed-js');
+      if (!existing) {
+        const s = document.createElement('script');
+        s.id = 'instagram-embed-js';
+        s.src = '//www.instagram.com/embed.js';
+        s.async = true;
+        s.onload = process;
+        document.body.appendChild(s);
+      } else {
+        existing.addEventListener('load', process);
+      }
+    }
+  }, [url]);
+  return (
+    <div className="mt-2 overflow-x-auto">
+      <blockquote
+        className="instagram-media"
+        data-instgrm-permalink={url}
+        data-instgrm-version="14"
+        style={{ maxWidth: '100%', width: '100%', margin: '0', border: 'none', borderRadius: '12px' }}
+      />
+    </div>
+  );
+}
+
 // ---- AnnounceSection ----
 function AnnounceSection({ announcements, onSave }: { announcements: SchAnnouncement[]; onSave: (a: SchAnnouncement[]) => void }) {
   const [showForm, setShowForm] = useState(false);
@@ -2078,13 +2117,14 @@ function AnnounceSection({ announcements, onSave }: { announcements: SchAnnounce
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [important, setImportant] = useState(false);
+  const [url, setUrl] = useState('');
 
-  const resetForm = () => { setDate(todayStr()); setTitle(''); setContent(''); setImportant(false); setEditing(null); setShowForm(false); };
-  const openEdit = (a: SchAnnouncement) => { setEditing(a); setDate(a.date); setTitle(a.title); setContent(a.content); setImportant(a.important ?? false); setShowForm(true); };
+  const resetForm = () => { setDate(todayStr()); setTitle(''); setContent(''); setImportant(false); setUrl(''); setEditing(null); setShowForm(false); };
+  const openEdit = (a: SchAnnouncement) => { setEditing(a); setDate(a.date); setTitle(a.title); setContent(a.content); setImportant(a.important ?? false); setUrl(a.url ?? ''); setShowForm(true); };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !content) return;
-    const entry: SchAnnouncement = { id: editing?.id ?? generateId(), date, title, content, important };
+    if (!title || (!content && !url)) return;
+    const entry: SchAnnouncement = { id: editing?.id ?? generateId(), date, title, content, important, ...(url && { url }) };
     const updated = editing ? announcements.map(a => a.id === editing.id ? entry : a) : [...announcements, entry];
     onSave(updated.sort((a, b) => b.date.localeCompare(a.date)));
     resetForm();
@@ -2105,7 +2145,8 @@ function AnnounceSection({ announcements, onSave }: { announcements: SchAnnounce
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">📅 日付</label><input type="date" value={toInputDate(date)} onChange={e => setDate(fromInputDate(e.target.value))} required className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none" /></div>
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">📌 タイトル</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} required placeholder="例: 次回練習のお知らせ" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500" /></div>
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1">📝 内容</label><textarea value={content} onChange={e => setContent(e.target.value)} required rows={4} placeholder="お知らせの内容を入力" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500 resize-none" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1">📝 内容</label><textarea value={content} onChange={e => setContent(e.target.value)} rows={4} placeholder="お知らせの内容を入力" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500 resize-none" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1">🔗 投稿URL <span className="font-normal text-slate-500">（Instagram リンク等）</span></label><input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.instagram.com/p/..." className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500" /></div>
                 <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={important} onChange={e => setImportant(e.target.checked)} className="w-4 h-4 accent-red-500" /><span className="text-sm text-slate-300">🔴 重要なお知らせとしてマーク</span></label>
                 <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl text-sm">投稿</button>
               </form>
@@ -2121,7 +2162,9 @@ function AnnounceSection({ announcements, onSave }: { announcements: SchAnnounce
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">{a.important && <span className="text-xs font-bold bg-red-600 text-white px-2 py-0.5 rounded-full">重要</span>}<span className="text-xs text-slate-400">{a.date}</span></div>
                 <p className="text-sm font-bold text-white">{a.title}</p>
-                <p className="text-sm text-slate-300 mt-1 whitespace-pre-wrap">{a.content}</p>
+                {a.content && <p className="text-sm text-slate-300 mt-1 whitespace-pre-wrap">{a.content}</p>}
+                {a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
+                {a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
               </div>
               <div className="flex flex-col gap-1"><button onClick={() => openEdit(a)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button><button onClick={() => handleDelete(a.id)} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button></div>
             </div>
