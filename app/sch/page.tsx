@@ -1862,7 +1862,7 @@ function HomeSection({
               {/* 縦長詳細ボタン */}
               <button
                 onClick={() => setNextExpanded(p => !p)}
-                className="w-10 flex-shrink-0 flex items-center justify-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                className="w-10 flex-shrink-0 grid place-items-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
               >
                 <span className="[writing-mode:vertical-rl]">{nextExpanded ? '閉じる' : '詳細'}</span>
               </button>
@@ -1874,10 +1874,7 @@ function HomeSection({
               const hasNote = !!nextEvent.note;
               const hasMap = (nextEvent.type === 'camp' || nextEvent.type === 'expedition') && !!nextEvent.mapQuery;
               const nextPlan = parkingPlan[0];
-              const activeSlots = nextPlan?.slots.filter(s => s.status !== 'skipped') ?? [];
-              const skippedSlots = nextPlan?.slots.filter(s => s.status === 'skipped') ?? [];
-              const hasParking = activeSlots.length > 0 || skippedSlots.length > 0;
-              const showParking = !multiMatch && !hasNote && !hasMap && hasParking;
+              const showParking = !multiMatch && !hasNote && !hasMap;
 
               return (
                 <div className="px-4 py-3 border-t border-white/10 space-y-2">
@@ -1906,29 +1903,19 @@ function HomeSection({
                       </a>
                     </div>
                   )}
-                  {showParking && (
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">🅿️ 駐車場当番</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {activeSlots.map(s => {
-                          const mem = sortedMembers.find(m => m.id === s.memberId);
-                          return (
-                            <span key={s.memberId} className="text-xs bg-slate-700/60 text-slate-300 px-2 py-0.5 rounded-full">
-                              🚗 {mem?.name ?? '?'}
-                            </span>
-                          );
-                        })}
-                        {skippedSlots.map(s => {
-                          const mem = sortedMembers.find(m => m.id === s.memberId);
-                          return (
-                            <span key={s.memberId} className="text-xs bg-slate-800/60 text-slate-500 line-through px-2 py-0.5 rounded-full">
-                              {mem?.name ?? '?'}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  {showParking && (() => {
+                    const hasSlots = (nextPlan?.slots.filter(s => s.status !== 'skipped').length ?? 0) > 0;
+                    const limited = nextPlan && nextPlan.maxSlots !== -1;
+                    return (
+                      <p className="text-xs text-slate-300">
+                        🅿️ 駐車場:{' '}
+                        {hasSlots
+                          ? <span className="text-slate-200">{limited ? 'あり（制限あり）' : 'あり（制限なし）'}</span>
+                          : <span className="text-slate-500">なし</span>
+                        }
+                      </p>
+                    );
+                  })()}
                 </div>
               );
             })()}
@@ -2060,7 +2047,7 @@ function HomeSection({
                       {hasDetail && (
                         <button
                           onClick={toggleExpand}
-                          className="w-10 flex-shrink-0 flex items-center justify-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                          className="w-10 flex-shrink-0 grid place-items-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
                         >
                           <span className="[writing-mode:vertical-rl]">{isExpanded ? '閉じる' : '詳細'}</span>
                         </button>
