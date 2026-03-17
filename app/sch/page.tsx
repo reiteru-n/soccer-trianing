@@ -1309,6 +1309,27 @@ function EventSection({ events, members, onSave }: {
   );
 }
 
+// ---- VideoLink ----
+function VideoLink({ url }: { url: string }) {
+  const [state, setState] = useState<'loading' | 'ok' | 'broken'>('loading');
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/check-url?url=${encodeURIComponent(url)}`)
+      .then(r => r.json())
+      .then((d: { ok: boolean }) => { if (!cancelled) setState(d.ok ? 'ok' : 'broken'); })
+      .catch(() => { if (!cancelled) setState('broken'); });
+    return () => { cancelled = true; };
+  }, [url]);
+  if (state === 'loading') return <span className="text-[10px] text-slate-500 animate-pulse">🎬…</span>;
+  if (state === 'broken') return <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">リンク切れ</span>;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className="text-[10px] text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-1.5 py-0.5 rounded transition-colors shrink-0">
+      🎬 動画
+    </a>
+  );
+}
+
 // ---- StatsSection ----
 type StatTab = 'overall' | 'byType' | 'byOpponent' | 'byPeriod';
 
@@ -1578,6 +1599,7 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
                           <span className="text-sm font-bold text-white tabular-nums">{m.homeScore} − {m.awayScore}</span>
                           {m.opponentName && <span className="text-xs text-slate-400 truncate">vs {m.opponentName}</span>}
                           {m.roundName && <span className="text-[10px] text-slate-500 shrink-0">({m.roundName})</span>}
+                          {m.videoUrl && <VideoLink url={m.videoUrl} />}
                         </div>
                       );
                     })}
