@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 
 export default function SchLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="max-w-lg mx-auto px-4 pt-4 pb-8 min-h-screen">
+    <div className="max-w-lg mx-auto px-4 pt-4 pb-8 min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 text-slate-800">
       {children}
     </div>
   );
