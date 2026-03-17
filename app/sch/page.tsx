@@ -1782,6 +1782,8 @@ function HomeSection({
 }) {
   const today = todayStr();
   const sortedMembers = useMemo(() => [...members].sort((a, b) => a.number - b.number), [members]);
+  const [nextExpanded, setNextExpanded] = useState(false);
+  const [expandedAnnounces, setExpandedAnnounces] = useState<Set<string>>(new Set());
 
   const upcomingEvents = useMemo(
     () => events.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)),
@@ -1855,6 +1857,49 @@ function HomeSection({
                 )}
               </div>
             </div>
+            {/* 詳細ボタン */}
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={() => setNextExpanded(p => !p)}
+                className="text-sm font-bold text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-black/20 hover:bg-black/40 border border-white/10 transition-colors"
+              >
+                {nextExpanded ? '閉じる' : '詳細'}
+              </button>
+            </div>
+            {/* 展開エリア */}
+            {nextExpanded && (
+              <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+                {nextEvent.type === 'match' && (() => {
+                  const ms = getMatches(nextEvent);
+                  if (ms.length <= 1) return null;
+                  return (
+                    <div className="space-y-1">
+                      {ms.map((m, i) => (
+                        <p key={m.id} className="text-xs text-slate-300">
+                          試合{i + 1}{m.roundName ? ` (${m.roundName})` : ''}{m.opponentName ? ` 🆚 ${m.opponentName}` : ''}
+                        </p>
+                      ))}
+                    </div>
+                  );
+                })()}
+                {nextEvent.note && <p className="text-xs text-slate-300">📝 {nextEvent.note}</p>}
+                {(nextEvent.type === 'camp' || nextEvent.type === 'expedition') && nextEvent.mapQuery && (
+                  <div>
+                    <iframe
+                      src={`https://maps.google.com/maps?q=${encodeURIComponent(nextEvent.mapQuery)}&output=embed&hl=ja&z=8`}
+                      width="100%" height="160"
+                      className="rounded-xl border border-white/10"
+                      loading="lazy"
+                    />
+                    <a href={`https://www.google.co.jp/maps/search/${encodeURIComponent(nextEvent.mapQuery)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-1 text-xs text-blue-400 hover:text-blue-300">
+                      🗺️ Google マップで開く
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="rounded-2xl p-5 border bg-slate-800/40 border-white/5 text-center text-slate-400 text-sm">予定がありません</div>
@@ -1961,16 +2006,29 @@ function HomeSection({
               )}
             </div>
             <div className="space-y-2">
-              {shown.map(a => (
-                <div key={a.id} className={`rounded-xl px-4 py-3 border ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    {a.important && <span className="text-[10px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded-full">重要</span>}
-                    <span className="text-[10px] text-slate-400">{a.date}</span>
+              {shown.map(a => {
+                const isExpanded = expandedAnnounces.has(a.id);
+                const toggleExpand = () => setExpandedAnnounces(prev => {
+                  const next = new Set(prev);
+                  isExpanded ? next.delete(a.id) : next.add(a.id);
+                  return next;
+                });
+                return (
+                  <div key={a.id} className={`rounded-xl px-4 py-3 border ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      {a.important && <span className="text-[10px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded-full">重要</span>}
+                      <span className="text-[10px] text-slate-400">{a.date}</span>
+                    </div>
+                    <p className="text-sm font-bold text-white">{a.title}</p>
+                    <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>
+                    {a.content && a.content.length > 60 && (
+                      <button onClick={toggleExpand} className="mt-1.5 text-sm font-bold text-slate-300 hover:text-white px-3 py-1 rounded-lg bg-slate-700/50 hover:bg-slate-600 border border-white/10 transition-colors">
+                        {isExpanded ? '閉じる' : '詳細'}
+                      </button>
+                    )}
                   </div>
-                  <p className="text-sm font-bold text-white">{a.title}</p>
-                  <p className="text-xs text-slate-300 mt-0.5 line-clamp-2 whitespace-pre-wrap">{a.content}</p>
-                </div>
-              ))}
+                );
+              })}
               {hasMore && (
                 <button onClick={onGoToAnnounce}
                   className="w-full text-xs py-2.5 rounded-xl border border-dashed border-slate-600 text-slate-400 hover:text-purple-300 hover:border-purple-500/50 transition-colors">
