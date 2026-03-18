@@ -333,8 +333,8 @@ function RecentIpSummary({
   excludedIps: string[];
   onExclude: (ip: string) => void;
 }) {
-  const oneHourAgo = Date.now() - 60 * 60 * 1000;
-  const recent = entries.filter(e => new Date(e.ts).getTime() > oneHourAgo);
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recent = entries.filter(e => new Date(e.ts).getTime() > sevenDaysAgo);
   if (recent.length === 0) return null;
 
   const byIp: Record<string, { count: number; lastTs: string }> = {};
@@ -348,7 +348,7 @@ function RecentIpSummary({
 
   return (
     <div className="bg-slate-800/60 border border-white/5 rounded-xl px-4 py-3 mb-4">
-      <h2 className="text-xs font-bold text-slate-300 mb-2">🕐 1時間以内のアクセス（IP別）</h2>
+      <h2 className="text-xs font-bold text-slate-300 mb-2">📅 7日以内のアクセス（IP別）</h2>
       <div className="space-y-1.5">
         {sorted.map(([ip, data]) => {
           const excluded = isIpExcluded(ip, excludedIps);
