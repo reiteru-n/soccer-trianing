@@ -394,6 +394,7 @@ export default function AdminPage() {
   const [accessEntries, setAccessEntries] = useState<AccessLogEntry[]>([]);
   const [changeEntries, setChangeEntries] = useState<ChangeLogEntry[]>([]);
   const [excludedIps, setExcludedIps] = useState<string[]>([]);
+  const [showExcluded, setShowExcluded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -518,7 +519,17 @@ export default function AdminPage() {
             {accessEntries.length === 0 && !loading && (
               <div className="text-center text-slate-500 text-sm py-12">記録がありません</div>
             )}
-            {accessEntries.map((e, i) => {
+            {accessEntries.length > 0 && excludedIps.length > 0 && (
+              <div className="flex items-center justify-end mb-1">
+                <button
+                  onClick={() => setShowExcluded(v => !v)}
+                  className={`text-[10px] px-2.5 py-1 rounded-lg border transition-colors ${showExcluded ? 'bg-slate-700 border-slate-500 text-slate-300' : 'bg-slate-800/60 border-white/10 text-slate-500 hover:text-slate-300'}`}
+                >
+                  {showExcluded ? '🚫 除外を隠す' : '👁 除外も表示'}
+                </button>
+              </div>
+            )}
+            {accessEntries.filter(e => showExcluded || !isIpExcluded(e.ip, excludedIps)).map((e, i) => {
               const excluded = isIpExcluded(e.ip, excludedIps);
               const subnetPattern = isIPv4(e.ip) ? toSubnetPattern(e.ip) : null;
               const subnetAlreadyExcluded = subnetPattern ? excludedIps.includes(subnetPattern) : false;
