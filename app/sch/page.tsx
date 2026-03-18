@@ -2160,8 +2160,9 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
   const [important, setImportant] = useState(false);
   const [url, setUrl] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<SchEvent | null>(null);
+  const [showAllEvents, setShowAllEvents] = useState(false);
 
-  const resetForm = () => { setDate(todayStr()); setTitle(''); setContent(''); setImportant(false); setUrl(''); setEditing(null); setShowForm(false); setSelectedEvent(null); };
+  const resetForm = () => { setDate(todayStr()); setTitle(''); setContent(''); setImportant(false); setUrl(''); setEditing(null); setShowForm(false); setSelectedEvent(null); setShowAllEvents(false); };
   const openEdit = (a: SchAnnouncement) => {
     setEditing(a); setDate(a.date); setTitle(a.title); setContent(a.content);
     setImportant(a.important ?? false); setUrl(a.url ?? '');
@@ -2222,8 +2223,8 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
                         >✕</button>
                       </div>
                     ) : (
-                      <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                        {upcoming.map(ev => {
+                      <div className="space-y-1.5">
+                        {(showAllEvents ? upcoming : upcoming.slice(0, 2)).map(ev => {
                           const ms = ev.type === 'match' ? getMatches(ev) : [];
                           const label = ev.type === 'match'
                             ? (ms[0]?.opponentName ? `${ev.date.slice(5)} 🆚 ${ms[0].opponentName}${ms.length > 1 ? ` ほか${ms.length - 1}試合` : ''}` : `${ev.date.slice(5)} 試合`)
@@ -2240,6 +2241,15 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
                             </button>
                           );
                         })}
+                        {!showAllEvents && upcoming.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowAllEvents(true)}
+                            className="w-full text-xs py-1.5 text-slate-500 hover:text-purple-400 transition-colors"
+                          >
+                            もっと見る（あと {upcoming.length - 2} 件）
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
