@@ -395,6 +395,7 @@ export default function AdminPage() {
   const [changeEntries, setChangeEntries] = useState<ChangeLogEntry[]>([]);
   const [excludedIps, setExcludedIps] = useState<string[]>([]);
   const [showExcluded, setShowExcluded] = useState(false);
+  const [showExcludedInChart, setShowExcludedInChart] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -471,8 +472,18 @@ export default function AdminPage() {
         {/* Charts */}
         {tab === 'access' && accessEntries.length > 0 && (
           <>
-            <AccessChart entries={accessEntries} excludedIps={excludedIps} />
-            <UniqueUsersChart entries={accessEntries} excludedIps={excludedIps} />
+            {excludedIps.length > 0 && (
+              <div className="flex justify-end mb-2">
+                <button
+                  onClick={() => setShowExcludedInChart(v => !v)}
+                  className={`text-[10px] px-2.5 py-1 rounded-lg border transition-colors ${showExcludedInChart ? 'bg-slate-700 border-slate-500 text-slate-300' : 'bg-slate-800/60 border-white/10 text-slate-500 hover:text-slate-300'}`}
+                >
+                  {showExcludedInChart ? '🚫 除外を反映' : '👁 除外を含めて表示'}
+                </button>
+              </div>
+            )}
+            <AccessChart entries={accessEntries} excludedIps={showExcludedInChart ? [] : excludedIps} />
+            <UniqueUsersChart entries={accessEntries} excludedIps={showExcludedInChart ? [] : excludedIps} />
           </>
         )}
 
