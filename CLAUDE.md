@@ -78,6 +78,23 @@
 - **実装完了後は指示を待たずに master へマージ・push まで行うこと**
 - claude/* ブランチで開発 → 完成したら master にマージ → `git push github master` でデプロイ
 
+### ⚠️ デプロイのための必須手順（毎回忘れずに）
+
+`claude/*` ブランチに push するだけでは **アプリは更新されない**。
+必ず以下の手順まで完走すること：
+
+```bash
+# 1. master にマージ（コンフリクトがあれば解消する）
+git checkout master
+git merge claude/<branch-name>
+
+# 2. GitHub の master に push → Vercel が自動デプロイ
+git push github master
+```
+
+- **`origin` への push だけでは本番に反映されない**（origin はローカルプロキシ）
+- **`github` remote への push が必須**
+
 ---
 
 ## GitHub Push 手順
