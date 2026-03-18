@@ -15,7 +15,7 @@ function hasRedis() {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const type = url.searchParams.get('type') ?? 'access';
-  const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '100', 10), 500);
+  const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '100', 10), 3000);
 
   if (!hasRedis()) {
     return NextResponse.json({ entries: [] });

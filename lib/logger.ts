@@ -1,6 +1,6 @@
 import type { AccessLogEntry, ChangeLogEntry } from './types';
 
-const MAX_ENTRIES = 500;
+const MAX_ENTRIES = 3000;
 
 async function getRedis() {
   const { Redis } = await import('@upstash/redis');

@@ -86,7 +86,7 @@ function buildChartData(entries: AccessLogEntry[], excludedIps: string[]): Chart
       const [bm, bd] = b.date.split('/').map(Number);
       return am !== bm ? am - bm : ad - bd;
     })
-    .slice(-14);
+    .slice(-30);
 }
 
 function AccessChart({ entries, excludedIps }: { entries: AccessLogEntry[]; excludedIps: string[] }) {
@@ -149,7 +149,7 @@ function UniqueUsersChart({ entries, excludedIps }: { entries: AccessLogEntry[];
       const [bm, bd] = b.date.split('/').map(Number);
       return am !== bm ? am - bm : ad - bd;
     })
-    .slice(-14);
+    .slice(-30);
 
   if (data.length === 0) return null;
 
@@ -403,7 +403,7 @@ export default function AdminPage() {
     setError('');
     try {
       const [aRes, cRes, eRes] = await Promise.all([
-        fetch('/api/admin/logs?type=access&limit=200'),
+        fetch('/api/admin/logs?type=access&limit=3000'),
         fetch('/api/admin/logs?type=change&limit=100'),
         fetch('/api/admin/excluded-ips'),
       ]);
