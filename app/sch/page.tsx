@@ -2118,6 +2118,38 @@ function InstagramEmbed({ url }: { url: string }) {
   );
 }
 
+// ---- EventSummaryCard (連絡内に予定情報を表示するコンパクトカード) ----
+function EventSummaryCard({ event }: { event: SchEvent }) {
+  const cfg = tc(event.type);
+  const ms = event.type === 'match' ? getMatches(event) : [];
+  const day = dayLabel(event.date);
+  const dateDisplay = `${event.date.slice(5).replace('/', '/')}（${day}）`;
+  return (
+    <div className={`rounded-lg p-3 border ${cfg.border} ${cfg.bg} space-y-1`}>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="text-sm">{cfg.icon}</span>
+        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${cfg.badge}`}>{cfg.label}</span>
+        <span className="text-xs text-slate-300 font-medium">{dateDisplay}</span>
+        {event.endDate && event.endDate !== event.date && <span className="text-xs text-slate-400">〜 {event.endDate.slice(5).replace('/', '/')}</span>}
+      </div>
+      {event.label && <p className="text-xs text-white font-semibold">{event.label}</p>}
+      {event.type === 'match' && ms.length > 0 && (
+        <div className="space-y-0.5">
+          {ms.map((m, i) => m.opponentName ? (
+            <p key={i} className="text-xs text-slate-200">🆚 {m.opponentName}{ms.length > 1 && m.roundName ? ` (${m.roundName})` : ''}</p>
+          ) : null)}
+        </div>
+      )}
+      <div className="space-y-0.5">
+        {event.location && <p className="text-xs text-slate-400">📍 {event.location}</p>}
+        {event.meetingTime && <p className="text-xs text-slate-400">🕐 集合 {event.meetingTime}{event.meetingPlace ? `　${event.meetingPlace}` : ''}</p>}
+        {event.startTime && <p className="text-xs text-slate-400">⏰ {event.startTime} 開始</p>}
+        {event.note && <p className="text-xs text-slate-500 mt-0.5">{event.note}</p>}
+      </div>
+    </div>
+  );
+}
+
 // ---- AnnounceSection ----
 function AnnounceSection({ announcements, onSave, events }: { announcements: SchAnnouncement[]; onSave: (a: SchAnnouncement[]) => void; events: SchEvent[] }) {
   const [showForm, setShowForm] = useState(false);
@@ -2127,13 +2159,32 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
   const [content, setContent] = useState('');
   const [important, setImportant] = useState(false);
   const [url, setUrl] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState<SchEvent | null>(null);
 
-  const resetForm = () => { setDate(todayStr()); setTitle(''); setContent(''); setImportant(false); setUrl(''); setEditing(null); setShowForm(false); };
-  const openEdit = (a: SchAnnouncement) => { setEditing(a); setDate(a.date); setTitle(a.title); setContent(a.content); setImportant(a.important ?? false); setUrl(a.url ?? ''); setShowForm(true); };
+  const resetForm = () => { setDate(todayStr()); setTitle(''); setContent(''); setImportant(false); setUrl(''); setEditing(null); setShowForm(false); setSelectedEvent(null); };
+  const openEdit = (a: SchAnnouncement) => {
+    setEditing(a); setDate(a.date); setTitle(a.title); setContent(a.content);
+    setImportant(a.important ?? false); setUrl(a.url ?? '');
+    setSelectedEvent(a.linkedEventId ? (events.find(e => e.id === a.linkedEventId) ?? null) : null);
+    setShowForm(true);
+  };
+  const handleSelectEvent = (ev: SchEvent) => {
+    setSelectedEvent(ev);
+    setDate(ev.date);
+    const ms = ev.type === 'match' ? getMatches(ev) : [];
+    const autoTitle = ev.type === 'match'
+      ? (ms[0]?.opponentName ? `${ev.date.slice(5)} 🆚 ${ms[0].opponentName}${ms.length > 1 ? ` ほか${ms.length - 1}試合` : ''}のお知らせ` : `${ev.date.slice(5)} 試合のお知らせ`)
+      : `${ev.date.slice(5)} ${ev.label || ev.location || tc(ev.type).label}のお知らせ`;
+    setTitle(autoTitle);
+  };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || (!content && !url)) return;
-    const entry: SchAnnouncement = { id: editing?.id ?? generateId(), date, title, content, important, ...(url && { url }) };
+    const entry: SchAnnouncement = {
+      id: editing?.id ?? generateId(), date, title, content, important,
+      ...(url && { url }),
+      ...(selectedEvent && { linkedEventId: selectedEvent.id }),
+    };
     const updated = editing ? announcements.map(a => a.id === editing.id ? entry : a) : [...announcements, entry];
     onSave(updated.sort((a, b) => b.date.localeCompare(a.date)));
     resetForm();
@@ -2144,72 +2195,88 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
   return (
     <div className="space-y-3">
       <button onClick={() => setShowForm(true)} className="w-full bg-gradient-to-r from-purple-600 to-violet-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
-        <span className="text-lg">＋</span> お知らせを投稿
+        <span className="text-lg">＋</span> 連絡を投稿
       </button>
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={resetForm}>
-          <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md border border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="px-5 pt-5 pb-6 space-y-3">
-              <div className="flex items-center justify-between"><h3 className="text-base font-bold text-white">{editing ? 'お知らせを編集' : 'お知らせを投稿'}</h3><button onClick={resetForm} className="text-slate-400 text-2xl">&times;</button></div>
-              {!editing && (() => {
+              <div className="flex items-center justify-between"><h3 className="text-base font-bold text-white">{editing ? '連絡を編集' : '連絡を投稿'}</h3><button onClick={resetForm} className="text-slate-400 text-2xl">&times;</button></div>
+
+              {/* 予定選択エリア */}
+              {(() => {
                 const upcoming = events
                   .filter(e => e.date >= todayStr())
-                  .sort((a, b) => a.date.localeCompare(b.date))
-                  .slice(0, 6);
+                  .sort((a, b) => a.date.localeCompare(b.date));
                 if (upcoming.length === 0) return null;
                 return (
                   <div>
-                    <p className="text-xs text-slate-400 mb-1.5">📅 予定をタップして件名に入力</p>
-                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                      {upcoming.map(e => {
-                        const ms = e.type === 'match' ? getMatches(e) : [];
-                        const label = e.type === 'match'
-                          ? (ms[0]?.opponentName ? `${e.date.slice(5)} 🆚 ${ms[0].opponentName}${ms.length > 1 ? ` ほか${ms.length - 1}試合` : ''}` : `${e.date.slice(5)} 試合`)
-                          : `${e.date.slice(5)} ${e.label || e.location || tc(e.type).label}`;
-                        return (
-                          <button
-                            key={e.id}
-                            type="button"
-                            onClick={() => setTitle(label)}
-                            className="w-full text-left text-xs px-3 py-2 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors flex items-center gap-2"
-                          >
-                            <span>{tc(e.type).icon}</span>
-                            <span className="truncate">{label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <p className="text-xs font-semibold text-slate-400 mb-2">📅 予定を選択して連絡に添付</p>
+                    {selectedEvent ? (
+                      <div className="relative">
+                        <EventSummaryCard event={selectedEvent} />
+                        <button
+                          type="button"
+                          onClick={() => setSelectedEvent(null)}
+                          className="absolute top-2 right-2 text-slate-400 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none"
+                        >✕</button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                        {upcoming.map(ev => {
+                          const ms = ev.type === 'match' ? getMatches(ev) : [];
+                          const label = ev.type === 'match'
+                            ? (ms[0]?.opponentName ? `${ev.date.slice(5)} 🆚 ${ms[0].opponentName}${ms.length > 1 ? ` ほか${ms.length - 1}試合` : ''}` : `${ev.date.slice(5)} 試合`)
+                            : `${ev.date.slice(5)} ${ev.label || ev.location || tc(ev.type).label}`;
+                          return (
+                            <button
+                              key={ev.id}
+                              type="button"
+                              onClick={() => handleSelectEvent(ev)}
+                              className="w-full text-left text-xs px-3 py-2 rounded-lg bg-slate-700/60 hover:bg-purple-700/40 border border-transparent hover:border-purple-500/50 text-slate-300 hover:text-white transition-colors flex items-center gap-2"
+                            >
+                              <span>{tc(ev.type).icon}</span>
+                              <span className="truncate">{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">📅 日付</label><input type="date" value={toInputDate(date)} onChange={e => setDate(fromInputDate(e.target.value))} required className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none" /></div>
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">📌 タイトル</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} required placeholder="例: 次回練習のお知らせ" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500" /></div>
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1">📝 内容</label><textarea value={content} onChange={e => setContent(e.target.value)} rows={4} placeholder="お知らせの内容を入力" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500 resize-none" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1">📝 コメント</label><textarea value={content} onChange={e => setContent(e.target.value)} rows={4} placeholder="連絡内容を入力" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500 resize-none" /></div>
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">🔗 投稿URL <span className="font-normal text-slate-500">（Instagram リンク等）</span></label><input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.instagram.com/p/..." className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500" /></div>
-                <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={important} onChange={e => setImportant(e.target.checked)} className="w-4 h-4 accent-red-500" /><span className="text-sm text-slate-300">🔴 重要なお知らせとしてマーク</span></label>
+                <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={important} onChange={e => setImportant(e.target.checked)} className="w-4 h-4 accent-red-500" /><span className="text-sm text-slate-300">🔴 重要な連絡としてマーク</span></label>
                 <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl text-sm">投稿</button>
               </form>
             </div>
           </div>
         </div>
       )}
-      {sorted.length === 0 && <p className="text-center text-slate-400 text-sm py-8">お知らせがありません</p>}
+      {sorted.length === 0 && <p className="text-center text-slate-400 text-sm py-8">連絡がありません</p>}
       <div className="space-y-2">
-        {sorted.map(a => (
-          <div key={a.id} className={`rounded-xl p-4 border ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">{a.important && <span className="text-xs font-bold bg-red-600 text-white px-2 py-0.5 rounded-full">重要</span>}<span className="text-xs text-slate-400">{a.date}</span></div>
-                <p className="text-sm font-bold text-white">{a.title}</p>
-                {a.content && <p className="text-sm text-slate-300 mt-1 whitespace-pre-wrap">{a.content}</p>}
-                {a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
-                {a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
+        {sorted.map(a => {
+          const linkedEv = a.linkedEventId ? events.find(e => e.id === a.linkedEventId) : null;
+          return (
+            <div key={a.id} className={`rounded-xl p-4 border ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">{a.important && <span className="text-xs font-bold bg-red-600 text-white px-2 py-0.5 rounded-full">重要</span>}<span className="text-xs text-slate-400">{a.date}</span></div>
+                  <p className="text-sm font-bold text-white">{a.title}</p>
+                  {linkedEv && <div className="mt-2"><EventSummaryCard event={linkedEv} /></div>}
+                  {a.content && <p className="text-sm text-slate-300 mt-2 whitespace-pre-wrap">{a.content}</p>}
+                  {a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
+                  {a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
+                </div>
+                <div className="flex flex-col gap-1"><button onClick={() => openEdit(a)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button><button onClick={() => handleDelete(a.id)} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button></div>
               </div>
-              <div className="flex flex-col gap-1"><button onClick={() => openEdit(a)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button><button onClick={() => handleDelete(a.id)} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button></div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

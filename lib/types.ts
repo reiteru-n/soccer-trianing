@@ -142,6 +142,7 @@ export interface SchAnnouncement {
   content: string;
   important?: boolean;
   url?: string; // 投稿URL（InstagramなどのSNSリンク）
+  linkedEventId?: string; // 予定と連携する場合の予定ID
 }
 
 export interface SchMemberParent {
