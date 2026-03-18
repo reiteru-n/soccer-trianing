@@ -1933,25 +1933,74 @@ function HomeSection({
         )}
       </div>
 
-      {/* Recent announcements */}
-      {announcements.length > 0 && (() => {
-        const recent = [...announcements].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
+      {/* 最近のお知らせ（過去7日以内・最大3件） */}
+      {(() => {
+        const sevenDaysAgo = (() => {
+          const d = new Date(today.replace(/\//g, '-'));
+          d.setDate(d.getDate() - 7);
+          return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+        })();
+        const recent = [...announcements]
+          .filter(a => a.date >= sevenDaysAgo)
+          .sort((a, b) => b.date.localeCompare(a.date));
+        if (recent.length === 0) return null;
+        const shown = recent.slice(0, 3);
+        const hasMore = recent.length > 3;
         return (
           <div>
-            <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">📢 最近のお知らせ</h2>
-            <div className="space-y-2">
-              {recent.map(a => (
-                <button key={a.id} onClick={onGoToAnnounce} className="w-full text-left">
-                  <div className={`rounded-xl px-4 py-3 border flex items-center gap-3 ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
-                    {a.important && <span className="text-xs font-bold bg-red-600 text-white px-2 py-0.5 rounded-full shrink-0">重要</span>}
-                    <p className="text-sm font-semibold text-white flex-1 truncate">{a.title}</p>
-                    <span className="text-xs text-slate-400 shrink-0">{a.date.slice(5)}</span>
-                  </div>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">📢 最近のお知らせ</h2>
+              {hasMore && (
+                <button onClick={onGoToAnnounce} className="text-[10px] text-purple-400 hover:text-purple-300">
+                  すべて見る →
                 </button>
-              ))}
-              <button onClick={onGoToAnnounce} className="text-xs text-slate-400 hover:text-slate-300 w-full text-right pr-1">
-                すべて見る →
-              </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              {shown.map(a => {
+                const isExpanded = expandedAnnounces.has(a.id);
+                const toggleExpand = () => setExpandedAnnounces(prev => {
+                  const next = new Set(prev);
+                  isExpanded ? next.delete(a.id) : next.add(a.id);
+                  return next;
+                });
+                const hasDetail = (a.content && a.content.length > 60) || !!a.url;
+                const isExpandedInstagram = isExpanded && !!a.url && isInstagramUrl(a.url);
+                return (
+                  <div key={a.id} className={`rounded-xl border ${isExpandedInstagram ? '' : 'overflow-hidden'} ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
+                    <div className={isExpandedInstagram ? '' : 'flex'}>
+                      <div className="flex-1 px-4 py-3 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          {a.important && <span className="text-[10px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded-full">重要</span>}
+                          <span className="text-[10px] text-slate-400">{a.date}</span>
+                          {isExpandedInstagram && (
+                            <button onClick={toggleExpand} className="ml-auto text-xs font-bold text-slate-400 hover:text-white px-2 py-0.5 rounded-lg hover:bg-white/10 transition-colors">閉じる ×</button>
+                          )}
+                        </div>
+                        <p className="text-sm font-bold text-white">{a.title}</p>
+                        {a.content && <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>}
+                        {isExpanded && a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
+                        {isExpanded && a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
+                        {!isExpanded && a.url && isInstagramUrl(a.url) && <p className="text-xs text-indigo-400 mt-0.5">📸 Instagram投稿あり</p>}
+                      </div>
+                      {hasDetail && !isExpandedInstagram && (
+                        <button
+                          onClick={toggleExpand}
+                          className="w-10 flex-shrink-0 grid place-items-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                        >
+                          <span className="flex flex-col items-center leading-tight">{(isExpanded ? '閉じる' : '詳細').split('').map((c, i) => <span key={i}>{c}</span>)}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {hasMore && (
+                <button onClick={onGoToAnnounce}
+                  className="w-full text-xs py-2.5 rounded-xl border border-dashed border-slate-600 text-slate-400 hover:text-purple-300 hover:border-purple-500/50 transition-colors">
+                  他 {recent.length - 3} 件のお知らせを見る
+                </button>
+              )}
             </div>
           </div>
         );
@@ -2033,78 +2082,6 @@ function HomeSection({
         />
       )}
 
-      {/* 最近のお知らせ（過去7日以内・最大3件） */}
-      {(() => {
-        const sevenDaysAgo = (() => {
-          const d = new Date(today.replace(/\//g, '-'));
-          d.setDate(d.getDate() - 7);
-          return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-        })();
-        const recent = [...announcements]
-          .filter(a => a.date >= sevenDaysAgo)
-          .sort((a, b) => b.date.localeCompare(a.date));
-        if (recent.length === 0) return null;
-        const shown = recent.slice(0, 3);
-        const hasMore = recent.length > 3;
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">📢 最近のお知らせ</h2>
-              {hasMore && (
-                <button onClick={onGoToAnnounce} className="text-[10px] text-purple-400 hover:text-purple-300">
-                  すべて見る →
-                </button>
-              )}
-            </div>
-            <div className="space-y-2">
-              {shown.map(a => {
-                const isExpanded = expandedAnnounces.has(a.id);
-                const toggleExpand = () => setExpandedAnnounces(prev => {
-                  const next = new Set(prev);
-                  isExpanded ? next.delete(a.id) : next.add(a.id);
-                  return next;
-                });
-                const hasDetail = (a.content && a.content.length > 60) || !!a.url;
-                const isExpandedInstagram = isExpanded && !!a.url && isInstagramUrl(a.url);
-                return (
-                  <div key={a.id} className={`rounded-xl border ${isExpandedInstagram ? '' : 'overflow-hidden'} ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
-                    <div className={isExpandedInstagram ? '' : 'flex'}>
-                      <div className="flex-1 px-4 py-3 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          {a.important && <span className="text-[10px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded-full">重要</span>}
-                          <span className="text-[10px] text-slate-400">{a.date}</span>
-                          {isExpandedInstagram && (
-                            <button onClick={toggleExpand} className="ml-auto text-xs font-bold text-slate-400 hover:text-white px-2 py-0.5 rounded-lg hover:bg-white/10 transition-colors">閉じる ×</button>
-                          )}
-                        </div>
-                        <p className="text-sm font-bold text-white">{a.title}</p>
-                        {a.content && <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>}
-                        {isExpanded && a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
-                        {isExpanded && a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
-                        {!isExpanded && a.url && isInstagramUrl(a.url) && <p className="text-xs text-indigo-400 mt-0.5">📸 Instagram投稿あり</p>}
-                      </div>
-                      {hasDetail && !isExpandedInstagram && (
-                        <button
-                          onClick={toggleExpand}
-                          className="w-10 flex-shrink-0 grid place-items-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                          <span className="flex flex-col items-center leading-tight">{(isExpanded ? '閉じる' : '詳細').split('').map((c, i) => <span key={i}>{c}</span>)}</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              {hasMore && (
-                <button onClick={onGoToAnnounce}
-                  className="w-full text-xs py-2.5 rounded-xl border border-dashed border-slate-600 text-slate-400 hover:text-purple-300 hover:border-purple-500/50 transition-colors">
-                  他 {recent.length - 3} 件のお知らせを見る
-                </button>
-              )}
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }
