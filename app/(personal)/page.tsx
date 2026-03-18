@@ -19,10 +19,29 @@ function todayStr() {
   return d.getFullYear()+"/"+(String(d.getMonth()+1).padStart(2,"0"))+"/"+(String(d.getDate()).padStart(2,"0"));
 }
 
+function getOpponentDisplay(e: SchEvent): string {
+  if (e.matches && e.matches.length > 0) {
+    const names = e.matches.map(m => m.opponentName).filter(Boolean) as string[];
+    if (names.length > 0) return `vs ${names.join('・')}`;
+  }
+  return e.opponentName ? `vs ${e.opponentName}` : '相手未定';
+}
+
+function getMatchScores(e: SchEvent): { myScore: number | undefined; oppScore: number | undefined } {
+  const m = (e.matches && e.matches.length > 0) ? e.matches[0] : e;
+  const homeScore = m.homeScore;
+  const awayScore = m.awayScore;
+  const isHome = (m.isHome ?? e.isHome) !== false;
+  if (homeScore == null || awayScore == null) return { myScore: undefined, oppScore: undefined };
+  return {
+    myScore: isHome ? homeScore : awayScore,
+    oppScore: isHome ? awayScore : homeScore,
+  };
+}
+
 function getMatchResult(event: SchEvent): 'win' | 'loss' | 'draw' | null {
-  if (event.homeScore == null || event.awayScore == null) return null;
-  const myScore = event.isHome !== false ? event.homeScore : event.awayScore;
-  const oppScore = event.isHome !== false ? event.awayScore : event.homeScore;
+  const { myScore, oppScore } = getMatchScores(event);
+  if (myScore == null || oppScore == null) return null;
   if (myScore > oppScore) return 'win';
   if (myScore < oppScore) return 'loss';
   return 'draw';
@@ -70,12 +89,12 @@ export default function DashboardPage() {
     addBodyRecord(record); setBodyWeight(""); setBodyHeight(""); setShowBodyForm(false);
   };
   // Match stats
-  const finishedMatches = matchEvents.filter(e => e.homeScore != null && e.awayScore != null);
+  const finishedMatches = matchEvents.filter(e => getMatchScores(e).myScore != null);
   const wins = finishedMatches.filter(e => getMatchResult(e) === 'win').length;
   const draws = finishedMatches.filter(e => getMatchResult(e) === 'draw').length;
   const losses = finishedMatches.filter(e => getMatchResult(e) === 'loss').length;
-  const goalsFor = finishedMatches.reduce((s, e) => s + ((e.isHome !== false ? e.homeScore : e.awayScore) ?? 0), 0);
-  const goalsAgainst = finishedMatches.reduce((s, e) => s + ((e.isHome !== false ? e.awayScore : e.homeScore) ?? 0), 0);
+  const goalsFor = finishedMatches.reduce((s, e) => s + (getMatchScores(e).myScore ?? 0), 0);
+  const goalsAgainst = finishedMatches.reduce((s, e) => s + (getMatchScores(e).oppScore ?? 0), 0);
   const recentMatches = matchEvents.slice(0, 5);
 
   if (isLoading) return (<div className="flex items-center justify-center py-24 text-gray-400"><div className="text-center"><p className="text-4xl mb-3">⚽</p><p className="text-sm">読み込み中...</p></div></div>);
@@ -144,14 +163,13 @@ export default function DashboardPage() {
           <div className="bg-slate-800/80 rounded-2xl overflow-hidden border border-white/10 shadow-lg">
             {recentMatches.map((e, i) => {
               const result = getMatchResult(e);
-              const myScore = e.isHome !== false ? e.homeScore : e.awayScore;
-              const oppScore = e.isHome !== false ? e.awayScore : e.homeScore;
+              const { myScore, oppScore } = getMatchScores(e);
               const resultColor = result === 'win' ? 'text-blue-300' : result === 'loss' ? 'text-red-400' : 'text-slate-400';
               const resultLabel = result === 'win' ? '勝' : result === 'loss' ? '負' : result === 'draw' ? '分' : '-';
               return (
                 <div key={e.id} className={`flex items-center gap-2 px-3 py-2 ${i < recentMatches.length - 1 ? 'border-b border-white/5' : ''}`}>
                   <span className="text-[10px] text-slate-500 w-12 shrink-0">{e.date.slice(5).replace('/', '/')}</span>
-                  <span className="text-xs text-slate-300 flex-1 truncate">{e.opponentName ? `vs ${e.opponentName}` : '相手未定'}</span>
+                  <span className="text-xs text-slate-300 flex-1 truncate">{getOpponentDisplay(e)}</span>
                   {result != null ? (
                     <>
                       <span className={`text-sm font-bold ${resultColor}`}>{myScore} - {oppScore}</span>
