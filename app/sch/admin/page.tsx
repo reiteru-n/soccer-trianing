@@ -333,6 +333,7 @@ function RecentIpSummary({
   excludedIps: string[];
   onExclude: (ip: string) => void;
 }) {
+  const [showExcluded, setShowExcluded] = useState(false);
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const recent = entries.filter(e => new Date(e.ts).getTime() > sevenDaysAgo);
   if (recent.length === 0) return null;
@@ -344,11 +345,25 @@ function RecentIpSummary({
     if (new Date(e.ts) > new Date(byIp[e.ip].lastTs)) byIp[e.ip].lastTs = e.ts;
   }
 
-  const sorted = Object.entries(byIp).sort((a, b) => b[1].count - a[1].count);
+  const sorted = Object.entries(byIp)
+    .sort((a, b) => b[1].count - a[1].count)
+    .filter(([ip]) => showExcluded || !isIpExcluded(ip, excludedIps));
+
+  const hasExcluded = Object.keys(byIp).some(ip => isIpExcluded(ip, excludedIps));
 
   return (
     <div className="bg-slate-800/60 border border-white/5 rounded-xl px-4 py-3 mb-4">
-      <h2 className="text-xs font-bold text-slate-300 mb-2">📅 7日以内のアクセス（IP別）</h2>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-xs font-bold text-slate-300">📅 7日以内のアクセス（IP別）</h2>
+        {hasExcluded && (
+          <button
+            onClick={() => setShowExcluded(v => !v)}
+            className={`text-[10px] px-2.5 py-1 rounded-lg border transition-colors ${showExcluded ? 'bg-slate-700 border-slate-500 text-slate-300' : 'bg-slate-800/60 border-white/10 text-slate-500 hover:text-slate-300'}`}
+          >
+            {showExcluded ? '🚫 除外を隠す' : '👁 除外も表示'}
+          </button>
+        )}
+      </div>
       <div className="space-y-1.5">
         {sorted.map(([ip, data]) => {
           const excluded = isIpExcluded(ip, excludedIps);
