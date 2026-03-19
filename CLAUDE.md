@@ -116,91 +116,45 @@ git push github master
 
 ### 背景
 このサンドボックス環境からは外部ネットワーク（Vercel / Upstash）に直接アクセスできない。
-そのため「シードAPIエンドポイント + GitHub Actions」の2段構えで投稿する。
+**GitHub Actions から Upstash REST API を直接叩く**方式で投稿する。
+（Vercelのシードエンドポイントは不要・ローカルサーバー経由も不可）
 
-### 手順（毎回この流れ）
+### 永続ワークフロー（既に設置済み）
+`.github/workflows/post-sch-announcement.yml` — 毎回使い回す
 
-**① シードAPI を作成**
+このワークフローは `.github/announcements/*.json` を読んで Upstash に書き込む。
+**JSONファイルを追加して push するだけで投稿完了。**
 
-`app/api/sch/seed-<名前>/route.ts` を新規作成:
+### 手順（毎回の流れ）
 
-```ts
-import { NextResponse } from 'next/server';
-import type { SchAnnouncement } from '@/lib/types';
+**① `.github/announcements/<日付-タイトル>.json` を作成**
 
-async function getRedis() {
-  const { Redis } = await import('@upstash/redis');
-  return new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! });
-}
-
-const ANNOUNCEMENT: SchAnnouncement = {
-  id: 'seed-<ユニークID>',  // 重複防止のため毎回変える
-  date: '2026/xx/xx',
-  title: '...',
-  important: true,
-  content: `...`,
-  checkItems: [
-    { text: '...', note: '...' },
-  ],
-};
-
-export async function GET() {
-  const redis = await getRedis();
-  const existing = await redis.get<SchAnnouncement[]>('sch:announcements') ?? [];
-  if (existing.some(a => a.id === ANNOUNCEMENT.id)) {
-    return NextResponse.json({ ok: true, message: '既に投稿済み', skipped: true });
-  }
-  const updated = [ANNOUNCEMENT, ...existing].sort((a, b) => b.date.localeCompare(a.date));
-  await redis.set('sch:announcements', updated);
-  return NextResponse.json({ ok: true, message: '投稿しました', total: updated.length });
+```json
+{
+  "id": "ユニークなID（例: 2026-04-01-hanami）",
+  "date": "2026/04/01",
+  "title": "タイトル",
+  "important": true,
+  "content": "本文（\\nで改行）",
+  "checkItems": [
+    { "text": "持ち物名", "note": "備考（省略可）" }
+  ]
 }
 ```
 
-**② GitHub Actions ワークフローを作成**
-
-`.github/workflows/seed-<名前>.yml`:
-
-```yaml
-name: seed-<名前>
-on:
-  push:
-    paths:
-      - '.github/workflows/seed-<名前>.yml'
-jobs:
-  seed:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for Vercel deploy
-        run: sleep 90
-      - name: Post announcement
-        run: |
-          for i in 1 2 3 4 5; do
-            echo "Attempt $i..."
-            curl -sf https://soccer-trianing.vercel.app/api/sch/seed-<名前> && break
-            echo "Retrying in 20s..."
-            sleep 20
-          done
-```
-
-**③ push → Actions が自動実行**
+**② push → Actions が自動実行（約10秒で完了）**
 
 ```bash
-git add . && git commit -m "[一時] ..." && git push github master
-```
-
-**④ 完了後に一時ファイルを削除**
-
-```bash
-rm app/api/sch/seed-<名前>/route.ts
-rmdir app/api/sch/seed-<名前>
-rm .github/workflows/seed-<名前>.yml
-git add -A && git commit -m "[削除] 一時シードファイル" && git push github master
+git add .github/announcements/
+git commit -m "お知らせ: ..."
+git push github master
 ```
 
 ### ポイント
-- `id` は毎回ユニークにする（重複スキップ機能があるので同じIDは2回目が無視される）
-- Actions の完了は https://github.com/reiteru-n/soccer-trianing/actions で確認
-- 持ち物リストは `checkItems` 配列で渡す（`text` 必須、`note` 任意）
+- `id` は毎回ユニークにする（同じIDは2回目がスキップされる）
+- `checkItems` は持ち物リスト用。不要なら省略可
+- Actions の完了確認: https://github.com/reiteru-n/soccer-trianing/actions
+- GitHub Secrets に `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` 設定済み
 
 ---
 
