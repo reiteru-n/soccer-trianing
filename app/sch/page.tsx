@@ -2634,10 +2634,51 @@ export default function SchPage() {
   const [teamLogo, setTeamLogo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'subscribed' | 'denied'>('loading');
 
   useEffect(() => {
     fetch('/api/admin/logs?limit=1').then(r => { if (r.ok) setIsAdmin(true); }).catch(() => {});
   }, []);
+
+  // Web Push: 初期状態を確認
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setPushState('unsupported');
+      return;
+    }
+    if (Notification.permission === 'denied') { setPushState('denied'); return; }
+    navigator.serviceWorker.register('/sw.js').then(async (reg) => {
+      const sub = await reg.pushManager.getSubscription();
+      setPushState(sub ? 'subscribed' : 'default');
+    }).catch(() => setPushState('unsupported'));
+  }, []);
+
+  const handlePushToggle = useCallback(async () => {
+    if (pushState === 'subscribed') {
+      // 解除
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch('/api/sch/push', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+        await sub.unsubscribe();
+      }
+      setPushState('default');
+      return;
+    }
+    // 購読
+    const permRes = await Notification.requestPermission();
+    if (permRes !== 'granted') { setPushState('denied'); return; }
+    const keyRes = await fetch('/api/sch/push');
+    if (!keyRes.ok) return;
+    const { publicKey } = await keyRes.json();
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: publicKey,
+    });
+    await fetch('/api/sch/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }) });
+    setPushState('subscribed');
+  }, [pushState]);
 
   useEffect(() => {
     fetch('/api/sch').then(r => r.json()).then(d => {
@@ -2758,6 +2799,22 @@ export default function SchPage() {
           <div className="flex flex-col items-end gap-1">
             <span className="text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
             <div className="flex items-center gap-1.5">
+              {pushState !== 'unsupported' && pushState !== 'loading' && (
+                <button
+                  onClick={handlePushToggle}
+                  className={`text-[10px] border px-2.5 py-1 rounded-lg transition-colors ${
+                    pushState === 'subscribed'
+                      ? 'text-green-400 border-green-700 hover:text-green-300 hover:border-green-500'
+                      : pushState === 'denied'
+                      ? 'text-slate-500 border-slate-700 cursor-not-allowed'
+                      : 'text-slate-400 hover:text-slate-200 border-slate-700 hover:border-slate-500'
+                  }`}
+                  title={pushState === 'subscribed' ? '通知をオフにする' : pushState === 'denied' ? 'ブラウザの設定から通知を許可してください' : '通知を受け取る'}
+                  disabled={pushState === 'denied'}
+                >
+                  {pushState === 'subscribed' ? '🔔 通知ON' : pushState === 'denied' ? '🔕 通知不可' : '🔔 通知'}
+                </button>
+              )}
               <button
                 onClick={() => {
                   const calUrl = 'https://soccer-trianing.vercel.app/api/sch/calendar';

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { SchSchedule, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent } from '@/lib/types';
+import { sendPushToAll } from '@/lib/webpush';
 
 // Legacy SchMatch shape (from sch:matches Redis key) — kept only for migration
 type LegacySchMatch = { id: string; date: string; startTime?: string; opponent?: string; location?: string; homeScore?: number; awayScore?: number; isHome?: boolean; note?: string; };
@@ -278,9 +279,12 @@ export async function POST(req: Request) {
     const body = await req.json() as Record<string, unknown>;
 
     // 試合イベント保存時、新規追加 or 日時/場所/相手が変わったら自動でお知らせを生成
+    let existing: Awaited<ReturnType<typeof readSchData>> | null = null;
+    const changedMatchEvents: SchEvent[] = [];
+
     if ('events' in body) {
       const newEvents = body.events as SchEvent[];
-      const existing = await readSchData();
+      existing = await readSchData();
       const oldEventMap = new Map(existing.events.map(e => [e.id, e]));
 
       const toAnnounce: SchAnnouncement[] = [];
@@ -289,6 +293,7 @@ export async function POST(req: Request) {
       for (const ev of newEvents.filter(e => e.type === 'match')) {
         const old = oldEventMap.get(ev.id);
         if (!old || matchEventChanged(old, ev)) {
+          changedMatchEvents.push(ev);
           const fmt = formatMatchAnnouncement(ev);
           if (fmt) {
             toAnnounce.push({
@@ -311,7 +316,36 @@ export async function POST(req: Request) {
       }
     }
 
+    // お知らせの新規追加を検出（Push通知用）
+    let newAnnouncementTitles: string[] = [];
+    if ('announcements' in body) {
+      const newAnns = body.announcements as SchAnnouncement[];
+      if (!existing) existing = await readSchData();
+      const oldIds = new Set(existing.announcements.map(a => a.id));
+      newAnnouncementTitles = newAnns
+        .filter(a => !oldIds.has(a.id))
+        .map(a => a.title);
+    }
+
     await writeSchPartial(body);
+
+    // Push通知送信（fire & forget）
+    if (changedMatchEvents.length > 0) {
+      const ev = changedMatchEvents[0];
+      const label = ev.label ?? (ev.matches?.[0]?.opponentName ? `vs ${ev.matches[0].opponentName}` : '試合');
+      sendPushToAll({
+        title: `⚽ 試合情報が更新されました`,
+        body: `${ev.date} ${label}`,
+        url: '/sch',
+      }).catch(() => {});
+    } else if (newAnnouncementTitles.length > 0) {
+      const title = newAnnouncementTitles[0].replace(/^[^\s]+\s/, '').slice(0, 50);
+      sendPushToAll({
+        title: `📢 ${newAnnouncementTitles[0]}`,
+        body: title !== newAnnouncementTitles[0] ? title : 'SCH Info をご確認ください',
+        url: '/sch',
+      }).catch(() => {});
+    }
     const actions = Object.keys(body).filter(k => k in ACTION_LABELS);
     if (actions.length > 0) {
       logChange({
