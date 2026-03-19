@@ -2806,18 +2806,24 @@ export default function SchPage() {
         const reg = await navigator.serviceWorker.ready;
         const sub = await reg.pushManager.getSubscription();
         if (sub) {
-          await fetch('/api/sch/push', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) });
-          await sub.unsubscribe();
+          await fetch('/api/sch/push', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {});
+          await sub.unsubscribe().catch(() => {});
         }
         setPushState('default');
       } else {
-        // 購読
-        const permRes = await Notification.requestPermission();
-        if (permRes !== 'granted') { setPushState('denied'); return; }
+        // 購読: 権限確認（すでに granted なら requestPermission はスキップ）
+        let perm = Notification.permission;
+        if (perm === 'default') {
+          perm = await Notification.requestPermission();
+        }
+        if (perm !== 'granted') { setPushState('denied'); return; }
         const keyRes = await fetch('/api/sch/push');
         if (!keyRes.ok) return;
         const { publicKey } = await keyRes.json();
         const reg = await navigator.serviceWorker.ready;
+        // 残存サブスクリプションがあれば先に解除
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) await existing.unsubscribe().catch(() => {});
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: publicKey,
@@ -2954,19 +2960,26 @@ export default function SchPage() {
               {pushState !== 'unsupported' && pushState !== 'loading' && (
                 <button
                   onClick={handlePushToggle}
-                  className={`text-[10px] whitespace-nowrap border px-2.5 py-1 rounded-lg transition-colors ${
+                  className={`text-[11px] whitespace-nowrap border px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${
                     pushBusy
                       ? 'text-slate-500 border-slate-700 cursor-wait opacity-60'
                       : pushState === 'subscribed'
                       ? 'text-white bg-green-700 border-green-600 active:bg-red-800 active:border-red-600'
                       : pushState === 'denied'
-                      ? 'text-slate-500 border-slate-700 cursor-not-allowed'
-                      : 'text-slate-400 hover:text-slate-200 border-slate-700 hover:border-slate-500'
+                      ? 'text-slate-500 border-slate-700 cursor-not-allowed opacity-50'
+                      : 'text-slate-400 border-slate-700 hover:text-slate-200 hover:border-slate-500'
                   }`}
-                  title={pushState === 'subscribed' ? '通知をオフにする' : pushState === 'denied' ? 'ブラウザの設定から通知を許可してください' : '通知を受け取る'}
+                  title={pushState === 'subscribed' ? '通知ON（タップでOFF）' : pushState === 'denied' ? 'ブラウザの設定から通知を許可してください' : '通知OFF（タップでON）'}
                   disabled={pushState === 'denied' || pushBusy}
                 >
-                  {pushBusy ? '...' : pushState === 'subscribed' ? '🔔 通知ON（タップでOFF）' : pushState === 'denied' ? '🔕 通知不可' : '🔕 通知OFF'}
+                  {pushBusy
+                    ? <span className="text-[10px]">…</span>
+                    : pushState === 'subscribed'
+                    ? <><span>🔔</span><span className="text-[9px]">通知</span></>
+                    : pushState === 'denied'
+                    ? <><span>🔕</span><span className="text-[9px]">通知</span></>
+                    : <><span>🔕</span><span className="text-[9px]">通知</span></>
+                  }
                 </button>
               )}
               <button
