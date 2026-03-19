@@ -2937,7 +2937,7 @@ export default function SchPage() {
             ) : (
               <Image src="/sch-logo.png" alt="SCH FC" width={175} height={215} className="object-contain h-14 w-auto" />
             )}
-            <h1 className="text-2xl font-extrabold text-white drop-shadow whitespace-nowrap">SCH Info</h1>
+            <h1 className="text-2xl font-extrabold text-white drop-shadow">SCH Info</h1>
           </div>
           <div className="flex flex-col items-end gap-1">
             <span className="text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
@@ -2945,7 +2945,7 @@ export default function SchPage() {
               {pushState !== 'unsupported' && pushState !== 'loading' && (
                 <button
                   onClick={handlePushToggle}
-                  className={`text-[10px] border px-2.5 py-1 rounded-lg transition-colors ${
+                  className={`text-[10px] whitespace-nowrap border px-2.5 py-1 rounded-lg transition-colors ${
                     pushState === 'subscribed'
                       ? 'text-green-400 border-green-700 hover:text-green-300 hover:border-green-500'
                       : pushState === 'denied'
@@ -2968,7 +2968,7 @@ export default function SchPage() {
                     window.open(`https://calendar.google.com/calendar/r?cid=${encodeURIComponent('webcal://soccer-trianing.vercel.app/api/sch/calendar')}`, '_blank');
                   }
                 }}
-                className="text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
+                className="text-[10px] whitespace-nowrap text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
                 title="予定をカレンダーに追加"
               >
                 📅 カレンダー追加
@@ -2976,7 +2976,7 @@ export default function SchPage() {
               {isAdmin && (
                 <a
                   href="/sch/admin"
-                  className="text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
+                  className="text-[10px] whitespace-nowrap text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
                 >
                   🔍 管理
                 </a>
