@@ -2778,6 +2778,7 @@ export default function SchPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'subscribed' | 'denied'>('loading');
+  const [pushBusy, setPushBusy] = useState(false);
 
   useEffect(() => {
     fetch('/api/admin/logs?limit=1').then(r => { if (r.ok) setIsAdmin(true); }).catch(() => {});
@@ -2797,31 +2798,39 @@ export default function SchPage() {
   }, []);
 
   const handlePushToggle = useCallback(async () => {
-    if (pushState === 'subscribed') {
-      // 解除
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) {
-        await fetch('/api/sch/push', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) });
-        await sub.unsubscribe();
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (pushState === 'subscribed') {
+        // 解除
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await fetch('/api/sch/push', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+          await sub.unsubscribe();
+        }
+        setPushState('default');
+      } else {
+        // 購読
+        const permRes = await Notification.requestPermission();
+        if (permRes !== 'granted') { setPushState('denied'); return; }
+        const keyRes = await fetch('/api/sch/push');
+        if (!keyRes.ok) return;
+        const { publicKey } = await keyRes.json();
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: publicKey,
+        });
+        await fetch('/api/sch/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }) });
+        setPushState('subscribed');
       }
-      setPushState('default');
-      return;
+    } catch (e) {
+      console.error('push toggle error', e);
+    } finally {
+      setPushBusy(false);
     }
-    // 購読
-    const permRes = await Notification.requestPermission();
-    if (permRes !== 'granted') { setPushState('denied'); return; }
-    const keyRes = await fetch('/api/sch/push');
-    if (!keyRes.ok) return;
-    const { publicKey } = await keyRes.json();
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: publicKey,
-    });
-    await fetch('/api/sch/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }) });
-    setPushState('subscribed');
-  }, [pushState]);
+  }, [pushState, pushBusy]);
 
   useEffect(() => {
     fetch('/api/sch').then(r => r.json()).then(d => {
@@ -2946,16 +2955,18 @@ export default function SchPage() {
                 <button
                   onClick={handlePushToggle}
                   className={`text-[10px] whitespace-nowrap border px-2.5 py-1 rounded-lg transition-colors ${
-                    pushState === 'subscribed'
+                    pushBusy
+                      ? 'text-slate-500 border-slate-700 cursor-wait opacity-60'
+                      : pushState === 'subscribed'
                       ? 'text-white bg-green-700 border-green-600 active:bg-red-800 active:border-red-600'
                       : pushState === 'denied'
                       ? 'text-slate-500 border-slate-700 cursor-not-allowed'
                       : 'text-slate-400 hover:text-slate-200 border-slate-700 hover:border-slate-500'
                   }`}
                   title={pushState === 'subscribed' ? '通知をオフにする' : pushState === 'denied' ? 'ブラウザの設定から通知を許可してください' : '通知を受け取る'}
-                  disabled={pushState === 'denied'}
+                  disabled={pushState === 'denied' || pushBusy}
                 >
-                  {pushState === 'subscribed' ? '🔔 通知ON（タップでOFF）' : pushState === 'denied' ? '🔕 通知不可' : '🔕 通知OFF'}
+                  {pushBusy ? '...' : pushState === 'subscribed' ? '🔔 通知ON（タップでOFF）' : pushState === 'denied' ? '🔕 通知不可' : '🔕 通知OFF'}
                 </button>
               )}
               <button
