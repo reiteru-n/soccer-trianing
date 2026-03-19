@@ -306,9 +306,9 @@ export async function POST(req: Request) {
       if (toAnnounce.length > 0) {
         const upsertIds = new Set(toAnnounce.map(a => a.id));
         body.announcements = [
-          ...existing.announcements.filter(a => !upsertIds.has(a.id)),
           ...toAnnounce,
-        ].sort((a, b) => b.date.localeCompare(a.date));
+          ...existing.announcements.filter(a => !upsertIds.has(a.id)),
+        ];
       }
     }
 

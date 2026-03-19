@@ -42,18 +42,18 @@ jobs:
           current = redis_get("sch:announcements")
           id_to_idx = {a["id"]: i for i, a in enumerate(current)}
 
-          for f in files:
+          new_anns = []
+          for f in sorted(files, reverse=True):  # 新しいファイルが先頭になるよう逆順
               ann = json.load(open(f, encoding="utf-8"))
               if ann["id"] in id_to_idx:
-                  # upsert: 既存レコードを上書き（createdAt等の更新のため）
                   current[id_to_idx[ann["id"]]] = ann
                   print(f"UPDATE: {ann['title']}")
               else:
-                  current.insert(0, ann)
+                  new_anns.append(ann)
                   print(f"ADD: {ann['title']}")
 
-          # createdAt があれば投稿日時順、なければ date 順
-          current.sort(key=lambda a: a.get("createdAt") or a["date"], reverse=True)
-          result = redis_set("sch:announcements", current)
-          print(f"Saved {len(current)} announcements. Result: {result}")
+          # 新規は先頭に追加（追加順を保持、ソートしない）
+          result_list = new_anns + current
+          result = redis_set("sch:announcements", result_list)
+          print(f"Saved {len(result_list)} announcements. Result: {result}")
           PYEOF

@@ -11,13 +11,6 @@ import {
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
-function sortAnnouncements(list: import('@/lib/types').SchAnnouncement[]) {
-  return [...list].sort((a, b) => {
-    const ka = a.createdAt ?? a.date;
-    const kb = b.createdAt ?? b.date;
-    return kb.localeCompare(ka);
-  });
-}
 function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
@@ -1947,8 +1940,7 @@ function HomeSection({
           d.setDate(d.getDate() - 7);
           return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
         })();
-        const recent = sortAnnouncements(announcements)
-          .filter(a => a.date >= sevenDaysAgo);
+        const recent = announcements.filter(a => a.date >= sevenDaysAgo);
         if (recent.length === 0) return null;
         const shown = recent.slice(0, 3);
         const hasMore = recent.length > 3;
@@ -2274,12 +2266,13 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
         checkItems: validCheckItems.map(i => ({ text: i.text.trim(), ...(i.note.trim() && { note: i.note.trim() }) })),
       }),
     };
-    const updated = editing ? announcements.map(a => a.id === editing.id ? entry : a) : [...announcements, entry];
-    onSave(sortAnnouncements(updated));
+    // 新規は先頭に追加、編集は位置を保持
+    const updated = editing ? announcements.map(a => a.id === editing.id ? entry : a) : [entry, ...announcements];
+    onSave(updated);
     resetForm();
   };
   const handleDelete = (id: string) => { if (window.confirm('削除しますか？')) onSave(announcements.filter(a => a.id !== id)); };
-  const sorted = sortAnnouncements(announcements);
+  const sorted = [...announcements];
 
   return (
     <div className="space-y-3">
