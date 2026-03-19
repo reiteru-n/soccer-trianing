@@ -149,6 +149,7 @@ export interface SchAnnouncement {
   url?: string; // 投稿URL（InstagramなどのSNSリンク）
   linkedEventId?: string; // 予定と連携する場合の予定ID
   checkItems?: SchCheckItem[]; // 持ち物・チェックリスト
+  createdAt?: string; // ISO8601 投稿日時（ソート用）
 }
 
 export interface SchMemberParent {

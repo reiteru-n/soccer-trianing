@@ -297,6 +297,7 @@ export async function POST(req: Request) {
               title: fmt.title,
               content: fmt.content,
               important: true,
+              createdAt: new Date().toISOString(),
             });
           }
         }

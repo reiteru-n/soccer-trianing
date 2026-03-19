@@ -11,6 +11,13 @@ import {
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
+function sortAnnouncements(list: import('@/lib/types').SchAnnouncement[]) {
+  return [...list].sort((a, b) => {
+    const ka = a.createdAt ?? a.date;
+    const kb = b.createdAt ?? b.date;
+    return kb.localeCompare(ka);
+  });
+}
 function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
@@ -1940,9 +1947,8 @@ function HomeSection({
           d.setDate(d.getDate() - 7);
           return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
         })();
-        const recent = [...announcements]
-          .filter(a => a.date >= sevenDaysAgo)
-          .sort((a, b) => b.date.localeCompare(a.date));
+        const recent = sortAnnouncements(announcements)
+          .filter(a => a.date >= sevenDaysAgo);
         if (recent.length === 0) return null;
         const shown = recent.slice(0, 3);
         const hasMore = recent.length > 3;
@@ -1964,7 +1970,7 @@ function HomeSection({
                   isExpanded ? next.delete(a.id) : next.add(a.id);
                   return next;
                 });
-                const hasDetail = (a.content && a.content.length > 60) || !!a.url;
+                const hasDetail = (a.content && a.content.length > 60) || !!a.url || !!(a.checkItems?.length);
                 const isExpandedInstagram = isExpanded && !!a.url && isInstagramUrl(a.url);
                 return (
                   <div key={a.id} className={`rounded-xl border ${isExpandedInstagram ? '' : 'overflow-hidden'} ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
@@ -1979,8 +1985,10 @@ function HomeSection({
                         </div>
                         <p className="text-sm font-bold text-white">{a.title}</p>
                         {a.content && <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>}
+                        {isExpanded && a.checkItems && a.checkItems.length > 0 && <CheckList items={a.checkItems} announcementId={a.id} />}
                         {isExpanded && a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
                         {isExpanded && a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
+                        {!isExpanded && a.checkItems && a.checkItems.length > 0 && <p className="text-xs text-amber-300 mt-0.5">🎒 持ち物リストあり（{a.checkItems.length}件）</p>}
                         {!isExpanded && a.url && isInstagramUrl(a.url) && <p className="text-xs text-indigo-400 mt-0.5">📸 Instagram投稿あり</p>}
                       </div>
                       {hasDetail && !isExpandedInstagram && (
@@ -2259,6 +2267,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
     if (!title || (!content && !url && validCheckItems.length === 0)) return;
     const entry: SchAnnouncement = {
       id: editing?.id ?? generateId(), date, title, content, important,
+      createdAt: editing?.createdAt ?? new Date().toISOString(),
       ...(url && { url }),
       ...(selectedEvent && { linkedEventId: selectedEvent.id }),
       ...(validCheckItems.length > 0 && {
@@ -2266,11 +2275,11 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
       }),
     };
     const updated = editing ? announcements.map(a => a.id === editing.id ? entry : a) : [...announcements, entry];
-    onSave(updated.sort((a, b) => b.date.localeCompare(a.date)));
+    onSave(sortAnnouncements(updated));
     resetForm();
   };
   const handleDelete = (id: string) => { if (window.confirm('削除しますか？')) onSave(announcements.filter(a => a.id !== id)); };
-  const sorted = [...announcements].sort((a, b) => b.date.localeCompare(a.date));
+  const sorted = sortAnnouncements(announcements);
 
   return (
     <div className="space-y-3">
