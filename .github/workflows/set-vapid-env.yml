@@ -1,0 +1,47 @@
+name: Set VAPID environment variables on Vercel
+
+on:
+  workflow_dispatch:  # 手動実行のみ
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set VAPID_PUBLIC_KEY
+        run: |
+          curl -s -X POST "https://api.vercel.com/v10/projects/soccer-trianing/env" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "key": "VAPID_PUBLIC_KEY",
+              "value": "BLuH52T9Pzk4dvCdwz1WLqV6dazPigKti_ROsdhzCJBOUmMll0Fa7a5nCYtpDTENvDHab5bO2Qg7aKXHFZcbK1c",
+              "target": ["production", "preview"],
+              "type": "encrypted"
+            }'
+
+      - name: Set VAPID_PRIVATE_KEY
+        run: |
+          curl -s -X POST "https://api.vercel.com/v10/projects/soccer-trianing/env" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "key": "VAPID_PRIVATE_KEY",
+              "value": "xTdoRQ2IKy1k0_iZoS66iVivjJQEibqmhCIaEpaau2w",
+              "target": ["production", "preview"],
+              "type": "encrypted"
+            }'
+
+      - name: Trigger redeploy
+        run: |
+          curl -s -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "soccer-trianing",
+              "gitSource": {
+                "type": "github",
+                "repoId": "reiteru-n/soccer-trianing",
+                "ref": "master"
+              }
+            }' || true
+          echo "環境変数の設定完了。Vercelで再デプロイしてください。"
