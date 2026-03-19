@@ -1,0 +1,63 @@
+name: post-sch-announcement
+on:
+  push:
+    paths:
+      - '.github/workflows/post-sch-announcement.yml'
+      - '.github/announcements/*.json'
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Post announcement to Upstash Redis
+        env:
+          UPSTASH_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+        run: |
+          python3 << 'PYEOF'
+          import json, urllib.request, os, glob
+
+          url   = os.environ["UPSTASH_URL"]
+          token = os.environ["UPSTASH_TOKEN"]
+          headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+          def redis_get(key):
+              req = urllib.request.Request(f"{url}/get/{key}", headers=headers)
+              with urllib.request.urlopen(req) as r:
+                  data = json.loads(r.read())
+              raw = data.get("result")
+              return json.loads(raw) if raw else []
+
+          def redis_set(key, value):
+              body = json.dumps(value, ensure_ascii=False).encode()
+              req = urllib.request.Request(f"{url}/set/{key}", data=body, headers=headers)
+              with urllib.request.urlopen(req) as r:
+                  return json.loads(r.read())
+
+          # .github/announcements/*.json を全て読み込む
+          files = sorted(glob.glob(".github/announcements/*.json"))
+          if not files:
+              print("No announcement files found")
+              exit(0)
+
+          current = redis_get("sch:announcements")
+          existing_ids = {a["id"] for a in current}
+          added = 0
+
+          for f in files:
+              ann = json.load(open(f, encoding="utf-8"))
+              if ann["id"] in existing_ids:
+                  print(f"SKIP (already exists): {ann['id']}")
+                  continue
+              current.insert(0, ann)
+              existing_ids.add(ann["id"])
+              added += 1
+              print(f"ADD: {ann['title']}")
+
+          if added > 0:
+              current.sort(key=lambda a: a["date"], reverse=True)
+              result = redis_set("sch:announcements", current)
+              print(f"Saved {len(current)} announcements. Result: {result}")
+          else:
+              print("Nothing to add")
+          PYEOF
