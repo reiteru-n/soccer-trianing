@@ -34,30 +34,26 @@ jobs:
               with urllib.request.urlopen(req) as r:
                   return json.loads(r.read())
 
-          # .github/announcements/*.json を全て読み込む
           files = sorted(glob.glob(".github/announcements/*.json"))
           if not files:
               print("No announcement files found")
               exit(0)
 
           current = redis_get("sch:announcements")
-          existing_ids = {a["id"] for a in current}
-          added = 0
+          id_to_idx = {a["id"]: i for i, a in enumerate(current)}
 
           for f in files:
               ann = json.load(open(f, encoding="utf-8"))
-              if ann["id"] in existing_ids:
-                  print(f"SKIP (already exists): {ann['id']}")
-                  continue
-              current.insert(0, ann)
-              existing_ids.add(ann["id"])
-              added += 1
-              print(f"ADD: {ann['title']}")
+              if ann["id"] in id_to_idx:
+                  # upsert: 既存レコードを上書き（createdAt等の更新のため）
+                  current[id_to_idx[ann["id"]]] = ann
+                  print(f"UPDATE: {ann['title']}")
+              else:
+                  current.insert(0, ann)
+                  print(f"ADD: {ann['title']}")
 
-          if added > 0:
-              current.sort(key=lambda a: a["date"], reverse=True)
-              result = redis_set("sch:announcements", current)
-              print(f"Saved {len(current)} announcements. Result: {result}")
-          else:
-              print("Nothing to add")
+          # createdAt があれば投稿日時順、なければ date 順
+          current.sort(key=lambda a: a.get("createdAt") or a["date"], reverse=True)
+          result = redis_set("sch:announcements", current)
+          print(f"Saved {len(current)} announcements. Result: {result}")
           PYEOF
