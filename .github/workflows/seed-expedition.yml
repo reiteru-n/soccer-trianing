@@ -1,0 +1,14 @@
+name: seed-expedition
+on:
+  push:
+    paths:
+      - '.github/workflows/seed-expedition.yml'
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel deploy
+        run: sleep 30
+      - name: Post expedition announcement
+        run: |
+          curl -f https://soccer-trianing.vercel.app/api/sch/seed-expedition
