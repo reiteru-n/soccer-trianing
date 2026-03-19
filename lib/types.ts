@@ -135,6 +135,11 @@ export interface SchEvent {
   mapQuery?: string; // Google Maps embed query
 }
 
+export interface SchCheckItem {
+  text: string;
+  note?: string;
+}
+
 export interface SchAnnouncement {
   id: string;
   date: string; // yyyy/mm/dd
@@ -143,6 +148,7 @@ export interface SchAnnouncement {
   important?: boolean;
   url?: string; // 投稿URL（InstagramなどのSNSリンク）
   linkedEventId?: string; // 予定と連携する場合の予定ID
+  checkItems?: SchCheckItem[]; // 持ち物・チェックリスト
 }
 
 export interface SchMemberParent {

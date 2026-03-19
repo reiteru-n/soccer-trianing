@@ -2150,6 +2150,67 @@ function EventSummaryCard({ event }: { event: SchEvent }) {
   );
 }
 
+// ---- CheckList ----
+function CheckList({ items, announcementId }: { items: { text: string; note?: string }[]; announcementId: string }) {
+  const storageKey = `sch-check-${announcementId}`;
+  const [checked, setChecked] = useState<boolean[]>(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const arr = JSON.parse(stored) as boolean[];
+        // 長さが合わない場合は拡張
+        if (arr.length < items.length) return [...arr, ...items.slice(arr.length).map(() => false)];
+        return arr;
+      }
+    } catch { /* ignore */ }
+    return items.map(() => false);
+  });
+
+  const toggle = (i: number) => {
+    const next = checked.map((v, idx) => idx === i ? !v : v);
+    setChecked(next);
+    try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+
+  const doneCount = checked.filter(Boolean).length;
+
+  return (
+    <div className="mt-3">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xs font-bold text-amber-300">🎒 持ち物リスト</span>
+        <span className="text-[10px] text-slate-500">{doneCount}/{items.length} 準備済み</span>
+        {doneCount === items.length && items.length > 0 && (
+          <span className="text-[10px] text-green-400 font-bold">✓ 完了!</span>
+        )}
+      </div>
+      <div className="space-y-1">
+        {items.map((item, i) => (
+          <label
+            key={i}
+            className={`flex items-center gap-2.5 py-2 px-3 rounded-lg cursor-pointer transition-all select-none ${
+              checked[i] ? 'bg-slate-700/30 opacity-50' : 'bg-slate-700/60 hover:bg-slate-700/80'
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={checked[i] ?? false}
+              onChange={() => toggle(i)}
+              className="w-4 h-4 accent-green-500 flex-shrink-0"
+            />
+            <span className={`text-sm flex-1 ${checked[i] ? 'line-through text-slate-500' : 'text-slate-200'}`}>
+              {item.text}
+            </span>
+            {item.note && (
+              <span className="text-[10px] text-slate-500 shrink-0 text-right">{item.note}</span>
+            )}
+          </label>
+        ))}
+      </div>
+      <p className="text-[10px] text-slate-600 pt-1.5">✓ チェックはこのデバイスにのみ保存されます</p>
+    </div>
+  );
+}
+
 // ---- AnnounceSection ----
 function AnnounceSection({ announcements, onSave, events }: { announcements: SchAnnouncement[]; onSave: (a: SchAnnouncement[]) => void; events: SchEvent[] }) {
   const [showForm, setShowForm] = useState(false);
@@ -2161,12 +2222,21 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
   const [url, setUrl] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<SchEvent | null>(null);
   const [showAllEvents, setShowAllEvents] = useState(false);
+  const [checkItems, setCheckItems] = useState<{ text: string; note: string }[]>([]);
+  const [showCheckItems, setShowCheckItems] = useState(false);
 
-  const resetForm = () => { setDate(todayStr()); setTitle(''); setContent(''); setImportant(false); setUrl(''); setEditing(null); setShowForm(false); setSelectedEvent(null); setShowAllEvents(false); };
+  const resetForm = () => {
+    setDate(todayStr()); setTitle(''); setContent(''); setImportant(false); setUrl('');
+    setEditing(null); setShowForm(false); setSelectedEvent(null); setShowAllEvents(false);
+    setCheckItems([]); setShowCheckItems(false);
+  };
   const openEdit = (a: SchAnnouncement) => {
     setEditing(a); setDate(a.date); setTitle(a.title); setContent(a.content);
     setImportant(a.important ?? false); setUrl(a.url ?? '');
     setSelectedEvent(a.linkedEventId ? (events.find(e => e.id === a.linkedEventId) ?? null) : null);
+    const ci = (a.checkItems ?? []).map(i => ({ text: i.text, note: i.note ?? '' }));
+    setCheckItems(ci);
+    setShowCheckItems(ci.length > 0);
     setShowForm(true);
   };
   const handleSelectEvent = (ev: SchEvent) => {
@@ -2178,13 +2248,22 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
       : `${ev.date.slice(5)} ${ev.label || ev.location || tc(ev.type).label}のお知らせ`;
     setTitle(autoTitle);
   };
+  const addCheckItem = () => setCheckItems(prev => [...prev, { text: '', note: '' }]);
+  const removeCheckItem = (i: number) => setCheckItems(prev => prev.filter((_, idx) => idx !== i));
+  const updateCheckItem = (i: number, field: 'text' | 'note', val: string) =>
+    setCheckItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: val } : item));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || (!content && !url)) return;
+    const validCheckItems = checkItems.filter(i => i.text.trim());
+    if (!title || (!content && !url && validCheckItems.length === 0)) return;
     const entry: SchAnnouncement = {
       id: editing?.id ?? generateId(), date, title, content, important,
       ...(url && { url }),
       ...(selectedEvent && { linkedEventId: selectedEvent.id }),
+      ...(validCheckItems.length > 0 && {
+        checkItems: validCheckItems.map(i => ({ text: i.text.trim(), ...(i.note.trim() && { note: i.note.trim() }) })),
+      }),
     };
     const updated = editing ? announcements.map(a => a.id === editing.id ? entry : a) : [...announcements, entry];
     onSave(updated.sort((a, b) => b.date.localeCompare(a.date)));
@@ -2258,7 +2337,56 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">📅 日付</label><input type="date" value={toInputDate(date)} onChange={e => setDate(fromInputDate(e.target.value))} required className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none" /></div>
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">📌 タイトル</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} required placeholder="例: 次回練習のお知らせ" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500" /></div>
-                <div><label className="block text-xs font-semibold text-slate-400 mb-1">📝 コメント</label><textarea value={content} onChange={e => setContent(e.target.value)} rows={4} placeholder="連絡内容を入力" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500 resize-none" /></div>
+                <div><label className="block text-xs font-semibold text-slate-400 mb-1">📝 コメント <span className="font-normal text-slate-500">（スケジュール・詳細など）</span></label><textarea value={content} onChange={e => setContent(e.target.value)} rows={5} placeholder={"例:\n3/28（土）〜 3/30（月） 山梨合同遠征\n\n6:00 集合\n9:00 出発\n12:00 到着・昼食"} className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500 resize-none" /></div>
+
+                {/* 持ち物リスト */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCheckItems(v => !v); if (!showCheckItems && checkItems.length === 0) addCheckItem(); }}
+                    className={`flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors w-full ${showCheckItems ? 'bg-amber-900/30 border-amber-500/40 text-amber-300' : 'bg-slate-700/40 border-white/10 text-slate-400 hover:text-amber-300'}`}
+                  >
+                    <span>🎒</span>
+                    <span>{showCheckItems ? '持ち物リストを閉じる' : '持ち物リストを追加'}</span>
+                    {checkItems.filter(i => i.text.trim()).length > 0 && (
+                      <span className="ml-auto text-[10px] bg-amber-600/40 text-amber-300 px-1.5 py-0.5 rounded-full">
+                        {checkItems.filter(i => i.text.trim()).length}件
+                      </span>
+                    )}
+                  </button>
+                  {showCheckItems && (
+                    <div className="mt-2 space-y-2 bg-slate-900/40 rounded-xl p-3 border border-amber-500/20">
+                      {checkItems.map((item, i) => (
+                        <div key={i} className="flex gap-1.5 items-center">
+                          <span className="text-slate-500 text-xs w-4 text-center shrink-0">{i + 1}</span>
+                          <input
+                            type="text"
+                            value={item.text}
+                            onChange={e => updateCheckItem(i, 'text', e.target.value)}
+                            placeholder="持ち物名"
+                            className="flex-1 rounded-lg border border-slate-600 bg-slate-800 text-white px-2 py-1.5 text-sm focus:border-amber-400 focus:outline-none placeholder-slate-500"
+                          />
+                          <input
+                            type="text"
+                            value={item.note}
+                            onChange={e => updateCheckItem(i, 'note', e.target.value)}
+                            placeholder="備考"
+                            className="w-20 rounded-lg border border-slate-600 bg-slate-800 text-white px-2 py-1.5 text-xs focus:border-amber-400 focus:outline-none placeholder-slate-500"
+                          />
+                          <button type="button" onClick={() => removeCheckItem(i)} className="text-slate-500 hover:text-red-400 text-sm px-1">✕</button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addCheckItem}
+                        className="w-full text-xs py-1.5 text-amber-400/70 hover:text-amber-300 border border-dashed border-amber-500/30 rounded-lg transition-colors"
+                      >
+                        ＋ 項目を追加
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">🔗 投稿URL <span className="font-normal text-slate-500">（Instagram リンク等）</span></label><input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.instagram.com/p/..." className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500" /></div>
                 <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={important} onChange={e => setImportant(e.target.checked)} className="w-4 h-4 accent-red-500" /><span className="text-sm text-slate-300">🔴 重要な連絡としてマーク</span></label>
                 <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl text-sm">投稿</button>
@@ -2279,6 +2407,9 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
                   <p className="text-sm font-bold text-white">{a.title}</p>
                   {linkedEv && <div className="mt-2"><EventSummaryCard event={linkedEv} /></div>}
                   {a.content && <p className="text-sm text-slate-300 mt-2 whitespace-pre-wrap">{a.content}</p>}
+                  {a.checkItems && a.checkItems.length > 0 && (
+                    <CheckList items={a.checkItems} announcementId={a.id} />
+                  )}
                   {a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
                   {a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
                 </div>
