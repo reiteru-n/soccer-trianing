@@ -2947,7 +2947,7 @@ export default function SchPage() {
                   onClick={handlePushToggle}
                   className={`text-[10px] whitespace-nowrap border px-2.5 py-1 rounded-lg transition-colors ${
                     pushState === 'subscribed'
-                      ? 'text-green-400 border-green-700 hover:text-green-300 hover:border-green-500'
+                      ? 'text-white bg-green-700 border-green-600 hover:bg-green-600 hover:border-green-500'
                       : pushState === 'denied'
                       ? 'text-slate-500 border-slate-700 cursor-not-allowed'
                       : 'text-slate-400 hover:text-slate-200 border-slate-700 hover:border-slate-500'
@@ -2955,7 +2955,7 @@ export default function SchPage() {
                   title={pushState === 'subscribed' ? '通知をオフにする' : pushState === 'denied' ? 'ブラウザの設定から通知を許可してください' : '通知を受け取る'}
                   disabled={pushState === 'denied'}
                 >
-                  {pushState === 'subscribed' ? '🔔 通知ON' : pushState === 'denied' ? '🔕 通知不可' : '🔔 通知'}
+                  {pushState === 'subscribed' ? '🔔 通知ON' : pushState === 'denied' ? '🔕 通知不可' : '🔕 通知OFF'}
                 </button>
               )}
               <button
