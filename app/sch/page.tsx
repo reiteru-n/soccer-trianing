@@ -2786,7 +2786,14 @@ export default function SchPage() {
 
   // Web Push: 初期状態を確認
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setPushState('unsupported');
+      return;
+    }
+    // iOS Safari: PWA（ホーム画面追加）でないとWeb Push不可
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isIOSPWA = (navigator as any).standalone === true;
+    if (isIOS && !isIOSPWA) {
       setPushState('unsupported');
       return;
     }
@@ -2816,7 +2823,10 @@ export default function SchPage() {
         if (perm === 'default') {
           perm = await Notification.requestPermission();
         }
-        if (perm !== 'granted') { setPushState('denied'); return; }
+        // ブラウザが明示的にブロックした場合のみ永続的に disabled にする
+        // キャンセル('default')や一時的な失敗は denied にしない（リトライ可能にする）
+        if (perm === 'denied') { setPushState('denied'); return; }
+        if (perm !== 'granted') return;
         const keyRes = await fetch('/api/sch/push');
         if (!keyRes.ok) return;
         const { publicKey } = await keyRes.json();
@@ -2957,7 +2967,17 @@ export default function SchPage() {
           <div className="flex flex-col items-end gap-1">
             <span className="text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
             <div className="flex items-center gap-1.5">
-              {pushState !== 'unsupported' && pushState !== 'loading' && (
+              {pushState === 'loading' ? null
+                : pushState === 'unsupported'
+                ? (() => {
+                    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+                    return isIOS ? (
+                      <span className="text-[9px] text-slate-500 text-right leading-tight">
+                        ホーム画面に追加<br />すると通知が使えます
+                      </span>
+                    ) : null;
+                  })()
+                : (
                 <button
                   onClick={handlePushToggle}
                   className={`text-[11px] whitespace-nowrap border px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${
@@ -2976,8 +2996,6 @@ export default function SchPage() {
                     ? <span className="text-[10px]">…</span>
                     : pushState === 'subscribed'
                     ? <><span>🔔</span><span className="text-[9px]">通知</span></>
-                    : pushState === 'denied'
-                    ? <><span>🔕</span><span className="text-[9px]">通知</span></>
                     : <><span>🔕</span><span className="text-[9px]">通知</span></>
                   }
                 </button>
