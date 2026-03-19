@@ -171,9 +171,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wait for Vercel deploy
-        run: sleep 30
+        run: sleep 90
       - name: Post announcement
-        run: curl -f https://soccer-trianing.vercel.app/api/sch/seed-<名前>
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i..."
+            curl -sf https://soccer-trianing.vercel.app/api/sch/seed-<名前> && break
+            echo "Retrying in 20s..."
+            sleep 20
+          done
 ```
 
 **③ push → Actions が自動実行**
