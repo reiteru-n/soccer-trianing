@@ -2937,7 +2937,7 @@ export default function SchPage() {
             ) : (
               <Image src="/sch-logo.png" alt="SCH FC" width={175} height={215} className="object-contain h-14 w-auto" />
             )}
-            <h1 className="text-2xl font-extrabold text-white drop-shadow">SCH Info</h1>
+            <h1 className="text-2xl font-extrabold text-white drop-shadow whitespace-nowrap">SCH Info</h1>
           </div>
           <div className="flex flex-col items-end gap-1">
             <span className="text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
