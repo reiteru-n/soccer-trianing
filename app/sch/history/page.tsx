@@ -210,7 +210,7 @@ export default function HistoryPage() {
                 <Td highlight><Year y="2022" /></Td>
                 <Td highlight>全国（第46回）</Td>
                 <Td highlight><Badge type="blue">全国ベスト8</Badge></Td>
-                <Td highlight><span className="text-[11px] text-slate-600">PK戦で惜敗</span></Td>
+                <Td highlight><span className="text-[11px] text-slate-600">PK戦で惜敗（vsアッズーロ佐賀）</span></Td>
                 <Td highlight><Src href="https://www.sakaiku.jp/column/technique/2023/016131.html" label="サカイク" /></Td>
               </tr>
               <tr>
@@ -247,21 +247,35 @@ export default function HistoryPage() {
                 <Td highlight><Year y="2021" /></Td>
                 <Td highlight>第48回</Td>
                 <Td highlight><Badge type="gold">🥇 優勝</Badge></Td>
-                <Td highlight><span className="text-[11px] text-slate-600">7年ぶり6大会ぶり</span></Td>
+                <Td highlight><span className="text-[11px] text-slate-600">7年ぶり6大会ぶり、決勝でJFC FUTURO逆転撃破</span></Td>
                 <Td highlight><Src href="https://www.juniorsoccer-news.com/post-1084079" label="JSN" /></Td>
               </tr>
               <tr>
-                <Td><Year y="2022〜2024" /></Td>
-                <Td>49〜51回</Td>
+                <Td><Year y="2022" /></Td>
+                <Td>第49回</Td>
                 <Td><Unknown /></Td>
-                <Td className="text-slate-400 text-[11px]">詳細未確認</Td>
+                <Td className="text-slate-400 text-[11px]">ベスト4以外（詳細未確認）</Td>
                 <Td>—</Td>
+              </tr>
+              <tr>
+                <Td><Year y="2023" /></Td>
+                <Td>第50回</Td>
+                <Td><Badge type="gray">2回戦敗退</Badge></Td>
+                <Td className="text-slate-500 text-[11px]">2回戦 荻野SCに2-2(PK2-3)</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1610620" label="JSN" /></Td>
+              </tr>
+              <tr>
+                <Td><Year y="2024" /></Td>
+                <Td>第51回</Td>
+                <Td><Badge type="blue">第4位</Badge></Td>
+                <Td className="text-slate-500 text-[11px]">準決勝で横浜F・マリノスに1-0敗退</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1774962" label="JSN" /></Td>
               </tr>
               <tr>
                 <Td><Year y="2025" /></Td>
                 <Td>第52回</Td>
                 <Td><Badge type="silver">第3位</Badge></Td>
-                <Td className="text-slate-500 text-[11px]">準決勝で惜敗</Td>
+                <Td className="text-slate-500 text-[11px]">準決勝で宮前平二葉SCに1-2敗退</Td>
                 <Td><Src href="https://www.juniorsoccer-news.com/post-1886363" label="JSN" /></Td>
               </tr>
             </tbody>
@@ -306,29 +320,41 @@ export default function HistoryPage() {
             </tbody>
           </ResultCard>
 
-          {/* その他大会 — 重複の2021 U-10チャンプは削除、U-10セクションのみに掲載 */}
+          {/* その他大会 */}
           <ResultCard title="📋 その他主要大会（U-12）">
             <thead>
               <tr><Th>年度</Th><Th>大会名</Th><Th>結果</Th><Th>出典</Th></tr>
             </thead>
             <tbody>
               <tr>
-                <Td highlight><Year y="2023" /></Td>
-                <Td highlight className="text-[11px]">神奈川県チャンピオンシップ U-12（第43回）</Td>
-                <Td highlight><Badge type="gold">🥇 優勝</Badge></Td>
-                <Td highlight><Src href="https://www.juniorsoccer-news.com/post-1582248" label="JSN" /></Td>
+                <Td><Year y="2022" /></Td>
+                <Td className="text-[11px]">神奈川県チャンピオンシップ U-12（第42回）</Td>
+                <Td><Badge type="silver">第3位</Badge></Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1221692" label="JSN" /></Td>
+              </tr>
+              <tr>
+                <Td><Year y="2023" /></Td>
+                <Td className="text-[11px]">神奈川県チャンピオンシップ U-12（第43回）</Td>
+                <Td><Badge type="silver">第3位</Badge></Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1476139" label="JSN" /></Td>
               </tr>
               <tr>
                 <Td highlight><Year y="2023" /></Td>
                 <Td highlight className="text-[11px]">フジパンCUP 第47回関東U-12</Td>
                 <Td highlight><Badge type="gold">🥇 優勝</Badge></Td>
-                <Td highlight><Src href="https://www.juniorsoccer-news.com/post-1582248" label="JSN" /></Td>
+                <Td highlight><Src href="https://www.juniorsoccer-news.com/post-1473463" label="JSN" /></Td>
               </tr>
               <tr>
                 <Td><Year y="2023" /></Td>
                 <Td className="text-[11px]">TOBIGERI ONE 2023 sfida CUP</Td>
                 <Td><Badge type="silver">第3位</Badge></Td>
                 <Td><Src href="https://www.juniorsoccer-news.com/post-1582248" label="JSN" /></Td>
+              </tr>
+              <tr>
+                <Td><Year y="2024" /></Td>
+                <Td className="text-[11px]">神奈川県チャンピオンシップ U-12（第44回）</Td>
+                <Td><Badge type="silver">準優勝</Badge></Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1641233" label="JSN" /></Td>
               </tr>
               <tr>
                 <Td><Year y="2025" /></Td>
