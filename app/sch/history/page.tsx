@@ -2,16 +2,17 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 // ---- Badge component ----
+// gold: 優勝（金色グロー）/ silver: 準優勝 / blue: 好成績（ロイヤルブルー）/ red: 降格等 / gray: 中間成績
 function Badge({ type, children }: { type: 'gold' | 'silver' | 'blue' | 'red' | 'gray'; children: React.ReactNode }) {
   const styles = {
-    gold:   'bg-yellow-400/20 text-yellow-700 border border-yellow-400/50 font-bold',
-    silver: 'bg-slate-200/80 text-slate-600 border border-slate-300 font-bold',
-    blue:   'bg-blue-100 text-blue-700 border border-blue-300 font-semibold',
-    red:    'bg-red-100 text-red-600 border border-red-200 font-semibold',
-    gray:   'bg-slate-100 text-slate-500 border border-slate-200 font-semibold',
+    gold:   'bg-[#FFF8DC] text-[#92620A] border border-[#D4A017] font-black shadow-[0_0_6px_rgba(212,160,23,0.4)]',
+    silver: 'bg-slate-100 text-slate-600 border border-slate-300 font-bold',
+    blue:   'bg-[#E8F0FE] text-[#003087] border border-[#003087]/30 font-bold',
+    red:    'bg-red-50 text-red-700 border border-red-200 font-bold',
+    gray:   'bg-slate-50 text-slate-500 border border-slate-200 font-semibold',
   };
   return (
-    <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full ${styles[type]}`}>
+    <span className={`inline-block text-[11px] px-2.5 py-0.5 rounded-full leading-5 ${styles[type]}`}>
       {children}
     </span>
   );
@@ -24,7 +25,7 @@ function Src({ href, label }: { href: string; label?: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded whitespace-nowrap"
+      className="inline-flex items-center gap-1 text-[10px] text-[#003087] hover:text-[#0047AB] bg-[#E8F0FE] border border-[#003087]/20 px-1.5 py-0.5 rounded whitespace-nowrap"
     >
       ↗ {label ?? '出典'}
     </a>
@@ -34,19 +35,21 @@ function Src({ href, label }: { href: string; label?: string }) {
 // ---- Section header ----
 function SectionHeader({ num, title }: { num: string; title: string }) {
   return (
-    <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-blue-100">
-      <span className="text-[10px] font-extrabold text-blue-400 tracking-widest uppercase">{num}</span>
-      <h2 className="text-base font-extrabold text-blue-900">{title}</h2>
-      <span className="ml-auto text-blue-200 text-xl font-black">↑</span>
+    <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-[#003087]/15">
+      <span className="flex-shrink-0 w-7 h-7 bg-[#003087] text-white text-[11px] font-black rounded-full flex items-center justify-center">
+        {num}
+      </span>
+      <h2 className="text-base font-extrabold text-[#001A52]">{title}</h2>
+      <span className="ml-auto text-[#0047AB]/40 text-xl font-black">↑</span>
     </div>
   );
 }
 
-// ---- Table wrapper ----
+// ---- Table card wrapper ----
 function ResultCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-blue-100 shadow-sm overflow-hidden mb-4">
-      <div className="bg-gradient-to-r from-blue-700 to-blue-500 px-4 py-2.5">
+    <div className="bg-white rounded-2xl border border-[#003087]/10 shadow-[0_2px_12px_rgba(0,48,135,0.08)] overflow-hidden mb-4">
+      <div className="bg-gradient-to-r from-[#001A52] to-[#0047AB] px-4 py-2.5">
         <p className="text-white text-[11px] font-bold tracking-wide">{title}</p>
       </div>
       <div className="overflow-x-auto">
@@ -60,7 +63,7 @@ function ResultCard({ title, children }: { title: string; children: React.ReactN
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="text-left px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100 whitespace-nowrap">
+    <th className="text-left px-3 py-2 text-[10px] font-bold text-[#003087]/50 uppercase tracking-wider bg-[#E8F0FE]/40 border-b border-[#003087]/8 whitespace-nowrap">
       {children}
     </th>
   );
@@ -68,17 +71,16 @@ function Th({ children }: { children: React.ReactNode }) {
 
 function Td({ children, highlight, className }: { children: React.ReactNode; highlight?: boolean; className?: string }) {
   return (
-    <td className={`px-3 py-2.5 align-top border-b border-slate-50 ${highlight ? 'bg-yellow-50/60' : ''} ${className ?? ''}`}>
+    <td className={`px-3 py-2.5 align-top border-b border-slate-50 ${highlight ? 'bg-[#FFF8DC]/30' : ''} ${className ?? ''}`}>
       {children}
     </td>
   );
 }
 
 function Year({ y }: { y: string }) {
-  return <span className="text-[10px] font-bold text-blue-500">{y}</span>;
+  return <span className="text-[10px] font-bold text-[#003087]">{y}</span>;
 }
 
-// ---- Unknown ----
 function Unknown() {
   return (
     <span className="inline-block text-[10px] text-slate-400 border border-dashed border-slate-300 px-2 py-0.5 rounded">
@@ -89,50 +91,84 @@ function Unknown() {
 
 export default function HistoryPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pb-16">
+    <div className="min-h-screen bg-white pb-16">
 
-      {/* Hero */}
-      <div className="bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 px-5 pt-8 pb-10 relative overflow-hidden">
-        {/* Decorative upward stripes */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-0 left-0 w-full h-full opacity-10"
-            style={{ background: 'repeating-linear-gradient(-60deg, transparent, transparent 18px, #fff 18px, #fff 20px)' }} />
-        </div>
-        <div className="absolute top-3 right-4 text-white/10 text-[120px] font-black leading-none select-none pointer-events-none">
-          ↑
-        </div>
-        <Link href="/sch" className="flex items-center gap-1.5 text-blue-200 text-[11px] mb-5 hover:text-white transition-colors">
+      {/* ===== Hero ===== */}
+      <div className="relative overflow-hidden bg-[#003087] px-5 pt-8 pb-4">
+        {/* ユニフォームの縦ライン */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: 'repeating-linear-gradient(180deg, transparent, transparent 24px, rgba(255,255,255,0.06) 24px, rgba(255,255,255,0.06) 26px)' }}
+        />
+        {/* 上昇グラジエント */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#0047AB] to-[#001A52] opacity-80" />
+        {/* 大きな上向き矢印 */}
+        <div className="absolute top-0 right-0 text-white/[0.1] text-[160px] font-black leading-none select-none pointer-events-none translate-x-8 -translate-y-4">↑</div>
+
+        <Link href="/sch" className="relative z-10 flex items-center gap-1.5 text-[#A8C4F0] text-[11px] mb-5 hover:text-white transition-colors">
           ← SCHチームページに戻る
         </Link>
-        <div className="flex items-end gap-4 relative z-10">
-          <Image src="/sch-logo.png" width={175} height={215} className="object-contain h-16 w-auto drop-shadow-lg" alt="SCH logo" />
+
+        <div className="relative z-10 flex items-end gap-4">
+          <Image
+            src="/sch-logo.png" width={175} height={215}
+            className="object-contain h-20 w-auto drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
+            alt="SCH logo"
+          />
           <div>
-            <p className="text-blue-200 text-[10px] font-bold tracking-widest uppercase mb-1">SINCE 1986</p>
-            <h1 className="text-white text-2xl font-extrabold leading-tight tracking-tight">
+            <p className="text-[#A8C4F0] text-[10px] font-bold tracking-[0.2em] uppercase mb-1">SINCE 1986</p>
+            <h1 className="text-white text-[26px] font-black leading-tight tracking-tight">
               SCH.FC<br />
-              <span className="text-yellow-300">先輩たちの</span>戦歴
+              <span className="text-[#FFD700]">先輩たちの</span>戦歴
             </h1>
-            <p className="text-blue-200 text-[11px] mt-2">2020年〜現在 ／ U-10〜U-12</p>
+            <p className="text-[#A8C4F0] text-[11px] mt-2">2020年〜2025年 ／ U-10〜U-12</p>
           </div>
         </div>
 
-        {/* Achievement strip */}
-        <div className="flex gap-2 mt-5 flex-wrap relative z-10">
+        {/* アチーブメントストリップ */}
+        <div className="relative z-10 flex gap-2 mt-5 flex-wrap">
           {[
-            { icon: '🏆', label: '全国ベスト8', sub: '2022年度' },
-            { icon: '🥇', label: '神奈川優勝', sub: '日産カップ 2021' },
-            { icon: '🥇', label: '関東優勝', sub: 'フジパンCUP 2023' },
+            { icon: '🏆', label: '全国ベスト8', sub: '2022年度', accent: true },
+            { icon: '🥇', label: '神奈川優勝',  sub: '日産カップ 2021', accent: false },
+            { icon: '🥇', label: '関東優勝',    sub: 'フジパンCUP 2023', accent: false },
           ].map(a => (
-            <div key={a.label} className="bg-white/10 backdrop-blur rounded-xl px-3 py-1.5 border border-white/20">
-              <p className="text-white text-[11px] font-bold">{a.icon} {a.label}</p>
-              <p className="text-blue-200 text-[9px]">{a.sub}</p>
+            <div key={a.label}
+              className={`rounded-xl px-3 py-2 border backdrop-blur-sm ${
+                a.accent
+                  ? 'bg-[#FFD700]/15 border-[#FFD700]/40 shadow-[0_0_12px_rgba(255,215,0,0.25)]'
+                  : 'bg-white/10 border-white/20'
+              }`}
+            >
+              <p className={`text-[12px] font-extrabold ${a.accent ? 'text-[#FFD700]' : 'text-white'}`}>
+                {a.icon} {a.label}
+              </p>
+              <p className="text-[#A8C4F0] text-[9px] mt-0.5">{a.sub}</p>
             </div>
           ))}
+        </div>
+
+        {/* 「次世代」ライン */}
+        <div className="relative z-10 mt-5 flex items-center gap-3">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+          <span className="text-white/40 text-[10px] font-bold tracking-widest">2026 →</span>
+          <div className="flex-1 h-px bg-gradient-to-r from-white/30 via-transparent to-transparent" />
+        </div>
+      </div>
+
+      {/* 2026 1部復帰 — 強調カード */}
+      <div className="mx-4 mt-4 relative rounded-2xl overflow-hidden border border-[#003087]/20 bg-gradient-to-br from-[#001A52] to-[#0047AB] px-5 py-4">
+        <div className="absolute top-0 right-0 text-white/10 text-[80px] font-black leading-none pointer-events-none select-none">↑</div>
+        <p className="text-[#A8C4F0] text-[10px] font-bold tracking-widest uppercase mb-1">2026シーズン</p>
+        <p className="text-white text-lg font-black leading-snug">
+          TOPリーグ <span className="text-[#FFD700]">1部 復帰確定</span>
+        </p>
+        <p className="text-[#A8C4F0] text-[11px] mt-1.5">入替戦を制し、2部Aから1部へ返り咲き</p>
+        <div className="mt-2">
+          <Src href="https://www.juniorsoccer-news.com/post-1888753" label="juniorsoccer-news" />
         </div>
       </div>
 
       {/* Notice */}
-      <div className="mx-4 mt-4 mb-1 bg-amber-50 border border-amber-200 border-l-4 border-l-amber-400 rounded-xl px-4 py-3 text-[11px] text-amber-700">
+      <div className="mx-4 mt-3 mb-1 bg-amber-50 border border-amber-200 border-l-4 border-l-amber-400 rounded-xl px-4 py-3 text-[11px] text-amber-700">
         ⚠️ 掲載情報は各出典URLに基づく確認済み情報のみです。未確認箇所は「未確認」と表示。最新情報は各協会公式サイトでご確認ください。
       </div>
 
@@ -146,13 +182,7 @@ export default function HistoryPage() {
           {/* 全日本U-12 */}
           <ResultCard title="🏆 全日本U-12サッカー選手権 神奈川県大会（FA中央大会）">
             <thead>
-              <tr>
-                <Th>年度</Th>
-                <Th>回</Th>
-                <Th>結果</Th>
-                <Th>備考</Th>
-                <Th>出典</Th>
-              </tr>
+              <tr><Th>年度</Th><Th>回</Th><Th>結果</Th><Th>備考</Th><Th>出典</Th></tr>
             </thead>
             <tbody>
               <tr>
@@ -169,7 +199,7 @@ export default function HistoryPage() {
                 <Td className="text-slate-500 text-[11px]">CHALLENGE CUP 準優勝</Td>
                 <Td><Src href="https://www.juniorsoccer-news.com/post-1413647" label="JSN" /></Td>
               </tr>
-              <tr className="">
+              <tr>
                 <Td highlight><Year y="2022" /></Td>
                 <Td highlight>第46回</Td>
                 <Td highlight><Badge type="gold">🥇 優勝</Badge></Td>
@@ -276,18 +306,12 @@ export default function HistoryPage() {
             </tbody>
           </ResultCard>
 
-          {/* その他大会 */}
+          {/* その他大会 — 重複の2021 U-10チャンプは削除、U-10セクションのみに掲載 */}
           <ResultCard title="📋 その他主要大会（U-12）">
             <thead>
               <tr><Th>年度</Th><Th>大会名</Th><Th>結果</Th><Th>出典</Th></tr>
             </thead>
             <tbody>
-              <tr>
-                <Td><Year y="2021" /></Td>
-                <Td className="text-[11px]">県チャンピオンシップ U-10（低学年）</Td>
-                <Td><Badge type="silver">準優勝</Badge></Td>
-                <Td><Src href="https://www.juniorsoccer-news.com/post-1582248" label="JSN" /></Td>
-              </tr>
               <tr>
                 <Td highlight><Year y="2023" /></Td>
                 <Td highlight className="text-[11px]">神奈川県チャンピオンシップ U-12（第43回）</Td>
@@ -320,7 +344,7 @@ export default function HistoryPage() {
         <section>
           <SectionHeader num="02" title="U-11 プレミアリーグ神奈川 成績" />
 
-          <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4 text-[11px] text-blue-700">
+          <div className="bg-[#E8F0FE] border border-[#003087]/15 rounded-xl px-4 py-3 mb-4 text-[11px] text-[#003087]">
             神奈川県内最大規模のジュニアリーグ。80チーム超が参加し1〜3部に分かれて年間戦う。
           </div>
 
@@ -358,13 +382,16 @@ export default function HistoryPage() {
               <tr>
                 <Td><Year y="2022" /></Td>
                 <Td className="text-[11px]">第14回 SCH SUPER LEAGUE U-11</Td>
-                <Td><Badge type="silver">準優勝</Badge></Td>
+                <Td>
+                  <Badge type="silver">準優勝</Badge>
+                  <span className="text-[10px] text-slate-400 ml-1">（優勝：柏レイソル）</span>
+                </Td>
                 <Td><Src href="https://www.juniorsoccer-news.com/post-1494456" label="JSN" /></Td>
               </tr>
               <tr>
                 <Td><Year y="2023" /></Td>
                 <Td className="text-[11px]">第15回 SCH SUPER LEAGUE U-11</Td>
-                <Td className="text-[11px] text-slate-500">SCHはホスト主催</Td>
+                <Td className="text-[11px] text-slate-500">SCHはホスト主催（優勝：バディーSC）</Td>
                 <Td><Src href="https://www.juniorsoccer-news.com/post-1494456" label="JSN" /></Td>
               </tr>
             </tbody>
@@ -420,7 +447,7 @@ export default function HistoryPage() {
               </tr>
               <tr>
                 <Td><Year y="2022〜2024" /></Td>
-                <Td className="text-[11px]">各回</Td>
+                <Td className="text-[11px]">各回（第14〜16回）</Td>
                 <Td><Unknown /></Td>
                 <Td>—</Td>
               </tr>
@@ -451,7 +478,7 @@ export default function HistoryPage() {
         {/* ===== Sources ===== */}
         <section>
           <SectionHeader num="04" title="情報出典 URL一覧" />
-          <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-4 space-y-3 text-[11px]">
+          <div className="bg-white rounded-2xl border border-[#003087]/10 shadow-[0_2px_12px_rgba(0,48,135,0.08)] p-4 space-y-3 text-[11px]">
             {[
               { label: 'juniorsoccer-news.com（主要大会記事）', href: 'https://www.juniorsoccer-news.com/team/8162/' },
               { label: 'プレミアリーグ神奈川 公式 pl11.jp', href: 'https://pl11.jp/kanagawa/' },
@@ -460,9 +487,9 @@ export default function HistoryPage() {
               { label: 'JRユースナビ（チーム紹介）', href: 'https://jr-youth-navi.com/introduce/sch-fc-com/' },
             ].map(s => (
               <div key={s.href} className="flex items-start gap-2">
-                <span className="text-blue-300 mt-0.5">▸</span>
+                <span className="text-[#003087]/40 mt-0.5">▸</span>
                 <a href={s.href} target="_blank" rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 hover:underline break-all">
+                  className="text-[#003087] hover:text-[#0047AB] hover:underline break-all">
                   {s.label}
                 </a>
               </div>
