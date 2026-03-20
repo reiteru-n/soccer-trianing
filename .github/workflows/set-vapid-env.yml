@@ -7,41 +7,81 @@ jobs:
   set-env:
     runs-on: ubuntu-latest
     steps:
-      - name: Set VAPID_PUBLIC_KEY
+      - name: Upsert VAPID_PUBLIC_KEY
         run: |
-          curl -s -X POST "https://api.vercel.com/v10/projects/soccer-trianing/env" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "key": "VAPID_PUBLIC_KEY",
-              "value": "BLuH52T9Pzk4dvCdwz1WLqV6dazPigKti_ROsdhzCJBOUmMll0Fa7a5nCYtpDTENvDHab5bO2Qg7aKXHFZcbK1c",
-              "target": ["production", "preview"],
-              "type": "encrypted"
-            }'
+          TOKEN="${{ secrets.VERCEL_TOKEN }}"
+          PROJECT="soccer-trianing"
+          KEY="VAPID_PUBLIC_KEY"
+          VALUE="BLuH52T9Pzk4dvCdwz1WLqV6dazPigKti_ROsdhzCJBOUmMll0Fa7a5nCYtpDTENvDHab5bO2Qg7aKXHFZcbK1c"
 
-      - name: Set VAPID_PRIVATE_KEY
-        run: |
-          curl -s -X POST "https://api.vercel.com/v10/projects/soccer-trianing/env" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "key": "VAPID_PRIVATE_KEY",
-              "value": "xTdoRQ2IKy1k0_iZoS66iVivjJQEibqmhCIaEpaau2w",
-              "target": ["production", "preview"],
-              "type": "encrypted"
-            }'
+          # 既存のenv varを取得してIDを探す
+          ENVS=$(curl -s "https://api.vercel.com/v10/projects/$PROJECT/env" \
+            -H "Authorization: Bearer $TOKEN")
+          echo "ENV LIST: $ENVS" | head -c 500
 
-      - name: Trigger redeploy
+          ENV_ID=$(echo "$ENVS" | python3 -c "
+          import json,sys
+          data=json.load(sys.stdin)
+          envs=data.get('envs',[])
+          match=[e for e in envs if e.get('key')=='$KEY']
+          print(match[0]['id'] if match else '')
+          " 2>/dev/null || echo "")
+
+          if [ -n "$ENV_ID" ]; then
+            echo "Updating existing $KEY (id=$ENV_ID)"
+            curl -s -X PATCH "https://api.vercel.com/v10/projects/$PROJECT/env/$ENV_ID" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"value\":\"$VALUE\",\"target\":[\"production\",\"preview\"],\"type\":\"encrypted\"}"
+          else
+            echo "Creating $KEY"
+            curl -s -X POST "https://api.vercel.com/v10/projects/$PROJECT/env" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"$KEY\",\"value\":\"$VALUE\",\"target\":[\"production\",\"preview\"],\"type\":\"encrypted\"}"
+          fi
+
+      - name: Upsert VAPID_PRIVATE_KEY
         run: |
-          curl -s -X POST "https://api.vercel.com/v13/deployments" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "name": "soccer-trianing",
-              "gitSource": {
-                "type": "github",
-                "repoId": "reiteru-n/soccer-trianing",
-                "ref": "master"
-              }
-            }' || true
-          echo "環境変数の設定完了。Vercelで再デプロイしてください。"
+          TOKEN="${{ secrets.VERCEL_TOKEN }}"
+          PROJECT="soccer-trianing"
+          KEY="VAPID_PRIVATE_KEY"
+          VALUE="xTdoRQ2IKy1k0_iZoS66iVivjJQEibqmhCIaEpaau2w"
+
+          ENVS=$(curl -s "https://api.vercel.com/v10/projects/$PROJECT/env" \
+            -H "Authorization: Bearer $TOKEN")
+
+          ENV_ID=$(echo "$ENVS" | python3 -c "
+          import json,sys
+          data=json.load(sys.stdin)
+          envs=data.get('envs',[])
+          match=[e for e in envs if e.get('key')=='$KEY']
+          print(match[0]['id'] if match else '')
+          " 2>/dev/null || echo "")
+
+          if [ -n "$ENV_ID" ]; then
+            echo "Updating existing $KEY (id=$ENV_ID)"
+            curl -s -X PATCH "https://api.vercel.com/v10/projects/$PROJECT/env/$ENV_ID" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"value\":\"$VALUE\",\"target\":[\"production\",\"preview\"],\"type\":\"encrypted\"}"
+          else
+            echo "Creating $KEY"
+            curl -s -X POST "https://api.vercel.com/v10/projects/$PROJECT/env" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"$KEY\",\"value\":\"$VALUE\",\"target\":[\"production\",\"preview\"],\"type\":\"encrypted\"}"
+          fi
+
+      - name: Confirm env vars set
+        run: |
+          TOKEN="${{ secrets.VERCEL_TOKEN }}"
+          ENVS=$(curl -s "https://api.vercel.com/v10/projects/soccer-trianing/env" \
+            -H "Authorization: Bearer $TOKEN")
+          echo "$ENVS" | python3 -c "
+          import json,sys
+          data=json.load(sys.stdin)
+          for e in data.get('envs',[]):
+            if 'VAPID' in e.get('key',''):
+              print(f\"  {e['key']} = {e.get('value','(encrypted)')} (target: {e.get('target')})\")
+          "
