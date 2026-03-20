@@ -1,3 +1,6 @@
+// fetchハンドラ（iOS SafariでSWを確実にactivateするために必要）
+self.addEventListener('fetch', () => {});
+
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   const data = event.data.json();

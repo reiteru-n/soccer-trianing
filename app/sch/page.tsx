@@ -2787,6 +2787,7 @@ export default function SchPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'subscribed' | 'denied'>('loading');
   const [pushBusy, setPushBusy] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/logs?limit=1').then(r => { if (r.ok) setIsAdmin(true); }).catch(() => {});
@@ -2815,6 +2816,7 @@ export default function SchPage() {
   const handlePushToggle = useCallback(async () => {
     if (pushBusy) return;
     setPushBusy(true);
+    setPushError(null);
     try {
       if (pushState === 'subscribed') {
         // 解除
@@ -2826,31 +2828,40 @@ export default function SchPage() {
         }
         setPushState('default');
       } else {
-        // 購読: 権限確認（すでに granted なら requestPermission はスキップ）
+        // 購読: 権限確認
         let perm = Notification.permission;
         if (perm === 'default') {
           perm = await Notification.requestPermission();
         }
-        // ブラウザが明示的にブロックした場合のみ永続的に disabled にする
-        // キャンセル('default')や一時的な失敗は denied にしない（リトライ可能にする）
         if (perm === 'denied') { setPushState('denied'); return; }
-        if (perm !== 'granted') return;
+        if (perm !== 'granted') { setPushError('通知が許可されませんでした'); return; }
+
         const keyRes = await fetch('/api/sch/push');
-        if (!keyRes.ok) return;
+        if (!keyRes.ok) { setPushError(`サーバーエラー: ${keyRes.status}`); return; }
         const { publicKey } = await keyRes.json();
+        if (!publicKey) { setPushError('VAPIDキー未設定'); return; }
+
         const reg = await navigator.serviceWorker.ready;
-        // 残存サブスクリプションがあれば先に解除
         const existing = await reg.pushManager.getSubscription();
         if (existing) await existing.unsubscribe().catch(() => {});
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKey),
-        });
-        await fetch('/api/sch/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }) });
+
+        let sub;
+        try {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+          });
+        } catch (e2) {
+          setPushError(`購読失敗: ${e2 instanceof Error ? e2.message : String(e2)}`);
+          return;
+        }
+
+        const saveRes = await fetch('/api/sch/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }) });
+        if (!saveRes.ok) { setPushError(`登録失敗: ${saveRes.status}`); return; }
         setPushState('subscribed');
       }
     } catch (e) {
-      console.error('push toggle error', e);
+      setPushError(`エラー: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setPushBusy(false);
     }
@@ -3007,6 +3018,9 @@ export default function SchPage() {
                     : <><span>🔕</span><span className="text-[9px]">通知</span></>
                   }
                 </button>
+              )}
+              {pushError && (
+                <span className="text-[9px] text-red-400 max-w-[120px] text-right leading-tight break-all">{pushError}</span>
               )}
               <button
                 onClick={() => {
