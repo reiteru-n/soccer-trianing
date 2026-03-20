@@ -197,6 +197,7 @@ export interface AccessLogEntry {
   page: string; // '/sch' | '/family' | 'login'
   ip: string;
   ua: string;
+  device_id?: string;
 }
 
 export interface ChangeLogEntry {
@@ -205,4 +206,5 @@ export interface ChangeLogEntry {
   detail: string;
   ip: string;
   ua: string;
+  device_id?: string;
 }

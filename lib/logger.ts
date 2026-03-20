@@ -47,3 +47,9 @@ export function getIp(req: Request): string {
 export function getUa(req: Request): string {
   return req.headers.get('user-agent') ?? 'unknown';
 }
+
+export function getDeviceId(req: Request): string {
+  const cookie = req.headers.get('cookie') ?? '';
+  const match = cookie.match(/(?:^|;\s*)device_id=([^;]+)/);
+  return match?.[1] ?? 'unknown';
+}

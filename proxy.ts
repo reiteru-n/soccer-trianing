@@ -19,12 +19,28 @@ async function hasValidCookie(req: NextRequest, cookieName: string, type: string
   return val === (await makeToken(type));
 }
 
+const DEVICE_ID_COOKIE = 'device_id';
+const DEVICE_ID_MAX_AGE = 60 * 60 * 24 * 365; // 1年
+
+function withDeviceId(req: NextRequest, res: NextResponse): NextResponse {
+  if (!req.cookies.get(DEVICE_ID_COOKIE)?.value) {
+    const id = crypto.randomUUID();
+    res.cookies.set(DEVICE_ID_COOKIE, id, {
+      maxAge: DEVICE_ID_MAX_AGE,
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+    });
+  }
+  return res;
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Always allow login pages and auth API
   if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
-    return NextResponse.next();
+    return withDeviceId(req, NextResponse.next());
   }
 
   // SCH calendar ICS: public (Apple/Google Calendar が cookie なしでアクセスするため)
@@ -37,7 +53,7 @@ export async function proxy(req: NextRequest) {
     if (!(await hasValidCookie(req, 'team_session', 'team'))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return NextResponse.next();
+    return withDeviceId(req, NextResponse.next());
   }
 
   // Personal data API: requires family session
@@ -45,7 +61,7 @@ export async function proxy(req: NextRequest) {
     if (!(await hasValidCookie(req, 'family_session', 'family'))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return NextResponse.next();
+    return withDeviceId(req, NextResponse.next());
   }
 
   // Admin APIs: requires family session
@@ -53,7 +69,7 @@ export async function proxy(req: NextRequest) {
     if (!(await hasValidCookie(req, 'family_session', 'family'))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return NextResponse.next();
+    return withDeviceId(req, NextResponse.next());
   }
 
   // SCH admin page: requires family session (管理者は家族パスワードでアクセス)
@@ -65,7 +81,7 @@ export async function proxy(req: NextRequest) {
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
-    return NextResponse.next();
+    return withDeviceId(req, NextResponse.next());
   }
 
   // SCH page: requires team session
@@ -77,7 +93,7 @@ export async function proxy(req: NextRequest) {
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
-    return NextResponse.next();
+    return withDeviceId(req, NextResponse.next());
   }
 
   // Personal pages: requires family session
@@ -93,7 +109,7 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return withDeviceId(req, NextResponse.next());
 }
 
 export const config = {

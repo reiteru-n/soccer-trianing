@@ -4,7 +4,7 @@ import { sendPushToAll } from '@/lib/webpush';
 
 // Legacy SchMatch shape (from sch:matches Redis key) — kept only for migration
 type LegacySchMatch = { id: string; date: string; startTime?: string; opponent?: string; location?: string; homeScore?: number; awayScore?: number; isHome?: boolean; note?: string; };
-import { logAccess, logChange, getIp, getUa } from '@/lib/logger';
+import { logAccess, logChange, getIp, getUa, getDeviceId } from '@/lib/logger';
 
 const KEYS = {
   events:         'sch:events',
@@ -201,7 +201,7 @@ async function writeSchPartial(body: Partial<Record<string, unknown>>): Promise<
 
 export async function GET(req: Request) {
   const data = await readSchData();
-  logAccess({ ts: new Date().toISOString(), type: 'team', page: '/sch', ip: getIp(req), ua: getUa(req) });
+  logAccess({ ts: new Date().toISOString(), type: 'team', page: '/sch', ip: getIp(req), ua: getUa(req), device_id: getDeviceId(req) });
   return NextResponse.json(data);
 }
 
@@ -355,6 +355,7 @@ export async function POST(req: Request) {
         detail: actions.map(a => ACTION_LABELS[a] ?? a).join(', '),
         ip: getIp(req),
         ua: getUa(req),
+        device_id: getDeviceId(req),
       });
     }
     return NextResponse.json({ ok: true });

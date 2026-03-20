@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS } from '@/lib/data';
-import { logAccess, getIp, getUa } from '@/lib/logger';
+import { logAccess, getIp, getUa, getDeviceId } from '@/lib/logger';
 
 // キーを種別ごとに分割してサイズ上限を回避
 const KEYS = {
@@ -120,7 +120,7 @@ async function writePartial(body: Partial<Record<string, unknown>>): Promise<voi
 
 // ----- API -----
 export async function GET(req: Request) {
-  logAccess({ ts: new Date().toISOString(), type: 'family', page: '/family', ip: getIp(req), ua: getUa(req) });
+  logAccess({ ts: new Date().toISOString(), type: 'family', page: '/family', ip: getIp(req), ua: getUa(req), device_id: getDeviceId(req) });
   const data = await readData();
   if (!data) {
     return NextResponse.json({
