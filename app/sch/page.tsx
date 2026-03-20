@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   SchEvent, SchEventType, SchMatchType, SchMatchFormat, SchScorer, SchMatch,
   SchAnnouncement, SchMember, SchMemberParent, SchParkingRecord, SchParkingSlot, SchNearbyParking,
@@ -1827,6 +1828,18 @@ function HomeSection({
 
   return (
     <div className="space-y-5">
+      {/* 戦歴バナー */}
+      <Link href="/sch/history"
+        className="flex items-center gap-3 bg-gradient-to-r from-blue-700 to-blue-500 rounded-2xl px-4 py-3 shadow hover:from-blue-800 hover:to-blue-600 transition-all active:scale-95"
+      >
+        <span className="text-2xl">🏆</span>
+        <div className="flex-1">
+          <p className="text-white text-sm font-bold leading-tight">先輩たちの戦歴を見る</p>
+          <p className="text-blue-200 text-[10px] mt-0.5">2020年〜現在 U-10〜U-12 主要大会成績</p>
+        </div>
+        <span className="text-white/60 text-lg font-black">↑</span>
+      </Link>
+
       {/* Next event */}
       <div>
         <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">次の予定</h2>
