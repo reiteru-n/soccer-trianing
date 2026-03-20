@@ -2766,12 +2766,14 @@ function MemberSection({
 // ---- Main Page ----
 type Tab = 'home' | 'events' | 'stats' | 'announce' | 'member';
 
-/** Base64URL文字列 → Uint8Array（iOS Safariは文字列キーを受け付けないため必須） */
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+/** Base64URL文字列 → ArrayBuffer（iOS Safariは文字列キーを受け付けないため必須） */
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+  const arr = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) arr[i] = rawData.charCodeAt(i);
+  return arr.buffer;
 }
 
 export default function SchPage() {
