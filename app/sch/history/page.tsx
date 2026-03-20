@@ -127,9 +127,10 @@ export default function HistoryPage() {
         {/* アチーブメントストリップ */}
         <div className="relative z-10 flex gap-2 mt-5 flex-wrap">
           {[
-            { icon: '🏆', label: '全国ベスト8', sub: '2022年度', accent: true },
-            { icon: '🥇', label: '神奈川優勝',  sub: '日産カップ 2021', accent: false },
+            { icon: '🏆', label: '全国ベスト8',    sub: 'U-12 2022年度', accent: true },
+            { icon: '🥇', label: '神奈川優勝',  sub: '日産カップU-12 2021', accent: false },
             { icon: '🥇', label: '関東優勝',    sub: 'フジパンCUP 2023', accent: false },
+            { icon: '🥇', label: '横浜チビッ子U-8 優勝', sub: '2025年度', accent: false },
           ].map(a => (
             <div key={a.label}
               className={`rounded-xl px-3 py-2 border backdrop-blur-sm ${
@@ -428,34 +429,45 @@ export default function HistoryPage() {
         <section>
           <SectionHeader num="03" title="U-10 主要大会成績" />
 
-          <ResultCard title="🏟 日産カップ争奪 神奈川県少年サッカー選手権 U-10">
+          <ResultCard title="🏟 日産カップ争奪 神奈川県少年サッカー選手権 U-10（低学年）">
             <thead>
-              <tr><Th>年度</Th><Th>回</Th><Th>結果</Th><Th>出典</Th></tr>
+              <tr><Th>年度</Th><Th>回</Th><Th>結果</Th><Th>備考</Th><Th>出典</Th></tr>
             </thead>
             <tbody>
               <tr>
                 <Td><Year y="2021" /></Td>
                 <Td>第48回</Td>
                 <Td><Badge type="silver">第3位</Badge></Td>
-                <Td><Src href="https://www.juniorsoccer-news.com/post-1610325" label="JSN" /></Td>
+                <Td className="text-slate-500 text-[11px]">準決勝でバディーSCに敗退</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1107768" label="JSN" /></Td>
               </tr>
               <tr>
                 <Td><Year y="2022" /></Td>
                 <Td>第49回</Td>
                 <Td><Badge type="blue">第4位</Badge></Td>
-                <Td><Src href="https://www.juniorsoccer-news.com/post-1610325" label="JSN" /></Td>
+                <Td className="text-slate-500 text-[11px]">3位決定戦で川崎Fに2-3敗退</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1335098" label="JSN" /></Td>
               </tr>
               <tr>
                 <Td><Year y="2023" /></Td>
                 <Td>第50回</Td>
                 <Td><Badge type="gray">ベスト16</Badge></Td>
+                <Td className="text-slate-500 text-[11px]">2回戦でPK戦負け</Td>
                 <Td><Src href="https://www.juniorsoccer-news.com/post-1610325" label="JSN" /></Td>
               </tr>
               <tr>
                 <Td><Year y="2024" /></Td>
                 <Td>第51回</Td>
-                <Td><Unknown /></Td>
-                <Td>—</Td>
+                <Td><Badge type="gray">ベスト16</Badge></Td>
+                <Td className="text-slate-500 text-[11px]">2回戦でFC PORTAに0-1敗退</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1750201" label="JSN" /></Td>
+              </tr>
+              <tr>
+                <Td><Year y="2025" /></Td>
+                <Td>第52回</Td>
+                <Td><Badge type="gray">ベスト32以下</Badge></Td>
+                <Td className="text-slate-500 text-[11px]">中央大会出場</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1886240" label="JSN" /></Td>
               </tr>
             </tbody>
           </ResultCard>
@@ -501,9 +513,70 @@ export default function HistoryPage() {
           </ResultCard>
         </section>
 
+        {/* ===== U-8 ===== */}
+        <section>
+          <SectionHeader num="04" title="U-8（2年生以下）主要大会成績" />
+
+          <div className="bg-[#E8F0FE] border border-[#003087]/15 rounded-xl px-4 py-3 mb-4 text-[11px] text-[#003087]">
+            神奈川県ではU-7・U-9単独の公式主要大会は設定なし。U-8（2年生以下）が最小の公式カテゴリ。
+          </div>
+
+          <ResultCard title="⭐ 横浜国際チビッ子サッカー大会 U-8（2年生以下）">
+            <thead>
+              <tr><Th>年度</Th><Th>結果</Th><Th>備考</Th><Th>出典</Th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <Td><Year y="2021" /></Td>
+                <Td><Badge type="gray">ベスト8</Badge></Td>
+                <Td className="text-slate-500 text-[11px]">決勝トーナメント進出</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1111574" label="JSN" /></Td>
+              </tr>
+              <tr>
+                <Td><Year y="2022" /></Td>
+                <Td><Badge type="gray">ベスト8</Badge></Td>
+                <Td className="text-slate-500 text-[11px]">準々決勝でSCH 0-1 あざみ野FC</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1321678" label="JSN" /></Td>
+              </tr>
+              <tr>
+                <Td><Year y="2023" /></Td>
+                <Td><Unknown /></Td>
+                <Td>—</Td>
+                <Td>—</Td>
+              </tr>
+              <tr>
+                <Td><Year y="2024" /></Td>
+                <Td><Badge type="gray">優勝外</Badge></Td>
+                <Td className="text-slate-500 text-[11px]">優勝：バディーSC</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1711690" label="JSN" /></Td>
+              </tr>
+              <tr>
+                <Td highlight><Year y="2025" /></Td>
+                <Td highlight><Badge type="gold">🥇 優勝</Badge></Td>
+                <Td highlight><span className="text-[11px] text-slate-600">横浜市130チームの頂点</span></Td>
+                <Td highlight><Src href="https://www.juniorsoccer-news.com/post-1864388" label="JSN" /></Td>
+              </tr>
+            </tbody>
+          </ResultCard>
+
+          <ResultCard title="⚽ 横浜市春季少年サッカー大会 U-8（参考）">
+            <thead>
+              <tr><Th>年度</Th><Th>結果</Th><Th>備考</Th><Th>出典</Th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <Td><Year y="2025" /></Td>
+                <Td><Badge type="blue">準決勝敗退</Badge></Td>
+                <Td className="text-slate-500 text-[11px]">準々決勝でJFC FUTURO撃破（優勝：横浜すみれSC）</Td>
+                <Td><Src href="https://www.juniorsoccer-news.com/post-1819572" label="JSN" /></Td>
+              </tr>
+            </tbody>
+          </ResultCard>
+        </section>
+
         {/* ===== Sources ===== */}
         <section>
-          <SectionHeader num="04" title="情報出典 URL一覧" />
+          <SectionHeader num="05" title="情報出典 URL一覧" />
           <div className="bg-white rounded-2xl border border-[#003087]/10 shadow-[0_2px_12px_rgba(0,48,135,0.08)] p-4 space-y-3 text-[11px]">
             {[
               { label: 'juniorsoccer-news.com（主要大会記事）', href: 'https://www.juniorsoccer-news.com/team/8162/' },
