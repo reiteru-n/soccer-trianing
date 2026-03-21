@@ -17,6 +17,18 @@ function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
 }
+// 終了時間＋1時間が経過していたら「過去」とみなす
+function isEventPast(event: { date: string; endDate?: string; endTime?: string }): boolean {
+  const today = todayStr();
+  const endDate = event.endDate ?? event.date;
+  if (endDate < today) return true;
+  if (endDate === today && event.endTime) {
+    const [h, m] = event.endTime.split(':').map(Number);
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes() >= h * 60 + m + 60;
+  }
+  return false;
+}
 const DAYS = ['日', '月', '火', '水', '木', '金', '土'];
 function dayLabel(dateStr: string) {
   return DAYS[new Date(dateStr.replace(/\//g, '-')).getDay()];
@@ -357,7 +369,7 @@ function MatchEntry({
 }
 
 // ---- Parking Logic ----
-type EventItem = { id: string; date: string; type: string; label: string; maxSlots: number };
+type EventItem = { id: string; date: string; endDate?: string; endTime?: string; type: string; label: string; maxSlots: number };
 type EventPlan = EventItem & { slots: SchParkingSlot[]; rotationStartIndex: number; consumedCount: number };
 
 function computeEventParking(
@@ -430,8 +442,7 @@ function ParkingEventCard({
   const [editingSlots, setEditingSlots] = useState(false);
   const [slotsInput, setSlotsInput] = useState(String(plan.maxSlots));
   const getMember = (id: string) => members.find(m => m.id === id);
-  const today = todayStr();
-  const isPast = plan.date < today;
+  const isPast = isEventPast(plan);
   const activeSlots = plan.slots.filter(s => s.status !== 'skipped');
   const skippedSlots = plan.slots.filter(s => s.status === 'skipped');
   const cfg = tc(plan.type);
@@ -812,8 +823,7 @@ function EventCard({
   onDelete: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const today = todayStr();
-  const isPast = (event.endDate ?? event.date) < today;
+  const isPast = isEventPast(event);
   const cfg = tc(event.type);
   const getMember = (id: string) => members.find(m => m.id === id);
 
@@ -1033,8 +1043,7 @@ function EventCard({
 
 // ---- MiniEventCard (カレンダー直下の次の予定プレビュー用) ----
 function MiniEventCard({ event, members, onClick }: { event: SchEvent; members: SchMember[]; onClick: () => void }) {
-  const today = todayStr();
-  const isPast = (event.endDate ?? event.date) < today;
+  const isPast = isEventPast(event);
   const cfg = tc(event.type);
   return (
     <button onClick={onClick} className={`w-full text-left rounded-xl border overflow-hidden transition-colors hover:brightness-110 ${isPast ? 'opacity-60 border-white/5' : cfg.border} ${cfg.bg}`}>
@@ -1201,8 +1210,8 @@ function EventSection({ events, members, onSave }: {
     (filter === 'practice' && (e.type as string) === 'schedule') ||
     (filter === 'camp' && e.type === 'expedition')
   );
-  const upcoming = filtered.filter(e => (e.endDate ?? e.date) >= today).sort((a, b) => a.date.localeCompare(b.date));
-  const past = filtered.filter(e => (e.endDate ?? e.date) < today).sort((a, b) => b.date.localeCompare(a.date));
+  const upcoming = filtered.filter(e => !isEventPast(e)).sort((a, b) => a.date.localeCompare(b.date));
+  const past = filtered.filter(e => isEventPast(e)).sort((a, b) => b.date.localeCompare(a.date));
 
   const filterBtns: { key: EventFilter; icon: string; label: string }[] = [
     { key: 'all',      icon: '📅', label: '全て' },
@@ -1268,7 +1277,7 @@ function EventSection({ events, members, onSave }: {
           );
           if (eventsOnDate.length > 0) {
             const firstEv = eventsOnDate.sort((a, b) => a.date.localeCompare(b.date))[0];
-            const isUpcoming = (firstEv.endDate ?? firstEv.date) >= today;
+            const isUpcoming = !isEventPast(firstEv);
             if (!isUpcoming) {
               const pastDetails = document.getElementById('past-events-details') as HTMLDetailsElement | null;
               if (pastDetails) pastDetails.open = true;
@@ -1804,7 +1813,7 @@ function HomeSection({
   const [expandedAnnounces, setExpandedAnnounces] = useState<Set<string>>(new Set());
 
   const upcomingEvents = useMemo(
-    () => events.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)),
+    () => events.filter(e => !isEventPast(e)).sort((a, b) => a.date.localeCompare(b.date)),
     [events, today]
   );
   const nextEvent = upcomingEvents[0];
@@ -1812,6 +1821,8 @@ function HomeSection({
   const toEventItem = (e: SchEvent): EventItem => ({
     id: e.id,
     date: e.date,
+    endDate: e.endDate,
+    endTime: e.endTime,
     type: e.type,
     label: e.type === 'match' ? (() => { const opp = getMatches(e)[0]?.opponentName || e.opponentName; return opp ? `🆚 ${opp}` : '相手未定'; })() : (e.label || e.location || tc(e.type).label),
     maxSlots: e.maxParkingSlots ?? DEFAULT_MAX_SLOTS,
