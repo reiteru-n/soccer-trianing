@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   SchEvent, SchEventType, SchMatchType, SchMatchFormat, SchScorer, SchMatch,
   SchAnnouncement, SchMember, SchMemberParent, SchParkingRecord, SchParkingSlot, SchNearbyParking,
+  SchUpdateHistory,
 } from '@/lib/types';
 
 // ---- Utilities ----
@@ -2417,7 +2418,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
         {sorted.map(a => {
           const linkedEv = a.linkedEventId ? events.find(e => e.id === a.linkedEventId) : null;
           return (
-            <div key={a.id} className={`rounded-xl p-4 border ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
+            <div key={a.id} id={`announce-card-${a.id}`} className={`rounded-xl p-4 border ${a.important ? 'bg-red-900/20 border-red-500/40' : 'bg-slate-800/60 border-white/10'}`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">{a.important && <span className="text-xs font-bold bg-red-600 text-white px-2 py-0.5 rounded-full">重要</span>}<span className="text-xs text-slate-400">{a.date}</span></div>
@@ -2800,6 +2801,9 @@ export default function SchPage() {
   const [parkingRotation, setParkingRotation] = useState(5);
   const [nearbyParking, setNearbyParking] = useState<SchNearbyParking[]>([]);
   const [teamLogo, setTeamLogo] = useState<string | null>(null);
+  const [updateHistory, setUpdateHistory] = useState<SchUpdateHistory[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [scrollTarget, setScrollTarget] = useState<{ tab: Tab; itemId: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'subscribed' | 'denied'>('loading');
@@ -2809,6 +2813,18 @@ export default function SchPage() {
   useEffect(() => {
     fetch('/api/admin/logs?limit=1').then(r => { if (r.ok) setIsAdmin(true); }).catch(() => {});
   }, []);
+
+  // scrollTarget: タブ切替後にスクロール
+  useEffect(() => {
+    if (!scrollTarget) return;
+    const timer = setTimeout(() => {
+      const prefix = scrollTarget.tab === 'events' ? 'event-card' : 'announce-card';
+      const el = document.getElementById(`${prefix}-${scrollTarget.itemId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setScrollTarget(null);
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [scrollTarget]);
 
   // Web Push: 初期状態を確認
   useEffect(() => {
@@ -2893,6 +2909,7 @@ export default function SchPage() {
       setParkingRotation(d.parkingRotation ?? 5);
       setNearbyParking(d.nearbyParking ?? []);
       setTeamLogo(d.teamLogo ?? null);
+      setUpdateHistory(d.updateHistory ?? []);
       setIsLoading(false);
     }).catch(() => setIsLoading(false));
   }, []);
@@ -2901,8 +2918,50 @@ export default function SchPage() {
     fetch('/api/sch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(console.error);
   }, []);
 
-  const saveEvents       = useCallback((e: SchEvent[])       => { setEvents(e);       post({ events: e }); }, [post]);
-  const saveAnnounce     = useCallback((a: SchAnnouncement[]) => { setAnnouncements(a); post({ announcements: a }); }, [post]);
+  const saveEvents = useCallback((e: SchEvent[]) => {
+    setEvents(e);
+    const oldMap = new Map(events.map(ev => [ev.id, ev]));
+    const historyEntries: SchUpdateHistory[] = [];
+    const getEvTitle = (ev: SchEvent) => {
+      if (ev.type === 'match') {
+        const opp = ev.matches?.[0]?.opponentName || ev.opponentName;
+        return opp ? `vs ${opp}` : '試合';
+      }
+      return ev.label || ev.location || tc(ev.type).label;
+    };
+    for (const ev of e) {
+      const old = oldMap.get(ev.id);
+      if (!old) {
+        historyEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: ev.type, title: getEvTitle(ev), action: 'new', itemId: ev.id, tab: 'events' });
+      } else if (JSON.stringify(old) !== JSON.stringify(ev)) {
+        if (window.confirm(`「${getEvTitle(ev)}」の編集を更新履歴に追記しますか？`)) {
+          historyEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: ev.type, title: getEvTitle(ev), action: 'edit', itemId: ev.id, tab: 'events' });
+        }
+      }
+    }
+    const updatedHistory = historyEntries.length > 0 ? [...historyEntries, ...updateHistory].slice(0, 20) : updateHistory;
+    if (historyEntries.length > 0) setUpdateHistory(updatedHistory);
+    post({ events: e, ...(historyEntries.length > 0 ? { updateHistory: updatedHistory } : {}) });
+  }, [post, events, updateHistory]);
+
+  const saveAnnounce = useCallback((a: SchAnnouncement[]) => {
+    setAnnouncements(a);
+    const oldMap = new Map(announcements.map(ann => [ann.id, ann]));
+    const historyEntries: SchUpdateHistory[] = [];
+    for (const ann of a) {
+      const old = oldMap.get(ann.id);
+      if (!old) {
+        historyEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: ann.title, action: 'new', itemId: ann.id, tab: 'announce' });
+      } else if (JSON.stringify(old) !== JSON.stringify(ann)) {
+        if (window.confirm(`「${ann.title}」の編集を更新履歴に追記しますか？`)) {
+          historyEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: ann.title, action: 'edit', itemId: ann.id, tab: 'announce' });
+        }
+      }
+    }
+    const updatedHistory = historyEntries.length > 0 ? [...historyEntries, ...updateHistory].slice(0, 20) : updateHistory;
+    if (historyEntries.length > 0) setUpdateHistory(updatedHistory);
+    post({ announcements: a, ...(historyEntries.length > 0 ? { updateHistory: updatedHistory } : {}) });
+  }, [post, announcements, updateHistory]);
   const saveMembers      = useCallback((m: SchMember[])       => { setMembers(m);      post({ members: m }); }, [post]);
   const saveNearby       = useCallback((p: SchNearbyParking[])=> { setNearbyParking(p);post({ nearbyParking: p }); }, [post]);
   const saveRotation     = useCallback((i: number)            => { setParkingRotation(i); post({ parkingRotation: i }); }, [post]);
@@ -3079,6 +3138,64 @@ export default function SchPage() {
           </button>
         ))}
       </div>
+
+      {tab === 'home' && updateHistory.length > 0 && (() => {
+        const latest = updateHistory[0];
+        const latestTs = new Date(latest.timestamp);
+        const mm = latestTs.getMonth() + 1;
+        const dd = latestTs.getDate();
+        const hh = latestTs.getHours().toString().padStart(2, '0');
+        const min = latestTs.getMinutes().toString().padStart(2, '0');
+        const histItems = updateHistory.slice(0, 5);
+        const typeIcon = (h: SchUpdateHistory) => {
+          if (h.type === 'announcement') return '📢';
+          const icons: Record<string, string> = { match: '🏆', practice: '⚽', camp: '🏕️', expedition: '🚌', other: '📅' };
+          return icons[h.eventType ?? ''] ?? '📅';
+        };
+        const itemTs = (h: SchUpdateHistory) => {
+          const t = new Date(h.timestamp);
+          return `${t.getMonth() + 1}/${t.getDate()} ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
+        };
+        return (
+          <div className="mb-4 rounded-2xl bg-slate-800/70 border border-white/10 overflow-hidden">
+            <button
+              className="w-full flex items-center gap-3 px-4 py-3 text-left"
+              onClick={() => setHistoryOpen(o => !o)}
+            >
+              <span className="text-lg">🔔</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-white leading-tight">
+                  {mm}月{dd}日 {hh}:{min} に更新がありました
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">{latest.action === 'new' ? '新規投稿' : '編集'}：{latest.title}</p>
+              </div>
+              <span className="text-slate-400 text-xs font-bold transition-transform" style={{ display: 'inline-block', transform: historyOpen ? 'rotate(180deg)' : 'none' }}>▼</span>
+            </button>
+            {historyOpen && (
+              <div className="border-t border-white/10">
+                <p className="text-[10px] text-slate-500 px-4 pt-2 pb-1 font-bold uppercase tracking-wider">過去 {histItems.length} 件の更新</p>
+                {histItems.map(h => (
+                  <button
+                    key={h.id}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 active:bg-white/10 transition-colors border-t border-white/5 text-left"
+                    onClick={() => { setHistoryOpen(false); setTab(h.tab); setScrollTarget({ tab: h.tab, itemId: h.itemId }); }}
+                  >
+                    <span className="text-base w-5 flex-shrink-0 text-center">{typeIcon(h)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-white font-semibold truncate">{h.title}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        <span className={`font-bold mr-1.5 ${h.action === 'new' ? 'text-emerald-400' : 'text-amber-400'}`}>{h.action === 'new' ? '新規' : '編集'}</span>
+                        {itemTs(h)}
+                      </p>
+                    </div>
+                    <span className="text-slate-500 text-xs">›</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {tab === 'home' && (
         <HomeSection

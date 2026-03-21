@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SchSchedule, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent } from '@/lib/types';
+import { SchSchedule, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent, SchUpdateHistory } from '@/lib/types';
 import { sendPushToAll } from '@/lib/webpush';
 
 // Legacy SchMatch shape (from sch:matches Redis key) — kept only for migration
@@ -16,6 +16,7 @@ const KEYS = {
   parkingRotation:'sch:parking_rotation',
   nearbyParking:  'sch:nearby_parking',
   teamLogo:       'sch:team_logo',
+  updateHistory:  'sch:update_history',
 } as const;
 
 const DEFAULT_MEMBERS: SchMember[] = [
@@ -56,6 +57,7 @@ interface SchData {
   parkingRotation: number;
   nearbyParking: SchNearbyParking[];
   teamLogo: string | null;
+  updateHistory: SchUpdateHistory[];
   // Legacy (kept for backward compat read)
   schedules: SchSchedule[];
   matches: LegacySchMatch[];
@@ -91,11 +93,11 @@ async function readSchData(): Promise<SchData> {
   if (hasRedis()) {
     const redis = await getRedis();
     const [eventsRaw, schedulesRaw, matchesRaw, announcements, membersRaw,
-           parkingRecordsRaw, parkingRotationRaw, nearbyParkingRaw, teamLogoRaw] =
+           parkingRecordsRaw, parkingRotationRaw, nearbyParkingRaw, teamLogoRaw, updateHistoryRaw] =
       await redis.mget<unknown[]>(
         KEYS.events, KEYS.schedules, KEYS.matches, KEYS.announcements,
         KEYS.members, KEYS.parkingRecords, KEYS.parkingRotation,
-        KEYS.nearbyParking, KEYS.teamLogo
+        KEYS.nearbyParking, KEYS.teamLogo, KEYS.updateHistory
       );
 
     let members = membersRaw as SchMember[] | null;
@@ -142,6 +144,7 @@ async function readSchData(): Promise<SchData> {
       parkingRotation,
       nearbyParking:  (nearbyParkingRaw as SchNearbyParking[]) ?? [],
       teamLogo:       (teamLogoRaw as string | null) ?? null,
+      updateHistory:  (updateHistoryRaw as SchUpdateHistory[]) ?? [],
       schedules:      (schedulesRaw as SchSchedule[]) ?? [],
       matches:        (matchesRaw as LegacySchMatch[]) ?? [],
     };
@@ -161,7 +164,7 @@ async function readSchData(): Promise<SchData> {
       events: [], announcements: [],
       members: DEFAULT_MEMBERS,
       parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
-      teamLogo: null, schedules: [], matches: [],
+      teamLogo: null, updateHistory: [], schedules: [], matches: [],
       ...data,
     };
   } catch {
@@ -169,7 +172,7 @@ async function readSchData(): Promise<SchData> {
       events: [], announcements: [],
       members: DEFAULT_MEMBERS,
       parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
-      teamLogo: null, schedules: [], matches: [],
+      teamLogo: null, updateHistory: [], schedules: [], matches: [],
     };
   }
 }
@@ -185,6 +188,7 @@ async function writeSchPartial(body: Partial<Record<string, unknown>>): Promise<
     if ('parkingRotation'in body) updates[KEYS.parkingRotation]= body.parkingRotation;
     if ('nearbyParking'  in body) updates[KEYS.nearbyParking]  = body.nearbyParking;
     if ('teamLogo'       in body) updates[KEYS.teamLogo]       = body.teamLogo;
+    if ('updateHistory'  in body) updates[KEYS.updateHistory]  = body.updateHistory;
     // Legacy keys (still writable for backward compat)
     if ('schedules'      in body) updates[KEYS.schedules]      = body.schedules;
     if ('matches'        in body) updates[KEYS.matches]        = body.matches;

@@ -190,6 +190,18 @@ export interface SchNearbyParking {
   note?: string;
 }
 
+// SCH update history
+export interface SchUpdateHistory {
+  id: string;
+  timestamp: string; // ISO
+  type: 'announcement' | 'event';
+  eventType?: string; // for events: match/practice/camp/expedition/other
+  title: string;
+  action: 'new' | 'edit';
+  itemId: string;
+  tab: 'events' | 'announce';
+}
+
 // Admin logs
 export interface AccessLogEntry {
   ts: string;   // ISO timestamp
