@@ -322,82 +322,123 @@ function ExcludedIpsPanel({
   );
 }
 
-// ─── Recent IP summary (last 1 hour) ─────────────────────
+// ─── Recent access summary (last 7 days) ─────────────────
 
-function RecentIpSummary({
+function shortDevId(id: string | undefined): string {
+  if (!id || id === 'unknown') return '?';
+  return id.replace(/-/g, '').slice(-8);
+}
+
+function RecentAccessSummary({
   entries,
   excludedIps,
+  myDeviceId,
   onExclude,
 }: {
   entries: AccessLogEntry[];
   excludedIps: string[];
+  myDeviceId: string | null;
   onExclude: (ip: string) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const [showExcluded, setShowExcluded] = useState(false);
+  const [viewMode, setViewMode] = useState<'device' | 'ip'>('device');
+  const SHOW_DEFAULT = 3;
+
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const recent = entries.filter(e => new Date(e.ts).getTime() > sevenDaysAgo);
   if (recent.length === 0) return null;
 
-  const byIp: Record<string, { count: number; lastTs: string }> = {};
+  // Group by device_id (fallback to ip)
+  type GroupEntry = { key: string; keyType: 'device' | 'ip'; ip: string; count: number; lastTs: string; isMe: boolean; ua: string; excluded: boolean };
+  const groups: Record<string, GroupEntry> = {};
   for (const e of recent) {
-    if (!byIp[e.ip]) byIp[e.ip] = { count: 0, lastTs: e.ts };
-    byIp[e.ip].count++;
-    if (new Date(e.ts) > new Date(byIp[e.ip].lastTs)) byIp[e.ip].lastTs = e.ts;
+    const groupKey = viewMode === 'device' && e.device_id && e.device_id !== 'unknown' ? `dev:${e.device_id}` : `ip:${e.ip}`;
+    if (!groups[groupKey]) {
+      groups[groupKey] = {
+        key: groupKey,
+        keyType: viewMode === 'device' && e.device_id && e.device_id !== 'unknown' ? 'device' : 'ip',
+        ip: e.ip,
+        count: 0,
+        lastTs: e.ts,
+        isMe: !!(myDeviceId && myDeviceId !== 'unknown' && e.device_id === myDeviceId),
+        ua: e.ua,
+        excluded: isIpExcluded(e.ip, excludedIps),
+      };
+    }
+    groups[groupKey].count++;
+    if (new Date(e.ts) > new Date(groups[groupKey].lastTs)) {
+      groups[groupKey].lastTs = e.ts;
+      groups[groupKey].ip = e.ip;
+    }
+    if (!groups[groupKey].isMe && myDeviceId && myDeviceId !== 'unknown' && e.device_id === myDeviceId) {
+      groups[groupKey].isMe = true;
+    }
+    if (!groups[groupKey].excluded && isIpExcluded(e.ip, excludedIps)) {
+      groups[groupKey].excluded = true;
+    }
   }
 
-  const sorted = Object.entries(byIp)
-    .sort((a, b) => b[1].count - a[1].count)
-    .filter(([ip]) => showExcluded || !isIpExcluded(ip, excludedIps));
+  const sorted = Object.values(groups)
+    .sort((a, b) => b.count - a.count)
+    .filter(g => showExcluded || !g.excluded);
 
-  const hasExcluded = Object.keys(byIp).some(ip => isIpExcluded(ip, excludedIps));
+  const hasExcluded = Object.values(groups).some(g => g.excluded);
+  const visible = expanded ? sorted : sorted.slice(0, SHOW_DEFAULT);
+  const hiddenCount = sorted.length - SHOW_DEFAULT;
 
   return (
     <div className="bg-slate-800/60 border border-white/5 rounded-xl px-4 py-3 mb-4">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xs font-bold text-slate-300">📅 7日以内のアクセス（IP別）</h2>
-        {hasExcluded && (
-          <button
-            onClick={() => setShowExcluded(v => !v)}
-            className={`text-[10px] px-2.5 py-1 rounded-lg border transition-colors ${showExcluded ? 'bg-slate-700 border-slate-500 text-slate-300' : 'bg-slate-800/60 border-white/10 text-slate-500 hover:text-slate-300'}`}
-          >
-            {showExcluded ? '🚫 除外を隠す' : '👁 除外も表示'}
-          </button>
-        )}
+      <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+        <h2 className="text-xs font-bold text-slate-300">📅 7日以内のアクセス</h2>
+        <div className="flex items-center gap-1.5">
+          {/* device/ip toggle */}
+          <div className="flex bg-slate-700/60 rounded-lg p-0.5">
+            <button onClick={() => setViewMode('device')} className={`text-[9px] px-2 py-0.5 rounded-md font-bold transition-colors ${viewMode === 'device' ? 'bg-purple-600/60 text-white' : 'text-slate-400'}`}>デバイス</button>
+            <button onClick={() => setViewMode('ip')} className={`text-[9px] px-2 py-0.5 rounded-md font-bold transition-colors ${viewMode === 'ip' ? 'bg-purple-600/60 text-white' : 'text-slate-400'}`}>IP</button>
+          </div>
+          {hasExcluded && (
+            <button onClick={() => setShowExcluded(v => !v)} className={`text-[10px] px-2 py-1 rounded-lg border transition-colors ${showExcluded ? 'bg-slate-700 border-slate-500 text-slate-300' : 'bg-slate-800/60 border-white/10 text-slate-500 hover:text-slate-300'}`}>
+              {showExcluded ? '🚫 除外を隠す' : '👁 除外も表示'}
+            </button>
+          )}
+        </div>
       </div>
       <div className="space-y-1.5">
-        {sorted.map(([ip, data]) => {
-          const excluded = isIpExcluded(ip, excludedIps);
-          const subnetPattern = isIPv4(ip) ? toSubnetPattern(ip) : null;
+        {visible.map(g => {
+          const devLabel = g.keyType === 'device' ? `#${shortDevId(g.key.slice(4))}` : g.ip;
+          const subnetPattern = isIPv4(g.ip) ? toSubnetPattern(g.ip) : null;
           const subnetAlreadyExcluded = subnetPattern ? excludedIps.includes(subnetPattern) : false;
           return (
-            <div key={ip} className={`flex items-center gap-2 bg-slate-700/30 rounded-lg px-3 py-2 ${excluded ? 'opacity-40' : ''}`}>
-              <span className="text-[11px] font-mono text-slate-300 flex-1">{ip}</span>
-              <span className="text-[11px] text-amber-300 font-bold tabular-nums">{data.count}回</span>
-              <span className="text-[10px] text-slate-500">{formatTs(data.lastTs)}</span>
-              {excluded ? (
-                <span className="text-[9px] text-slate-600 px-1.5 py-0.5 rounded bg-slate-700/40">除外中</span>
-              ) : (
+            <div key={g.key} className={`flex items-center gap-2 rounded-lg px-3 py-2 ${g.isMe ? 'bg-purple-900/30 border border-purple-500/30' : 'bg-slate-700/30'} ${g.excluded ? 'opacity-40' : ''}`}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  {g.isMe && <span className="text-[9px] font-bold text-purple-400 bg-purple-900/40 px-1.5 py-0.5 rounded">このデバイス</span>}
+                  <span className="text-[11px] font-mono text-slate-300">{devLabel}</span>
+                  {g.keyType === 'device' && <span className="text-[9px] text-slate-600 font-mono">{g.ip}</span>}
+                </div>
+                <p className="text-[10px] text-slate-500 mt-0.5">{shortUa(g.ua)} · {formatTs(g.lastTs)}</p>
+              </div>
+              <span className="text-[11px] text-amber-300 font-bold tabular-nums flex-shrink-0">{g.count}回</span>
+              {!g.excluded ? (
                 <>
-                  <button
-                    onClick={() => onExclude(ip)}
-                    className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors"
-                  >
-                    除外
-                  </button>
+                  <button onClick={() => onExclude(g.ip)} className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors">除外</button>
                   {subnetPattern && !subnetAlreadyExcluded && (
-                    <button
-                      onClick={() => onExclude(subnetPattern)}
-                      className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap"
-                    >
-                      {subnetPattern}
-                    </button>
+                    <button onClick={() => onExclude(subnetPattern)} className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap">{subnetPattern}</button>
                   )}
                 </>
+              ) : (
+                <span className="text-[9px] text-slate-600 px-1.5 py-0.5 rounded bg-slate-700/40">除外中</span>
               )}
             </div>
           );
         })}
       </div>
+      {sorted.length > SHOW_DEFAULT && (
+        <button onClick={() => setExpanded(v => !v)} className="mt-2 w-full text-[10px] text-slate-400 hover:text-slate-300 py-1.5 border-t border-white/5 transition-colors">
+          {expanded ? '▲ 閉じる' : `▼ 残り ${hiddenCount} 件を見る`}
+        </button>
+      )}
     </div>
   );
 }
@@ -409,6 +450,7 @@ export default function AdminPage() {
   const [accessEntries, setAccessEntries] = useState<AccessLogEntry[]>([]);
   const [changeEntries, setChangeEntries] = useState<ChangeLogEntry[]>([]);
   const [excludedIps, setExcludedIps] = useState<string[]>([]);
+  const [myDeviceId, setMyDeviceId] = useState<string | null>(null);
   const [showExcluded, setShowExcluded] = useState(false);
   const [showExcludedInChart, setShowExcludedInChart] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -419,16 +461,18 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const [aRes, cRes, eRes] = await Promise.all([
+      const [aRes, cRes, eRes, dRes] = await Promise.all([
         fetch('/api/admin/logs?type=access&limit=3000'),
         fetch('/api/admin/logs?type=change&limit=100'),
         fetch('/api/admin/excluded-ips'),
+        fetch('/api/admin/my-device-id'),
       ]);
       if (!aRes.ok || !cRes.ok) throw new Error('ログ取得失敗');
-      const [aData, cData, eData] = await Promise.all([aRes.json(), cRes.json(), eRes.json()]);
+      const [aData, cData, eData, dData] = await Promise.all([aRes.json(), cRes.json(), eRes.json(), dRes.json()]);
       setAccessEntries(aData.entries ?? []);
       setChangeEntries(cData.entries ?? []);
       setExcludedIps(eData.ips ?? []);
+      setMyDeviceId(dData.deviceId ?? null);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -530,11 +574,12 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* Recent IP summary */}
+        {/* Recent access summary */}
         {tab === 'access' && (
-          <RecentIpSummary
+          <RecentAccessSummary
             entries={accessEntries}
             excludedIps={excludedIps}
+            myDeviceId={myDeviceId}
             onExclude={addExcludedPattern}
           />
         )}
@@ -559,35 +604,28 @@ export default function AdminPage() {
               const excluded = isIpExcluded(e.ip, excludedIps);
               const subnetPattern = isIPv4(e.ip) ? toSubnetPattern(e.ip) : null;
               const subnetAlreadyExcluded = subnetPattern ? excludedIps.includes(subnetPattern) : false;
+              const isMe = !!(myDeviceId && myDeviceId !== 'unknown' && e.device_id === myDeviceId);
               return (
-                <div key={i} className={`bg-slate-800/60 border border-white/5 rounded-xl px-4 py-3 ${excluded ? 'opacity-40' : ''}`}>
+                <div key={i} className={`border rounded-xl px-4 py-3 ${isMe ? 'bg-purple-900/20 border-purple-500/20' : 'bg-slate-800/60 border-white/5'} ${excluded ? 'opacity-40' : ''}`}>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[11px] text-slate-400 font-mono">{formatTs(e.ts)}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${TYPE_BADGE[e.type] ?? 'bg-slate-600/40 text-slate-400'}`}>
-                      {e.type}
-                    </span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${TYPE_BADGE[e.type] ?? 'bg-slate-600/40 text-slate-400'}`}>{e.type}</span>
                     <span className="text-xs text-white font-medium">{e.page}</span>
+                    {isMe && <span className="text-[9px] font-bold text-purple-400 bg-purple-900/40 px-1.5 py-0.5 rounded">このデバイス</span>}
                   </div>
                   <div className="mt-1 flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] text-slate-500 font-mono">{e.ip}</span>
+                    {e.device_id && e.device_id !== 'unknown' && (
+                      <span className="text-[10px] text-slate-600 font-mono">#{shortDevId(e.device_id)}</span>
+                    )}
                     <span className="text-[10px] text-slate-500">{shortUa(e.ua)}</span>
                     {excluded ? (
                       <span className="text-[9px] text-slate-600 px-1.5 py-0.5 rounded bg-slate-700/40">除外中</span>
                     ) : (
                       <>
-                        <button
-                          onClick={() => addExcludedPattern(e.ip)}
-                          className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors"
-                        >
-                          除外
-                        </button>
+                        <button onClick={() => addExcludedPattern(e.ip)} className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors">除外</button>
                         {subnetPattern && !subnetAlreadyExcluded && (
-                          <button
-                            onClick={() => addExcludedPattern(subnetPattern)}
-                            className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap"
-                          >
-                            {subnetPattern}
-                          </button>
+                          <button onClick={() => addExcludedPattern(subnetPattern)} className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap">{subnetPattern}</button>
                         )}
                       </>
                     )}
