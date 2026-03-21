@@ -2200,7 +2200,7 @@ function CheckList({ items, announcementId }: { items: { text: string; note?: st
         {items.map((item, i) => (
           <label
             key={i}
-            className={`flex items-center gap-2.5 py-2 px-3 rounded-lg cursor-pointer transition-all select-none ${
+            className={`flex items-start gap-2.5 py-2 px-3 rounded-lg cursor-pointer transition-all select-none ${
               checked[i] ? 'bg-slate-700/30 opacity-50' : 'bg-slate-700/60 hover:bg-slate-700/80'
             }`}
           >
@@ -2208,14 +2208,16 @@ function CheckList({ items, announcementId }: { items: { text: string; note?: st
               type="checkbox"
               checked={checked[i] ?? false}
               onChange={() => toggle(i)}
-              className="w-4 h-4 accent-green-500 flex-shrink-0"
+              className="w-4 h-4 accent-green-500 flex-shrink-0 mt-0.5"
             />
-            <span className={`text-sm flex-1 ${checked[i] ? 'line-through text-slate-500' : 'text-slate-200'}`}>
-              {item.text}
-            </span>
-            {item.note && (
-              <span className="text-[10px] text-slate-500 shrink-0 text-right">{item.note}</span>
-            )}
+            <div className="flex-1 min-w-0">
+              <span className={`text-sm block ${checked[i] ? 'line-through text-slate-500' : 'text-slate-200'}`}>
+                {item.text}
+              </span>
+              {item.note && (
+                <span className="text-[10px] text-slate-500 block mt-0.5">{item.note}</span>
+              )}
+            </div>
           </label>
         ))}
       </div>
