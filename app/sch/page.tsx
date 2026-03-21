@@ -2819,7 +2819,7 @@ export default function SchPage() {
   const [pushBusy, setPushBusy] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
   // 編集履歴モーダル
-  interface HistoryModal { editEntries: SchUpdateHistory[]; autoEntries: SchUpdateHistory[]; baseHistory: SchUpdateHistory[]; memo: string; }
+  interface HistoryModal { editEntries: SchUpdateHistory[]; autoEntries: SchUpdateHistory[]; baseHistory: SchUpdateHistory[]; memo: string; previousEvents?: SchEvent[]; previousAnnouncements?: SchAnnouncement[]; }
   const [historyModal, setHistoryModal] = useState<HistoryModal | null>(null);
 
   useEffect(() => {
@@ -2946,7 +2946,7 @@ export default function SchPage() {
       else if (JSON.stringify(old) !== JSON.stringify(ev)) editEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: ev.type, title: getEvTitle(ev), action: 'edit', itemId: ev.id, tab: 'events' });
     }
     if (editEntries.length > 0) {
-      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '' });
+      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '', previousEvents: events });
     } else if (autoEntries.length > 0) {
       const h = [...autoEntries, ...updateHistory].slice(0, 20);
       setUpdateHistory(h); post({ updateHistory: h });
@@ -2965,7 +2965,7 @@ export default function SchPage() {
       else if (JSON.stringify(old) !== JSON.stringify(ann)) editEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: ann.title, action: 'edit', itemId: ann.id, tab: 'announce' });
     }
     if (editEntries.length > 0) {
-      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '' });
+      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '', previousAnnouncements: announcements });
     } else if (autoEntries.length > 0) {
       const h = [...autoEntries, ...updateHistory].slice(0, 20);
       setUpdateHistory(h); post({ updateHistory: h });
@@ -3226,26 +3226,40 @@ export default function SchPage() {
                 autoFocus
               />
             </div>
-            <div className="flex border-t border-white/10">
-              <button
-                className="flex-1 py-3 text-sm text-slate-400 hover:bg-white/5 transition-colors"
-                onClick={() => {
-                  // キャンセル：autoEntries だけ保存
-                  const { autoEntries, baseHistory } = historyModal;
-                  if (autoEntries.length > 0) { const h = [...autoEntries, ...baseHistory].slice(0, 20); setUpdateHistory(h); post({ updateHistory: h }); }
-                  setHistoryModal(null);
-                }}
-              >キャンセル</button>
-              <button
-                className="flex-1 py-3 text-sm font-bold text-white bg-purple-600/30 hover:bg-purple-600/50 transition-colors border-l border-white/10"
-                onClick={() => {
-                  const { editEntries, autoEntries, baseHistory, memo } = historyModal;
-                  const withMemo = editEntries.map(e => ({ ...e, ...(memo.trim() ? { changeMemo: memo.trim() } : {}) }));
-                  const h = [...withMemo, ...autoEntries, ...baseHistory].slice(0, 20);
-                  setUpdateHistory(h); post({ updateHistory: h });
-                  setHistoryModal(null);
-                }}
-              >追記する</button>
+            <div className="border-t border-white/10">
+              <div className="flex">
+                <button
+                  className="flex-1 py-3 text-sm font-semibold text-slate-200 hover:bg-white/5 transition-colors border-r border-white/10"
+                  onClick={() => {
+                    // 編集のみ保存：autoEntries だけ履歴に追加
+                    const { autoEntries, baseHistory } = historyModal;
+                    if (autoEntries.length > 0) { const h = [...autoEntries, ...baseHistory].slice(0, 20); setUpdateHistory(h); post({ updateHistory: h }); }
+                    setHistoryModal(null);
+                  }}
+                >編集のみ保存</button>
+                <button
+                  className="flex-1 py-3 text-sm font-bold text-white bg-purple-600/30 hover:bg-purple-600/50 transition-colors"
+                  onClick={() => {
+                    const { editEntries, autoEntries, baseHistory, memo } = historyModal;
+                    const withMemo = editEntries.map(e => ({ ...e, ...(memo.trim() ? { changeMemo: memo.trim() } : {}) }));
+                    const h = [...withMemo, ...autoEntries, ...baseHistory].slice(0, 20);
+                    setUpdateHistory(h); post({ updateHistory: h });
+                    setHistoryModal(null);
+                  }}
+                >更新を通知する</button>
+              </div>
+              <div className="flex justify-center border-t border-white/5 py-2">
+                <button
+                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors px-4 py-1"
+                  onClick={() => {
+                    // 戻る：編集をリバート
+                    const { previousEvents, previousAnnouncements } = historyModal;
+                    if (previousEvents) { setEvents(previousEvents); post({ events: previousEvents }); }
+                    if (previousAnnouncements) { setAnnouncements(previousAnnouncements); post({ announcements: previousAnnouncements }); }
+                    setHistoryModal(null);
+                  }}
+                >戻る（編集を取り消す）</button>
+              </div>
             </div>
           </div>
         </div>
