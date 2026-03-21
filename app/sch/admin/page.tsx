@@ -42,14 +42,23 @@ function shortUa(ua: string): string {
   return ua.slice(0, 20);
 }
 
-// ワイルドカード対応マッチング（"203.0.113.*" → 203.0.113.x を全て除外）
-function isIpExcluded(ip: string, excludedList: string[]): boolean {
+// IP or device_id 除外チェック
+// - IP: "203.0.113.45" or "203.0.113.*" (wildcard)
+// - Device: "device:550e8400-..."
+function isEntryExcluded(ip: string, deviceId: string | undefined, excludedList: string[]): boolean {
   return excludedList.some(pattern => {
+    if (pattern.startsWith('device:')) {
+      return !!deviceId && deviceId !== 'unknown' && pattern === `device:${deviceId}`;
+    }
     if (pattern.endsWith('.*')) {
-      return ip.startsWith(pattern.slice(0, -1)); // "203.0.113.*" → "203.0.113." で前方一致
+      return ip.startsWith(pattern.slice(0, -1));
     }
     return ip === pattern;
   });
+}
+// 後方互換用（IP専用）
+function isIpExcluded(ip: string, excludedList: string[]): boolean {
+  return isEntryExcluded(ip, undefined, excludedList);
 }
 
 // IPv4かどうか（サブネット除外ボタン表示判定）
@@ -69,7 +78,7 @@ function toSubnetPattern(ip: string): string {
 type ChartDay = { date: string; family: number; team: number; login: number; total: number };
 
 function buildChartData(entries: AccessLogEntry[], excludedIps: string[]): ChartDay[] {
-  const filtered = entries.filter(e => !isIpExcluded(e.ip, excludedIps));
+  const filtered = entries.filter(e => !isEntryExcluded(e.ip, e.device_id, excludedIps));
   const counts: Record<string, ChartDay> = {};
   for (const e of filtered) {
     const d = new Date(e.ts);
@@ -134,7 +143,7 @@ function AccessChart({ entries, excludedIps }: { entries: AccessLogEntry[]; excl
 // ─── Unique users line chart ─────────────────────────────
 
 function UniqueUsersChart({ entries, excludedIps }: { entries: AccessLogEntry[]; excludedIps: string[] }) {
-  const filtered = entries.filter(e => !isIpExcluded(e.ip, excludedIps));
+  const filtered = entries.filter(e => !isEntryExcluded(e.ip, e.device_id, excludedIps));
   const dayIps: Record<string, Set<string>> = {};
   for (const e of filtered) {
     const d = new Date(e.ts);
@@ -204,9 +213,10 @@ function ExcludedIpsPanel({
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
 
-  function remove(ip: string) {
-    onUpdate(ips.filter(x => x !== ip));
-  }
+  const deviceEntries = ips.filter(p => p.startsWith('device:'));
+  const ipEntries = ips.filter(p => !p.startsWith('device:'));
+
+  function remove(pattern: string) { onUpdate(ips.filter(x => x !== pattern)); }
 
   function addPattern(pattern: string) {
     if (!pattern || ips.includes(pattern)) return;
@@ -220,101 +230,69 @@ function ExcludedIpsPanel({
     setInput('');
   }
 
-  // 未除外IPのアクセス回数トップ5
-  const topUnexcluded: { ip: string; count: number }[] = (() => {
-    const counts: Record<string, number> = {};
-    for (const e of entries) {
-      if (!isIpExcluded(e.ip, ips)) counts[e.ip] = (counts[e.ip] ?? 0) + 1;
-    }
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([ip, count]) => ({ ip, count }));
-  })();
-
   return (
     <div className="bg-slate-800/60 border border-white/5 rounded-xl mb-4 overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
         className="w-full px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-300 hover:bg-slate-700/40 transition-colors"
       >
-        <span>🚫 グラフ除外IPリスト（{ips.length}件）{saving && <span className="ml-1 text-[10px] text-slate-500">保存中...</span>}</span>
+        <span>🚫 グラフ除外リスト（デバイス {deviceEntries.length}件 / IP {ipEntries.length}件）{saving && <span className="ml-1 text-[10px] text-slate-500">保存中...</span>}</span>
         <span className="text-slate-500 text-[11px]">{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (
-        <div className="px-4 pb-4 border-t border-white/5">
+        <div className="px-4 pb-4 border-t border-white/5 space-y-4">
 
-          {/* 登録済みリスト */}
-          {ips.length === 0 ? (
-            <p className="text-[11px] text-slate-500 py-3">
-              除外IPなし。アクセス履歴のIPの横にある「除外」ボタンで登録できます。
-            </p>
-          ) : (
-            <div className="space-y-1.5 mt-3 mb-3">
-              {ips.map(ip => (
-                <div key={ip} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-2">
-                  <span className="text-xs font-mono text-slate-300 flex-1">{ip}</span>
-                  {ip.endsWith('.*') && (
-                    <span className="text-[9px] text-blue-400 bg-blue-900/30 px-1.5 py-0.5 rounded">🔀 サブネット</span>
-                  )}
-                  <button
-                    onClick={() => remove(ip)}
-                    className="text-[10px] text-red-400 hover:text-red-300 px-2 py-0.5 rounded bg-red-900/20 hover:bg-red-900/40 transition-colors"
-                  >
-                    削除
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* デバイス除外リスト */}
+          <div className="mt-3">
+            <p className="text-[10px] text-purple-400 font-bold mb-1.5">📱 デバイス除外（IP変化に強い）</p>
+            {deviceEntries.length === 0 ? (
+              <p className="text-[11px] text-slate-600">登録なし。アクセス履歴の「除外」ボタンで登録できます。</p>
+            ) : (
+              <div className="space-y-1.5">
+                {deviceEntries.map(p => {
+                  const devId = p.slice(7);
+                  return (
+                    <div key={p} className="flex items-center gap-2 bg-purple-900/20 border border-purple-500/20 rounded-lg px-3 py-2">
+                      <span className="text-[9px] text-purple-400 bg-purple-900/40 px-1.5 py-0.5 rounded font-bold">デバイス</span>
+                      <span className="text-xs font-mono text-slate-300 flex-1">#{shortDevId(devId)}</span>
+                      <button onClick={() => remove(p)} className="text-[10px] text-red-400 hover:text-red-300 px-2 py-0.5 rounded bg-red-900/20 hover:bg-red-900/40 transition-colors">削除</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-          {/* 最近よく来るIP（未除外トップ5） */}
-          {topUnexcluded.length > 0 && (
-            <div className="mt-3 mb-3">
-              <p className="text-[10px] text-slate-500 mb-2">最近のアクセス（未除外・多い順）</p>
-              <div className="space-y-1">
-                {topUnexcluded.map(({ ip, count }) => (
-                  <div key={ip} className="flex items-center gap-2 bg-slate-700/20 rounded-lg px-3 py-2">
-                    <span className="text-[11px] font-mono text-slate-400 flex-1">{ip}</span>
-                    <span className="text-[10px] text-slate-600">{count}回</span>
-                    <button
-                      onClick={() => addPattern(ip)}
-                      className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors"
-                    >
-                      除外
-                    </button>
-                    {isIPv4(ip) && (
-                      <button
-                        onClick={() => addPattern(toSubnetPattern(ip))}
-                        className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap"
-                      >
-                        {toSubnetPattern(ip)}
-                      </button>
-                    )}
+          {/* IP除外リスト */}
+          <div>
+            <p className="text-[10px] text-slate-500 font-bold mb-1.5">🌐 IP除外</p>
+            {ipEntries.length === 0 ? (
+              <p className="text-[11px] text-slate-600">登録なし</p>
+            ) : (
+              <div className="space-y-1.5">
+                {ipEntries.map(p => (
+                  <div key={p} className="flex items-center gap-2 bg-slate-700/40 rounded-lg px-3 py-2">
+                    <span className="text-xs font-mono text-slate-300 flex-1">{p}</span>
+                    {p.endsWith('.*') && <span className="text-[9px] text-blue-400 bg-blue-900/30 px-1.5 py-0.5 rounded">サブネット</span>}
+                    <button onClick={() => remove(p)} className="text-[10px] text-red-400 hover:text-red-300 px-2 py-0.5 rounded bg-red-900/20 hover:bg-red-900/40 transition-colors">削除</button>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* 手動入力 */}
-          <div className="flex gap-2 mt-2 pt-2 border-t border-white/5">
+          {/* 手動入力（IP用） */}
+          <div className="flex gap-2 pt-2 border-t border-white/5">
             <input
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="直接入力（例: 203.0.113.*）"
+              placeholder="IP直接入力（例: 203.0.113.*）"
               className="flex-1 text-xs font-mono bg-slate-700/60 border border-white/10 rounded-lg px-3 py-2 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-slate-500"
               onKeyDown={e => { if (e.key === 'Enter') addManual(); }}
             />
-            <button
-              onClick={addManual}
-              disabled={!input.trim()}
-              className="text-xs bg-slate-600 hover:bg-slate-500 disabled:opacity-40 text-white px-3 py-2 rounded-lg transition-colors"
-            >
-              追加
-            </button>
+            <button onClick={addManual} disabled={!input.trim()} className="text-xs bg-slate-600 hover:bg-slate-500 disabled:opacity-40 text-white px-3 py-2 rounded-lg transition-colors">追加</button>
           </div>
         </div>
       )}
@@ -350,20 +328,22 @@ function RecentAccessSummary({
   if (recent.length === 0) return null;
 
   // Group by device_id (fallback to ip)
-  type GroupEntry = { key: string; keyType: 'device' | 'ip'; ip: string; count: number; lastTs: string; isMe: boolean; ua: string; excluded: boolean };
+  type GroupEntry = { key: string; keyType: 'device' | 'ip'; deviceId?: string; ip: string; count: number; lastTs: string; isMe: boolean; ua: string; excluded: boolean };
   const groups: Record<string, GroupEntry> = {};
   for (const e of recent) {
-    const groupKey = viewMode === 'device' && e.device_id && e.device_id !== 'unknown' ? `dev:${e.device_id}` : `ip:${e.ip}`;
+    const hasDevId = !!(e.device_id && e.device_id !== 'unknown');
+    const groupKey = viewMode === 'device' && hasDevId ? `dev:${e.device_id}` : `ip:${e.ip}`;
     if (!groups[groupKey]) {
       groups[groupKey] = {
         key: groupKey,
-        keyType: viewMode === 'device' && e.device_id && e.device_id !== 'unknown' ? 'device' : 'ip',
+        keyType: viewMode === 'device' && hasDevId ? 'device' : 'ip',
+        deviceId: hasDevId ? e.device_id : undefined,
         ip: e.ip,
         count: 0,
         lastTs: e.ts,
         isMe: !!(myDeviceId && myDeviceId !== 'unknown' && e.device_id === myDeviceId),
         ua: e.ua,
-        excluded: isIpExcluded(e.ip, excludedIps),
+        excluded: isEntryExcluded(e.ip, e.device_id, excludedIps),
       };
     }
     groups[groupKey].count++;
@@ -374,7 +354,7 @@ function RecentAccessSummary({
     if (!groups[groupKey].isMe && myDeviceId && myDeviceId !== 'unknown' && e.device_id === myDeviceId) {
       groups[groupKey].isMe = true;
     }
-    if (!groups[groupKey].excluded && isIpExcluded(e.ip, excludedIps)) {
+    if (!groups[groupKey].excluded && isEntryExcluded(e.ip, e.device_id, excludedIps)) {
       groups[groupKey].excluded = true;
     }
   }
@@ -422,8 +402,11 @@ function RecentAccessSummary({
               <span className="text-[11px] text-amber-300 font-bold tabular-nums flex-shrink-0">{g.count}回</span>
               {!g.excluded ? (
                 <>
-                  <button onClick={() => onExclude(g.ip)} className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors">除外</button>
-                  {subnetPattern && !subnetAlreadyExcluded && (
+                  <button
+                    onClick={() => onExclude(g.deviceId ? `device:${g.deviceId}` : g.ip)}
+                    className="text-[9px] text-slate-500 hover:text-purple-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-purple-900/20 transition-colors whitespace-nowrap"
+                  >{g.deviceId ? '📱 デバイス除外' : 'IP除外'}</button>
+                  {!g.deviceId && subnetPattern && !subnetAlreadyExcluded && (
                     <button onClick={() => onExclude(subnetPattern)} className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap">{subnetPattern}</button>
                   )}
                 </>
@@ -600,8 +583,10 @@ export default function AdminPage() {
                 </button>
               </div>
             )}
-            {accessEntries.filter(e => showExcluded || !isIpExcluded(e.ip, excludedIps)).map((e, i) => {
-              const excluded = isIpExcluded(e.ip, excludedIps);
+            {accessEntries.filter(e => showExcluded || !isEntryExcluded(e.ip, e.device_id, excludedIps)).map((e, i) => {
+              const excluded = isEntryExcluded(e.ip, e.device_id, excludedIps);
+              const hasDevId = !!(e.device_id && e.device_id !== 'unknown');
+              const devAlreadyExcluded = hasDevId && excludedIps.includes(`device:${e.device_id}`);
               const subnetPattern = isIPv4(e.ip) ? toSubnetPattern(e.ip) : null;
               const subnetAlreadyExcluded = subnetPattern ? excludedIps.includes(subnetPattern) : false;
               const isMe = !!(myDeviceId && myDeviceId !== 'unknown' && e.device_id === myDeviceId);
@@ -615,16 +600,17 @@ export default function AdminPage() {
                   </div>
                   <div className="mt-1 flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] text-slate-500 font-mono">{e.ip}</span>
-                    {e.device_id && e.device_id !== 'unknown' && (
-                      <span className="text-[10px] text-slate-600 font-mono">#{shortDevId(e.device_id)}</span>
-                    )}
+                    {hasDevId && <span className="text-[10px] text-slate-600 font-mono">#{shortDevId(e.device_id)}</span>}
                     <span className="text-[10px] text-slate-500">{shortUa(e.ua)}</span>
                     {excluded ? (
                       <span className="text-[9px] text-slate-600 px-1.5 py-0.5 rounded bg-slate-700/40">除外中</span>
                     ) : (
                       <>
-                        <button onClick={() => addExcludedPattern(e.ip)} className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors">除外</button>
-                        {subnetPattern && !subnetAlreadyExcluded && (
+                        {hasDevId && !devAlreadyExcluded && (
+                          <button onClick={() => addExcludedPattern(`device:${e.device_id}`)} className="text-[9px] text-slate-500 hover:text-purple-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-purple-900/20 transition-colors">📱 デバイス除外</button>
+                        )}
+                        {!hasDevId && <button onClick={() => addExcludedPattern(e.ip)} className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-amber-900/20 transition-colors">IP除外</button>}
+                        {subnetPattern && !subnetAlreadyExcluded && !hasDevId && (
                           <button onClick={() => addExcludedPattern(subnetPattern)} className="text-[9px] text-slate-500 hover:text-blue-400 px-1.5 py-0.5 rounded bg-slate-700/40 hover:bg-blue-900/20 transition-colors whitespace-nowrap">{subnetPattern}</button>
                         )}
                       </>
