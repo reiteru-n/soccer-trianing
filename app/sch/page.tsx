@@ -898,6 +898,13 @@ function EventCard({
                 🚩 集合{event.meetingTime ? ` ${event.meetingTime}` : ''}{event.meetingPlace ? ` ${event.meetingPlace}` : ''}
               </p>
             )}
+            {event.maxParkingSlots !== undefined && (
+              event.maxParkingSlots === 0
+                ? <p className="text-xs text-red-400/80 mt-0.5">🚫 駐車場なし</p>
+                : event.maxParkingSlots === -1
+                  ? <p className="text-xs text-emerald-400/80 mt-0.5">🅿️ 駐車場制限なし</p>
+                  : <p className="text-xs text-blue-400/80 mt-0.5">🅿️ 駐車場 {event.maxParkingSlots}台</p>
+            )}
           </div>
           {/* Actions */}
           <div className="flex flex-col gap-2 flex-shrink-0 items-end">
