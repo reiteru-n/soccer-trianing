@@ -1674,7 +1674,7 @@ function ParkingHistorySection({
   };
 
   const evLabel = (ev: SchEvent) =>
-    ev.type === 'match' ? (ev.opponentName ? `vs ${ev.opponentName}` : '試合') : (ev.label || ev.location || tc(ev.type).label);
+    ev.type === 'match' ? (() => { const opp = getMatches(ev)[0]?.opponentName || ev.opponentName; return opp ? `vs ${opp}` : '試合'; })() : (ev.label || ev.location || tc(ev.type).label);
 
   return (
     <details className="group" open>
@@ -1813,7 +1813,7 @@ function HomeSection({
     id: e.id,
     date: e.date,
     type: e.type,
-    label: e.type === 'match' ? (e.opponentName ? `🆚 ${e.opponentName}` : '相手未定') : (e.label || e.location || tc(e.type).label),
+    label: e.type === 'match' ? (() => { const opp = getMatches(e)[0]?.opponentName || e.opponentName; return opp ? `🆚 ${opp}` : '相手未定'; })() : (e.label || e.location || tc(e.type).label),
     maxSlots: e.maxParkingSlots ?? DEFAULT_MAX_SLOTS,
   });
 
