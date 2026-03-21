@@ -2809,6 +2809,9 @@ export default function SchPage() {
   const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'subscribed' | 'denied'>('loading');
   const [pushBusy, setPushBusy] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
+  // 編集履歴モーダル
+  interface HistoryModal { editEntries: SchUpdateHistory[]; autoEntries: SchUpdateHistory[]; baseHistory: SchUpdateHistory[]; memo: string; }
+  const [historyModal, setHistoryModal] = useState<HistoryModal | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/logs?limit=1').then(r => { if (r.ok) setIsAdmin(true); }).catch(() => {});
@@ -2920,47 +2923,44 @@ export default function SchPage() {
 
   const saveEvents = useCallback((e: SchEvent[]) => {
     setEvents(e);
+    post({ events: e });
     const oldMap = new Map(events.map(ev => [ev.id, ev]));
-    const historyEntries: SchUpdateHistory[] = [];
     const getEvTitle = (ev: SchEvent) => {
-      if (ev.type === 'match') {
-        const opp = ev.matches?.[0]?.opponentName || ev.opponentName;
-        return opp ? `vs ${opp}` : '試合';
-      }
+      if (ev.type === 'match') { const opp = ev.matches?.[0]?.opponentName || ev.opponentName; return opp ? `vs ${opp}` : '試合'; }
       return ev.label || ev.location || tc(ev.type).label;
     };
+    const autoEntries: SchUpdateHistory[] = [];
+    const editEntries: SchUpdateHistory[] = [];
     for (const ev of e) {
       const old = oldMap.get(ev.id);
-      if (!old) {
-        historyEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: ev.type, title: getEvTitle(ev), action: 'new', itemId: ev.id, tab: 'events' });
-      } else if (JSON.stringify(old) !== JSON.stringify(ev)) {
-        if (window.confirm(`「${getEvTitle(ev)}」の編集を更新履歴に追記しますか？`)) {
-          historyEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: ev.type, title: getEvTitle(ev), action: 'edit', itemId: ev.id, tab: 'events' });
-        }
-      }
+      if (!old) autoEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: ev.type, title: getEvTitle(ev), action: 'new', itemId: ev.id, tab: 'events' });
+      else if (JSON.stringify(old) !== JSON.stringify(ev)) editEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: ev.type, title: getEvTitle(ev), action: 'edit', itemId: ev.id, tab: 'events' });
     }
-    const updatedHistory = historyEntries.length > 0 ? [...historyEntries, ...updateHistory].slice(0, 20) : updateHistory;
-    if (historyEntries.length > 0) setUpdateHistory(updatedHistory);
-    post({ events: e, ...(historyEntries.length > 0 ? { updateHistory: updatedHistory } : {}) });
+    if (editEntries.length > 0) {
+      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '' });
+    } else if (autoEntries.length > 0) {
+      const h = [...autoEntries, ...updateHistory].slice(0, 20);
+      setUpdateHistory(h); post({ updateHistory: h });
+    }
   }, [post, events, updateHistory]);
 
   const saveAnnounce = useCallback((a: SchAnnouncement[]) => {
     setAnnouncements(a);
+    post({ announcements: a });
     const oldMap = new Map(announcements.map(ann => [ann.id, ann]));
-    const historyEntries: SchUpdateHistory[] = [];
+    const autoEntries: SchUpdateHistory[] = [];
+    const editEntries: SchUpdateHistory[] = [];
     for (const ann of a) {
       const old = oldMap.get(ann.id);
-      if (!old) {
-        historyEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: ann.title, action: 'new', itemId: ann.id, tab: 'announce' });
-      } else if (JSON.stringify(old) !== JSON.stringify(ann)) {
-        if (window.confirm(`「${ann.title}」の編集を更新履歴に追記しますか？`)) {
-          historyEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: ann.title, action: 'edit', itemId: ann.id, tab: 'announce' });
-        }
-      }
+      if (!old) autoEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: ann.title, action: 'new', itemId: ann.id, tab: 'announce' });
+      else if (JSON.stringify(old) !== JSON.stringify(ann)) editEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: ann.title, action: 'edit', itemId: ann.id, tab: 'announce' });
     }
-    const updatedHistory = historyEntries.length > 0 ? [...historyEntries, ...updateHistory].slice(0, 20) : updateHistory;
-    if (historyEntries.length > 0) setUpdateHistory(updatedHistory);
-    post({ announcements: a, ...(historyEntries.length > 0 ? { updateHistory: updatedHistory } : {}) });
+    if (editEntries.length > 0) {
+      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '' });
+    } else if (autoEntries.length > 0) {
+      const h = [...autoEntries, ...updateHistory].slice(0, 20);
+      setUpdateHistory(h); post({ updateHistory: h });
+    }
   }, [post, announcements, updateHistory]);
   const saveMembers      = useCallback((m: SchMember[])       => { setMembers(m);      post({ members: m }); }, [post]);
   const saveNearby       = useCallback((p: SchNearbyParking[])=> { setNearbyParking(p);post({ nearbyParking: p }); }, [post]);
@@ -3185,6 +3185,7 @@ export default function SchPage() {
                       <p className="text-xs text-white font-semibold truncate">{h.title}</p>
                       <p className="text-[10px] text-slate-400 mt-0.5">
                         <span className={`font-bold mr-1.5 ${h.action === 'new' ? 'text-emerald-400' : 'text-amber-400'}`}>{h.action === 'new' ? '新規' : '編集'}</span>
+                        {h.changeMemo && <span className="text-slate-300 mr-1.5">「{h.changeMemo}」</span>}
                         {itemTs(h)}
                       </p>
                     </div>
@@ -3196,6 +3197,50 @@ export default function SchPage() {
           </div>
         );
       })()}
+
+      {/* 編集履歴モーダル */}
+      {historyModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)' }}>
+          <div className="w-full max-w-md bg-slate-800 rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+            <div className="px-5 pt-5 pb-3">
+              <p className="text-sm font-bold text-white mb-0.5">更新履歴に追記しますか？</p>
+              <p className="text-[11px] text-slate-400 mb-4">
+                {historyModal.editEntries.map(e => `「${e.title}」`).join('・')} を編集しました
+              </p>
+              <label className="block text-[11px] font-bold text-slate-400 mb-1.5">変更内容のメモ（例: 備考を修正、集合時間を変更）</label>
+              <input
+                type="text"
+                value={historyModal.memo}
+                onChange={e => setHistoryModal(m => m ? { ...m, memo: e.target.value } : m)}
+                placeholder="省略可"
+                className="w-full rounded-xl bg-slate-900 border border-slate-600 text-white text-sm px-3 py-2.5 focus:border-purple-400 focus:outline-none placeholder-slate-500"
+                autoFocus
+              />
+            </div>
+            <div className="flex border-t border-white/10">
+              <button
+                className="flex-1 py-3 text-sm text-slate-400 hover:bg-white/5 transition-colors"
+                onClick={() => {
+                  // キャンセル：autoEntries だけ保存
+                  const { autoEntries, baseHistory } = historyModal;
+                  if (autoEntries.length > 0) { const h = [...autoEntries, ...baseHistory].slice(0, 20); setUpdateHistory(h); post({ updateHistory: h }); }
+                  setHistoryModal(null);
+                }}
+              >キャンセル</button>
+              <button
+                className="flex-1 py-3 text-sm font-bold text-white bg-purple-600/30 hover:bg-purple-600/50 transition-colors border-l border-white/10"
+                onClick={() => {
+                  const { editEntries, autoEntries, baseHistory, memo } = historyModal;
+                  const withMemo = editEntries.map(e => ({ ...e, ...(memo.trim() ? { changeMemo: memo.trim() } : {}) }));
+                  const h = [...withMemo, ...autoEntries, ...baseHistory].slice(0, 20);
+                  setUpdateHistory(h); post({ updateHistory: h });
+                  setHistoryModal(null);
+                }}
+              >追記する</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {tab === 'home' && (
         <HomeSection
