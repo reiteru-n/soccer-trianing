@@ -1792,6 +1792,7 @@ function HomeSection({
 }) {
   const today = todayStr();
   const sortedMembers = useMemo(() => [...members].sort((a, b) => a.number - b.number), [members]);
+  const [parkingShowCount, setParkingShowCount] = useState(3);
   const [nextExpanded, setNextExpanded] = useState(false);
   const [expandedAnnounces, setExpandedAnnounces] = useState<Set<string>>(new Set());
 
@@ -2017,7 +2018,7 @@ function HomeSection({
           <p className="text-center text-slate-400 text-sm py-4">予定がありません</p>
         ) : (
           <div className="space-y-3">
-            {parkingPlan.slice(0, 3).map(plan => (
+            {parkingPlan.slice(0, parkingShowCount).map(plan => (
               <ParkingEventCard
                 key={plan.id}
                 plan={plan}
@@ -2028,26 +2029,15 @@ function HomeSection({
                 onUpdateMaxSlots={onUpdateMaxSlots}
               />
             ))}
-            {parkingPlan.length > 3 && (
-              <details className="group">
-                <summary className="text-xs text-slate-400 hover:text-slate-300 cursor-pointer list-none flex items-center gap-1 select-none">
-                  <span className="transition-transform group-open:rotate-90 inline-block">▶</span>
-                  さらに {parkingPlan.length - 3} 件を表示
-                </summary>
-                <div className="mt-3 space-y-3">
-                  {parkingPlan.slice(3).map(plan => (
-                    <ParkingEventCard
-                      key={plan.id}
-                      plan={plan}
-                      members={sortedMembers}
-                      onSkip={onSkip}
-                      onUnskip={onUnskip}
-                      onMarkUsed={onMarkUsed}
-                      onUpdateMaxSlots={onUpdateMaxSlots}
-                    />
-                  ))}
-                </div>
-              </details>
+            {parkingPlan.length > parkingShowCount && (
+              <div>
+                <button
+                  onClick={() => setParkingShowCount(c => c + 10)}
+                  className="w-full text-xs text-slate-400 hover:text-slate-300 py-2 rounded-lg bg-slate-800/60 border border-white/5 hover:bg-slate-700/40 transition-colors"
+                >
+                  ▼ さらに表示（先10件）
+                </button>
+              </div>
             )}
           </div>
         )}
