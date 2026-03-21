@@ -1811,7 +1811,7 @@ function HomeSection({
   });
 
   const eventItems: EventItem[] = useMemo(
-    () => upcomingEvents.slice(0, 6).map(toEventItem),
+    () => upcomingEvents.slice(0, 20).map(toEventItem),
     [upcomingEvents]
   );
 
@@ -1824,7 +1824,8 @@ function HomeSection({
   );
 
   const parkingPlan = useMemo(
-    () => buildParkingPlan(sortedMembers, eventItems, parkingRotation, parkingRecords),
+    () => buildParkingPlan(sortedMembers, eventItems, parkingRotation, parkingRecords)
+            .filter(p => p.maxSlots !== -1),
     [sortedMembers, eventItems, parkingRotation, parkingRecords]
   );
 
