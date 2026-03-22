@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Shield background -->
+  <path d="M50 5 L90 20 L90 60 Q90 85 50 96 Q10 85 10 60 L10 20 Z" fill="#00AFED"/>
+  <!-- White accent band -->
+  <path d="M50 5 L90 20 L90 32 L10 32 L10 20 Z" fill="#ffffff" opacity="0.2"/>
+  <!-- Diagonal wave decoration -->
+  <path d="M10 55 Q30 48 50 55 Q70 62 90 55 L90 68 Q70 75 50 68 Q30 61 10 68 Z" fill="#ffffff" opacity="0.18"/>
+  <!-- F letter -->
+  <text x="50" y="72" text-anchor="middle" font-size="48" fill="#ffffff" font-family="Arial Black, Arial" font-weight="900" letter-spacing="-2">F</text>
+</svg>

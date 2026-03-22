@@ -446,9 +446,25 @@ function buildStaticLayer(key,cfg,data){
 // ═══════════════════════════════════════════
 const BADGE_R = 14; // badge radius
 
+// ロゴ画像を使うチーム
+const LOGOS = {
+  sch:      '/sch-logo.png',
+  marinos:  '/marinos-badge.svg',
+  frontale: '/frontale-badge.svg',
+};
+
 function buildBadgeLayer(key,cfg,data){
   const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,style:'min-width:560px;width:100%;display:block;position:absolute;top:0;left:0;pointer-events:none;'});
   svg.id=`svg-badge-${key}`;
+
+  // ロゴ用 clipPath を defs に追加
+  const defs=mk('defs',{});
+  Object.keys(LOGOS).forEach(tid=>{
+    const cp=mk('clipPath',{id:`clip-${key}-${tid}`});
+    cp.appendChild(mk('circle',{cx:'0',cy:'0',r:String(BADGE_R)}));
+    defs.appendChild(cp);
+  });
+  svg.appendChild(defs);
 
   const state=getState(key);
 
@@ -478,16 +494,31 @@ function buildBadgeLayer(key,cfg,data){
     const glow=mk('circle',{cx:0,cy:0,r:BADGE_R+4,fill:team.color,opacity:'.2'});
     glow.id=`glow-${key}-${team.id}`;
 
-    // main circle
-    const circle=mk('circle',{cx:0,cy:0,r:BADGE_R,fill:team.color,stroke:'rgba(255,255,255,.25)','stroke-width':'1.5'});
+    // main circle（ロゴありは白背景、なしはチームカラー）
+    const hasLogo=!!LOGOS[team.id];
+    const circle=mk('circle',{cx:0,cy:0,r:BADGE_R,
+      fill:hasLogo?'#fff':team.color,
+      stroke:hasLogo?team.color:'rgba(255,255,255,.25)',
+      'stroke-width':'2'});
     circle.id=`badge-circle-${key}-${team.id}`;
 
-    // text label
-    const txt=mk('text',{x:0,y:0,'text-anchor':'middle','dominant-baseline':'middle','font-size':'8.5','font-weight':'900',fill:team.text,'font-family':'Noto Sans JP, sans-serif'});
-    txt.textContent=team.short;
-    txt.id=`badge-txt-${key}-${team.id}`;
-
-    g.appendChild(glow);g.appendChild(circle);g.appendChild(txt);
+    g.appendChild(glow);g.appendChild(circle);
+    if(hasLogo){
+      const img=document.createElementNS(NS,'image');
+      img.setAttribute('href',LOGOS[team.id]);
+      img.setAttribute('x',String(-BADGE_R+1));
+      img.setAttribute('y',String(-BADGE_R+1));
+      img.setAttribute('width',String((BADGE_R-1)*2));
+      img.setAttribute('height',String((BADGE_R-1)*2));
+      img.setAttribute('clip-path',`url(#clip-${key}-${team.id})`);
+      img.setAttribute('preserveAspectRatio','xMidYMid meet');
+      g.appendChild(img);
+    } else {
+      const txt=mk('text',{x:0,y:0,'text-anchor':'middle','dominant-baseline':'middle','font-size':'8.5','font-weight':'900',fill:team.text,'font-family':'Noto Sans JP, sans-serif'});
+      txt.textContent=team.short;
+      txt.id=`badge-txt-${key}-${team.id}`;
+      g.appendChild(txt);
+    }
     svg.appendChild(g);
 
     // set initial position
