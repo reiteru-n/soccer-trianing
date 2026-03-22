@@ -74,9 +74,11 @@ main{max-width:1120px;margin:0 auto;padding:clamp(12px,3vw,18px) clamp(14px,4vw,
 
 /* 年度インジケーター */
 .year-indicator{
-  font-family:'Oswald',sans-serif;font-size:clamp(20px,5vw,32px);
+  font-family:'Oswald',sans-serif;font-size:clamp(22px,5.5vw,36px);
   font-weight:700;color:var(--gold);letter-spacing:.04em;
-  padding:0 4px;flex-shrink:0;min-width:60px;text-align:center;
+  padding:3px 12px;flex-shrink:0;min-width:74px;text-align:center;
+  background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);
+  border-radius:7px;
 }
 
 /* シークバー */
@@ -449,6 +451,15 @@ function buildBadgeLayer(key,cfg,data){
   svg.id=`svg-badge-${key}`;
 
   const state=getState(key);
+
+  // 現在年度 大きな背景ウォーターマーク（バッジの後ろ）
+  const curYearBig=mk('text',{id:`cur-year-big-${key}`,x:rx(0),y:PT+CH/2,
+    'text-anchor':'middle','dominant-baseline':'middle',
+    fill:'rgba(245,158,11,0.07)','font-size':'110','font-weight':'900',
+    'font-family':'Oswald,sans-serif','pointer-events':'none'});
+  curYearBig.textContent=String(YEARS[0]);
+  svg.appendChild(curYearBig);
+
   TEAMS.filter(t=>(data[t.id]||[]).some(v=>v!==null) && state.activeTeams.has(t.id)).forEach(team=>{
     const d=data[team.id]||[];
     // find first non-null position for initial placement
@@ -488,6 +499,22 @@ function buildBadgeLayer(key,cfg,data){
       g.setAttribute('opacity','0');
     }
   });
+
+  // 現在位置インジケーター（バッジの前面）
+  const curLine=mk('line',{id:`cur-line-${key}`,
+    x1:rx(0),x2:rx(0),y1:PT-10,y2:H-PB,
+    stroke:'rgba(245,158,11,0.5)','stroke-width':'1.5','stroke-dasharray':'4 3'});
+  svg.appendChild(curLine);
+  const curPill=mk('rect',{id:`cur-pill-${key}`,
+    x:rx(0)-20,y:PT-22,width:40,height:16,rx:'4',
+    fill:'rgba(245,158,11,0.18)',stroke:'rgba(245,158,11,0.6)','stroke-width':'1'});
+  svg.appendChild(curPill);
+  const curYearTxt=mk('text',{id:`cur-year-svg-${key}`,
+    x:rx(0),y:PT-8,'text-anchor':'middle','dominant-baseline':'auto',
+    fill:'#f59e0b','font-size':'11.5','font-weight':'900',
+    'font-family':'Oswald,sans-serif','pointer-events':'none'});
+  curYearTxt.textContent=String(YEARS[0]);
+  svg.appendChild(curYearTxt);
 
   return svg;
 }
@@ -646,6 +673,26 @@ function animateBadges(key,cfg,data){
   // seeker
   const seeker=document.getElementById(`seeker-${key}`);
   if(seeker) seeker.value=frameFloat/(NY-1)*100;
+
+  // 現在位置インジケーター更新 + 自動スクロール
+  const curX=rx(frameFloat);
+  const curYr=YEARS[Math.min(Math.round(frameFloat),NY-1)];
+  const clEl=document.getElementById(`cur-line-${key}`);
+  if(clEl){clEl.setAttribute('x1',curX);clEl.setAttribute('x2',curX);}
+  const cpEl=document.getElementById(`cur-pill-${key}`);
+  if(cpEl){cpEl.setAttribute('x',(curX-20).toFixed(1));}
+  const ctEl=document.getElementById(`cur-year-svg-${key}`);
+  if(ctEl){ctEl.setAttribute('x',curX);ctEl.textContent=String(curYr);}
+  const cbEl=document.getElementById(`cur-year-big-${key}`);
+  if(cbEl){cbEl.setAttribute('x',curX);cbEl.textContent=String(curYr);}
+  // スクロール追従（現在X座標が常に中央に来るよう）
+  const scEl=document.querySelector(`#p-${key} .cscroll`);
+  if(scEl){
+    const svgEl=scEl.querySelector('svg');
+    const svgW=svgEl?svgEl.getBoundingClientRect().width:W;
+    const tgt=curX*(svgW/W)-scEl.clientWidth/2;
+    scEl.scrollLeft=Math.max(0,tgt);
+  }
 
   // 1) まず全チームのraw座標を収集
   const activeTeams = TEAMS.filter(t=>state.activeTeams.has(t.id));
