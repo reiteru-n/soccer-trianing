@@ -466,25 +466,6 @@ function buildBadgeLayer(key,cfg,data){
   });
   svg.appendChild(defs);
 
-  // ── Y軸ラベルオーバーレイ（バッジより上に常時表示）──
-  // 左余白に半透明の暗背景を敷いてラベルを常に読めるようにする
-  const axisOverlayBg=mk('rect',{
-    x:'0',y:String(PT-10),width:String(PL-2),height:String(CH+18),
-    fill:'#0f1321',opacity:'0.93'
-  });
-  svg.appendChild(axisOverlayBg);
-  cfg.levels.forEach((lv,i)=>{
-    const y=PT+(i/(cfg.levels.length-1))*CH;
-    const t=mk('text',{
-      x:String(PL-6),y:String(y+4),
-      'text-anchor':'end',fill:'#94a3b8',
-      'font-size':'10.5','font-weight':'700',
-      'font-family':'Noto Sans JP,sans-serif'
-    });
-    t.textContent=lv.l;
-    svg.appendChild(t);
-  });
-
   const state=getState(key);
 
   // 現在年度 大きな背景ウォーターマーク（バッジの後ろ）
@@ -565,6 +546,23 @@ function buildBadgeLayer(key,cfg,data){
     'font-family':'Oswald,sans-serif','pointer-events':'none'});
   curYearTxt.textContent=String(YEARS[0]);
   svg.appendChild(curYearTxt);
+
+  // ── Y軸ラベルオーバーレイ（全バッジ・インジケーターより上に最後に追加）──
+  svg.appendChild(mk('rect',{
+    x:'0',y:String(PT-12),width:String(PL-1),height:String(CH+20),
+    fill:'#0f1321',opacity:'0.95'
+  }));
+  cfg.levels.forEach((lv,i)=>{
+    const y=PT+(i/(cfg.levels.length-1))*CH;
+    const t=mk('text',{
+      x:String(PL-6),y:String(y+4),
+      'text-anchor':'end',fill:'#c0cce0',
+      'font-size':'10.5','font-weight':'700',
+      'font-family':'Noto Sans JP,sans-serif'
+    });
+    t.textContent=lv.l;
+    svg.appendChild(t);
+  });
 
   return svg;
 }
