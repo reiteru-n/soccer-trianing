@@ -369,8 +369,8 @@ function buildStaticLayer(key,cfg,data){
   // H grid + labels
   cfg.levels.forEach((lv,i)=>{
     const y=PT+(i/(cfg.levels.length-1))*CH;
-    svg.appendChild(mk('line',{x1:PL,x2:W-PR,y1:y,y2:y,stroke:'rgba(255,255,255,.05)','stroke-dasharray':'3 5'}));
-    const t=mk('text',{x:PL-5,y:y+4,'text-anchor':'end',fill:'#3f4d6b','font-size':'10.5'});
+    svg.appendChild(mk('line',{x1:PL,x2:W-PR,y1:y,y2:y,stroke:'rgba(255,255,255,.07)','stroke-dasharray':'3 5'}));
+    const t=mk('text',{x:PL-5,y:y+4,'text-anchor':'end',fill:'#4a5a7a','font-size':'10.5'});
     t.textContent=lv.l;svg.appendChild(t);
   });
 
@@ -465,6 +465,25 @@ function buildBadgeLayer(key,cfg,data){
     defs.appendChild(cp);
   });
   svg.appendChild(defs);
+
+  // ── Y軸ラベルオーバーレイ（バッジより上に常時表示）──
+  // 左余白に半透明の暗背景を敷いてラベルを常に読めるようにする
+  const axisOverlayBg=mk('rect',{
+    x:'0',y:String(PT-10),width:String(PL-2),height:String(CH+18),
+    fill:'#0f1321',opacity:'0.93'
+  });
+  svg.appendChild(axisOverlayBg);
+  cfg.levels.forEach((lv,i)=>{
+    const y=PT+(i/(cfg.levels.length-1))*CH;
+    const t=mk('text',{
+      x:String(PL-6),y:String(y+4),
+      'text-anchor':'end',fill:'#94a3b8',
+      'font-size':'10.5','font-weight':'700',
+      'font-family':'Noto Sans JP,sans-serif'
+    });
+    t.textContent=lv.l;
+    svg.appendChild(t);
+  });
 
   const state=getState(key);
 
