@@ -1,10 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Shield background -->
-  <path d="M50 5 L90 20 L90 60 Q90 85 50 96 Q10 85 10 60 L10 20 Z" fill="#00AFED"/>
-  <!-- White accent band -->
-  <path d="M50 5 L90 20 L90 32 L10 32 L10 20 Z" fill="#ffffff" opacity="0.2"/>
-  <!-- Diagonal wave decoration -->
-  <path d="M10 55 Q30 48 50 55 Q70 62 90 55 L90 68 Q70 75 50 68 Q30 61 10 68 Z" fill="#ffffff" opacity="0.18"/>
-  <!-- F letter -->
-  <text x="50" y="72" text-anchor="middle" font-size="48" fill="#ffffff" font-family="Arial Black, Arial" font-weight="900" letter-spacing="-2">F</text>
+  <!-- 外周：黒円 -->
+  <circle cx="50" cy="50" r="49" fill="#1a1a1a"/>
+
+  <!-- 月桂樹（左）簡略 -->
+  <g fill="#C9A84C" opacity="0.85">
+    <ellipse cx="14" cy="45" rx="4" ry="7" transform="rotate(-30 14 45)"/>
+    <ellipse cx="10" cy="55" rx="4" ry="7" transform="rotate(-15 10 55)"/>
+    <ellipse cx="11" cy="66" rx="4" ry="7" transform="rotate(5 11 66)"/>
+    <ellipse cx="17" cy="76" rx="4" ry="7" transform="rotate(20 17 76)"/>
+  </g>
+  <!-- 月桂樹（右）簡略 -->
+  <g fill="#C9A84C" opacity="0.85">
+    <ellipse cx="86" cy="45" rx="4" ry="7" transform="rotate(30 86 45)"/>
+    <ellipse cx="90" cy="55" rx="4" ry="7" transform="rotate(15 90 55)"/>
+    <ellipse cx="89" cy="66" rx="4" ry="7" transform="rotate(-5 89 66)"/>
+    <ellipse cx="83" cy="76" rx="4" ry="7" transform="rotate(-20 83 76)"/>
+  </g>
+
+  <!-- 盾：黒背景 -->
+  <path d="M50 16 L74 26 L74 64 Q74 82 50 90 Q26 82 26 64 L26 26 Z" fill="#1a1a1a"/>
+  <!-- 盾：白アウトライン -->
+  <path d="M50 16 L74 26 L74 64 Q74 82 50 90 Q26 82 26 64 L26 26 Z" fill="none" stroke="#ffffff" stroke-width="2"/>
+
+  <!-- 上部バナー（青） -->
+  <path d="M20 30 Q50 20 80 30 L76 40 Q50 30 24 40 Z" fill="#3CB4E7"/>
+  <!-- バナー両端リボン -->
+  <path d="M20 30 L24 40 L18 42 L14 36 Z" fill="#3CB4E7"/>
+  <path d="M80 30 L76 40 L82 42 L86 36 Z" fill="#3CB4E7"/>
+  <!-- FRONTALE テキスト -->
+  <text x="50" y="37" text-anchor="middle" font-size="8" fill="#ffffff" font-family="Arial Black,Arial" font-weight="900" letter-spacing="0.5">FRONTALE</text>
+
+  <!-- 盾内：青 -->
+  <path d="M50 40 L70 47 L70 64 Q70 78 50 86 Q30 78 30 64 L30 47 Z" fill="#3CB4E7"/>
+  <!-- 黒縦縞 -->
+  <rect x="40" y="47" width="8" height="38" fill="#1a1a1a" rx="1"/>
+  <rect x="52" y="47" width="8" height="38" fill="#1a1a1a" rx="1"/>
+  <!-- 盾クリップ -->
+  <path d="M50 40 L70 47 L70 64 Q70 78 50 86 Q30 78 30 64 L30 47 Z" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+
+  <!-- KAWASAKI テキスト -->
+  <text x="50" y="56" text-anchor="middle" font-size="6.5" fill="#ffffff" font-family="Arial Black,Arial" font-weight="900" letter-spacing="0.2">KAWASAKI</text>
+  <!-- EST.1997 テキスト -->
+  <text x="50" y="64" text-anchor="middle" font-size="5" fill="#ffffff" font-family="Arial,sans-serif" font-weight="700">EST.1997</text>
+
+  <!-- イルカ（白 simplified） -->
+  <path d="M42 72 Q46 67 50 69 Q56 71 58 76 Q54 79 50 80 Q44 79 42 72Z" fill="#ffffff"/>
+  <path d="M56 71 Q62 66 64 68 Q62 72 58 76Z" fill="#ffffff"/>
 </svg>
