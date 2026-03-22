@@ -168,6 +168,23 @@ export default function HistoryPage() {
         </div>
       </div>
 
+      {/* 神奈川県チーム推移リンク */}
+      <div className="mx-4 mt-3">
+        <Link
+          href="/sch/kanagawa"
+          className="flex items-center justify-between w-full bg-[#0b0e1a] border border-[#f59e0b]/30 rounded-xl px-4 py-3 hover:border-[#f59e0b]/60 hover:bg-[#0f1321] transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-[#f59e0b] text-lg">📈</span>
+            <div>
+              <p className="text-white text-[13px] font-bold">神奈川県チーム推移</p>
+              <p className="text-[#3f4d6b] text-[10px] mt-0.5">2010〜2025年 強豪チーム順位推移グラフ</p>
+            </div>
+          </div>
+          <span className="text-[#f59e0b] text-[18px] group-hover:translate-x-1 transition-transform">→</span>
+        </Link>
+      </div>
+
       {/* Notice */}
       <div className="mx-4 mt-3 mb-1 bg-amber-50 border border-amber-200 border-l-4 border-l-amber-400 rounded-xl px-4 py-3 text-[11px] text-amber-700">
         ⚠️ 掲載情報は各出典URLに基づく確認済み情報のみです。未確認箇所は「未確認」と表示。最新情報は各協会公式サイトでご確認ください。
