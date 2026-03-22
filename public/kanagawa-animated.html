@@ -823,7 +823,7 @@ function startAnimation(key,cfg,data){
     const dt=(ts-lastTs)/1000; // seconds
     lastTs=ts;
 
-    state.frame+=dt*state.speed*1.5; // 1.5 years per second at speed=1
+    state.frame+=dt*state.speed*1.0; // 1.0 years per second at speed=1
 
     const endFrame=state.lastDataIdx??NY-1;
     if(state.frame>=endFrame){
