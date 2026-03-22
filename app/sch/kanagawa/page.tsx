@@ -1,7 +1,22 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRef, useEffect } from 'react';
 
 export default function KanagawaPage() {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    function handleMessage(e: MessageEvent) {
+      if (e.data?.type === 'iframeHeight' && iframeRef.current) {
+        iframeRef.current.style.height = e.data.height + 'px';
+      }
+    }
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#060810] pb-16">
 
@@ -39,18 +54,16 @@ export default function KanagawaPage() {
         </div>
       </div>
 
-      {/* iframe */}
-      <div className="px-0 pt-0">
-        <iframe
-          src="/kanagawa-animated.html"
-          width="100%"
-          height="860"
-          frameBorder="0"
-          scrolling="no"
-          style={{ border: 'none', display: 'block' }}
-          title="神奈川ジュニアサッカー 順位推移グラフ"
-        />
-      </div>
+      {/* iframe — 高さはpostMessageで自動調整 */}
+      <iframe
+        ref={iframeRef}
+        src="/kanagawa-animated.html"
+        width="100%"
+        height="800"
+        scrolling="no"
+        style={{ border: 'none', display: 'block', overflow: 'hidden' }}
+        title="神奈川ジュニアサッカー 順位推移グラフ"
+      />
 
     </div>
   );

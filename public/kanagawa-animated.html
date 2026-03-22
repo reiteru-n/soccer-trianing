@@ -32,7 +32,7 @@ h1 em{color:var(--gold);font-style:normal;}
 .tab .tl{display:block;font-size:clamp(8px,1.8vw,10px);}
 
 /* ── MAIN ── */
-main{max-width:1120px;margin:0 auto;padding:clamp(12px,3vw,18px) clamp(14px,4vw,24px) 80px;}
+main{max-width:1120px;margin:0 auto;padding:clamp(12px,3vw,18px) clamp(14px,4vw,24px) 24px;}
 .panel{display:none;animation:fi .2s ease;}
 .panel.on{display:block;}
 @keyframes fi{from{opacity:0;transform:translateY(4px);}to{opacity:1;}}
@@ -131,14 +131,6 @@ svg.chart{display:block;min-width:560px;width:100%;}
 </style>
 </head>
 <body>
-
-<header>
-  <div class="hd">
-    <div class="badge">⚽ 神奈川ジュニアサッカー アーカイブ 2010–2025</div>
-    <h1>強豪チーム <em>順位推移アニメーション</em></h1>
-    <p class="sub">▶ 再生するとチームバッジが年度ごとに線上を移動 ／ スピード調整可 ／ シークバーで任意の年度へ</p>
-  </div>
-</header>
 
 <div class="tab-bar">
   <div class="tabs">
@@ -945,6 +937,15 @@ function sw(btn){
 }
 
 renderPanel('zen');
+
+// ── 親ウィンドウへ高さを通知（iframe auto-resize）──
+function notifyHeight() {
+  const h = document.documentElement.scrollHeight;
+  window.parent.postMessage({ type: 'iframeHeight', height: h }, '*');
+}
+new MutationObserver(notifyHeight).observe(document.body, { childList: true, subtree: true, attributes: true });
+window.addEventListener('resize', notifyHeight);
+notifyHeight();
 </script>
 </body>
 </html>
