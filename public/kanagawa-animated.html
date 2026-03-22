@@ -717,9 +717,13 @@ function animateBadges(key,cfg,data){
   const yEl=document.getElementById(`year-ind-${key}`);
   if(yEl) yEl.textContent=YEARS[Math.min(Math.round(frameFloat),NY-1)];
 
-  // seeker
+  // seeker（データ範囲に合わせた0〜100へ正規化）
   const seeker=document.getElementById(`seeker-${key}`);
-  if(seeker) seeker.value=frameFloat/(NY-1)*100;
+  if(seeker){
+    const fi=state.firstDataIdx??0, li=state.lastDataIdx??NY-1;
+    const range=li-fi||1;
+    seeker.value=Math.max(0,Math.min(100,(frameFloat-fi)/range*100));
+  }
 
   // 現在位置インジケーター更新 + 自動スクロール
   const curX=rx(frameFloat);
@@ -821,8 +825,9 @@ function startAnimation(key,cfg,data){
 
     state.frame+=dt*state.speed*1.5; // 1.5 years per second at speed=1
 
-    if(state.frame>=NY-1){
-      state.frame=NY-1;
+    const endFrame=state.lastDataIdx??NY-1;
+    if(state.frame>=endFrame){
+      state.frame=endFrame;
       animateBadges(key,cfg,data);
       state.playing=false;
       updatePlayBtn(key);
@@ -838,7 +843,8 @@ function startAnimation(key,cfg,data){
 
 function togglePlay(key,cfg,data){
   const state=getState(key);
-  if(state.frame>=NY-1) state.frame=0; // restart
+  const fi=state.firstDataIdx??0, li=state.lastDataIdx??NY-1;
+  if(state.frame>=li) state.frame=fi; // データ末尾に達したらデータ先頭へリスタート
   state.playing=!state.playing;
   updatePlayBtn(key);
   if(state.playing) startAnimation(key,cfg,data);
@@ -851,7 +857,8 @@ function updatePlayBtn(key){
   if(state.playing){
     btn.innerHTML=`<svg viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/></svg>一時停止`;
   } else {
-    btn.innerHTML=`<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>${state.frame>0&&state.frame<NY-1?'再開':'▶ 再生'}`;
+    const fi2=state.firstDataIdx??0,li2=state.lastDataIdx??NY-1;
+    btn.innerHTML=`<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>${state.frame>fi2&&state.frame<li2?'再開':'▶ 再生'}`;
   }
 }
 
@@ -868,10 +875,23 @@ function renderPanel(key){
   const cfg=CFGS[key];
   const data=RAW[cfg.data];
 
+  // データ範囲を算出（データがある最初・最後のYEARSインデックス）
+  let firstDataIdx=NY-1, lastDataIdx=0;
+  TEAMS.forEach(t=>{
+    (data[t.id]||[]).forEach((v,i)=>{
+      if(v!==null){firstDataIdx=Math.min(firstDataIdx,i);lastDataIdx=Math.max(lastDataIdx,i);}
+    });
+  });
+  if(firstDataIdx>lastDataIdx){firstDataIdx=0;lastDataIdx=NY-1;}
+
   // init state
   const state=getState(key);
   const top=autoSelect(data,7);
   top.forEach(id=>state.activeTeams.add(id));
+  // データ範囲をstateに保存し、初期フレームをデータ開始年に設定
+  state.firstDataIdx=firstDataIdx;
+  state.lastDataIdx=lastDataIdx;
+  state.frame=firstDataIdx;
 
   // shell
   const sh=document.createElement('div');
@@ -885,7 +905,7 @@ function renderPanel(key){
       <div class="ctrl-title">${cfg.title}</div>
       <div class="ctrl-sub">${cfg.desc}</div>
     </div>
-    <div class="year-indicator" id="year-ind-${key}">${YEARS[0]}</div>
+    <div class="year-indicator" id="year-ind-${key}">${YEARS[firstDataIdx]}</div>
     <button class="btn-play" id="btn-play-${key}">
       <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>▶ 再生
     </button>
@@ -900,9 +920,9 @@ function renderPanel(key){
   const seekWrap=document.createElement('div');
   seekWrap.className='seek-wrap';
   seekWrap.innerHTML=`
-    <span class="seek-label">${YEARS[0]}</span>
+    <span class="seek-label">${YEARS[firstDataIdx]}</span>
     <input type="range" class="seeker" id="seeker-${key}" min="0" max="100" step="0.1" value="0"/>
-    <span class="seek-label">${YEARS[NY-1]}</span>
+    <span class="seek-label">${YEARS[lastDataIdx]}</span>
   `;
   sh.appendChild(seekWrap);
 
@@ -1009,7 +1029,8 @@ function renderPanel(key){
   // SEEKER EVENT
   document.getElementById(`seeker-${key}`).addEventListener('input',function(){
     const state2=getState(key);
-    state2.frame=(this.value/100)*(NY-1);
+    const fi=state2.firstDataIdx??0, li=state2.lastDataIdx??NY-1;
+    state2.frame=fi+(this.value/100)*(li-fi);
     if(state2.playing){state2.playing=false;cancelAnimationFrame(state2.raf);updatePlayBtn(key);}
     animateBadges(key,cfg,data);
   });
