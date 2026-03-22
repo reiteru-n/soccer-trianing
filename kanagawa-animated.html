@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<title>神奈川ジュニアサッカー 順位推移グラフ（アニメーション）</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#060810;--panel:#0b0e1a;--card:#0f1321;--card2:#131829;
+  --border:rgba(255,255,255,.08);--gold:#f59e0b;--text:#e2e8f0;--muted:#3f4d6b;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* ── HEADER ── */
+header{padding:clamp(16px,4vw,26px) clamp(14px,4vw,24px) clamp(12px,3vw,18px);background:linear-gradient(160deg,#080c20,#060810);border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
+header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 120% at 85% 50%,rgba(245,158,11,.06),transparent 70%);pointer-events:none;}
+.hd{max-width:1120px;margin:0 auto;position:relative;}
+.badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);padding:3px 10px;border-radius:3px;margin-bottom:10px;}
+h1{font-family:'Oswald',sans-serif;font-size:clamp(20px,5vw,44px);font-weight:700;line-height:1.1;color:#fff;}
+h1 em{color:var(--gold);font-style:normal;}
+.sub{font-size:clamp(10px,2.5vw,12px);color:var(--muted);margin-top:8px;line-height:1.7;}
+
+/* ── TABS ── */
+.tab-bar{max-width:1120px;margin:0 auto;padding:clamp(10px,3vw,16px) clamp(14px,4vw,24px) 0;}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;background:var(--panel);padding:4px;border-radius:12px;border:1px solid var(--border);}
+.tab{padding:clamp(8px,2vw,11px) 4px;background:transparent;border:none;color:var(--muted);font-size:clamp(9px,2.2vw,11px);font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;border-radius:9px;transition:all .2s;line-height:1.3;}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.04);}
+.tab.on{background:var(--gold);color:#060810;}
+.tab .ti{display:block;font-size:clamp(13px,3vw,16px);margin-bottom:2px;}
+.tab .tl{display:block;font-size:clamp(8px,1.8vw,10px);}
+
+/* ── MAIN ── */
+main{max-width:1120px;margin:0 auto;padding:clamp(12px,3vw,18px) clamp(14px,4vw,24px) 80px;}
+.panel{display:none;animation:fi .2s ease;}
+.panel.on{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(4px);}to{opacity:1;}}
+
+/* ── CHART SHELL ── */
+.cshell{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px;position:relative;}
+.cshell::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),transparent);}
+
+/* ── CONTROLS BAR ── */
+.ctrl-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:12px 20px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.02);
+}
+.ctrl-title{font-family:'Oswald',sans-serif;font-size:clamp(13px,3vw,16px);letter-spacing:.04em;color:#fff;flex:1;min-width:0;}
+.ctrl-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* 再生ボタン */
+.btn-play{
+  display:flex;align-items:center;gap:7px;
+  padding:8px 18px;border-radius:24px;
+  background:var(--gold);color:#060810;
+  border:none;cursor:pointer;
+  font-size:12px;font-weight:900;font-family:'Noto Sans JP',sans-serif;
+  transition:all .2s;flex-shrink:0;white-space:nowrap;
+}
+.btn-play:hover{background:#fbbf24;transform:scale(1.04);}
+.btn-play svg{width:14px;height:14px;flex-shrink:0;}
+
+/* スピード */
+.speed-wrap{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);flex-shrink:0;}
+.speed-btn{
+  padding:4px 10px;border-radius:16px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;
+  font-size:10px;font-weight:700;font-family:'Noto Sans JP',sans-serif;
+  transition:all .15s;
+}
+.speed-btn.on{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:var(--gold);}
+
+/* 年度インジケーター */
+.year-indicator{
+  font-family:'Oswald',sans-serif;font-size:clamp(20px,5vw,32px);
+  font-weight:700;color:var(--gold);letter-spacing:.04em;
+  padding:0 4px;flex-shrink:0;min-width:60px;text-align:center;
+}
+
+/* シークバー */
+.seek-wrap{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 20px 10px;
+}
+.seek-label{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+input[type=range].seeker{
+  -webkit-appearance:none;flex:1;height:4px;
+  background:var(--border);border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range].seeker::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;
+  background:var(--gold);border-radius:50%;cursor:pointer;
+  box-shadow:0 0 8px rgba(245,158,11,.5);
+}
+input[type=range].seeker::-moz-range-thumb{
+  width:16px;height:16px;background:var(--gold);border-radius:50%;
+  cursor:pointer;border:none;
+}
+
+/* ── CHART SVG ── */
+.cscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 4px 6px;scrollbar-width:thin;scrollbar-color:rgba(245,158,11,.3) transparent;}
+.cscroll::-webkit-scrollbar{height:4px;}
+.cscroll::-webkit-scrollbar-thumb{background:rgba(245,158,11,.3);border-radius:2px;}
+svg.chart{display:block;min-width:560px;width:100%;}
+
+/* ── LEGEND ── */
+.legend{display:flex;gap:8px;flex-wrap:wrap;padding:10px 20px;border-top:1px solid var(--border);background:rgba(255,255,255,.01);}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
+.ld{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+
+/* ── SELECTOR ── */
+.selector{padding:12px 20px;border-top:1px solid var(--border);background:rgba(255,255,255,.015);}
+.stitle{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.sall{font-size:9px;font-weight:700;color:var(--gold);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);padding:2px 9px;border-radius:20px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{display:flex;align-items:center;gap:5px;padding:5px 11px 5px 8px;border-radius:20px;cursor:pointer;user-select:none;border:1.5px solid transparent;background:rgba(255,255,255,.03);transition:all .15s;font-size:11px;font-weight:700;color:rgba(255,255,255,.35);min-height:36px;}
+.chip:hover,.chip:active{color:rgba(255,255,255,.7);}
+.chip.on{color:#fff;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.07);}
+.chip .cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* ── TOOLTIP ── */
+#tt{position:fixed;pointer-events:none;z-index:9999;opacity:0;transition:opacity .1s;background:rgba(6,8,16,.97);border:1px solid rgba(245,158,11,.35);border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7;box-shadow:0 10px 40px rgba(0,0,0,.8);max-width:min(220px,80vw);}
+#tt.on{opacity:1;}
+#tt .tn{font-weight:900;display:block;margin-bottom:2px;}
+#tt .tr{color:#fff;font-weight:700;}
+#tt .ty{color:var(--muted);font-size:10px;display:block;}
+
+@media(max-width:480px){.tab .tl{display:none;}.tab .ti{font-size:17px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="badge">⚽ 神奈川ジュニアサッカー アーカイブ 2010–2025</div>
+    <h1>強豪チーム <em>順位推移アニメーション</em></h1>
+    <p class="sub">▶ 再生するとチームバッジが年度ごとに線上を移動 ／ スピード調整可 ／ シークバーで任意の年度へ</p>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <div class="tabs">
+    <button class="tab on" data-key="zen" onclick="sw(this)"><span class="ti">🏆</span><span class="tl">全日本U-12</span></button>
+    <button class="tab" data-key="nis" onclick="sw(this)"><span class="ti">🏟</span><span class="tl">日産カップ</span></button>
+    <button class="tab" data-key="fa"  onclick="sw(this)"><span class="ti">📊</span><span class="tl">FAリーグ</span></button>
+    <button class="tab" data-key="cs"  onclick="sw(this)"><span class="ti">🏅</span><span class="tl">県CS</span></button>
+  </div>
+</div>
+
+<main>
+  <div id="p-zen" class="panel on"></div>
+  <div id="p-nis" class="panel"></div>
+  <div id="p-fa"  class="panel"></div>
+  <div id="p-cs"  class="panel"></div>
+</main>
+
+<div id="tt"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// TEAMS — ユニフォームカラー＋略称バッジ
+// ═══════════════════════════════════════════
+const TEAMS = [
+  {id:'buddy',       name:'バディーSC',          short:'BSC',  color:'#1b5e20', text:'#fff'},
+  {id:'frontale',    name:'川崎フロンターレ',      short:'川F',  color:'#00a0e9', text:'#fff'},
+  {id:'marinos',     name:'マリノスPr（新横）',   short:'MFM', color:'#003087', text:'#fff'},
+  {id:'sch',         name:'SCH.FC',             short:'SCH', color:'#0d47a1', text:'#fff'},
+  {id:'nakanoshima', name:'中野島FC',            short:'中野', color:'#c62828', text:'#fff'},
+  {id:'marinoso',    name:'マリノスPr（追浜）',   short:'MOP', color:'#0277bd', text:'#fff'},
+  {id:'futuro',      name:'JFC FUTURO',          short:'FUT', color:'#b71c1c', text:'#fff'},
+  {id:'azamino',     name:'あざみ野FC',           short:'AZM', color:'#d32f2f', text:'#fff'},
+  {id:'persimmon',   name:'FCパーシモン',         short:'PRS', color:'#e65100', text:'#fff'},
+  {id:'sumire',      name:'横浜すみれSC',         short:'SMR', color:'#6a1b9a', text:'#fff'},
+  {id:'porta',       name:'FC PORTA',           short:'POR', color:'#2e7d32', text:'#fff'},
+  {id:'higashi',     name:'東住吉SC',            short:'HGS', color:'#e65100', text:'#fff'},
+  {id:'sfat',        name:'SFAT ISEHARA',        short:'SFT', color:'#37474f', text:'#fff'},
+  {id:'cfg',         name:'CFG-YOKOHAMA',        short:'CFG', color:'#0277bd', text:'#fff'},
+  {id:'testigo',     name:'FC Testigo',          short:'TST', color:'#00695c', text:'#fff'},
+  {id:'vinculo',     name:'FCヴィンクーロ',       short:'VNK', color:'#4527a0', text:'#fff'},
+  {id:'ashigara',    name:'足柄FC',              short:'ASH', color:'#f57f17', text:'#fff'},
+  {id:'littlejumbo', name:'リトルジャンボSC',     short:'LJB', color:'#880e4f', text:'#fff'},
+];
+
+const YEARS = [2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+const NY = YEARS.length;
+
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const RAW = {
+  zen:{
+    // [2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025]
+    buddy:       [1,   null,null,3,   null,2,   2,   null,null,2,   1,   null,8,   3,   1,   8  ],
+    frontale:    [null,1,   null,null,3,   8,   null,1,   8,   null,8,   null,3,   2,   4,   1  ],
+    marinos:     [null,null,null,1,   1,   1,   1,   null,null,1,   2,   null,3,   1,   3,   8  ],
+    sch:         [null,null,2,   null,null,null,null,null,null,8,   3,   1,   1,   4,   16,  8  ],
+    nakanoshima: [null,null,null,null,null,null,null,null,null,null,null,null,2,   8,   4,   4  ],
+    marinoso:    [null,null,null,16,  null,8,   8,   16,  8,   16,  null,null,3,   null,2,   8  ],
+    futuro:      [null,null,null,null,null,null,null,null,4,   8,   null,null,null,8,   4,   8  ],
+    azamino:     [null,null,null,null,2,   null,null,2,   null,null,null,null,8,   null,null,null],
+    persimmon:   [null,null,null,null,null,null,null,16,  null,null,8,   16,  16,  null,16,  8  ],
+    sumire:      [null,null,null,null,null,null,null,null,null,null,null,null,8,   null,8,   null],
+    porta:       [null,null,null,null,null,null,null,null,null,null,null,null,null,8,   2,   8  ],
+    higashi:     [null,null,null,null,null,null,null,null,null,null,null,null,8,   8,   null,null],
+    sfat:        [null,null,null,null,null,null,null,null,null,8,   16,  null,8,   null,null,null],
+    cfg:         [null,null,null,null,null,null,null,null,null,null,3,   null,null,null,null,null],
+    testigo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,8,   null,null],
+    vinculo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,null,8,   null],
+    ashigara:    [null,null,null,null,null,null,null,null,null,null,null,null,null,null,8,   null],
+    littlejumbo: [null,null,null,2,   null,null,null,null,null,null,null,null,null,null,null,null],
+  },
+  nis:{
+    // 日産カップ高学年 第38回(2010年度)〜第52回(2025年度)
+    // [2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025]
+    // 2010=第38回(バディー優勝) 2011=第38回高学年? ※第38回は2011年2月開催=2010年度大会
+    // 2020年度(第47回)はコロナ中止
+    // 第38(2010)=buddy優勝 第39(2012)=marinos優勝,frontale準 第40(2013)=marinos優勝
+    // 第41(2014)=sch優勝 第42(2015)=buddy優勝 第43(2016)=sfat優勝
+    // 第44(2017)=marinos優勝,frontale準,futuro3,azamino4
+    // 第45(2018)=buddy優勝,persimmon準,futuro4
+    // 第46(2019)=buddy優勝,marinos準
+    // 第47(2020)=コロナ中止
+    // 第48(2021)=sch優勝,futuro準
+    // 第49(2022)=sfat優勝,buddy3
+    // 第50(2023)=buddy優勝,marinos準,testigo3
+    // 第51(2024)=marinos優勝,porta準,frontale3,sch4,futuro/buddy/sumire/persimmon=B8
+    // 第52(2025)=buddy優勝,sch3,nakanoshima4,marinos/marinoso=B8
+    buddy:       [1,   null,null,null,null,1,   null,null,1,   1,   null,null,3,   1,   8,   1  ],
+    frontale:    [null,null,2,   null,null,null,null,2,   null,null,null,null,null,null,3,   null],
+    marinos:     [null,null,1,   1,   null,null,1,   1,   null,2,   null,null,null,2,   1,   8  ],
+    sch:         [null,null,null,null,1,   3,   null,null,8,   null,null,1,   null,null,4,   3  ],
+    nakanoshima: [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,4  ],
+    marinoso:    [null,null,3,   null,null,null,1,   null,null,null,null,null,null,null,null,8  ],
+    futuro:      [null,null,null,null,null,4,   null,3,   4,   null,null,2,   null,null,8,   null],
+    azamino:     [null,null,null,null,null,null,null,4,   null,null,null,null,null,null,null,null],
+    persimmon:   [null,null,null,null,null,null,null,null,2,   null,null,null,null,null,8,   null],
+    sumire:      [null,null,null,null,null,null,null,null,null,null,null,null,null,null,8,   null],
+    porta:       [null,null,null,null,null,null,null,null,null,null,null,null,null,8,   2,   null],
+    higashi:     Array(NY).fill(null),
+    sfat:        [null,null,null,null,null,null,1,   null,null,null,null,null,1,   null,null,null],
+    cfg:         Array(NY).fill(null),
+    testigo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,3,   null,null],
+    vinculo:     Array(NY).fill(null),
+    ashigara:    Array(NY).fill(null),
+    littlejumbo: Array(NY).fill(null),
+  },
+  fa:{
+    buddy:       [null,null,null,null,null,null,1,1,1,1,1,1,1,1,1,2],
+    frontale:    [null,null,null,null,null,null,1,1,1,1,1,1,1,1,1,1],
+    marinos:     [null,null,null,null,null,null,1,1,1,1,1,1,1,1,2,2],
+    sch:         [null,null,null,null,null,null,2,2,1,1,1,2,2,2,2,5],
+    nakanoshima: [null,null,null,null,null,null,1,1,1,1,1,1,1,1,1,1],
+    marinoso:    [null,null,null,null,null,null,6,6,6,6,6,6,6,6,4,4],
+    futuro:      [null,null,null,null,null,null,5,5,6,6,6,6,6,6,4,3],
+    azamino:     [null,null,null,null,null,null,3,3,3,3,3,3,3,null,null,null],
+    persimmon:   [null,null,null,null,null,null,1,1,1,1,1,1,1,1,1,2],
+    sumire:      [null,null,null,null,null,null,1,1,1,1,1,1,1,5,4,4],
+    porta:       [null,null,null,null,null,null,7,7,7,7,7,7,6,6,4,4],
+    higashi:     [null,null,null,null,null,null,2,2,2,2,2,2,3,3,3,null],
+    sfat:        [null,null,null,null,null,null,3,3,3,3,3,null,null,null,null,null],
+    cfg:         [null,null,null,null,null,null,2,null,null,null,null,null,null,null,null,null],
+    testigo:     [null,null,null,null,null,null,7,7,7,7,7,7,6,6,4,null],
+    vinculo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,null,1,null],
+    ashigara:    Array(NY).fill(null),
+    littlejumbo: Array(NY).fill(null),
+  },
+  cs:{
+    // 神奈川CS（チャンピオンシップ）U-12 ※2016年度（第36回）〜
+    // [2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025]
+    // 36回(2016)=buddy優勝 37回(2017)=buddy優勝,frontale準
+    // 38回(2018)=buddy優勝,persimmon準,frontale3
+    // 39回(2019)=大豆戸優勝,足柄準,futuro3,azamino4
+    // 40回(2020)=コロナ中止
+    // 41回(2021)=persimmon優勝,futuro準,frontale3
+    // 42回(2022)=buddy優勝,azamino準,marinoso4
+    // 43回(2023)=frontale優勝,futuro準,sch3,marinoso4
+    // 44回(2024)=buddy優勝
+    // 45回(2025)=（未確認→既存データ維持）
+    // 45回(2025)=frontale優勝,東住吉準(対象外),futuro3,azamino4位
+    buddy:       [null,null,null,null,null,null,1,   1,   1,   null,null,null,1,   null,1,   8  ],
+    frontale:    [null,null,null,null,null,null,null,2,   3,   null,null,3,   null,1,   null,1  ],
+    marinos:     [null,null,null,null,null,null,null,null,null,1,   null,null,null,3,   8,   null],
+    sch:         [null,null,null,null,null,null,null,null,null,null,null,null,3,   3,   2,   null],
+    nakanoshima: Array(NY).fill(null),
+    marinoso:    [null,null,null,null,null,null,null,null,null,null,null,null,4,   4,   8,   null],
+    futuro:      [null,null,null,null,null,null,null,null,null,3,   null,2,   null,2,   3,   3  ],
+    azamino:     [null,null,null,null,null,null,null,null,null,4,   null,null,2,   null,null,4  ],
+    persimmon:   [null,null,null,null,null,null,null,null,2,   null,null,1,   null,null,null,null],
+    sumire:      [null,null,null,null,null,null,null,null,null,null,null,null,null,null,3,   null],
+    porta:       Array(NY).fill(null),
+    higashi:     Array(NY).fill(null),
+    sfat:        Array(NY).fill(null),
+    cfg:         Array(NY).fill(null),
+    testigo:     Array(NY).fill(null),
+    vinculo:     Array(NY).fill(null),
+    ashigara:    Array(NY).fill(null),
+    littlejumbo: Array(NY).fill(null),
+  }
+};
+
+const CFGS = {
+  zen:{title:'全日本U-12 神奈川県大会',desc:'2010〜2025年度（第34〜49回） ／ 縦軸：上が高順位 ／ ★=優勝',
+    levels:[{v:1,l:'優勝'},{v:2,l:'準優勝'},{v:3,l:'3〜4位'},{v:4,l:'ベスト4'},{v:8,l:'ベスト8'},{v:16,l:'ベスト16'}],data:'zen'},
+  nis:{title:'日産カップ U-12',desc:'神奈川県少年少女サッカー選手権 高学年 ／ 約500チーム参加',
+    levels:[{v:1,l:'優勝'},{v:2,l:'準優勝'},{v:3,l:'3〜4位'},{v:4,l:'ベスト4'},{v:8,l:'ベスト8'}],data:'nis'},
+  fa:{title:'FAリーグ TOPリーグ 部別',desc:'2016年度〜2025年度 ／ 縦軸：上が上位リーグ',
+    levels:[{v:1,l:'1部上位'},{v:2,l:'1部上'},{v:3,l:'1部中'},{v:4,l:'1部下'},{v:5,l:'2部A'},{v:6,l:'2部B'},{v:7,l:'かもめ'}],data:'fa'},
+  cs:{title:'神奈川県チャンピオンシップ U-12',desc:'フジパンCUP関東大会出場権 ／ 2016年度以降',
+    levels:[{v:1,l:'優勝'},{v:2,l:'準優勝'},{v:3,l:'3〜4位'},{v:4,l:'ベスト4'},{v:8,l:'ベスト8'}],data:'cs'},
+};
+
+// ═══════════════════════════════════════════
+// SCORING
+// ═══════════════════════════════════════════
+function score(data,id){
+  return (data[id]||[]).reduce((s,v)=>{
+    if(v===1)return s+6;if(v===2)return s+4;if(v===3)return s+3;
+    if(v===4)return s+2;if(v===8)return s+1;if(v===16)return s+.5;
+    return s;
+  },0);
+}
+function autoSelect(data,n=7){
+  return TEAMS.map(t=>({id:t.id,sc:score(data,t.id)}))
+    .filter(x=>x.sc>0).sort((a,b)=>b.sc-a.sc).slice(0,n).map(x=>x.id);
+}
+
+// ═══════════════════════════════════════════
+// SVG HELPERS
+// ═══════════════════════════════════════════
+const NS='http://www.w3.org/2000/svg';
+function mk(tag,at={}){
+  const e=document.createElementNS(NS,tag);
+  Object.entries(at).forEach(([k,v])=>e.setAttribute(k,v));
+  return e;
+}
+
+const W=880,H=300,PL=76,PR=20,PT=22,PB=38;
+const CW=W-PL-PR,CH=H-PT-PB;
+
+function ry(cfg,v){
+  if(v===null)return null;
+  const i=cfg.levels.findIndex(l=>l.v===v);
+  if(i<0)return null;
+  return PT+(i/(cfg.levels.length-1))*CH;
+}
+function rx(i){return PL+(i/(NY-1))*CW;}
+
+// ═══════════════════════════════════════════
+// ANIMATION STATE (per key)
+// ═══════════════════════════════════════════
+const STATE = {};
+function getState(key){
+  if(!STATE[key]) STATE[key]={playing:false,frame:0,speed:0.5,raf:null,activeTeams:new Set()};
+  return STATE[key];
+}
+
+// ═══════════════════════════════════════════
+// BUILD STATIC CHART (lines + grid)
+// ═══════════════════════════════════════════
+function buildStaticLayer(key,cfg,data){
+  const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,style:'min-width:560px;width:100%;display:block;'});
+  svg.id=`svg-static-${key}`;
+
+  // band stripes
+  cfg.levels.forEach((_,i)=>{
+    if(i%2===0){
+      const bH=CH/(cfg.levels.length-1);
+      const y=PT+i*bH-bH/2;
+      svg.appendChild(mk('rect',{x:PL,y:Math.max(PT,y),width:CW,height:Math.min(bH,CH-Math.max(0,y-PT)),fill:'rgba(255,255,255,.012)'}));
+    }
+  });
+
+  // H grid + labels
+  cfg.levels.forEach((lv,i)=>{
+    const y=PT+(i/(cfg.levels.length-1))*CH;
+    svg.appendChild(mk('line',{x1:PL,x2:W-PR,y1:y,y2:y,stroke:'rgba(255,255,255,.05)','stroke-dasharray':'3 5'}));
+    const t=mk('text',{x:PL-5,y:y+4,'text-anchor':'end',fill:'#3f4d6b','font-size':'10.5'});
+    t.textContent=lv.l;svg.appendChild(t);
+  });
+
+  // V grid + year labels
+  YEARS.forEach((yr,i)=>{
+    const x=rx(i);
+    svg.appendChild(mk('line',{x1:x,x2:x,y1:PT,y2:H-PB+4,stroke:'rgba(255,255,255,.03)'}));
+    const t=mk('text',{x,y:H-PB+16,'text-anchor':'middle',fill:'#3f4d6b','font-size':'9.5'});
+    t.textContent=(i%2===0)?yr:"'"+String(yr).slice(2);
+    svg.appendChild(t);
+  });
+
+  // axes
+  svg.appendChild(mk('line',{x1:PL,x2:PL,y1:PT,y2:H-PB,stroke:'rgba(255,255,255,.08)'}));
+  svg.appendChild(mk('line',{x1:PL,x2:W-PR,y1:H-PB,y2:H-PB,stroke:'rgba(255,255,255,.08)'}));
+
+  // LINES + static dots per team
+  const state=getState(key);
+  TEAMS.filter(t=>(data[t.id]||[]).some(v=>v!==null)).forEach(team=>{
+    const d=data[team.id]||[];
+    const isOn=state.activeTeams.has(team.id);
+    const g=mk('g',{'data-team':team.id,opacity:isOn?'1':'0.07'});
+    g.id=`g-line-${key}-${team.id}`;
+
+    const pts=[];
+    d.forEach((v,i)=>{const y=ry(cfg,v);if(y!==null)pts.push({x:rx(i),y,v,i});});
+
+    // area
+    if(pts.length>=2){
+      let aD=`M${pts[0].x},${pts[0].y}`;
+      for(let k=1;k<pts.length;k++){
+        const c=(pts[k-1].x+pts[k].x)/2;
+        aD+=` C${c},${pts[k-1].y} ${c},${pts[k].y} ${pts[k].x},${pts[k].y}`;
+      }
+      aD+=` L${pts[pts.length-1].x},${H-PB} L${pts[0].x},${H-PB} Z`;
+      g.appendChild(mk('path',{d:aD,fill:team.color,opacity:'.06','stroke-width':'0'}));
+      let lD=`M${pts[0].x},${pts[0].y}`;
+      for(let k=1;k<pts.length;k++){
+        const c=(pts[k-1].x+pts[k].x)/2;
+        lD+=` C${c},${pts[k-1].y} ${c},${pts[k].y} ${pts[k].x},${pts[k].y}`;
+      }
+      g.appendChild(mk('path',{d:lD,fill:'none',stroke:team.color,'stroke-width':'2.2','stroke-linecap':'round',opacity:'.6'}));
+    }
+
+    // small static dots
+    pts.forEach(({x,y,v,i})=>{
+      const win=v===1;
+      const r=win?7:4;
+      if(win){
+        g.appendChild(mk('circle',{cx:x,cy:y,r:r+5,fill:'none',stroke:team.color,'stroke-width':'1.5',opacity:'.3'}));
+      }
+      g.appendChild(mk('circle',{cx:x,cy:y,r,fill:team.color,stroke:win?'rgba(255,255,255,.8)':'rgba(6,8,16,.7)','stroke-width':'1.5',opacity:'.9'}));
+      if(win){
+        const s=mk('text',{x,y:y+3,'text-anchor':'middle','font-size':'8',fill:'#fff','font-weight':'900'});
+        s.textContent='★';g.appendChild(s);
+      }
+      const hit=mk('circle',{cx:x,cy:y,r:'14',fill:'transparent',style:'cursor:pointer'});
+      const lbl=cfg.levels.find(l=>l.v===v)?.l||v;
+      hit.addEventListener('click',e=>showTip(e,team.name,YEARS[i],lbl,team.color));
+      hit.addEventListener('mousemove',e=>showTip(e,team.name,YEARS[i],lbl,team.color));
+      hit.addEventListener('mouseleave',hideTip);
+      g.appendChild(hit);
+    });
+
+    svg.appendChild(g);
+  });
+
+  return svg;
+}
+
+// ═══════════════════════════════════════════
+// BADGE LAYER (animated)
+// ═══════════════════════════════════════════
+const BADGE_R = 14; // badge radius
+
+function buildBadgeLayer(key,cfg,data){
+  const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,style:'min-width:560px;width:100%;display:block;position:absolute;top:0;left:0;pointer-events:none;'});
+  svg.id=`svg-badge-${key}`;
+
+  const state=getState(key);
+  TEAMS.filter(t=>(data[t.id]||[]).some(v=>v!==null) && state.activeTeams.has(t.id)).forEach(team=>{
+    const d=data[team.id]||[];
+    // find first non-null position for initial placement
+    let firstIdx=d.findIndex(v=>v!==null);
+    if(firstIdx<0)return;
+
+    // 引き出し線：バッジがズレたとき元の点と繋ぐ点線（バッジgより先に描いて背面に）
+    const leader=mk('line',{x1:0,y1:0,x2:0,y2:0,
+      stroke:team.color,'stroke-width':'1.2','stroke-dasharray':'2 2',opacity:'0'});
+    leader.id=`leader-${key}-${team.id}`;
+    svg.appendChild(leader);
+
+    const g=mk('g',{id:`badge-${key}-${team.id}`});
+
+    // outer glow circle
+    const glow=mk('circle',{cx:0,cy:0,r:BADGE_R+4,fill:team.color,opacity:'.2'});
+    glow.id=`glow-${key}-${team.id}`;
+
+    // main circle
+    const circle=mk('circle',{cx:0,cy:0,r:BADGE_R,fill:team.color,stroke:'rgba(255,255,255,.25)','stroke-width':'1.5'});
+    circle.id=`badge-circle-${key}-${team.id}`;
+
+    // text label
+    const txt=mk('text',{x:0,y:0,'text-anchor':'middle','dominant-baseline':'middle','font-size':'8.5','font-weight':'900',fill:team.text,'font-family':'Noto Sans JP, sans-serif'});
+    txt.textContent=team.short;
+    txt.id=`badge-txt-${key}-${team.id}`;
+
+    g.appendChild(glow);g.appendChild(circle);g.appendChild(txt);
+    svg.appendChild(g);
+
+    // set initial position
+    const initY=ry(cfg,d[firstIdx]);
+    const initX=rx(firstIdx);
+    if(initY!==null){
+      g.setAttribute('transform',`translate(${initX},${initY})`);
+    } else {
+      g.setAttribute('opacity','0');
+    }
+  });
+
+  return svg;
+}
+
+// ═══════════════════════════════════════════
+// ANIMATION ENGINE
+// ═══════════════════════════════════════════
+// frame = 0..(NY-1) as float
+//
+// 方針:
+//   データがない年度(null)でも消さず、前後の有効データ間をブリッジ補間して通過。
+//   チームのデータ範囲より前・後(= 最初/最後の有効データの外側)のみフェードアウト。
+//
+function getInterpolatedPos(cfg, data, teamId, frame){
+  const d = data[teamId] || [];
+
+  // 有効インデックス一覧
+  const validIdxs = [];
+  d.forEach((v,i)=>{ if(v!==null) validIdxs.push(i); });
+  if(validIdxs.length === 0) return null;
+
+  const firstValid = validIdxs[0];
+  const lastValid  = validIdxs[validIdxs.length - 1];
+
+  // データ範囲の外側はフェードして非表示
+  const FADE = 0.7; // フェード幅（フレーム数）
+  let opacity = 1;
+  if(frame < firstValid){
+    const dist = firstValid - frame;
+    if(dist >= FADE) return null;
+    opacity = 1 - dist / FADE;
+  } else if(frame > lastValid){
+    const dist = frame - lastValid;
+    if(dist >= FADE) return null;
+    opacity = 1 - dist / FADE;
+  }
+
+  // frame位置の直前・直後の有効インデックスを探す
+  let prevIdx = null, nextIdx = null;
+  for(let i = 0; i < validIdxs.length; i++){
+    if(validIdxs[i] <= frame) prevIdx = validIdxs[i];
+    if(validIdxs[i] >= frame && nextIdx === null) nextIdx = validIdxs[i];
+  }
+
+  // 両端を補完
+  if(prevIdx === null) prevIdx = nextIdx;
+  if(nextIdx === null) nextIdx = prevIdx;
+
+  const y0 = ry(cfg, d[prevIdx]);
+  const y1 = ry(cfg, d[nextIdx]);
+  const x0 = rx(prevIdx);
+  const x1 = rx(nextIdx);
+
+  if(y0 === null && y1 === null) return null;
+  const useY0 = y0 !== null ? y0 : y1;
+  const useY1 = y1 !== null ? y1 : y0;
+
+  // prevIdx〜nextIdx間のt(0..1)
+  const span = nextIdx - prevIdx;
+  const t = span > 0 ? (frame - prevIdx) / span : 0;
+  // ease in-out cubic
+  const et = t < 0.5 ? 4*t*t*t : (1 - Math.pow(-2*t+2,3)/2);
+
+  // X座標はフレームそのもの(グラフ上の正確な位置)
+  const x = rx(frame);
+  const y = useY0 + (useY1 - useY0) * et;
+
+  // 現在フレームに一番近い有効データが優勝かどうか
+  const nearIdx = (Math.abs(frame - prevIdx) <= Math.abs(frame - nextIdx)) ? prevIdx : nextIdx;
+  const isWin = d[nearIdx] === 1;
+
+  return { x, y, visible: true, opacity, isWin };
+}
+
+// ═══════════════════════════════════════════
+// COLLISION AVOIDANCE
+// 同じY座標付近のバッジを扇状に展開する
+// ═══════════════════════════════════════════
+const COLL_THRESH = BADGE_R * 2.4;   // この距離以内なら「衝突」と判定
+const SPREAD_X    = BADGE_R * 2.2;   // 横方向の展開間隔
+const SPREAD_Y    = BADGE_R * 2.2;   // 縦方向の展開間隔（2行になるとき）
+
+function resolveCollisions(positions){
+  // positions: [{id, rawX, rawY, visible}]
+  // → [{id, x, y, visible}] (衝突回避済み)
+
+  const visible = positions.filter(p => p.visible);
+  const result  = {};
+
+  // まず全員をrawXで初期化
+  positions.forEach(p => { result[p.id] = {x: p.rawX, y: p.rawY, visible: p.visible}; });
+
+  // Y座標でグループ化（閾値内に収まるものを同グループ）
+  const used = new Set();
+  const groups = [];
+
+  visible.forEach(p => {
+    if(used.has(p.id)) return;
+    const group = [p];
+    used.add(p.id);
+    visible.forEach(q => {
+      if(used.has(q.id)) return;
+      if(Math.abs(q.rawY - p.rawY) < COLL_THRESH){
+        group.push(q);
+        used.add(q.id);
+      }
+    });
+    groups.push(group);
+  });
+
+  groups.forEach(group => {
+    if(group.length === 1) return; // 衝突なし
+
+    const n = group.length;
+    const baseX = group[0].rawX; // 全員同じX（同年度）
+    const baseY = group.reduce((s,p) => s + p.rawY, 0) / n; // Y重心
+
+    if(n <= 4){
+      // 1行で横に並べる
+      // 中心を baseX に合わせ、等間隔に配置
+      const totalW = (n - 1) * SPREAD_X;
+      const startX = baseX - totalW / 2;
+      group.forEach((p, i) => {
+        result[p.id].x = startX + i * SPREAD_X;
+        result[p.id].y = baseY;
+      });
+    } else {
+      // 2行に分けて並べる（上段 ceil(n/2)、下段 floor(n/2)）
+      const row1 = group.slice(0, Math.ceil(n / 2));
+      const row2 = group.slice(Math.ceil(n / 2));
+
+      const r1W = (row1.length - 1) * SPREAD_X;
+      row1.forEach((p, i) => {
+        result[p.id].x = baseX - r1W/2 + i * SPREAD_X;
+        result[p.id].y = baseY - SPREAD_Y / 2;
+      });
+      const r2W = (row2.length - 1) * SPREAD_X;
+      row2.forEach((p, i) => {
+        result[p.id].x = baseX - r2W/2 + i * SPREAD_X;
+        result[p.id].y = baseY + SPREAD_Y / 2;
+      });
+    }
+  });
+
+  return result;
+}
+
+function animateBadges(key,cfg,data){
+  const state=getState(key);
+  const frameFloat=state.frame;
+
+  // year indicator
+  const yEl=document.getElementById(`year-ind-${key}`);
+  if(yEl) yEl.textContent=YEARS[Math.min(Math.round(frameFloat),NY-1)];
+
+  // seeker
+  const seeker=document.getElementById(`seeker-${key}`);
+  if(seeker) seeker.value=frameFloat/(NY-1)*100;
+
+  // 1) まず全チームのraw座標を収集
+  const activeTeams = TEAMS.filter(t=>state.activeTeams.has(t.id));
+  const rawPositions = activeTeams.map(team => {
+    const pos = getInterpolatedPos(cfg, data, team.id, frameFloat);
+    return {
+      id: team.id,
+      rawX: pos ? pos.x : 0,
+      rawY: pos ? pos.y : 0,
+      visible: !!pos,
+      opacity: pos ? (pos.opacity !== undefined ? pos.opacity : 1) : 0,
+      isWin: pos ? pos.isWin : false,
+    };
+  });
+
+  // 2) 衝突回避して最終座標を得る
+  const resolved = resolveCollisions(rawPositions);
+
+  // 3) DOMに反映
+  activeTeams.forEach(team => {
+    const g = document.getElementById(`badge-${key}-${team.id}`);
+    if(!g) return;
+    const r = resolved[team.id];
+    const rawP = rawPositions.find(p=>p.id===team.id);
+    if(!r || !r.visible){
+      g.setAttribute('opacity','0');
+      return;
+    }
+
+    const finalOpacity = rawP ? rawP.opacity : 1;
+    g.setAttribute('opacity', finalOpacity.toFixed(3));
+    g.setAttribute('transform',`translate(${r.x.toFixed(2)},${r.y.toFixed(2)})`);
+
+    // 接続ライン
+    const lineEl = document.getElementById(`leader-${key}-${team.id}`);
+    if(lineEl && rawP){
+      const dx = r.x - rawP.rawX;
+      const dy = r.y - rawP.rawY;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if(dist > BADGE_R + 2){
+        // ラインを表示: 元の点→バッジ中心方向に BADGE_R 手前まで
+        const angle = Math.atan2(dy, dx);
+        lineEl.setAttribute('x1', rawP.rawX.toFixed(2));
+        lineEl.setAttribute('y1', rawP.rawY.toFixed(2));
+        lineEl.setAttribute('x2', (r.x - Math.cos(angle)*(BADGE_R+1)).toFixed(2));
+        lineEl.setAttribute('y2', (r.y - Math.sin(angle)*(BADGE_R+1)).toFixed(2));
+        lineEl.setAttribute('opacity','0.5');
+      } else {
+        lineEl.setAttribute('opacity','0');
+      }
+    }
+
+    // pulse on win
+    const circle=document.getElementById(`badge-circle-${key}-${team.id}`);
+    const glow=document.getElementById(`glow-${key}-${team.id}`);
+    const rp = rawPositions.find(p=>p.id===team.id);
+    if(rp && rp.isWin && circle){
+      circle.setAttribute('r','17');
+      if(glow) glow.setAttribute('r','24');
+    } else if(circle){
+      circle.setAttribute('r',String(BADGE_R));
+      if(glow) glow.setAttribute('r',String(BADGE_R+4));
+    }
+  });
+}
+
+function startAnimation(key,cfg,data){
+  const state=getState(key);
+  if(state.raf) cancelAnimationFrame(state.raf);
+
+  const FRAMES_PER_YEAR=60/state.speed; // frames to spend per year transition
+  let lastTs=null;
+
+  function loop(ts){
+    if(!state.playing){state.raf=null;return;}
+    if(!lastTs){lastTs=ts;}
+    const dt=(ts-lastTs)/1000; // seconds
+    lastTs=ts;
+
+    state.frame+=dt*state.speed*1.5; // 1.5 years per second at speed=1
+
+    if(state.frame>=NY-1){
+      state.frame=NY-1;
+      animateBadges(key,cfg,data);
+      state.playing=false;
+      updatePlayBtn(key);
+      state.raf=null;
+      return;
+    }
+
+    animateBadges(key,cfg,data);
+    state.raf=requestAnimationFrame(loop);
+  }
+  state.raf=requestAnimationFrame(loop);
+}
+
+function togglePlay(key,cfg,data){
+  const state=getState(key);
+  if(state.frame>=NY-1) state.frame=0; // restart
+  state.playing=!state.playing;
+  updatePlayBtn(key);
+  if(state.playing) startAnimation(key,cfg,data);
+}
+
+function updatePlayBtn(key){
+  const btn=document.getElementById(`btn-play-${key}`);
+  if(!btn)return;
+  const state=getState(key);
+  if(state.playing){
+    btn.innerHTML=`<svg viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/></svg>一時停止`;
+  } else {
+    btn.innerHTML=`<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>${state.frame>0&&state.frame<NY-1?'再開':'▶ 再生'}`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// PANEL RENDER
+// ═══════════════════════════════════════════
+const ACT={};
+
+function renderPanel(key){
+  const el=document.getElementById('p-'+key);
+  if(el.dataset.built)return;
+  el.dataset.built='1';
+
+  const cfg=CFGS[key];
+  const data=RAW[cfg.data];
+
+  // init state
+  const state=getState(key);
+  const top=autoSelect(data,7);
+  top.forEach(id=>state.activeTeams.add(id));
+
+  // shell
+  const sh=document.createElement('div');
+  sh.className='cshell';
+
+  // controls bar
+  const ctrl=document.createElement('div');
+  ctrl.className='ctrl-bar';
+  ctrl.innerHTML=`
+    <div style="flex:1;min-width:0;">
+      <div class="ctrl-title">${cfg.title}</div>
+      <div class="ctrl-sub">${cfg.desc}</div>
+    </div>
+    <div class="year-indicator" id="year-ind-${key}">${YEARS[0]}</div>
+    <button class="btn-play" id="btn-play-${key}">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>▶ 再生
+    </button>
+    <div class="speed-wrap">
+      速度：
+      ${[0.5,1,2,3].map(s=>`<button class="speed-btn${s===0.5?' on':''}" data-key="${key}" data-speed="${s}" onclick="setSpeed('${key}',${s},this)">${s}x</button>`).join('')}
+    </div>
+  `;
+  sh.appendChild(ctrl);
+
+  // seek bar
+  const seekWrap=document.createElement('div');
+  seekWrap.className='seek-wrap';
+  seekWrap.innerHTML=`
+    <span class="seek-label">${YEARS[0]}</span>
+    <input type="range" class="seeker" id="seeker-${key}" min="0" max="100" step="0.1" value="0"/>
+    <span class="seek-label">${YEARS[NY-1]}</span>
+  `;
+  sh.appendChild(seekWrap);
+
+  // svg container (overlay)
+  const svgWrap=document.createElement('div');
+  svgWrap.className='cscroll';
+  const svgContainer=document.createElement('div');
+  svgContainer.style.position='relative';
+  const staticSvg=buildStaticLayer(key,cfg,data);
+  const badgeSvg=buildBadgeLayer(key,cfg,data);
+  svgContainer.appendChild(staticSvg);
+  svgContainer.appendChild(badgeSvg);
+  svgWrap.appendChild(svgContainer);
+  sh.appendChild(svgWrap);
+
+  // legend
+  const lg=document.createElement('div');
+  lg.className='legend';
+  lg.innerHTML=`
+    <div class="leg"><span class="ld" style="background:var(--gold);box-shadow:0 0 0 2px rgba(245,158,11,.35)"></span>優勝（★パルス）</div>
+    <div class="leg"><span class="ld" style="background:rgba(255,255,255,.5)"></span>上位入賞</div>
+    <div class="leg" style="font-size:10px;color:var(--muted);">バッジ＝チームロゴ ／ 色＝ユニフォームカラー</div>
+  `;
+  sh.appendChild(lg);
+
+  // team chips
+  const sel=document.createElement('div');
+  sel.className='selector';
+  const st2=document.createElement('div');
+  st2.className='stitle';
+  st2.textContent='チーム表示切替（スコア上位7チームを自動表示）';
+  const ab=document.createElement('button');
+  ab.className='sall';ab.textContent='全て切替';
+  let ao=true;
+  ab.onclick=()=>{
+    ao=!ao;
+    TEAMS.forEach(t=>{
+      if(ao)state.activeTeams.add(t.id);else state.activeTeams.delete(t.id);
+      document.querySelector(`[data-k="${key}"][data-t="${t.id}"]`)?.classList.toggle('on',ao);
+      const gl=document.getElementById(`g-line-${key}-${t.id}`);
+      if(gl)gl.setAttribute('opacity',ao?'1':'0.07');
+      const bg=document.getElementById(`badge-${key}-${t.id}`);
+      if(bg)bg.setAttribute('opacity',ao?'1':'0');
+    });
+    // rebuild badge layer
+    rebuildBadgeLayer(key,cfg,data,svgContainer,staticSvg);
+  };
+  st2.appendChild(ab);sel.appendChild(st2);
+
+  const chips=document.createElement('div');chips.className='chips';
+  TEAMS.filter(t=>(data[t.id]||[]).some(v=>v!==null))
+    .sort((a,b)=>score(data,b.id)-score(data,a.id))
+    .forEach(team=>{
+      const c=document.createElement('div');
+      c.className='chip'+(state.activeTeams.has(team.id)?' on':'');
+      c.dataset.k=key;c.dataset.t=team.id;
+      c.innerHTML=`<span class="cdot" style="background:${team.color}"></span>${team.name}`;
+      c.onclick=()=>{
+        const on=state.activeTeams.has(team.id);
+        if(on)state.activeTeams.delete(team.id);else state.activeTeams.add(team.id);
+        c.classList.toggle('on',!on);
+        const gl=document.getElementById(`g-line-${key}-${team.id}`);
+        if(gl)gl.setAttribute('opacity',!on?'1':'0.07');
+        rebuildBadgeLayer(key,cfg,data,svgContainer,staticSvg);
+      };
+      chips.appendChild(c);
+    });
+  sel.appendChild(chips);
+  sh.appendChild(sel);
+  el.appendChild(sh);
+
+  // PLAY BUTTON EVENT
+  document.getElementById(`btn-play-${key}`).addEventListener('click',()=>togglePlay(key,cfg,data));
+
+  // SEEKER EVENT
+  document.getElementById(`seeker-${key}`).addEventListener('input',function(){
+    const state2=getState(key);
+    state2.frame=(this.value/100)*(NY-1);
+    if(state2.playing){state2.playing=false;cancelAnimationFrame(state2.raf);updatePlayBtn(key);}
+    animateBadges(key,cfg,data);
+  });
+}
+
+function rebuildBadgeLayer(key,cfg,data,container,staticSvg){
+  const old=document.getElementById(`svg-badge-${key}`);
+  if(old)old.remove();
+  const newBadge=buildBadgeLayer(key,cfg,data);
+  container.appendChild(newBadge);
+  animateBadges(key,cfg,data);
+}
+
+function setSpeed(key,spd,btn){
+  const state=getState(key);
+  state.speed=spd;
+  document.querySelectorAll(`[data-key="${key}"][data-speed]`).forEach(b=>b.classList.toggle('on',parseFloat(b.dataset.speed)===spd));
+}
+
+// ═══════════════════════════════════════════
+// TOOLTIP
+// ═══════════════════════════════════════════
+const tip=document.getElementById('tt');
+let tv=false;
+function showTip(e,name,year,result,color){
+  tip.innerHTML=`<span class="tn" style="color:${color}">${name}</span><span class="tr">${result}</span><span class="ty">${year}年度</span>`;
+  tip.classList.add('on');tv=true;posTip(e);
+}
+function hideTip(){tip.classList.remove('on');tv=false;}
+function posTip(e){
+  const x=e.clientX+14,y=e.clientY-60;
+  tip.style.left=Math.min(Math.max(x,8),window.innerWidth-230)+'px';
+  tip.style.top=Math.max(y,8)+'px';
+}
+document.addEventListener('mousemove',e=>{if(tv)posTip(e);});
+document.addEventListener('touchstart',e=>{if(!e.target.closest('circle'))hideTip();},{passive:true});
+
+// ═══════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════
+function sw(btn){
+  const key=btn.dataset.key;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('p-'+key).classList.add('on');
+  renderPanel(key);
+}
+
+renderPanel('zen');
+</script>
+</body>
+</html>
