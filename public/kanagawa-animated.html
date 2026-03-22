@@ -369,9 +369,8 @@ function buildStaticLayer(key,cfg,data){
   // H grid + labels
   cfg.levels.forEach((lv,i)=>{
     const y=PT+(i/(cfg.levels.length-1))*CH;
-    svg.appendChild(mk('line',{x1:PL,x2:W-PR,y1:y,y2:y,stroke:'rgba(255,255,255,.07)','stroke-dasharray':'3 5'}));
-    const t=mk('text',{x:PL-5,y:y+4,'text-anchor':'end',fill:'#4a5a7a','font-size':'10.5'});
-    t.textContent=lv.l;svg.appendChild(t);
+    svg.appendChild(mk('line',{x1:PL,x2:W-PR,y1:y,y2:y,stroke:'rgba(255,255,255,.05)','stroke-dasharray':'3 5'}));
+    // ラベルはHTML overlayで表示するためSVG側は省略
   });
 
   // V grid + year labels
@@ -917,7 +916,36 @@ function renderPanel(key){
   svgContainer.appendChild(staticSvg);
   svgContainer.appendChild(badgeSvg);
   svgWrap.appendChild(svgContainer);
-  sh.appendChild(svgWrap);
+
+  // ── Y軸ラベル固定オーバーレイ（スクロール外に独立配置）──
+  // cscroll の横スクロールに巻き込まれないよう、ラッパーを position:relative にして
+  // position:absolute で左端に貼り付ける
+  const chartWrap=document.createElement('div');
+  chartWrap.style.cssText='position:relative;';
+  chartWrap.appendChild(svgWrap);
+
+  const axisOverlay=document.createElement('div');
+  axisOverlay.style.cssText=`
+    position:absolute;left:0;top:0;bottom:0;
+    width:${PL+4}px;z-index:20;pointer-events:none;
+    background:linear-gradient(90deg,#0b0e1a 78%,transparent 100%);
+  `;
+  cfg.levels.forEach((lv,i)=>{
+    const pct=(PT+(i/(cfg.levels.length-1))*CH)/H*100;
+    const sp=document.createElement('span');
+    sp.style.cssText=`
+      position:absolute;right:8px;top:${pct}%;
+      transform:translateY(-50%);
+      font-size:10.5px;font-weight:700;
+      color:#c0cce0;font-family:'Noto Sans JP',sans-serif;
+      white-space:nowrap;letter-spacing:.02em;
+    `;
+    sp.textContent=lv.l;
+    axisOverlay.appendChild(sp);
+  });
+  chartWrap.appendChild(axisOverlay);
+
+  sh.appendChild(chartWrap);
 
   // legend
   const lg=document.createElement('div');
