@@ -27,9 +27,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   'その他':       'rgba(156,163,175,0.85)',
 };
 
-/** yyyy-MM-dd → Date (local) */
+/** yyyy/mm/dd → Date (local) */
 function parseDate(dateStr: string): Date {
-  const [y, m, d] = dateStr.split('-').map(Number);
+  const [y, m, d] = dateStr.split('/').map(Number);
   return new Date(y, m - 1, d);
 }
 
