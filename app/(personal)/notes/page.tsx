@@ -27,6 +27,7 @@ import NoteCard from '@/components/NoteCard';
 import NoteForm from '@/components/NoteForm';
 import PracticeStats, { parseGroupKey } from '@/components/PracticeStats';
 import PracticeBarChart from '@/components/PracticeBarChart';
+import Practice14WeekChart from '@/components/Practice14WeekChart';
 import { PracticeNote } from '@/lib/types';
 
 export default function NotesPage() {
@@ -197,10 +198,16 @@ export default function NotesPage() {
               onToggleImprovement={toggleImprovementItem}
             />
             {practiceNotes.length > 0 && (
-              <div className="mt-3 bg-slate-800/80 rounded-2xl p-4 shadow-xl border border-white/10">
-                <p className="text-xs font-semibold text-gray-400 mb-2">📅 月別練習回数</p>
-                <PracticeBarChart notes={practiceNotes} />
-              </div>
+              <>
+                <div className="mt-3 bg-slate-800/80 rounded-2xl p-4 shadow-xl border border-white/10">
+                  <p className="text-xs font-semibold text-gray-400 mb-2">📅 直近14週間の練習回数</p>
+                  <Practice14WeekChart notes={practiceNotes} />
+                </div>
+                <div className="mt-3 bg-slate-800/80 rounded-2xl p-4 shadow-xl border border-white/10">
+                  <p className="text-xs font-semibold text-gray-400 mb-2">📅 月別練習回数</p>
+                  <PracticeBarChart notes={practiceNotes} />
+                </div>
+              </>
             )}
           </>
         )}
