@@ -901,8 +901,7 @@ function renderPanel(key){
 
   // init state
   const state=getState(key);
-  const top=autoSelect(data,7);
-  top.forEach(id=>state.activeTeams.add(id));
+  TEAMS.filter(t=>(data[t.id]||[]).some(v=>v!==null)).forEach(t=>state.activeTeams.add(t.id));
   // データ範囲をstateに保存し、初期フレームをデータ開始年に設定
   state.firstDataIdx=firstDataIdx;
   state.lastDataIdx=lastDataIdx;
@@ -997,7 +996,7 @@ function renderPanel(key){
   sel.className='selector';
   const st2=document.createElement('div');
   st2.className='stitle';
-  st2.textContent='チーム表示切替（スコア上位7チームを自動表示）';
+  st2.textContent='チーム表示切替';
   const ab=document.createElement('button');
   ab.className='sall';ab.textContent='全て切替';
   let ao=true;
