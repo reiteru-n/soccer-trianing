@@ -149,7 +149,7 @@ function UniqueUsersChart({ entries, excludedIps }: { entries: AccessLogEntry[];
     const d = new Date(e.ts);
     const key = `${d.getMonth() + 1}/${d.getDate()}`;
     if (!dayIps[key]) dayIps[key] = new Set();
-    dayIps[key].add(e.ip);
+    dayIps[key].add(e.device_id && e.device_id !== 'unknown' ? `device:${e.device_id}` : e.ip);
   }
   const data = Object.entries(dayIps)
     .map(([date, ips]) => ({ date, count: ips.size }))
@@ -178,7 +178,7 @@ function UniqueUsersChart({ entries, excludedIps }: { entries: AccessLogEntry[];
 
   return (
     <div className="bg-slate-800/60 border border-white/5 rounded-xl px-4 py-4 mb-4">
-      <h2 className="text-xs font-bold text-slate-300 mb-2">👥 ユニークユーザー数（IP別）</h2>
+      <h2 className="text-xs font-bold text-slate-300 mb-2">👥 ユニークユーザー数（デバイスID別）</h2>
       <svg viewBox={`0 0 ${VW} ${totalH}`} className="w-full overflow-visible">
         {/* area fill */}
         <path d={areaPath} fill="rgba(99,102,241,0.12)" />
