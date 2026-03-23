@@ -633,7 +633,17 @@ function getInterpolatedPos(cfg, data, teamId, frame){
 
   // 現在フレームに一番近い有効データが優勝かどうか
   const nearIdx = (Math.abs(frame - prevIdx) <= Math.abs(frame - nextIdx)) ? prevIdx : nextIdx;
-  const isWin = d[nearIdx] === 1;
+
+  // null年度フェード: 最近のvalidデータから距離が離れるほど透明化。
+  // buddy(2015優勝→2016null→2018優勝)が2016で優勝ラインに表示される問題を解消。
+  // dist=0(データあり)→opacity変化なし / dist=0.5→約18% / dist=1(隣の年)→7%
+  const distToNearest = validIdxs.reduce((mn, vi) => Math.min(mn, Math.abs(vi - frame)), Infinity);
+  if(distToNearest > 0.05) {
+    const nullFade = Math.max(0.07, Math.pow(Math.max(0, 1 - distToNearest), 2.5));
+    opacity = Math.min(opacity, nullFade);
+  }
+  // isWin: 実データのある年(dist<0.1)でのみtrue（null年での優勝パルス防止）
+  const isWin = distToNearest < 0.1 && d[nearIdx] === 1;
 
   return { x, y, visible: true, opacity, isWin };
 }
@@ -757,7 +767,8 @@ function animateBadges(key,cfg,data){
       id: team.id,
       rawX: pos ? pos.x : 0,
       rawY: pos ? pos.y : 0,
-      visible: !!pos,
+      // nullフェードで透明化されたバッジは衝突判定対象外（spread-outさせない）
+      visible: !!pos && (pos.opacity === undefined || pos.opacity > 0.15),
       opacity: pos ? (pos.opacity !== undefined ? pos.opacity : 1) : 0,
       isWin: pos ? pos.isWin : false,
     };
