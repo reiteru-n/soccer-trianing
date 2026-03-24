@@ -60,6 +60,17 @@ const ok = (await hasValidCookie(req, 'team_session', 'team'))
 if (!ok) { ... }
 ```
 
+#### ログインAPIも上位互換が必要（落とし穴）
+
+proxy.ts だけ直しても不十分。ログインフローを追うと：
+
+1. `/sch` アクセス → proxy が `/login?type=team` にリダイレクト
+2. ログインページが `{ type: 'team', password }` を送信
+3. **API が `TEAM_PASSWORD` と照合するため、家族PWを入力しても弾かれる**
+
+`app/api/auth/route.ts` の `type === 'team'` ハンドラでも、
+**FAMILY_PASSWORD に一致したら `family_session` を発行する**処理が必須。
+
 ---
 
 ## SCHチームページ（`/sch`）

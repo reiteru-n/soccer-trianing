@@ -36,8 +36,22 @@ export async function POST(req: NextRequest) {
   }
 
   if (type === 'team') {
-    const expected = process.env.TEAM_PASSWORD;
-    if (!expected || password.toLowerCase() !== expected.toLowerCase()) {
+    const teamPw = process.env.TEAM_PASSWORD;
+    const familyPw = process.env.FAMILY_PASSWORD;
+    const pw = password.toLowerCase();
+    // family password is superset: also accepted on team login, issues family_session
+    if (familyPw && pw === familyPw.toLowerCase()) {
+      const res = NextResponse.json({ ok: true });
+      res.cookies.set('family_session', await makeToken('family'), {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: COOKIE_MAX_AGE,
+      });
+      logChange({ ts: new Date().toISOString(), action: 'login', detail: 'type=team(via family)', ip: getIp(req), ua: getUa(req), device_id: getDeviceId(req) });
+      return res;
+    }
+    if (!teamPw || pw !== teamPw.toLowerCase()) {
       return NextResponse.json({ error: 'パスワードが違います' }, { status: 401 });
     }
     const res = NextResponse.json({ ok: true });
