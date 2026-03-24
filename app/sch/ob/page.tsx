@@ -340,8 +340,8 @@ export default function ObPage() {
       {/* ─── JFL・地域リーグOB ─── */}
       <SectionHeader
         icon="🏅"
-        title="JFL・地域リーグのOB"
-        sub="SCH出身でプロ準相当リーグで活躍する選手たち"
+        title="JFL・Jリーグ（その他）のOB"
+        sub="SCH Jr（小学部）・JY（中学部）卒業後にプロ準相当以上で活躍"
       />
 
       {[
@@ -368,6 +368,21 @@ export default function ObPage() {
         {
           name: '西山 大輝', kana: 'にしやま だいき', birth: '—',
           career: 'SCH.FC → クリアソン新宿（JFL）',
+          src: 'https://www.sch-fc.com/pages/246/',
+        },
+        {
+          name: '土佐 陸翼', kana: 'とさ りくと', birth: '—（SCH JY中学部卒）',
+          career: 'SCH FC JY → 栃木シティFC（J3優勝・J2昇格 2025〜）',
+          src: 'https://www.sch-fc.com/pages/246/',
+        },
+        {
+          name: '国本 玲央', kana: 'くにもと れお', birth: '（SCH JY中学部 2013年度卒）',
+          career: 'SCH FC JY → 暁星国際高 → レノファ山口FC（J2） → 新潟シンガポール等',
+          src: 'https://www.sch-fc.com/pages/246/',
+        },
+        {
+          name: '北村 涼太', kana: 'きたむら りょうた', birth: '（SCH JY中学部 2010年度卒）',
+          career: 'SCH FC JY → 関東学院大 → 福島ユナイテッドFC（J3）',
           src: 'https://www.sch-fc.com/pages/246/',
         },
       ].map((p) => (
@@ -473,7 +488,7 @@ export default function ObPage() {
             club: '横浜F・マリノス系',
             count: '12+名',
             color: '#60a5fa',
-            players: '松村晃助・中村翼・角田惠風・岩崎真波・小林夏生・金丸希陽・小漉良太・須見玲央斗・今村涼也・河合涼聖 ほか',
+            players: '松村晃助・中村翼・角田惠風・岩崎真波・小林夏生・金丸希陽・関一成・小漉良太・須見玲央斗・伊藤駿 ほか',
             note: 'JY本体 / JY追浜 / ユース',
           },
           {
@@ -535,9 +550,9 @@ export default function ObPage() {
           { year: '2015年度', a: false, name: '増田 健昇', dest: '横浜FC ユース → 早稲田大 → 横河武蔵野（JFL）' },
           { year: '2016年度', a: false, name: '松村 晃助', dest: '横浜FM JY追浜 → ユース → 法政大 → 横浜FM（J1）' },
           { year: '〜2017年度', a: true, name: '齋藤 俊輔', dest: '横浜FMプライマリー → JY → 桐光学園 → 水戸(J2) → ベルギー' },
-          { year: '2021年度', a: false, name: '金丸 希陽 ほか', dest: '横浜FM JY追浜（小漉良太・須見玲央斗 同在籍）' },
-          { year: '2022年度', a: false, name: '18名 卒業', dest: '川崎F 3名・横浜FM 2名・横浜FC 1名・湘南BM 2名・SCH JY 6名・他 4名' },
-          { year: '2023年度', a: false, name: '15名 卒業', dest: '横浜FM 4名・横浜FC 2名・川崎F 1名・湘南BM 4名・SCH JY 2名・他 2名' },
+          { year: '2021年度', a: false, name: '金丸 希陽', dest: '横浜FM JY追浜 → マリノスユース（2025〜）' },
+          { year: '2022年度 計18名', a: false, name: '関 一成・小漉 良太・須見 玲央斗 ほか', dest: '横浜FM JY→ユース / 川崎F3名・横浜FC1名・SCH JY6名 等' },
+          { year: '2023年度 計15名', a: false, name: '15名 卒業', dest: '横浜FM4名・横浜FC2名・川崎F1名・湘南BM4名・SCH JY2名 等' },
         ].map((row, i) => (
           <div key={i} className="grid grid-cols-[70px_1fr_1fr] px-3 py-2 border-b border-white/5 last:border-0 items-start">
             <p className="text-[#f59e0b] text-[10px] font-bold leading-tight pt-0.5">
