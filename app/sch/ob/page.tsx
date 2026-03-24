@@ -459,6 +459,99 @@ export default function ObPage() {
         <Src href="https://www.sch-fc.com/" label="SCH公式サイト（OB情報）" />
       </div>
 
+      {/* ─── 年度別進路まとめ ─── */}
+      <SectionHeader
+        icon="📋"
+        title="年度別 輩出実績"
+        sub="SCH卒業後の進路一覧（卒業年度順）"
+      />
+
+      {/* ── 進路先別カード (FC Porta スタイル) ── */}
+      <div className="mx-4 mb-4 space-y-2">
+        {[
+          {
+            club: '横浜F・マリノス系',
+            count: '12+名',
+            color: '#60a5fa',
+            players: '松村晃助・中村翼・角田惠風・岩崎真波・小林夏生・金丸希陽・小漉良太・須見玲央斗・今村涼也・河合涼聖 ほか',
+            note: 'JY本体 / JY追浜 / ユース',
+          },
+          {
+            club: '横浜FC系',
+            count: '3+名',
+            color: '#4ade80',
+            players: '佐藤夏樹・増田健昇 ほか',
+            note: 'JY / ユース',
+          },
+          {
+            club: '川崎フロンターレ',
+            count: '3+名',
+            color: '#f59e0b',
+            players: '2022年度 3名（生田2・等々力1） ほか',
+            note: 'JY',
+          },
+          {
+            club: '湘南ベルマーレ',
+            count: '6+名',
+            color: '#c084fc',
+            players: '2022年度 2名・2023年度 4名（JY/WAIST/EAST）',
+            note: 'JY / WAIST / EAST',
+          },
+          {
+            club: 'ノジマステラ 神奈川',
+            count: '1+名',
+            color: '#f87171',
+            players: '小野奈菜（WEリーグプロ）・2023年度 Avvenire 1名',
+            note: 'WEリーグ / Avvenire（育成）',
+          },
+        ].map((item) => (
+          <div key={item.club} className="bg-[#0b0e1a] border border-white/8 rounded-xl px-4 py-3">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <p className="text-white text-[13px] font-bold">{item.club}</p>
+              <span className="text-[11px] font-black" style={{ color: item.color }}>{item.count}</span>
+            </div>
+            <p className="text-[#a0b4c8] text-[10px] leading-relaxed">{item.players}</p>
+            <p className="text-[#3f4d6b] text-[9px] mt-0.5">{item.note}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── 年度別一覧テーブル ── */}
+      <div className="mx-4 mb-4 bg-[#0b0e1a] border border-white/8 rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-[70px_1fr_1fr] bg-[#0d1530] px-3 py-2 border-b border-white/8">
+          <p className="text-[#3f4d6b] text-[9px] font-bold">卒業年度</p>
+          <p className="text-[#3f4d6b] text-[9px] font-bold">選手 / 人数</p>
+          <p className="text-[#3f4d6b] text-[9px] font-bold">主な進路先</p>
+        </div>
+        {[
+          { year: '〜2010年度', a: true, name: '阿部 隼人', dest: '横浜FMアカデミー → FCティアモ枚方（JFL）' },
+          { year: '2011年度', a: true, name: '小野 奈菜', dest: '日テレメニーナ → 神奈川大 → ノジマステラ（WEリーグ）' },
+          { year: '2013年度', a: false, name: '小林 夏生', dest: '横浜FM ユース → 順天堂大（U-17日本代表）' },
+          { year: '2014年度', a: false, name: '中村 翼', dest: '横浜FM JY → ユース → 法政大 → 福島（J3）' },
+          { year: '2014年度', a: false, name: '平野 元稀', dest: '東急Sレイエス → 帝京第三高 → 流通経済大 → YSCC（JFL）' },
+          { year: '2015年度', a: false, name: '岩崎 真波', dest: '横浜FM JY → ユース → 中央大（U-15・16代表）' },
+          { year: '2015年度', a: false, name: '佐藤 夏樹', dest: '横浜FC JY' },
+          { year: '2015年度', a: false, name: '角田 惠風', dest: '横浜FM JY追浜 → ユース → 慶應大 → 柏（J1）' },
+          { year: '2015年度', a: false, name: '増田 健昇', dest: '横浜FC ユース → 早稲田大 → 横河武蔵野（JFL）' },
+          { year: '2016年度', a: false, name: '松村 晃助', dest: '横浜FM JY追浜 → ユース → 法政大 → 横浜FM（J1）' },
+          { year: '〜2017年度', a: true, name: '齋藤 俊輔', dest: '横浜FMプライマリー → JY → 桐光学園 → 水戸(J2) → ベルギー' },
+          { year: '2021年度', a: false, name: '金丸 希陽 ほか', dest: '横浜FM JY追浜（小漉良太・須見玲央斗 同在籍）' },
+          { year: '2022年度', a: false, name: '18名 卒業', dest: '川崎F 3名・横浜FM 2名・横浜FC 1名・湘南BM 2名・SCH JY 6名・他 4名' },
+          { year: '2023年度', a: false, name: '15名 卒業', dest: '横浜FM 4名・横浜FC 2名・川崎F 1名・湘南BM 4名・SCH JY 2名・他 2名' },
+        ].map((row, i) => (
+          <div key={i} className="grid grid-cols-[70px_1fr_1fr] px-3 py-2 border-b border-white/5 last:border-0 items-start">
+            <p className="text-[#f59e0b] text-[10px] font-bold leading-tight pt-0.5">
+              {row.year}{row.a && <span className="text-[#3f4d6b] text-[8px]">※</span>}
+            </p>
+            <p className="text-white text-[11px] font-semibold leading-tight pr-2">{row.name}</p>
+            <p className="text-[#60a5fa] text-[10px] leading-tight">{row.dest}</p>
+          </div>
+        ))}
+        <div className="px-3 py-2 bg-[#0d1530]">
+          <p className="text-[#3f4d6b] text-[8px]">※ 推定年度。SCHの在籍期間により実際と異なる場合があります。2022・2023年度は人数のみ判明（個人名未確認）。</p>
+        </div>
+      </div>
+
       {/* ─── 強豪JY・ユース進路 ─── */}
       <SectionHeader
         icon="🏃"
@@ -504,51 +597,6 @@ export default function ObPage() {
       <div className="mx-4 mb-2 flex flex-wrap gap-2">
         <Src href="https://www.sch-fc.com/" label="SCH公式サイト（OB情報）" />
         <Src href="https://www.f-marinos.com/team/academy/player/jryouth" label="横浜F・マリノス JY選手一覧" />
-      </div>
-
-      {/* ─── 進路イメージ ─── */}
-      <SectionHeader
-        icon="🗺️"
-        title="SCHからの代表的な進路"
-        sub="こんな道が待っている"
-      />
-
-      <div className="mx-4 bg-[#0b0e1a] border border-white/8 rounded-2xl p-4">
-        <div className="space-y-3">
-          {[
-            { step: 'SCH.FC（小学生）', color: '#4ade80', icon: '⚽' },
-            { step: '強豪JY（横浜FM・横浜FC など）', color: '#60a5fa', icon: '🏃' },
-            { step: '強豪ユース・強豪高校', color: '#c084fc', icon: '🏫' },
-            { step: '大学サッカー部 / プロアカデミー', color: '#f59e0b', icon: '🎓' },
-            { step: 'Jリーグプロ・WEリーグ・日本代表', color: '#f87171', icon: '🇯🇵' },
-          ].map((item, i, arr) => (
-            <div key={i}>
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0"
-                  style={{ backgroundColor: `${item.color}20`, border: `1px solid ${item.color}50` }}
-                >
-                  {item.icon}
-                </div>
-                <p className="text-white text-[13px] font-semibold">{item.step}</p>
-              </div>
-              {i < arr.length - 1 && (
-                <div className="ml-4 w-0.5 h-3 bg-white/10 my-0.5" />
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] rounded-xl px-4 py-3">
-          <p className="text-[#4ade80] text-[11px] font-bold mb-1">SCHにいると、こんな可能性がある！</p>
-          <ul className="text-[#a0b4c8] text-[11px] space-y-0.5">
-            <li>✅ 横浜F・マリノス/横浜FCのJYへ複数名が進学</li>
-            <li>✅ J1・J2・J3・WEリーグ・JFL・海外でも活躍</li>
-            <li>✅ U-15〜U-20まで各年代の日本代表に選出</li>
-            <li>✅ ベルギー1部リーグへの海外移籍実績</li>
-            <li>✅ ワールドカップ出場・優勝の実績</li>
-          </ul>
-        </div>
       </div>
 
       {/* ─── データソース ─── */}
