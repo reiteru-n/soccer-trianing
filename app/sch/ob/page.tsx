@@ -59,26 +59,34 @@ interface PlayerCardProps {
 
 function PlayerCard({ name, nameKana, birth, position, career, tags, sources, highlight }: PlayerCardProps) {
   return (
-    <div className="mx-4 mb-3 bg-[#0b0e1a] border border-white/8 rounded-2xl overflow-hidden">
-      {highlight && (
-        <div className="bg-gradient-to-r from-[#1a2744] to-[#0d1530] px-4 py-2 border-b border-white/8">
-          <p className="text-[#f59e0b] text-[11px] font-bold">{highlight}</p>
-        </div>
-      )}
-      <div className="px-4 pt-3 pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-white text-[17px] font-black leading-tight">{name}</p>
-            <p className="text-[#3f4d6b] text-[10px] mt-0.5">{nameKana}</p>
+    <details className="mx-4 mb-3 bg-[#0b0e1a] border border-white/8 rounded-2xl overflow-hidden">
+      <summary className="cursor-pointer [list-style:none] [&::-webkit-details-marker]:hidden">
+        {highlight && (
+          <div className="bg-gradient-to-r from-[#1a2744] to-[#0d1530] px-4 py-2 border-b border-white/8">
+            <p className="text-[#f59e0b] text-[11px] font-bold">{highlight}</p>
           </div>
-          <div className="text-right shrink-0">
-            {birth && <p className="text-[#3f4d6b] text-[9px]">{birth}</p>}
-            {position && <p className="text-[#60a5fa] text-[10px] font-bold mt-0.5">{position}</p>}
+        )}
+        <div className="px-4 pt-3 pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-white text-[17px] font-black leading-tight">{name}</p>
+              <p className="text-[#3f4d6b] text-[10px] mt-0.5">{nameKana}</p>
+            </div>
+            <div className="text-right shrink-0">
+              {position && <p className="text-[#60a5fa] text-[10px] font-bold">{position}</p>}
+              <span className="text-[#3f4d6b] text-[9px]">▼ 経歴を見る</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {tags.map((t, i) => <Tag key={i} color={t.color}>{t.text}</Tag>)}
           </div>
         </div>
+      </summary>
 
-        {/* 進路フロー */}
-        <div className="mt-3 space-y-1.5">
+      {/* 展開コンテンツ */}
+      <div className="border-t border-white/8 px-4 py-3">
+        {birth && <p className="text-[#3f4d6b] text-[9px] mb-2">{birth}</p>}
+        <div className="space-y-1.5">
           {career.map((step, i) => (
             <div key={i} className="flex items-start gap-2">
               <span className="text-[#3f4d6b] text-[10px] w-14 shrink-0 pt-0.5">{step.label}</span>
@@ -89,20 +97,13 @@ function PlayerCard({ name, nameKana, birth, position, career, tags, sources, hi
             </div>
           ))}
         </div>
-
-        {/* タグ */}
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {tags.map((t, i) => <Tag key={i} color={t.color}>{t.text}</Tag>)}
-        </div>
-
-        {/* ソース */}
         {sources.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-3">
             {sources.map((s, i) => <Src key={i} href={s.href} label={s.label} />)}
           </div>
         )}
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -201,15 +202,15 @@ export default function ObPage() {
         {/* サマリー数字 */}
         <div className="relative z-10 grid grid-cols-3 gap-2 mt-5">
           <div className="bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#4ade80] text-[22px] font-black leading-none">3</p>
-            <p className="text-[#3f4d6b] text-[9px] mt-0.5">プロ選手<br />（男女）</p>
+            <p className="text-[#4ade80] text-[22px] font-black leading-none">9+</p>
+            <p className="text-[#3f4d6b] text-[9px] mt-0.5">プロ・JFL<br />（男女）</p>
           </div>
           <div className="bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#f59e0b] text-[22px] font-black leading-none">3</p>
+            <p className="text-[#f59e0b] text-[22px] font-black leading-none">5+</p>
             <p className="text-[#3f4d6b] text-[9px] mt-0.5">日本代表<br />選出歴</p>
           </div>
           <div className="bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#60a5fa] text-[22px] font-black leading-none">6+</p>
+            <p className="text-[#60a5fa] text-[22px] font-black leading-none">8+</p>
             <p className="text-[#3f4d6b] text-[9px] mt-0.5">強豪JYへ<br />の進路</p>
           </div>
         </div>
@@ -261,7 +262,7 @@ export default function ObPage() {
         nameKana="なかむら つばさ"
         birth="2002年4月26日生（神奈川県出身）"
         position="MF / FW"
-        highlight="⚽ 2025シーズン 福島ユナイテッドFC（J3）でプロデビュー！"
+        highlight="⚽ 2025シーズン 福島ユナイテッドFC（J3）でプロデビュー！ 3/30初得点"
         career={[
           { label: '小学', value: 'SCH.FC', note: '横浜市立上矢部小' },
           { label: '中学', value: '横浜F・マリノス JrユースU-15', note: '横浜市立岡津中' },
@@ -278,6 +279,31 @@ export default function ObPage() {
           { href: 'https://fufc.jp/news/12094/', label: '福島ユナイテッドFC公式' },
           { href: 'https://ja.wikipedia.org/wiki/%E4%B8%AD%E6%9D%91%E7%BF%BC_(%E3%82%B5%E3%83%83%E3%82%AB%E3%83%BC%E9%81%B8%E6%89%8B)', label: 'Wikipedia' },
           { href: 'https://www.jleague.jp/player/1637254/', label: 'Jリーグ公式' },
+        ]}
+      />
+
+      <PlayerCard
+        name="齋藤 俊輔"
+        nameKana="さいとう しゅんすけ"
+        birth="2005年4月26日生（神奈川県出身）"
+        position="MF"
+        highlight="🌍 2026年 KVCウェステルロー（ベルギー）移籍！ J2月間MVP・U-20日本代表"
+        career={[
+          { label: '小学', value: 'SCH.FC → 横浜F・マリノスプライマリー' },
+          { label: '中学', value: '横浜F・マリノス ジュニアユース' },
+          { label: '高校', value: '桐光学園高校' },
+          { label: 'プロ', value: '水戸ホーリーホック', note: 'J2・2024〜2025 / J2月間MVP・J2優秀選手賞' },
+          { label: '海外', value: 'KVCウェステルロー', note: 'ベルギー1部・2026年移籍' },
+        ]}
+        tags={[
+          { text: '海外プロ（ベルギー）', color: 'gold' },
+          { text: 'U-20日本代表', color: 'red' },
+          { text: 'J2月間MVP', color: 'green' },
+          { text: 'J2優秀選手賞', color: 'teal' },
+        ]}
+        sources={[
+          { href: 'https://www.mito-hollyhock.net/news/p=48042/', label: '水戸ホーリーホック公式' },
+          { href: 'https://ja.wikipedia.org/wiki/%E9%BD%8B%E8%97%A4%E4%BF%8A%E8%BC%94', label: 'Wikipedia' },
         ]}
       />
 
@@ -311,6 +337,55 @@ export default function ObPage() {
         ]}
       />
 
+      {/* ─── JFL・地域リーグOB ─── */}
+      <SectionHeader
+        icon="🏅"
+        title="JFL・地域リーグのOB"
+        sub="SCH出身でプロ準相当リーグで活躍する選手たち"
+      />
+
+      {[
+        {
+          name: '平野 元稀', kana: 'ひらの もとき', birth: '2002年10月15日生',
+          career: 'SCH.FC → 東急SレイエスFC → 帝京第三高 → 流通経済大 → Y.S.C.C.横浜（JFL）',
+          src: 'https://www.fansaka.info/player/J52AF1/',
+        },
+        {
+          name: '増田 健昇', kana: 'ますだ けんしょう', birth: '2003年9月22日生',
+          career: 'SCH.FC → 横浜FCユース → 早稲田大学 → 横河武蔵野FC（JFL・2026年加入）',
+          src: 'https://fc.yokogawa-musashino.jp/view/569',
+        },
+        {
+          name: '阿部 隼人', kana: 'あべ はやと', birth: '1998年6月27日生',
+          career: 'SCH.FC → 横浜FMアカデミー系 → FCティアモ枚方（JFL）',
+          src: 'https://www.sch-fc.com/pages/246/',
+        },
+        {
+          name: '萩原 大河', kana: 'はぎわら たいが', birth: '—',
+          career: 'SCH.FC → ブリオベッカ浦安・市川（JFL）',
+          src: 'https://www.sch-fc.com/pages/246/',
+        },
+        {
+          name: '西山 大輝', kana: 'にしやま だいき', birth: '—',
+          career: 'SCH.FC → クリアソン新宿（JFL）',
+          src: 'https://www.sch-fc.com/pages/246/',
+        },
+      ].map((p) => (
+        <div key={p.name} className="mx-4 mb-2 bg-[#0b0e1a] border border-white/8 rounded-xl px-4 py-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-white text-[14px] font-bold">{p.name}</p>
+              <p className="text-[#3f4d6b] text-[9px]">{p.kana}{p.birth !== '—' ? ` · ${p.birth}` : ''}</p>
+            </div>
+            <Tag color="blue">JFL</Tag>
+          </div>
+          <p className="text-[#60a5fa] text-[11px] mt-1.5 leading-relaxed">{p.career}</p>
+          <div className="mt-1.5">
+            <Src href={p.src} label="出典" />
+          </div>
+        </div>
+      ))}
+
       {/* ─── 日本代表・国際大会歴 ─── */}
       <SectionHeader
         icon="🇯🇵"
@@ -318,6 +393,13 @@ export default function ObPage() {
         sub="SCH出身の日本代表選手たち"
       />
 
+      <TrecenCard
+        year="2024-25"
+        name="齋藤俊輔"
+        level="日本代表"
+        event="U-20日本代表 複数回選出 / J2月間MVP・J2優秀選手賞"
+        note="SCH.FC → 横浜FMプライマリー → 桐光学園 → 水戸(J2) → KVC(ベルギー)"
+      />
       <TrecenCard
         year="2023"
         name="松村晃助"
@@ -395,9 +477,9 @@ export default function ObPage() {
         destinations={['横浜FC ジュニアユース', 'JリーグアカデミーU-13選出']}
       />
       <PathCard
-        season="2016年度卒"
-        players={['角田 恵風']}
-        destinations={['横浜F・マリノス ユース', 'FUJI XEROX SUPER CUP 2020出場']}
+        season="2015年度卒"
+        players={['角田 惠風']}
+        destinations={['横浜FM JY追浜 → ユース → 慶應大', '→ 柏レイソル（J1）2026年加入⭐']}
       />
       <PathCard
         season="2014年度卒"
@@ -405,12 +487,17 @@ export default function ObPage() {
         destinations={['横浜F・マリノス JrユースU-15', '→ ユース → 法政大 → 福島(J3)プロ']}
       />
       <PathCard
-        season="2014年度卒（Jrセレクト）"
+        season="2013年度（Jrセレクト）"
         players={['小林 夏生']}
-        destinations={['横浜F・マリノス ユース', 'U-17日本代表・国体優勝']}
+        destinations={['横浜FMユース → 順天堂大学', 'U-17日本代表・国体優勝']}
       />
       <PathCard
-        season="現役（〜2025）"
+        season="2017年度頃（推定）"
+        players={['齋藤 俊輔']}
+        destinations={['横浜FMプライマリー → JY', '→ 桐光学園 → 水戸(J2) → ベルギー🌍']}
+      />
+      <PathCard
+        season="2021年度"
         players={['金丸 希陽']}
         destinations={['横浜F・マリノス JY追浜', 'JY所属中']}
       />
@@ -455,9 +542,10 @@ export default function ObPage() {
         <div className="mt-4 bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] rounded-xl px-4 py-3">
           <p className="text-[#4ade80] text-[11px] font-bold mb-1">SCHにいると、こんな可能性がある！</p>
           <ul className="text-[#a0b4c8] text-[11px] space-y-0.5">
-            <li>✅ 横浜F・マリノスJYへ複数名が進学</li>
-            <li>✅ J1・J3・WEリーグでプロとして活躍</li>
+            <li>✅ 横浜F・マリノス/横浜FCのJYへ複数名が進学</li>
+            <li>✅ J1・J2・J3・WEリーグ・JFL・海外でも活躍</li>
             <li>✅ U-15〜U-20まで各年代の日本代表に選出</li>
+            <li>✅ ベルギー1部リーグへの海外移籍実績</li>
             <li>✅ ワールドカップ出場・優勝の実績</li>
           </ul>
         </div>
