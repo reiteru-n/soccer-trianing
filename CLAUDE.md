@@ -39,6 +39,27 @@
   - `AUTH_SECRET` — HMAC署名シークレット（未設定時は `dev-secret`）
 - Cookie: `family_session` / `team_session`（30日有効）
 
+### ⚠️ パスワードの上位互換関係（絶対に忘れない）
+
+```
+family_session（家族PW） ⊃ team_session（チームPW）
+```
+
+- **家族パスワードはチームパスワードの上位互換**
+- `family_session` を持つユーザーは `/sch` も `/api/sch` も全てアクセス可能
+- `team_session` のみでは `/sch` 系のみアクセス可能（個人ページ不可）
+- `proxy.ts` でチームセッションを要求する箇所は **必ず** 以下の形にすること：
+
+```ts
+// NG（家族ユーザーが弾かれる）
+if (!(await hasValidCookie(req, 'team_session', 'team'))) { ... }
+
+// OK（上位互換を維持）
+const ok = (await hasValidCookie(req, 'team_session', 'team'))
+  || (await hasValidCookie(req, 'family_session', 'family'));
+if (!ok) { ... }
+```
+
 ---
 
 ## SCHチームページ（`/sch`）

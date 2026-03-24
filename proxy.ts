@@ -48,9 +48,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // SCH API: requires team session
+  // SCH API: requires team session OR family session (family is superset)
   if (pathname.startsWith('/api/sch')) {
-    if (!(await hasValidCookie(req, 'team_session', 'team'))) {
+    const ok = (await hasValidCookie(req, 'team_session', 'team'))
+      || (await hasValidCookie(req, 'family_session', 'family'));
+    if (!ok) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     return withDeviceId(req, NextResponse.next());
@@ -84,9 +86,11 @@ export async function proxy(req: NextRequest) {
     return withDeviceId(req, NextResponse.next());
   }
 
-  // SCH page: requires team session
+  // SCH page: requires team session OR family session (family is superset)
   if (pathname.startsWith('/sch')) {
-    if (!(await hasValidCookie(req, 'team_session', 'team'))) {
+    const ok = (await hasValidCookie(req, 'team_session', 'team'))
+      || (await hasValidCookie(req, 'family_session', 'family'));
+    if (!ok) {
       const url = req.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('type', 'team');
