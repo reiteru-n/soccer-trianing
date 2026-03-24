@@ -486,38 +486,45 @@ export default function ObPage() {
         {[
           {
             club: '横浜F・マリノス系',
-            count: '12+名',
+            count: '16名（2018-23）',
             color: '#60a5fa',
-            players: '松村晃助・中村翼・角田惠風・岩崎真波・小林夏生・金丸希陽・関一成・小漉良太・須見玲央斗・伊藤駿 ほか',
+            players: '金丸希陽・関一成（→ユース進学）・松村晃助・中村翼・角田惠風・岩崎真波 ほか／JY本体7名+追浜9名',
             note: 'JY本体 / JY追浜 / ユース',
           },
           {
             club: '横浜FC系',
-            count: '3+名',
+            count: '15名（2018-23）',
             color: '#4ade80',
-            players: '佐藤夏樹・増田健昇 ほか',
-            note: 'JY / ユース',
+            players: '佐藤夏樹・増田健昇 ほか／2018年度は本部4+戸塚2の計6名と最多',
+            note: 'JY本体 / 戸塚 / ユース',
+          },
+          {
+            club: '湘南ベルマーレ系',
+            count: '15名（2018-23）',
+            color: '#c084fc',
+            players: '2021年度4名（JY+EAST+WEST2）・2023年度4名（JY+WAIST3）が多い',
+            note: 'JY / WAIST / EAST / WEST',
+          },
+          {
+            club: 'SCH.FC JY（自クラブ）',
+            count: '21名（2018-23）',
+            color: '#facc15',
+            players: '2021・2022年度は各6名が内部進学。SCH JY卒のプロOBも多数輩出',
+            note: 'SCH FC JY（中学部）セレクト入学',
           },
           {
             club: '川崎フロンターレ',
-            count: '3+名',
+            count: '4名（2022-23）',
             color: '#f59e0b',
-            players: '2022年度 3名（生田2・等々力1） ほか',
-            note: 'JY',
-          },
-          {
-            club: '湘南ベルマーレ',
-            count: '6+名',
-            color: '#c084fc',
-            players: '2022年度 2名・2023年度 4名（JY/WAIST/EAST）',
-            note: 'JY / WAIST / EAST',
+            players: '2022年度3名（生田2+等々力1）・2023年度1名（生田）',
+            note: 'JY生田 / JY等々力',
           },
           {
             club: 'ノジマステラ 神奈川',
-            count: '1+名',
+            count: '2名（2018+23）',
             color: '#f87171',
-            players: '小野奈菜（WEリーグプロ）・2023年度 Avvenire 1名',
-            note: 'WEリーグ / Avvenire（育成）',
+            players: '小野奈菜（WEリーグプロ）・Avvenire計2名（2018年度・2023年度各1名）',
+            note: 'WEリーグ / Avvenire（女子育成）',
           },
         ].map((item) => (
           <div key={item.club} className="bg-[#0b0e1a] border border-white/8 rounded-xl px-4 py-3">
@@ -550,9 +557,12 @@ export default function ObPage() {
           { year: '2015年度', a: false, name: '増田 健昇', dest: '横浜FC ユース → 早稲田大 → 横河武蔵野（JFL）' },
           { year: '2016年度', a: false, name: '松村 晃助', dest: '横浜FM JY追浜 → ユース → 法政大 → 横浜FM（J1）' },
           { year: '〜2017年度', a: true, name: '齋藤 俊輔', dest: '横浜FMプライマリー → JY → 桐光学園 → 水戸(J2) → ベルギー' },
-          { year: '2021年度', a: false, name: '金丸 希陽', dest: '横浜FM JY追浜 → マリノスユース（2025〜）' },
-          { year: '2022年度 計18名', a: false, name: '関 一成・小漉 良太・須見 玲央斗 ほか', dest: '横浜FM JY→ユース / 川崎F3名・横浜FC1名・SCH JY6名 等' },
-          { year: '2023年度 計15名', a: false, name: '15名 卒業', dest: '横浜FM4名・横浜FC2名・川崎F1名・湘南BM4名・SCH JY2名 等' },
+          { year: '2018年度 計15名', a: false, name: '15名 卒業', dest: 'SCH FC4・横浜FC6（本部4+戸塚2）・湘南BM EAST1・ノジマAvvenire1・中学校2' },
+          { year: '2019年度 計14名', a: false, name: '14名 卒業', dest: '横浜FM JY/追浜計4・横浜FC JY/戸塚2・湘南BM3・厚木ドリームス3・SC相模原1・SCD1' },
+          { year: '2020年度 計16名', a: false, name: '16名 卒業', dest: 'SCH JY3・横浜FM JY3・横浜FC JY2・東京ヴェルディ JY1・湘南BM EAST1・東急Sレイエス1・大豆戸FC JY2・他3' },
+          { year: '2021年度 計17名', a: false, name: '金丸 希陽（FM追浜→ユース2025〜）', dest: 'SCH JY6・横浜FM JY2+追浜1・横浜FC JY2・湘南BM JY1+EAST1+WEST2・部活2' },
+          { year: '2022年度 計18名', a: false, name: '関 一成（FM JY→ユース2025〜）', dest: 'SCH JY6・川崎FR3（生田2+等々力1）・横浜FM JY1+追浜1・横浜FC JY1・湘南BM JY1+EAST1・テアトロ2・他2' },
+          { year: '2023年度 計15名', a: false, name: '15名 卒業', dest: 'SCH JY2・川崎FR生田1・横浜FM JY2+追浜2・横浜FC JY2・湘南BM JY1+WAIST3・ノジマAvvenire1・大豆戸FC JY1' },
         ].map((row, i) => (
           <div key={i} className="grid grid-cols-[70px_1fr_1fr] px-3 py-2 border-b border-white/5 last:border-0 items-start">
             <p className="text-[#f59e0b] text-[10px] font-bold leading-tight pt-0.5">
@@ -563,7 +573,7 @@ export default function ObPage() {
           </div>
         ))}
         <div className="px-3 py-2 bg-[#0d1530]">
-          <p className="text-[#3f4d6b] text-[8px]">※ 推定年度。SCHの在籍期間により実際と異なる場合があります。2022・2023年度は人数のみ判明（個人名未確認）。</p>
+          <p className="text-[#3f4d6b] text-[8px]">※ 推定年度あり。2018〜2023年度の集計は公式進路先資料より。個人名は公開情報のみ掲載。</p>
         </div>
       </div>
 
@@ -605,9 +615,19 @@ export default function ObPage() {
         destinations={['横浜FMプライマリー → JY', '→ 桐光学園 → 水戸(J2) → ベルギー🌍']}
       />
       <PathCard
-        season="2021年度"
+        season="2021年度（計17名）"
         players={['金丸 希陽']}
-        destinations={['横浜F・マリノス JY追浜', 'JY所属中']}
+        destinations={['横浜F・マリノス JY追浜 → マリノスユース（2025〜）', 'SCH JY6・横浜FC JY2・湘南BM4・部活2 ほか']}
+      />
+      <PathCard
+        season="2022年度（計18名）"
+        players={['関 一成']}
+        destinations={['横浜F・マリノス JY → マリノスユース（2025〜）', 'SCH JY6・川崎FR3・横浜FM追浜1・横浜FC JY1 ほか']}
+      />
+      <PathCard
+        season="2023年度（計15名）"
+        players={['15名 卒業']}
+        destinations={['横浜FM JY/追浜4・横浜FC JY2・川崎FR生田1', 'SCH JY2・湘南BM4・ノジマAvvenire1・大豆戸FC JY1']}
       />
       <div className="mx-4 mb-2 flex flex-wrap gap-2">
         <Src href="https://www.sch-fc.com/" label="SCH公式サイト（OB情報）" />
