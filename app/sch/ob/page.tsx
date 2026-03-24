@@ -485,21 +485,21 @@ export default function ObPage() {
       <div className="mx-4 mb-4 space-y-2">
         {[
           {
-            club: '横浜F・マリノス系',
+            club: '横浜F・マリノス',
             count: '16名（2018-23）',
             color: '#60a5fa',
             players: '金丸希陽・関一成（→ユース進学）・松村晃助・中村翼・角田惠風・岩崎真波 ほか／JY本体7名+追浜9名',
             note: 'JY本体 / JY追浜 / ユース',
           },
           {
-            club: '横浜FC系',
+            club: '横浜FC',
             count: '15名（2018-23）',
             color: '#4ade80',
             players: '佐藤夏樹・増田健昇 ほか／2018年度は本部4+戸塚2の計6名と最多',
             note: 'JY本体 / 戸塚 / ユース',
           },
           {
-            club: '湘南ベルマーレ系',
+            club: '湘南ベルマーレ',
             count: '15名（2018-23）',
             color: '#c084fc',
             players: '2021年度4名（JY+EAST+WEST2）・2023年度4名（JY+WAIST3）が多い',
