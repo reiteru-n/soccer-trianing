@@ -397,7 +397,8 @@ function RecentAccessSummary({
                   <span className="text-[11px] font-mono text-slate-300">{devLabel}</span>
                   {g.keyType === 'device' && <span className="text-[9px] text-slate-600 font-mono">{g.ip}</span>}
                 </div>
-                <p className="text-[10px] text-slate-500 mt-0.5">{shortUa(g.ua)} · {formatTs(g.lastTs)}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">{shortUa(g.ua)}</p>
+                <p className="text-[11px] font-semibold text-slate-300 mt-0.5">🕐 {formatTs(g.lastTs)}</p>
               </div>
               <span className="text-[11px] text-amber-300 font-bold tabular-nums flex-shrink-0">{g.count}回</span>
               {!g.excluded ? (
