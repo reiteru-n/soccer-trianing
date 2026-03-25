@@ -201,17 +201,17 @@ export default function ObPage() {
 
         {/* サマリー数字 */}
         <div className="relative z-10 grid grid-cols-3 gap-2 mt-5">
-          <div className="bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#4ade80] text-[22px] font-black leading-none">9+</p>
-            <p className="text-[#3f4d6b] text-[9px] mt-0.5">プロ・JFL<br />（男女）</p>
-          </div>
           <div className="bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#f59e0b] text-[22px] font-black leading-none">5+</p>
-            <p className="text-[#3f4d6b] text-[9px] mt-0.5">日本代表<br />選出歴</p>
+            <p className="text-[#f59e0b] text-[22px] font-black leading-none">1</p>
+            <p className="text-[#3f4d6b] text-[9px] mt-0.5">🌍 海外リーグ<br />（現役）</p>
+          </div>
+          <div className="bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] rounded-xl px-3 py-2.5 text-center">
+            <p className="text-[#4ade80] text-[22px] font-black leading-none">10</p>
+            <p className="text-[#3f4d6b] text-[9px] mt-0.5">⚽ Jリーグ<br />（J1〜J3・WE）</p>
           </div>
           <div className="bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#60a5fa] text-[22px] font-black leading-none">8+</p>
-            <p className="text-[#3f4d6b] text-[9px] mt-0.5">強豪JYへ<br />の進路</p>
+            <p className="text-[#60a5fa] text-[22px] font-black leading-none">5</p>
+            <p className="text-[#3f4d6b] text-[9px] mt-0.5">🏅 JFL<br />（準プロ）</p>
           </div>
         </div>
       </div>
@@ -238,7 +238,7 @@ export default function ObPage() {
         position="MF（ミッドフィルダー）"
         highlight="🏆 2025年 特別指定選手・2027シーズン 横浜F・マリノス（J1）加入内定！"
         career={[
-          { label: '小学', value: 'SCH.FC' },
+          { label: '小学', value: 'SCH.FC', note: '2016年度卒' },
           { label: '中学', value: '横浜F・マリノス JY追浜', note: '横浜市立谷本中' },
           { label: '高校', value: '横浜F・マリノスユース', note: '神奈川県立荏田高' },
           { label: '大学', value: '法政大学サッカー部' },
@@ -264,7 +264,7 @@ export default function ObPage() {
         position="MF / FW"
         highlight="⚽ 2025シーズン 福島ユナイテッドFC（J3）でプロデビュー！ 3/30初得点"
         career={[
-          { label: '小学', value: 'SCH.FC', note: '横浜市立上矢部小' },
+          { label: '小学', value: 'SCH.FC', note: '横浜市立上矢部小 / 2014年度卒' },
           { label: '中学', value: '横浜F・マリノス JrユースU-15', note: '横浜市立岡津中' },
           { label: '高校', value: '横浜F・マリノスユース', note: '神奈川県立上矢部高・3年時キャプテン' },
           { label: '大学', value: '法政大学サッカー部' },
@@ -289,7 +289,7 @@ export default function ObPage() {
         position="MF"
         highlight="🌍 2026年 KVCウェステルロー（ベルギー）移籍！ J2月間MVP・U-20日本代表"
         career={[
-          { label: '小学', value: 'SCH.FC → 横浜F・マリノスプライマリー' },
+          { label: '小学', value: 'SCH.FC → 横浜F・マリノスプライマリー', note: '2017年度卒' },
           { label: '中学', value: '横浜F・マリノス ジュニアユース' },
           { label: '高校', value: '桐光学園高校' },
           { label: 'プロ', value: '水戸ホーリーホック', note: 'J2・2024〜2025 / J2月間MVP・J2優秀選手賞' },
@@ -307,6 +307,53 @@ export default function ObPage() {
         ]}
       />
 
+      <PlayerCard
+        name="浅田 大翔"
+        nameKana="あさだ ひろと"
+        birth="2008年1月16日生（藤沢市立六会小学校出身）"
+        position="MF（ミッドフィルダー）"
+        highlight="🌟 2025年 横浜F・マリノス（J1）クラブ史上最年少17歳16日でプロ契約！"
+        career={[
+          { label: '小学', value: 'SCH.FC', note: '2019年度卒' },
+          { label: '中学', value: '横浜F・マリノス ジュニアユース' },
+          { label: '高校', value: '横浜F・マリノスユース' },
+          { label: 'プロ', value: '横浜F・マリノス', note: 'J1・2025〜 / クラブ史上最年少契約' },
+        ]}
+        tags={[
+          { text: 'J1プロ', color: 'gold' },
+          { text: 'U-17日本代表', color: 'red' },
+          { text: 'クラブ史上最年少', color: 'green' },
+        ]}
+        sources={[
+          { href: 'https://www.f-marinos.com/news/team/7937', label: '横浜F・マリノス公式（トップ昇格）' },
+          { href: 'https://www.f-marinos.com/team/player/player-detail/46', label: '横浜F・マリノス選手詳細' },
+        ]}
+      />
+
+      <PlayerCard
+        name="五十嵐 太陽"
+        nameKana="いがらし たいよう"
+        birth="2003年4月14日生"
+        position="MF（ミッドフィルダー）"
+        highlight="⚽ 川崎フロンターレ（J1）でプロデビュー → 2026年 栃木SC（J2）完全移籍"
+        career={[
+          { label: '小学', value: 'SCH.FC → 川崎フロンターレU-12', note: '2015年度卒' },
+          { label: '中学', value: '川崎フロンターレU-15' },
+          { label: '高校', value: '川崎フロンターレU-18' },
+          { label: 'プロ', value: '川崎フロンターレ', note: 'J1・2022〜2025' },
+          { label: 'ローン', value: 'レノファ山口FC', note: '育成型期限付き・2023〜2024' },
+          { label: '移籍', value: '栃木SC', note: 'J2・2026〜完全移籍' },
+        ]}
+        tags={[
+          { text: 'J1→J2プロ', color: 'blue' },
+          { text: '川崎FA出身', color: 'teal' },
+        ]}
+        sources={[
+          { href: 'https://www.jleague.jp/sp/player/1635199/', label: 'Jリーグ公式：五十嵐太陽' },
+          { href: 'https://www.tochigisc.jp/news/1381', label: '栃木SC公式（完全移籍加入）' },
+        ]}
+      />
+
       {/* ─── プロ選手（女子） ─── */}
       <SectionHeader
         icon="👩‍⚽"
@@ -321,7 +368,7 @@ export default function ObPage() {
         position="DF（ディフェンダー）"
         highlight="🌟 U-17女子W杯 準優勝 / U-20女子W杯 優勝！"
         career={[
-          { label: 'Jr年代', value: 'SCH.FC（ジュニアセレクト）' },
+          { label: 'Jr年代', value: 'SCH.FC（ジュニアセレクト）', note: '2011年度卒' },
           { label: '中高', value: '日テレ・東京ヴェルディメニーナ' },
           { label: '大学', value: '神奈川大学' },
           { label: 'プロ', value: 'ノジマステラ神奈川相模原', note: 'WEリーグ' },
@@ -346,43 +393,48 @@ export default function ObPage() {
 
       {[
         {
-          name: '平野 元稀', kana: 'ひらの もとき', birth: '2002年10月15日生',
+          name: '加藤 大育', kana: 'かとう だいすけ', birth: '1998年10月6日生', grad: '2010年度卒（小学部）',
+          career: 'SCH.FC → 横浜FM JY追浜 → 日本大学高校 → 神奈川大学 → ブリオベッカ浦安（JFL・2021-22）→ SC相模原（J3・2023〜）',
+          src: 'https://soccer.yahoo.co.jp/jleague/category/j3/teams/30676/players/1640670',
+        },
+        {
+          name: '平野 元稀', kana: 'ひらの もとき', birth: '2002年10月15日生', grad: '2014年度卒（小学部）',
           career: 'SCH.FC → 東急SレイエスFC → 帝京第三高 → 流通経済大 → Y.S.C.C.横浜（JFL）',
           src: 'https://www.fansaka.info/player/J52AF1/',
         },
         {
-          name: '増田 健昇', kana: 'ますだ けんしょう', birth: '2003年9月22日生',
+          name: '増田 健昇', kana: 'ますだ けんしょう', birth: '2003年9月22日生', grad: '2015年度卒（小学部）',
           career: 'SCH.FC → 横浜FCユース → 早稲田大学 → 横河武蔵野FC（JFL・2026年加入）',
           src: 'https://fc.yokogawa-musashino.jp/view/569',
         },
         {
-          name: '阿部 隼人', kana: 'あべ はやと', birth: '1998年6月27日生',
+          name: '阿部 隼人', kana: 'あべ はやと', birth: '1998年6月27日生', grad: '2010年度卒（小学部）',
           career: 'SCH.FC → 横浜FMアカデミー系 → FCティアモ枚方（JFL）',
           src: 'https://www.sch-fc.com/pages/246/',
         },
         {
-          name: '萩原 大河', kana: 'はぎわら たいが', birth: '—',
+          name: '萩原 大河', kana: 'はぎわら たいが', birth: '—', grad: '—',
           career: 'SCH.FC → ブリオベッカ浦安・市川（JFL）',
           src: 'https://www.sch-fc.com/pages/246/',
         },
         {
-          name: '西山 大輝', kana: 'にしやま だいき', birth: '—',
+          name: '西山 大輝', kana: 'にしやま だいき', birth: '—', grad: '—',
           career: 'SCH.FC → クリアソン新宿（JFL）',
           src: 'https://www.sch-fc.com/pages/246/',
         },
         {
-          name: '土佐 陸翼', kana: 'とさ りくと', birth: '—（SCH JY中学部卒）',
+          name: '土佐 陸翼', kana: 'とさ りくと', birth: '—', grad: 'JY卒（中学部）',
           career: 'SCH FC JY → 栃木シティFC（J3優勝・J2昇格 2025〜）',
           src: 'https://www.sch-fc.com/pages/246/',
           league: 'J3→J2',
         },
         {
-          name: '国本 玲央', kana: 'くにもと れお', birth: '（SCH JY中学部 2013年度卒）',
+          name: '国本 玲央', kana: 'くにもと れお', birth: '—', grad: '2013年度卒（JY中学部）',
           career: 'SCH FC JY → 暁星国際高 → レノファ山口FC（J2） → 新潟シンガポール等',
           src: 'https://www.sch-fc.com/pages/246/',
         },
         {
-          name: '北村 涼太', kana: 'きたむら りょうた', birth: '（SCH JY中学部 2010年度卒）',
+          name: '北村 涼太', kana: 'きたむら りょうた', birth: '—', grad: '2010年度卒（JY中学部）',
           career: 'SCH FC JY → 関東学院大 → 福島ユナイテッドFC（J3）',
           src: 'https://www.sch-fc.com/pages/246/',
         },
@@ -392,6 +444,7 @@ export default function ObPage() {
             <div>
               <p className="text-white text-[14px] font-bold">{p.name}</p>
               <p className="text-[#3f4d6b] text-[9px]">{p.kana}{p.birth !== '—' ? ` · ${p.birth}` : ''}</p>
+              {p.grad !== '—' && <p className="text-[#3f4d6b] text-[9px]">SCH卒: {p.grad}</p>}
             </div>
             <Tag color="blue">{'league' in p ? (p as {league: string}).league : 'JFL'}</Tag>
           </div>
@@ -409,6 +462,13 @@ export default function ObPage() {
         sub="SCH出身の日本代表選手たち"
       />
 
+      <TrecenCard
+        year="2025"
+        name="浅田大翔"
+        level="日本代表"
+        event="U-17日本代表選出 / 横浜F・マリノス クラブ史上最年少17歳16日プロ契約"
+        note="SCH.FC → 横浜FM JY → ユース → 横浜FM（J1）"
+      />
       <TrecenCard
         year="2024-25"
         name="齋藤俊輔"
@@ -515,10 +575,10 @@ export default function ObPage() {
           },
           {
             club: '川崎フロンターレ',
-            count: '4名（2022-23）',
+            count: '5名（2015・2022-23）',
             color: '#f59e0b',
-            players: '2022年度3名（生田2+等々力1）・2023年度1名（生田）',
-            note: 'JY生田 / JY等々力',
+            players: '五十嵐太陽（2015年度卒・U-12〜トップ）・2022年度3名（生田2+等々力1）・2023年度1名（生田）',
+            note: 'U-12 / JY生田 / JY等々力',
           },
           {
             club: 'ノジマステラ 神奈川',
@@ -547,8 +607,9 @@ export default function ObPage() {
           <p className="text-[#3f4d6b] text-[9px] font-bold">主な進路先</p>
         </div>
         {[
-          { year: '〜2010年度', a: true, name: '阿部 隼人', dest: '横浜FMアカデミー → FCティアモ枚方（JFL）' },
-          { year: '2011年度', a: true, name: '小野 奈菜', dest: '日テレメニーナ → 神奈川大 → ノジマステラ（WEリーグ）' },
+          { year: '2010年度', a: false, name: '阿部 隼人', dest: '横浜FMアカデミー → FCティアモ枚方（JFL）' },
+          { year: '2010年度', a: false, name: '加藤 大育', dest: '横浜FM JY追浜 → 日大高 → 神奈川大 → ブリオベッカ浦安(JFL) → SC相模原(J3)' },
+          { year: '2011年度', a: false, name: '小野 奈菜', dest: '日テレメニーナ → 神奈川大 → ノジマステラ（WEリーグ）' },
           { year: '2013年度', a: false, name: '小林 夏生', dest: '横浜FM ユース → 順天堂大（U-17日本代表）' },
           { year: '2014年度', a: false, name: '中村 翼', dest: '横浜FM JY → ユース → 法政大 → 福島（J3）' },
           { year: '2014年度', a: false, name: '平野 元稀', dest: '東急Sレイエス → 帝京第三高 → 流通経済大 → YSCC（JFL）' },
@@ -556,9 +617,11 @@ export default function ObPage() {
           { year: '2015年度', a: false, name: '佐藤 夏樹', dest: '横浜FC JY' },
           { year: '2015年度', a: false, name: '角田 惠風', dest: '横浜FM JY追浜 → ユース → 慶應大 → 柏（J1）' },
           { year: '2015年度', a: false, name: '増田 健昇', dest: '横浜FC ユース → 早稲田大 → 横河武蔵野（JFL）' },
+          { year: '2015年度', a: false, name: '五十嵐 太陽', dest: '川崎フロンターレU-12/JY/ユース → トップ(J1) → レノファ山口(J2) → 栃木SC(J2)' },
           { year: '2016年度', a: false, name: '松村 晃助', dest: '横浜FM JY追浜 → ユース → 法政大 → 横浜FM（J1）' },
-          { year: '〜2017年度', a: true, name: '齋藤 俊輔', dest: '横浜FMプライマリー → JY → 桐光学園 → 水戸(J2) → ベルギー' },
+          { year: '2017年度', a: false, name: '齋藤 俊輔', dest: '横浜FMプライマリー → JY → 桐光学園 → 水戸(J2) → ベルギー' },
           { year: '2018年度 計15名', a: false, name: '15名 卒業', dest: 'SCH FC4・横浜FC6（本部4+戸塚2）・湘南BM EAST1・ノジマAvvenire1・中学校2' },
+          { year: '2019年度', a: false, name: '浅田 大翔', dest: '横浜FM JY → ユース → 横浜FM(J1) ※17歳最年少プロ契約・U-17日本代表' },
           { year: '2019年度 計14名', a: false, name: '14名 卒業', dest: '横浜FM JY/追浜計4・横浜FC JY/戸塚2・湘南BM3・厚木ドリームス3・SC相模原1・SCD1' },
           { year: '2020年度 計16名', a: false, name: '16名 卒業', dest: 'SCH JY3・横浜FM JY3・横浜FC JY2・東京ヴェルディ JY1・湘南BM EAST1・東急Sレイエス1・大豆戸FC JY2・他3' },
           { year: '2021年度 計17名', a: false, name: '金丸 希陽（FM追浜→ユース2025〜）', dest: 'SCH JY6・横浜FM JY2+追浜1・横浜FC JY2・湘南BM JY1+EAST1+WEST2・部活2' },
