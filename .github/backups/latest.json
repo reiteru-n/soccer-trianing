@@ -1,0 +1,3500 @@
+{
+  "timestamp": "2026-03-25T17:11:05.619110+09:00",
+  "total_keys": 17,
+  "keys": {
+    "sch:announcements": [
+      {
+        "id": "mn1evjqpjh7zwz3sf98",
+        "date": "2026/03/22",
+        "title": "神奈川県チーム推移をまとめました。",
+        "content": "2010年以降の神奈川県ベスト8以上のチーム遷移をアニメーションでまとめました。\nSCH チーム戦歴ページに神奈川県チームへのリンクを作成しました。",
+        "important": false,
+        "createdAt": "2026-03-22T07:04:16.561Z",
+        "url": "https://soccer-trianing.vercel.app/sch/kanagawa"
+      },
+      {
+        "id": "seed-yamanashi-2026-0328",
+        "date": "2026/03/28",
+        "title": "🏕️ 山梨合同遠征スケジュール（3/28〜3/30）",
+        "content": "【3/28（土）】\n8:00  ゆめが丘第三公園・集合（集合時間は別途参照）\n9:00  出発\n12:00 到着\n13:00 昼食\n14:00〜16:00 トレーニング（合同）\n18:00 洗濯・夕食・風呂\n20:00 ミーティング\n21:00 就寝\n\n【3/29（日）】\n6:30  起床・散歩\n7:00  朝食\n8:00  グラウンド移動・準備\n10:00 トレーニング\n12:00 昼食\n13:00〜16:00 トレーニングマッチ（試合詳細はピクロ参照）\n18:00 洗濯・夕食・風呂\n20:00 ミーティング\n21:00 就寝\n\n【3/30（月）】\n6:30  起床・散歩\n7:00  朝食\n8:00  グラウンド移動・準備\n10:00 トレーニング（紅白戦等）\n12:00 昼食\n14:00 現地出発\n16:00 ゆめが丘第三公園・到着・解散",
+        "important": true,
+        "createdAt": "2026-03-19T22:02:00.000Z",
+        "checkItems": [
+          {
+            "text": "ユニフォーム一式",
+            "note": "キッズエリートユニフォーム。ない方はいつもの練習着。"
+          },
+          {
+            "text": "サッカー用具一式",
+            "note": "水筒含む"
+          },
+          {
+            "text": "バスタオル・洗濯ネット"
+          },
+          {
+            "text": "着替え必要分",
+            "note": "館内着含む。館内着はキャラクター系ではない方がよい。"
+          },
+          {
+            "text": "常備薬",
+            "note": "必要に応じて"
+          },
+          {
+            "text": "ハンガー",
+            "note": "洗濯用"
+          },
+          {
+            "text": "歯磨きセット"
+          },
+          {
+            "text": "筆記用具"
+          },
+          {
+            "text": "1日目昼食",
+            "note": "※持てられる容器でお願いします"
+          },
+          {
+            "text": "室内履き"
+          }
+        ]
+      },
+      {
+        "id": "auto-match-mn07w7phvd0e8t39pw",
+        "date": "2026/03/21",
+        "title": "⚽ 試合のお知らせ：2026/04/05 vs FCパーシモン",
+        "content": "📅 日時：2026/04/05（日） 16:00\n📍 場所：ふれあいの広場\n⚽ 種別：トレマ\n🏆 大会名：トレマ\n⏰ 集合：15:30\n🆚 相手：FCパーシモン（ホーム）",
+        "important": true,
+        "createdAt": "2026-03-21T11:01:04.616Z"
+      },
+      {
+        "id": "mmw2qlz2mnwjsnmcboh",
+        "date": "2026/04/12",
+        "title": "04/12 🆚 FC PORTAのお知らせ",
+        "content": "トレマ決定！",
+        "important": false,
+        "linkedEventId": "mmupoglsh0eioz1fo"
+      },
+      {
+        "id": "mmtarlnds1tm9rmmii",
+        "date": "2026/03/17",
+        "title": "試合動画のURLを追加",
+        "content": "試合結果に試合動画のリンクを貼れるようにしました。\n動画のアップロードは、BANDアプリやYouTubeアプリなどにアップされたものをリンクしています。\nなお、BANDアプリのグループに招待済みの方はURLから動画見れます。\n未参加の方はURLへ飛ぶと参加申請を出せると思うので申請をお願いします。\n",
+        "important": true,
+        "url": "https://band.us/band/101398731/post/10"
+      },
+      {
+        "id": "mmunfd3ga4tngjwp9gh",
+        "date": "2026/03/17",
+        "title": "新U-7公式投稿",
+        "content": "",
+        "important": false,
+        "url": "https://www.instagram.com/p/DV5ol8xE_UR/?igsh=c3dsMGQxeTRybDVz"
+      },
+      {
+        "id": "mmt9okuojlonpb4vrp9",
+        "date": "2026/03/16",
+        "title": "3月21日YSCC試合観戦について",
+        "content": "樋口コーチより\n\nYSCC試合観戦チラシの件ですが、クラブOBでSCHロールモデルコーチとしても活動中の平野元稀選手（YSCC）の試合に、選手のみ無料招待いただけることになりました。 当日は鈴木コーチが引率します。\n参加希望者は、3/18（水）までに higuchi@sch-fc.com へご連絡ください。\n【試合情報】\nJFL CUP YSCC開幕戦\n時間：13:00～\n会場：ニッパツ三ツ沢競技場 ※配布チラシ持参で無料（選手のみ）\nOBをみんなで応援しましょう！",
+        "important": false
+      }
+    ],
+    "sch:events": [
+      {
+        "id": "mmrpj9z1k4hn7fccy8",
+        "date": "2026/03/15",
+        "type": "match",
+        "startTime": "11:00",
+        "location": "SCHフッボルエスタディオ横浜",
+        "matchType": "トレマ",
+        "matchFormat": "friendly",
+        "matches": [
+          {
+            "id": "mmrpj9z1k4hn7fccy8_0",
+            "opponentName": "品濃ウィングス",
+            "roundName": "第1試合",
+            "isHome": true,
+            "homeScore": 0,
+            "awayScore": 0,
+            "videoUrl": "https://band.us/band/101398731/post/10"
+          },
+          {
+            "id": "mmta4jt4mgcoxoi0csb",
+            "opponentName": "品濃ウィングス",
+            "roundName": "第2試合",
+            "isHome": true,
+            "homeScore": 5,
+            "awayScore": 0,
+            "videoUrl": "https://band.us/band/101398731/post/11"
+          },
+          {
+            "id": "mmta9nqejr0ooqoqxmh",
+            "opponentName": "品濃ウィングス",
+            "roundName": "第3試合",
+            "isHome": true,
+            "homeScore": 5,
+            "awayScore": 0,
+            "videoUrl": "https://band.us/band/101398731/post/17"
+          },
+          {
+            "id": "mmtabn96nalgfemdwy",
+            "opponentName": "品濃ウィングス",
+            "roundName": "第4試合",
+            "isHome": true,
+            "homeScore": 2,
+            "awayScore": 0,
+            "videoUrl": "https://band.us/band/101398731/post/13"
+          },
+          {
+            "id": "mmtadpag9slli5nmcdb",
+            "opponentName": "品濃ウィングス",
+            "roundName": "第5試合",
+            "isHome": true,
+            "homeScore": 5,
+            "awayScore": 0,
+            "videoUrl": "https://band.us/band/101398731/post/14"
+          },
+          {
+            "id": "mmtaehe20g7vs0mfk40g",
+            "opponentName": "品濃ウィングス",
+            "roundName": "第6試合",
+            "isHome": true,
+            "homeScore": 1,
+            "awayScore": 1,
+            "videoUrl": "https://band.us/band/101398731/post/15"
+          },
+          {
+            "id": "mmtagnsga8zeztpkrl",
+            "opponentName": "品濃ウィングス",
+            "roundName": "第7試合",
+            "isHome": true,
+            "homeScore": 1,
+            "awayScore": 1,
+            "videoUrl": "https://band.us/band/101398731/post/16"
+          }
+        ]
+      },
+      {
+        "id": "mmt8sdg2i68y3e6mqxr",
+        "date": "2026/03/17",
+        "type": "practice",
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "location": "SCHフッボルエスタディオ横浜",
+        "label": "キッズエリートクラス",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmrpm8q7zcvbu8n0a1l",
+        "date": "2026/03/21",
+        "type": "practice",
+        "startTime": "09:00",
+        "endTime": "10:30",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmu79qykn041b33zhv",
+        "date": "2026/03/21",
+        "type": "other",
+        "startTime": "13:00",
+        "endTime": "16:00",
+        "location": "ﾆｯﾊﾟﾂ三ッ沢競技場",
+        "label": "JFLCUP　YSCC開幕戦",
+        "note": "選手たちに配布をさせて頂きましたYSCC試合観戦のﾁﾗｼですが、ｸﾗﾌﾞOBで現在ﾛｰﾙﾓﾃﾞﾙｺｰﾁとして SCHでも活躍しているYSCC所属の平野元稀選手の試合を無料招待（選手のみ）していただける事となりました。 選手のみでの観戦をする場合も鈴木ｺｰﾁが現地にいますので引率させて頂きます。 引率にあたり人数集計をさせて頂ければと思いますのでお手数ではありますが、 観戦を希望する選手は、下記ｱﾄﾞﾚｽに3/18（水）までにご連絡をお願い致します。 ご理解・ご協力のほどよろしくお願いいたします。  今後とも宜しくお願い致します  SCHﾌｯﾄﾎﾞｰﾙｸﾗﾌﾞ　樋口 連絡先：higuchi@sch-fc.com  OBを応援しよう！！ ﾛｰﾙﾓﾃﾞﾙｺｰﾁとして現在SCHでも活動してくれている平野元稀選手在籍 YSCCの開幕戦を応援に行こう！！ JFLCUP　YSCC開幕戦 時間：13：00～ 会場：ﾆｯﾊﾟﾂ三ッ沢競技場 ※配布ﾁﾗｼ持参でﾁｹｯﾄ無料 ※ﾁｹｯﾄ無料は選手のみとなります。",
+        "maxParkingSlots": 0
+      },
+      {
+        "id": "mmt95y99sbisvnnbotf",
+        "date": "2026/03/24",
+        "type": "practice",
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "location": "SCHフッボルエスタディオ横浜",
+        "label": "キッズエリートクラス",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmrpnreci3342ayh7ck",
+        "date": "2026/03/27",
+        "type": "practice",
+        "startTime": "13:30",
+        "endTime": "15:00",
+        "location": "SCHフッボルエスタディオ横浜",
+        "label": "SCHチーム練習",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmss4yt6p1d105wamho",
+        "date": "2026/03/28",
+        "type": "camp",
+        "endDate": "2026/03/30",
+        "startTime": "08:50",
+        "endTime": "14:00",
+        "location": "井戸前旅館　天然芝グランド",
+        "label": "山梨合宿",
+        "meetingTime": "08:50",
+        "meetingPlace": "ゆめが丘第三公園",
+        "maxParkingSlots": 0,
+        "mapQuery": "井戸前旅館"
+      },
+      {
+        "id": "mmt5lerx64ty40wy7yg",
+        "date": "2026/04/03",
+        "type": "practice",
+        "location": "SCHフッボルエスタディオ横浜",
+        "label": "チーム練習",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mn07w7phvd0e8t39pw",
+        "date": "2026/04/05",
+        "type": "match",
+        "startTime": "16:00",
+        "endTime": "18:00",
+        "location": "ふれあいの広場",
+        "label": "トレマ",
+        "note": "14時半開門",
+        "meetingTime": "15:30",
+        "matchType": "トレマ",
+        "matchFormat": "friendly",
+        "matches": [
+          {
+            "id": "mn07ud33k9fo70igahd",
+            "opponentName": "FCパーシモン",
+            "isHome": true
+          }
+        ]
+      },
+      {
+        "id": "mmujh7hci8ybjq8cuu",
+        "date": "2026/04/07",
+        "type": "practice",
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "location": "SCHフッボルエスタディオ横浜",
+        "label": "キッズエリートクラス(振替)",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmsxpnvxc3dr48uc6ek",
+        "date": "2026/04/09",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmupqp7yd3btfin4s3l",
+        "date": "2026/04/11",
+        "type": "practice",
+        "startTime": "09:00",
+        "endTime": "10:30",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmupoglsh0eioz1fo",
+        "date": "2026/04/12",
+        "type": "match",
+        "startTime": "16:00",
+        "endTime": "18:00",
+        "location": "辻堂海浜公園",
+        "label": "トレマ",
+        "meetingTime": "15:00",
+        "matchType": "トレマ",
+        "matchFormat": "friendly",
+        "matches": [
+          {
+            "id": "mmupm0j70cbs7wyjikbh",
+            "opponentName": "FC PORTA",
+            "isHome": true
+          }
+        ]
+      },
+      {
+        "id": "mmsxqwrob2qzbynbw8q",
+        "date": "2026/04/16",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "label": "SCHチーム練習",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmsxs5krk4y0k4ljsuf",
+        "date": "2026/04/23",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "label": "SCHチーム練習",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmsxszhy5o80dqxch4a",
+        "date": "2026/04/30",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "label": "SCHチーム練習",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmupskjush4jus2zgw8",
+        "date": "2026/05/07",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmuptqnqvjsltvjjrg",
+        "date": "2026/05/14",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmupv29m7q9b0lc9w83",
+        "date": "2026/05/21",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmupw06qxz2ctmywf9k",
+        "date": "2026/05/28",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmupx24ios7q2gjmf6",
+        "date": "2026/06/04",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmupxzwnrh0w7c2abns",
+        "date": "2026/06/11",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmupzb67ry07wcsqkx9",
+        "date": "2026/06/18",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmuq05x8pvmo8ewmznj",
+        "date": "2026/06/25",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmuq1d4neuwtf904vdi",
+        "date": "2026/07/02",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmuq2e15pypdhxyzb6",
+        "date": "2026/07/09",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
+        "id": "mmuq3n2fubxwsohuog",
+        "date": "2026/07/16",
+        "type": "practice",
+        "startTime": "17:00",
+        "endTime": "18:20",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      }
+    ],
+    "sch:matches": [
+      {
+        "id": "mmrpj9z1k4hn7fccy8",
+        "date": "2026/03/15",
+        "startTime": "11:00",
+        "opponent": "品濃ウィングス",
+        "location": "SCHフッボルエスタディオ横浜",
+        "isHome": true
+      }
+    ],
+    "sch:members": [
+      {
+        "id": "m6",
+        "number": 6,
+        "name": "年森海志",
+        "nameKana": "かいし",
+        "parents": [
+          {
+            "role": "父",
+            "name": "年森祥太郎"
+          },
+          {
+            "role": "母",
+            "name": "年森舞"
+          }
+        ]
+      },
+      {
+        "id": "m7",
+        "number": 7,
+        "name": "廣瀧樹",
+        "nameKana": "いつき",
+        "parents": [
+          {
+            "role": "父",
+            "name": "廣瀧巧"
+          },
+          {
+            "role": "母",
+            "name": "廣瀧渚"
+          }
+        ]
+      },
+      {
+        "id": "m8",
+        "number": 8,
+        "name": "大和田琉煌",
+        "nameKana": "るきあ",
+        "parents": [
+          {
+            "role": "父",
+            "name": "大和田 真"
+          },
+          {
+            "role": "母",
+            "name": "大和田 あゆ未"
+          }
+        ]
+      },
+      {
+        "id": "m9",
+        "number": 9,
+        "name": "荒井修蔵",
+        "nameKana": "しゅうぞう",
+        "parents": [
+          {
+            "role": "父",
+            "name": "荒井大輔"
+          },
+          {
+            "role": "母",
+            "name": "荒井未紗子"
+          }
+        ]
+      },
+      {
+        "id": "m10",
+        "number": 10,
+        "name": "嶋津然",
+        "nameKana": "ぜん",
+        "parents": [
+          {
+            "role": "父",
+            "name": "嶋津勝也"
+          },
+          {
+            "role": "母",
+            "name": "嶋津佳奈"
+          }
+        ]
+      },
+      {
+        "id": "m11",
+        "number": 11,
+        "name": "小野沢朔",
+        "nameKana": "さく",
+        "parents": [
+          {
+            "role": "父",
+            "name": "小野沢太郎"
+          },
+          {
+            "role": "母",
+            "name": "小野沢友香里"
+          }
+        ]
+      },
+      {
+        "id": "m14",
+        "number": 14,
+        "name": "鳥谷海翔",
+        "nameKana": "かいと",
+        "parents": [
+          {
+            "role": "父",
+            "name": "鳥谷浩之"
+          },
+          {
+            "role": "母",
+            "name": "鳥谷香織"
+          }
+        ]
+      },
+      {
+        "id": "m15",
+        "number": 15,
+        "name": "小笠原快",
+        "nameKana": "かい",
+        "parents": [
+          {
+            "role": "父",
+            "name": "小笠原亮"
+          },
+          {
+            "role": "母",
+            "name": "小笠原晴菜"
+          }
+        ]
+      },
+      {
+        "id": "m17",
+        "number": 17,
+        "name": "村岡晟旺",
+        "nameKana": "せお",
+        "parents": [
+          {
+            "role": "母",
+            "name": "村岡祥子",
+            "nameKana": ""
+          },
+          {
+            "role": "父",
+            "name": "村岡慶男"
+          }
+        ]
+      },
+      {
+        "id": "m19",
+        "number": 19,
+        "name": "西本拓渡",
+        "nameKana": "たくと",
+        "birthDate": "2019-12-19",
+        "parents": [
+          {
+            "role": "父",
+            "name": "西本励照",
+            "nameKana": "にしもと　れいてる"
+          },
+          {
+            "role": "母",
+            "name": "西本倫実",
+            "nameKana": "にしもと　れいてる"
+          }
+        ]
+      },
+      {
+        "id": "m20",
+        "number": 20,
+        "name": "宮﨑朔太郎",
+        "nameKana": "さくたろう",
+        "parents": [
+          {
+            "role": "父",
+            "name": "竜史郎"
+          },
+          {
+            "role": "母",
+            "name": "有子"
+          }
+        ]
+      },
+      {
+        "id": "m30",
+        "number": 30,
+        "name": "横山寛人",
+        "nameKana": "ひろと",
+        "parents": [
+          {
+            "role": "父",
+            "name": "横山大輔"
+          },
+          {
+            "role": "母",
+            "name": "よこやまえつこ"
+          }
+        ]
+      },
+      {
+        "id": "m31",
+        "number": 31,
+        "name": "鈴木柊羽",
+        "nameKana": "しゅう",
+        "parents": [
+          {
+            "role": "母",
+            "name": "しおり"
+          }
+        ]
+      }
+    ],
+    "sch:parking_records": [
+      {
+        "eventId": "mmrpj9z1k4hn7fccy8",
+        "eventDate": "2026/03/15",
+        "eventType": "match",
+        "slots": [
+          {
+            "memberId": "m10",
+            "status": "used"
+          },
+          {
+            "memberId": "m6",
+            "status": "used"
+          },
+          {
+            "memberId": "m7",
+            "status": "used"
+          },
+          {
+            "memberId": "m8",
+            "status": "used"
+          },
+          {
+            "memberId": "m9",
+            "status": "skipped"
+          }
+        ],
+        "rotationStartIndex": 0
+      },
+      {
+        "eventId": "mmrpm8q7zcvbu8n0a1l",
+        "eventDate": "2026/03/21",
+        "eventType": "practice",
+        "slots": [],
+        "rotationStartIndex": 0
+      }
+    ],
+    "sch:parking_rotation": 5,
+    "sch:push_subscriptions": null,
+    "sch:schedules": [
+      {
+        "id": "mmrpm8q7zcvbu8n0a1l",
+        "date": "2026/03/21",
+        "startTime": "09:00",
+        "endTime": "10:30",
+        "location": "SCHフッボルエスタディオ横浜"
+      },
+      {
+        "id": "mmrpnreci3342ayh7ck",
+        "date": "2026/03/27",
+        "startTime": "13:30",
+        "endTime": "15:00",
+        "location": "SCHフッボルエスタディオ横浜"
+      }
+    ],
+    "sch:update_history": [
+      {
+        "id": "mn405mrkjy5ztrvd7j",
+        "timestamp": "2026-03-24T02:35:31.328Z",
+        "type": "announcement",
+        "title": "🏕️ 山梨合同遠征スケジュール（3/28〜3/30）",
+        "action": "edit",
+        "itemId": "seed-yamanashi-2026-0328",
+        "tab": "announce",
+        "changeMemo": "持ち物に室内履き追加"
+      },
+      {
+        "id": "mn1evjquzcwrgl2948p",
+        "timestamp": "2026-03-22T07:04:16.566Z",
+        "type": "announcement",
+        "title": "神奈川県チーム推移をまとめました。",
+        "action": "new",
+        "itemId": "mn1evjqpjh7zwz3sf98",
+        "tab": "announce"
+      },
+      {
+        "id": "mn07w7pmig0clhhmni",
+        "timestamp": "2026-03-21T11:01:04.138Z",
+        "type": "event",
+        "eventType": "match",
+        "title": "vs FCパーシモン",
+        "action": "new",
+        "itemId": "mn07w7phvd0e8t39pw",
+        "tab": "events"
+      },
+      {
+        "id": "mmztqgg6ipd0rermbx9",
+        "timestamp": "2026-03-21T04:24:40.903Z",
+        "type": "announcement",
+        "title": "🏕️ 山梨合同遠征スケジュール（3/28〜3/30）",
+        "action": "edit",
+        "itemId": "seed-yamanashi-2026-0328",
+        "tab": "announce"
+      },
+      {
+        "id": "mmzqzl430hwr5m43y1a6",
+        "timestamp": "2026-03-21T03:07:48.003Z",
+        "type": "announcement",
+        "title": "🏕️ 山梨合同遠征スケジュール（3/28〜3/30）",
+        "action": "edit",
+        "itemId": "seed-yamanashi-2026-0328",
+        "tab": "announce"
+      }
+    ],
+    "takuto:body": [
+      {
+        "id": "b01",
+        "date": "2020/02/10",
+        "weight": 4.5
+      },
+      {
+        "id": "b02",
+        "date": "2020/02/24",
+        "weight": 5.5
+      },
+      {
+        "id": "b03",
+        "date": "2020/03/06",
+        "weight": 5.6
+      },
+      {
+        "id": "b04",
+        "date": "2020/03/12",
+        "height": 54
+      },
+      {
+        "id": "b05",
+        "date": "2020/04/02",
+        "weight": 6.2
+      },
+      {
+        "id": "b06",
+        "date": "2020/04/23",
+        "weight": 6.2
+      },
+      {
+        "id": "b07",
+        "date": "2020/05/05",
+        "weight": 6.8
+      },
+      {
+        "id": "b08",
+        "date": "2020/05/11",
+        "height": 61
+      },
+      {
+        "id": "b09",
+        "date": "2020/05/13",
+        "height": 61,
+        "weight": 6.28
+      },
+      {
+        "id": "b10",
+        "date": "2020/05/16",
+        "weight": 6.2
+      },
+      {
+        "id": "b11",
+        "date": "2020/05/22",
+        "height": 62
+      },
+      {
+        "id": "b12",
+        "date": "2020/05/25",
+        "weight": 6.5
+      },
+      {
+        "id": "b13",
+        "date": "2020/05/27",
+        "height": 65
+      },
+      {
+        "id": "b14",
+        "date": "2020/05/31",
+        "weight": 6.4
+      },
+      {
+        "id": "b15",
+        "date": "2020/06/09",
+        "weight": 6.5
+      },
+      {
+        "id": "b16",
+        "date": "2020/06/19",
+        "weight": 6.7
+      },
+      {
+        "id": "b17",
+        "date": "2020/06/20",
+        "weight": 6.5
+      },
+      {
+        "id": "b18",
+        "date": "2020/07/01",
+        "height": 65,
+        "weight": 6.74
+      },
+      {
+        "id": "b19",
+        "date": "2020/07/29",
+        "weight": 7.1
+      },
+      {
+        "id": "b20",
+        "date": "2020/09/05",
+        "weight": 7.5
+      },
+      {
+        "id": "b21",
+        "date": "2020/10/04",
+        "weight": 7.9
+      },
+      {
+        "id": "b22",
+        "date": "2020/10/09",
+        "height": 71,
+        "weight": 7.6
+      },
+      {
+        "id": "b23",
+        "date": "2020/10/10",
+        "height": 72.5,
+        "weight": 7.6
+      },
+      {
+        "id": "b24",
+        "date": "2020/11/06",
+        "weight": 7.85
+      },
+      {
+        "id": "b25",
+        "date": "2020/12/20",
+        "height": 70
+      },
+      {
+        "id": "b26",
+        "date": "2020/12/21",
+        "height": 73
+      },
+      {
+        "id": "b27",
+        "date": "2020/12/29",
+        "weight": 8.3
+      },
+      {
+        "id": "b28",
+        "date": "2021/01/16",
+        "weight": 8.5
+      },
+      {
+        "id": "b29",
+        "date": "2021/02/21",
+        "weight": 8.7
+      },
+      {
+        "id": "b30",
+        "date": "2021/03/31",
+        "weight": 8.9
+      },
+      {
+        "id": "b31",
+        "date": "2021/04/18",
+        "weight": 8.9
+      },
+      {
+        "id": "b32",
+        "date": "2021/05/11",
+        "height": 76
+      },
+      {
+        "id": "b33",
+        "date": "2021/05/16",
+        "weight": 9.4
+      },
+      {
+        "id": "b34",
+        "date": "2021/05/25",
+        "height": 76
+      },
+      {
+        "id": "b35",
+        "date": "2021/06/15",
+        "height": 77.8
+      },
+      {
+        "id": "b36",
+        "date": "2021/06/30",
+        "weight": 9.2
+      },
+      {
+        "id": "b37",
+        "date": "2021/07/09",
+        "height": 78.8,
+        "weight": 9.55
+      },
+      {
+        "id": "b38",
+        "date": "2021/09/05",
+        "height": 79.8
+      },
+      {
+        "id": "b39",
+        "date": "2021/09/27",
+        "weight": 9.8
+      },
+      {
+        "id": "b40",
+        "date": "2021/10/23",
+        "weight": 10.2
+      },
+      {
+        "id": "b41",
+        "date": "2021/10/30",
+        "height": 81.5
+      },
+      {
+        "id": "b42",
+        "date": "2021/11/15",
+        "weight": 10.7
+      },
+      {
+        "id": "b43",
+        "date": "2022/01/10",
+        "height": 82.5
+      },
+      {
+        "id": "b44",
+        "date": "2022/01/18",
+        "height": 83.5
+      },
+      {
+        "id": "b45",
+        "date": "2022/01/31",
+        "weight": 10.5
+      },
+      {
+        "id": "b46",
+        "date": "2022/03/03",
+        "height": 84
+      },
+      {
+        "id": "b47",
+        "date": "2022/03/10",
+        "weight": 11.2
+      },
+      {
+        "id": "b48",
+        "date": "2022/04/03",
+        "height": 83.5
+      },
+      {
+        "id": "b49",
+        "date": "2022/04/24",
+        "height": 85.5
+      },
+      {
+        "id": "b50",
+        "date": "2022/05/21",
+        "height": 85.7
+      },
+      {
+        "id": "b51",
+        "date": "2022/06/10",
+        "weight": 11.2
+      },
+      {
+        "id": "b52",
+        "date": "2022/07/18",
+        "height": 87.2
+      },
+      {
+        "id": "b53",
+        "date": "2022/09/11",
+        "height": 89
+      },
+      {
+        "id": "b54",
+        "date": "2022/09/16",
+        "weight": 11.2
+      },
+      {
+        "id": "b55",
+        "date": "2023/02/23",
+        "height": 90.5
+      },
+      {
+        "id": "b56",
+        "date": "2023/04/30",
+        "height": 93.3,
+        "weight": 12.9
+      },
+      {
+        "id": "b57",
+        "date": "2023/09/10",
+        "weight": 12.8
+      },
+      {
+        "id": "b58",
+        "date": "2024/01/12",
+        "weight": 14.25
+      },
+      {
+        "id": "b59",
+        "date": "2024/01/19",
+        "height": 97
+      },
+      {
+        "id": "b60",
+        "date": "2024/06/07",
+        "height": 99.6,
+        "weight": 14.25
+      },
+      {
+        "id": "b61",
+        "date": "2024/08/04",
+        "weight": 15
+      },
+      {
+        "id": "b62",
+        "date": "2024/08/25",
+        "weight": 14.4
+      },
+      {
+        "id": "b63",
+        "date": "2024/08/29",
+        "height": 101.3
+      },
+      {
+        "id": "b64",
+        "date": "2024/10/20",
+        "height": 103
+      },
+      {
+        "id": "b65",
+        "date": "2024/11/26",
+        "weight": 14.8
+      },
+      {
+        "id": "b66",
+        "date": "2025/03/11",
+        "height": 104.5
+      },
+      {
+        "id": "b67",
+        "date": "2025/04/12",
+        "height": 104.7
+      },
+      {
+        "id": "b68",
+        "date": "2025/04/22",
+        "height": 106
+      },
+      {
+        "id": "b69",
+        "date": "2025/04/27",
+        "weight": 16.5
+      },
+      {
+        "id": "b70",
+        "date": "2025/06/08",
+        "weight": 16.6
+      },
+      {
+        "id": "b71",
+        "date": "2025/07/08",
+        "weight": 16.8
+      },
+      {
+        "id": "b72",
+        "date": "2025/07/25",
+        "weight": 16.7
+      },
+      {
+        "id": "b73",
+        "date": "2025/08/04",
+        "weight": 17.5
+      },
+      {
+        "id": "b74",
+        "date": "2025/08/11",
+        "weight": 17.2
+      },
+      {
+        "id": "b75",
+        "date": "2025/08/20",
+        "weight": 17.2
+      },
+      {
+        "id": "b76",
+        "date": "2025/08/21",
+        "height": 108.3
+      },
+      {
+        "id": "b77",
+        "date": "2025/08/29",
+        "weight": 17.7
+      },
+      {
+        "id": "b78",
+        "date": "2025/09/13",
+        "height": 109.5
+      },
+      {
+        "id": "b79",
+        "date": "2025/10/20",
+        "height": 110
+      },
+      {
+        "id": "b80",
+        "date": "2025/11/25",
+        "weight": 18.1
+      },
+      {
+        "id": "b81",
+        "date": "2025/12/03",
+        "weight": 18.6
+      },
+      {
+        "id": "b82",
+        "date": "2025/12/22",
+        "height": 111.5
+      },
+      {
+        "id": "b83",
+        "date": "2026/01/14",
+        "height": 112,
+        "weight": 18.8
+      },
+      {
+        "date": "2026/03/08",
+        "height": 113,
+        "id": "mmhod82c3zpudbdpjjv"
+      },
+      {
+        "date": "2026/03/08",
+        "weight": 19.2,
+        "id": "mmhoht9g1z6gg1uit2c"
+      },
+      {
+        "date": "2026/03/10",
+        "weight": 19.7,
+        "id": "mmklq54pj7e7fdrfd7e"
+      },
+      {
+        "date": "2026/03/23",
+        "weight": 19.4,
+        "id": "mn3voeellv7o2ou96ii"
+      }
+    ],
+    "takuto:config": {
+      "childBirthDate": "2019/12/19"
+    },
+    "takuto:lifting": [
+      {
+        "id": "1",
+        "date": "2025/07/23",
+        "count": 10,
+        "location": "家",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "2",
+        "date": "2025/07/24",
+        "count": 18,
+        "location": "家",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "3",
+        "date": "2025/07/25",
+        "count": 22,
+        "location": "家",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "4",
+        "date": "2025/08/28",
+        "count": 36,
+        "location": "リーフスタジアム",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "5",
+        "date": "2025/09/24",
+        "count": 42,
+        "location": "家",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "6",
+        "date": "2025/09/25",
+        "count": 78,
+        "location": "家",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "7",
+        "date": "2025/11/02",
+        "count": 83,
+        "location": "大和マリノス",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "8",
+        "date": "2025/12/20",
+        "count": 93,
+        "location": "田戸小",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "9",
+        "date": "2025/12/31",
+        "count": 114,
+        "location": "三春公園",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "10",
+        "date": "2026/01/15",
+        "count": 135,
+        "location": "田戸小",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "11",
+        "date": "2026/01/24",
+        "count": 201,
+        "location": "野比小",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "id": "12",
+        "date": "2026/02/19",
+        "count": 209,
+        "location": "リーフスタジアム",
+        "part": "インステップ",
+        "side": "左足"
+      },
+      {
+        "date": "2026/03/01",
+        "count": 312,
+        "location": "JARA",
+        "part": "インステップ",
+        "side": "左足",
+        "id": "13"
+      },
+      {
+        "id": "14",
+        "date": "2026/03/01",
+        "count": 24,
+        "location": "JARA",
+        "part": "インステップ",
+        "side": "右足"
+      },
+      {
+        "id": "15",
+        "date": "2026/03/01",
+        "count": 10,
+        "location": "三春公園",
+        "part": "インサイド",
+        "side": "左足"
+      },
+      {
+        "id": "16",
+        "date": "2026/03/05",
+        "count": 11,
+        "location": "家",
+        "part": "インサイド",
+        "side": "左足"
+      },
+      {
+        "id": "17",
+        "date": "2026/03/05",
+        "count": 6,
+        "location": "家",
+        "part": "インサイド",
+        "side": "右足"
+      },
+      {
+        "id": "18",
+        "date": "2026/03/05",
+        "count": 10,
+        "location": "家",
+        "part": "アウトサイド",
+        "side": "左足"
+      },
+      {
+        "id": "19",
+        "date": "2026/03/05",
+        "count": 6,
+        "location": "家",
+        "part": "アウトサイド",
+        "side": "右足"
+      },
+      {
+        "id": "20",
+        "date": "2026/03/05",
+        "count": 5,
+        "location": "家",
+        "part": "もも",
+        "side": "左足"
+      },
+      {
+        "id": "21",
+        "date": "2026/03/05",
+        "count": 3,
+        "location": "家",
+        "part": "もも",
+        "side": "右足"
+      },
+      {
+        "id": "22",
+        "date": "2026/03/05",
+        "count": 5,
+        "location": "家",
+        "part": "もも",
+        "side": "両足"
+      },
+      {
+        "id": "23",
+        "date": "2026/03/05",
+        "count": 3,
+        "location": "家",
+        "part": "アウトサイド",
+        "side": "両足"
+      },
+      {
+        "id": "24",
+        "date": "2026/03/05",
+        "count": 2,
+        "location": "家",
+        "part": "頭",
+        "side": "両足"
+      },
+      {
+        "id": "25",
+        "date": "2026/03/05",
+        "count": 8,
+        "location": "家",
+        "part": "インステップ",
+        "side": "両足"
+      },
+      {
+        "id": "26",
+        "date": "2026/03/05",
+        "count": 5,
+        "location": "家",
+        "part": "インサイド",
+        "side": "両足"
+      },
+      {
+        "date": "2026/03/08",
+        "count": 15,
+        "location": "岩戸小",
+        "part": "インサイド",
+        "side": "左足",
+        "id": "mmhme5rcd7ozh4hptwb"
+      },
+      {
+        "date": "2026/03/08",
+        "count": 7,
+        "location": "岩戸小",
+        "part": "もも",
+        "side": "左足",
+        "id": "mmhmeqnt5r3rtfa7ig4"
+      },
+      {
+        "date": "2026/03/08",
+        "count": 10,
+        "location": "岩戸小",
+        "part": "インステップ",
+        "side": "両足",
+        "id": "mmhmgs7rz3psto3faa"
+      },
+      {
+        "date": "2026/03/09",
+        "count": 14,
+        "location": "家",
+        "part": "インステップ",
+        "side": "両足",
+        "id": "mmiuetgowwd996svwjk"
+      },
+      {
+        "date": "2026/03/09",
+        "count": 15,
+        "location": "家",
+        "part": "インステップ",
+        "side": "両足",
+        "id": "mmiuhupfc87ynzd98kl"
+      },
+      {
+        "date": "2026/03/09",
+        "count": 18,
+        "location": "ノジマ",
+        "part": "インサイド",
+        "side": "左足",
+        "id": "mmivtnsztdado0od6d"
+      },
+      {
+        "date": "2026/03/11",
+        "count": 26,
+        "location": "家",
+        "part": "インステップ",
+        "side": "右足",
+        "id": "mmlqx14bsdmm83kq4l7"
+      },
+      {
+        "date": "2026/03/11",
+        "count": 20,
+        "location": "家",
+        "part": "インステップ",
+        "side": "両足",
+        "id": "mmlqzu7lsyq231anauc"
+      },
+      {
+        "date": "2026/03/11",
+        "count": 4,
+        "location": "家",
+        "part": "もも",
+        "side": "右足",
+        "id": "mmlrjoumlxufbu9ib6l"
+      },
+      {
+        "date": "2026/03/11",
+        "count": 34,
+        "location": "家",
+        "part": "インステップ",
+        "side": "両足",
+        "id": "mmlsjs9pbjn0eis4ozw"
+      },
+      {
+        "date": "2026/03/13",
+        "count": 7,
+        "location": "戸田",
+        "part": "インサイド",
+        "side": "右足",
+        "id": "mmoe6kb09z41k4nsjvv"
+      },
+      {
+        "date": "2026/03/13",
+        "count": 7,
+        "location": "戸田",
+        "part": "インサイド",
+        "side": "両足",
+        "id": "mmoe7ke3a7j05kjvcz7"
+      },
+      {
+        "date": "2026/03/14",
+        "count": 8,
+        "location": "下松",
+        "part": "インサイド",
+        "side": "右足",
+        "id": "mmpwvy2jng8s7oghnza"
+      },
+      {
+        "date": "2026/03/14",
+        "count": 5,
+        "location": "下松",
+        "part": "もも",
+        "side": "右足",
+        "id": "mmpxa4612c8c2pgy9nr"
+      },
+      {
+        "date": "2026/03/15",
+        "count": 1,
+        "location": "家",
+        "part": "胸→足",
+        "side": "両足",
+        "id": "mmre0ve53kyg2e7i3ce"
+      },
+      {
+        "date": "2026/03/15",
+        "count": 563,
+        "location": "三春公園",
+        "part": "インステップ",
+        "side": "左足",
+        "id": "mmrhdb2sam0brmamakq"
+      }
+    ],
+    "takuto:logs": [
+      {
+        "id": "mmhrfukabmrxc8hr2zf",
+        "date": "2026/03/08",
+        "completedItemIds": []
+      },
+      {
+        "id": "mmiu19bixl5j3apxuy",
+        "date": "2026/03/09",
+        "completedItemIds": [
+          "tm1",
+          "tm2",
+          "tm3",
+          "tm4",
+          "tm5"
+        ]
+      },
+      {
+        "id": "mmlq5alhsrw7a9l6plp",
+        "date": "2026/03/11",
+        "completedItemIds": [
+          "tm1",
+          "tm2",
+          "tm3",
+          "tm4",
+          "tm5",
+          "tm6",
+          "tm7",
+          "tm8",
+          "tm9",
+          "tm10",
+          "tm11",
+          "tm12",
+          "tm13",
+          "tm14"
+        ]
+      },
+      {
+        "id": "mmoe3k3a65qjl3m7t5q",
+        "date": "2026/03/13",
+        "completedItemIds": [
+          "tm7",
+          "tm8",
+          "tm9"
+        ]
+      },
+      {
+        "id": "mmra24ci9wmuacy3y7r",
+        "date": "2026/03/15",
+        "completedItemIds": [
+          "tm10",
+          "tm13",
+          "tm12",
+          "tm11",
+          "tm14",
+          "tm9",
+          "tm8",
+          "tm7",
+          "tm6",
+          "tm5",
+          "tm3",
+          "tm4",
+          "tm2",
+          "tm1"
+        ]
+      },
+      {
+        "id": "mmwsal466eqowyxl1ve",
+        "date": "2026/03/19",
+        "completedItemIds": [
+          "tm7",
+          "tm8",
+          "tm9",
+          "tm1",
+          "tm2",
+          "tm3",
+          "tm4",
+          "tm5",
+          "tm10",
+          "tm11",
+          "tm12",
+          "tm13",
+          "tm14",
+          "mmri7wogsgrsizwzkbk",
+          "tm6"
+        ]
+      },
+      {
+        "id": "mn4ds0rzo857zjifc1",
+        "date": "2026/03/24",
+        "completedItemIds": []
+      }
+    ],
+    "takuto:menu": [
+      {
+        "id": "tm1",
+        "name": "ミニハードル(片足ずつ)",
+        "targetCount": 10,
+        "isMinimum": false,
+        "estimatedMinutes": 3,
+        "order": 1
+      },
+      {
+        "id": "tm2",
+        "name": "ミニハードル(両足)",
+        "targetCount": 10,
+        "isMinimum": false,
+        "estimatedMinutes": 3,
+        "order": 2
+      },
+      {
+        "id": "tm3",
+        "name": "ラダー(1歩)",
+        "targetCount": 10,
+        "isMinimum": false,
+        "estimatedMinutes": 3,
+        "order": 3
+      },
+      {
+        "id": "tm4",
+        "name": "ラダー(2歩)",
+        "targetCount": 10,
+        "isMinimum": false,
+        "estimatedMinutes": 3,
+        "order": 4
+      },
+      {
+        "id": "tm5",
+        "name": "ラダー(中中外)",
+        "targetCount": 10,
+        "isMinimum": false,
+        "estimatedMinutes": 3,
+        "order": 5
+      },
+      {
+        "id": "tm6",
+        "name": "バンドダッシュ",
+        "targetCount": 10,
+        "isMinimum": false,
+        "estimatedMinutes": 5,
+        "order": 6
+      },
+      {
+        "id": "tm7",
+        "name": "リフティング(インステップ左足)",
+        "targetCount": 50,
+        "isMinimum": true,
+        "estimatedMinutes": 3,
+        "order": 7
+      },
+      {
+        "name": "リフティング(インステップ右足)",
+        "targetCount": 20,
+        "isMinimum": true,
+        "estimatedMinutes": 3,
+        "id": "tm8",
+        "order": 8
+      },
+      {
+        "name": "リフティング(インサイド左足)",
+        "targetCount": 10,
+        "isMinimum": true,
+        "estimatedMinutes": 3,
+        "id": "tm9",
+        "order": 9
+      },
+      {
+        "id": "tm10",
+        "name": "リフティング(インサイド右足)",
+        "targetCount": 5,
+        "isMinimum": true,
+        "estimatedMinutes": 3,
+        "order": 10
+      },
+      {
+        "id": "tm11",
+        "name": "リフティング(アウトサイド左足)",
+        "targetCount": 5,
+        "isMinimum": true,
+        "estimatedMinutes": 3,
+        "order": 11
+      },
+      {
+        "id": "tm12",
+        "name": "リフティング(アウトサイド右足)",
+        "targetCount": 5,
+        "isMinimum": true,
+        "estimatedMinutes": 3,
+        "order": 12
+      },
+      {
+        "id": "tm13",
+        "name": "リフティング(もも)",
+        "targetCount": 6,
+        "isMinimum": true,
+        "estimatedMinutes": 3,
+        "order": 13
+      },
+      {
+        "id": "tm14",
+        "name": "リフティング(むね)",
+        "targetCount": 4,
+        "isMinimum": true,
+        "estimatedMinutes": 3,
+        "order": 14
+      },
+      {
+        "name": "リフティング(ちょんちょん)",
+        "targetCount": 4,
+        "isMinimum": true,
+        "estimatedMinutes": 3,
+        "id": "mmri7wogsgrsizwzkbk",
+        "order": 15
+      }
+    ],
+    "takuto:notes": [
+      {
+        "date": "2026/01/22",
+        "location": "リーフスタジアム",
+        "category": "スクール",
+        "goodPoints": "シュートの足が振り切ることができた。",
+        "improvements": [
+          {
+            "text": "周りを見ていない",
+            "done": true
+          }
+        ],
+        "id": "1",
+        "teamName": "マリノス"
+      },
+      {
+        "date": "2026/01/23",
+        "location": "家",
+        "category": "自主練",
+        "goodPoints": "自分で課題の修正メニューができた。",
+        "improvements": [
+          {
+            "text": "シュートの足が降れてなかった。",
+            "done": true
+          }
+        ],
+        "id": "2"
+      },
+      {
+        "date": "2026/01/24",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "カバーができた。",
+        "improvements": [
+          {
+            "text": "取られたあと取り返すのが遅い",
+            "done": true
+          }
+        ],
+        "id": "3",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2026/01/29",
+        "location": "リーフスタジアム",
+        "category": "スクール",
+        "goodPoints": "フェイントでかわした。",
+        "improvements": [
+          {
+            "text": "ボールを取りに行くとき焦った。",
+            "done": true
+          }
+        ],
+        "id": "4",
+        "teamName": "マリノス"
+      },
+      {
+        "date": "2026/02/22",
+        "location": "SCH",
+        "category": "チーム練習",
+        "goodPoints": "かわしたあとスピードを上げられた。",
+        "improvements": [
+          {
+            "text": "取られた後にプレーが遅かった。",
+            "done": true
+          }
+        ],
+        "id": "5",
+        "teamName": "SCH"
+      },
+      {
+        "date": "2026/03/08",
+        "location": "岩戸小",
+        "category": "スクール",
+        "goodPoints": "抜かした後早く前にいけた",
+        "improvements": [
+          {
+            "text": "なし",
+            "done": true
+          }
+        ],
+        "id": "mmhowrg8yim20p0gyg",
+        "teamName": "I.O"
+      },
+      {
+        "date": "2026/01/26",
+        "location": "周南",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhrt9vuw1vg0evfy1",
+        "teamName": "フットアラーズ"
+      },
+      {
+        "date": "2026/02/24",
+        "location": "新横浜",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhrtv7lh6wgbr9gyte",
+        "teamName": "バルサアカデミー"
+      },
+      {
+        "date": "2026/02/16",
+        "location": "一色小",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhrui1bs62cnnzsyp",
+        "teamName": "カルチェット"
+      },
+      {
+        "date": "2026/02/03",
+        "location": "SCH",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhrv1iehh0kn1zvluj",
+        "teamName": "SCH(キッズエリートクラス)"
+      },
+      {
+        "date": "2026/02/24",
+        "location": "リーフスタジアム",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhrvgx81x9d6lgh272",
+        "teamName": "マリノス"
+      },
+      {
+        "date": "2026/01/24",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhrw1d7mtm7x7owa7",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2026/01/18",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhrxfcnv1ofixrxflq",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2026/01/17",
+        "location": "三浦半島大会",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhry2wc0cuhn8s4fxed",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2026/01/17",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhryhw576sbbqhxokh",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2026/01/12",
+        "location": "トレマ",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhrzi1kilhzchlzmt",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2026/01/11",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhrzss5285l1347a1s",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2026/01/27",
+        "location": "観音",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs0rfyveqy4mf93sp",
+        "teamName": "サンフレッチェ"
+      },
+      {
+        "date": "2026/01/04",
+        "location": "佐原",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs1m1gq9lbcl7bux",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/12/25",
+        "location": "一色小",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs2f9ji986w0xow5m",
+        "teamName": "カルチェット"
+      },
+      {
+        "date": "2025/12/20",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs3bu619ssrixu0te",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/12/06",
+        "location": "小田原SSC CUP",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs4vhgkb8vksghgqr",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2025/11/30",
+        "location": "レイエスカップ",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs5eg7wds7va74ut",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2025/12/10",
+        "location": "下松",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs6fi6t9mgrrofhde",
+        "teamName": "リベルダーテ"
+      },
+      {
+        "date": "2025/12/11",
+        "location": "久米",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs6uklzwvgoqdlhs",
+        "teamName": "リベルダーテ"
+      },
+      {
+        "date": "2025/12/08",
+        "location": "周南",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs77blwlg02ercdc",
+        "teamName": "フットアラーズ"
+      },
+      {
+        "date": "2025/11/27",
+        "location": "一色小",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs7lobkgt54u7ioj",
+        "teamName": "カルチェット"
+      },
+      {
+        "date": "2025/12/24",
+        "location": "野比東小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs86nvpq2uq8nguxf",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/11/23",
+        "location": "野比東小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs8wu4m3xg4tx3hdr",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/11/22",
+        "location": "野比東小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhs9e8io3vdugjkzd",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/11/16",
+        "location": "野比東小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsa56tjflusd83wq",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/11/15",
+        "location": "野比東小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsak8qm44tbk0jgp",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/11/09",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsavy8uew31b1up6",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/11/02",
+        "location": "マリノスフェスティバル",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsbamo13v5iuh4sime",
+        "teamName": "マリノス"
+      },
+      {
+        "date": "2025/11/01",
+        "location": "野比東小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsbnt060sgd8bcj36",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2026/02/21",
+        "location": "マリノスフェスティバル",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsc102e11g7mkotla",
+        "teamName": "マリノス"
+      },
+      {
+        "date": "2025/10/19",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsdx0z6pytzhaw9md",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/10/18",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsebw7gmmz2ffn6dg",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/10/12",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsembcokbus2uee1l",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/10/11",
+        "location": "野比小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhseywyk6s17fjv2v",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/09/23",
+        "location": "野比東小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsfvooza6l8tbyyhe",
+        "teamName": "シーガルズ"
+      },
+      {
+        "date": "2025/09/21",
+        "location": "田戸カップ",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsgkfh5c9pm5k7l7s",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2025/09/20",
+        "location": "マリノスフェスティバル",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsgydu2vlbpd2dsgk",
+        "teamName": "マリノス"
+      },
+      {
+        "date": "2025/09/15",
+        "location": "レイエスカップ",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhshvgbs3f50dbdbk",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2025/09/07",
+        "location": "トレマ",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsilf02h6y8ukap3w",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2025/08/07",
+        "location": "岩国",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhskkv3u68nq8d7af",
+        "teamName": "サンフレッチェ"
+      },
+      {
+        "date": "2025/08/05",
+        "location": "周南",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsl1dfaf0czwuzmiq",
+        "teamName": "レノファ"
+      },
+      {
+        "date": "2025/08/04",
+        "location": "周南",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsletd527fe8krwt",
+        "teamName": "フットアラーズ"
+      },
+      {
+        "date": "2025/07/30",
+        "location": "下松",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhslrtqyob6iq23ii",
+        "teamName": "リベルダーテ"
+      },
+      {
+        "date": "2025/06/28",
+        "location": "IOカップ",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsmpr01t90u1180ww",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2025/06/14",
+        "location": "マリノスフェスティバル",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsneihzomp4od138",
+        "teamName": "マリノス"
+      },
+      {
+        "date": "2025/05/31",
+        "location": "キッズ大会久里浜",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhso7r1lges8pq88pj",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2025/09/27",
+        "location": "トレマ",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhspe2pv0y3ildi3po",
+        "teamName": "TADO"
+      },
+      {
+        "date": "2025/06/25",
+        "location": "佐原",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmhsr92k33qj0pu7vqg",
+        "teamName": "グリーンアカデミー"
+      },
+      {
+        "date": "2026/01/18",
+        "location": "SCH",
+        "category": "セレクション",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmht0tsi40tpvwspzui",
+        "teamName": "SCH(2次セレクション)-合格"
+      },
+      {
+        "date": "2026/01/10",
+        "location": "SCH",
+        "category": "セレクション",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmht1u5lk1fxvrzwjoo",
+        "teamName": "SCH(1次セレクション)-合格"
+      },
+      {
+        "date": "2025/12/21",
+        "location": "子供の国",
+        "category": "セレクション",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmht30a9bwtgon0f53k",
+        "teamName": "バディ選抜(1次)-不合格"
+      },
+      {
+        "date": "2026/03/08",
+        "location": "根岸交通公園",
+        "category": "自主練",
+        "goodPoints": "初めて自転車に乗れるようになった🚲\n(補助輪なし)",
+        "improvements": [],
+        "id": "mmhtld7fwddyoilsu1"
+      },
+      {
+        "date": "2025/01/11",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmie596gw42kpcqwt89",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/01/12",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmie5vbz2qkfud3s2l9",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/01/13",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmie68bwwa7jynzssfg",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/01/18",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmie6pu6mvzekzvcmjd",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/01/19",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmie7fz2datltubzumo",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/01/25",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmie7u31fv4sawmxp2",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/02/01",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmie8p6vhkjr6ftlopk",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/02/09",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmie961ssbmguufvvu",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/02/11",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmie9kxhzc2nqeo2xaa",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/02/15",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiea4d16axmgttcmow",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/02/23",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiear74qkz0exbckt",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/03/01",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiebd9xtg55thumznl",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/03/02",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiebnsdax2e76u9jtj",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/03/08",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiec5s1pmle6vdso5b",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/03/09",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiecs1q4exv1yqnxba",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/03/15",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmied6jzlxz37lult1q",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/03/23",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiee2f44fjwhtlwm14",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/03/29",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmieenv7ckjt49yybbq",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/03/30",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmieexq2oj1uswej1e",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/04/05",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiefdx0efg214fepe5",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/04/06",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiefvb2u7b7vufhxbp",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/04/13",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiegi5d5rrscosz74m",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/04/19",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiegx5lzcnlclatbhr",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/04/20",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiehei32fscmjcd61w",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/05/17",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmieiknpqckr8r84oo",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/05/24",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiej2mg7s15fr67d0p",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/05/25",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiejbzol6xaaox7dp",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/05/26",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiejvc4udgjbl8yjy",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/06/07",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiekmkbprbhr67h0z",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/06/08",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiel24wet0xrv1rede",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/06/15",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmielqsghi8dia5n4d",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/07/06",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiemc16xgq4avr8kz",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/07/12",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiemrweta01e9sg7x",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/07/13",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmien2f2rkgjq5vif6",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/07/19",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmienk80qnshahf117c",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/07/21",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmient6ev6hzrcrzo8",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/08/23",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmieog0dob2i6azl2gb",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/09/06",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiep2kvkynljptkeyq",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/09/07",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiepb7do3a7ikm7lq",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/09/13",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmietq1bqgq0z2n9qbf",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/09/14",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmietzv35t6xblkw3si",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/09/20",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmifzwpa6700qbj6438",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/09/27",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig0lraov2jbcms3kq",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/10/11",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig1zqzkxbdpkkz4qm",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/10/12",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig2iifpailkdcbx0k",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/10/13",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig2r5071h0lbm1ebx",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/10/18",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig37gzo6hi9v5a25b",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/10/19",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig3g93wm2fqfe3km",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/10/26",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig448jt4n6laqzpib",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/11/09",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig4q1apcm306sfgba",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/11/15",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig54t6y67m3qpwb3l",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/11/16",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig5dqv204ueingh8k",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/11/22",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig5wctebtlkeicubi",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/11/23",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig645semkzd4rysjo",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/11/24",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig6dwa56qmui3bch4",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/12/20",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig6z6h9ug11s2rjmc",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/12/31",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig7t9rqk0gjipv62",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2026/01/04",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig8qxoc1ntzbphz0p",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2026/01/10",
+        "location": "田戸小",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmig9cldx0f7ogntzb",
+        "teamName": "TADOなかよし"
+      },
+      {
+        "date": "2025/06/21",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigcz7e5nws17ba5lk",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/07/01",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigdvy7wsrufhazfu",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/09/02",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigenubmdu6lsdse29",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/09/09",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigf0485x3kgkas2q7",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/09/16",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigfi5dz32371kuxl",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/09/23",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigft9kzi76rfm4fpr",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/10/07",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiggvhbb57cgdocu1a",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/10/14",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigh4n1esjh05nqfdt",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/10/21",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmighgp24chzk4i26n7",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/10/28",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmighqn137ov55nmbl",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/11/10",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigjpokyz3d75kjnr",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/11/17",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigjypljqyc6a0oji9",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/11/24",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigk7encci2u0pwhwg",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/11/04",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigkn3k2we8s16mjd",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/11/11",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigl2vu47td5rce1eo",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/11/18",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiglcksw7sfb8d7rgm",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/11/25",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiglmrzjbubbji5d18",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/12/16",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigm9fhppvxcxikax",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/12/01",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmign6xbqnkxa3smn1",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/12/02",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmignf8kpeq8zd0nzf",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/12/13",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmignwm6d3vfhxv0rap",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/12/15",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigpa6d6kvt9hk3lg3",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/12/17",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigpomm27c13ejevvo",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/01/05",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigquooupz2dyhgcn",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/01/06",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigr2c0fht660s2awn",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/01/08",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigrb99t31n71fvqf",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/01/12",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigsa6odki37iajhw",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/01/13",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigsh5526tw6a8qcme",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/01/19",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigsunnxs7o84wimnr",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/01/20",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigt1vt5kl4uramsiu",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/02/02",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigu15ogln5azne9n",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/02/05",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigu81u2ger876ss3b",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/02/10",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiguuqgs14ofwqtp",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/02/17",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigvczuoxj7lzh8gcf",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/02/23",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigvrypq21btkrgel",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/02/26",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigw2z18o9hnke3o39",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/03/02",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigwlg9litqt03rgu",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/03/04",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigwx0gb720k0zy9lh",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2026/03/05",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmigx3hrco2fjv8paak",
+        "teamName": "ゴールドスクール"
+      },
+      {
+        "date": "2025/11/08",
+        "teamName": "シーガルズ",
+        "location": "保土ヶ谷公園",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmioibzcfgn0l7rbjwi"
+      },
+      {
+        "date": "2026/03/09",
+        "teamName": "ゴールドスクール",
+        "location": "横須賀",
+        "category": "スクール",
+        "goodPoints": "かわした後、早く前に行ってゴールを決めれてた。\n練習を誰よりたくさんやってた。",
+        "improvements": [
+          {
+            "text": "もっと前からプレスをかける",
+            "done": true
+          }
+        ],
+        "id": "mmiyupuvhxq8fsi3ktw"
+      },
+      {
+        "date": "2026/03/09",
+        "location": "家",
+        "category": "自主練",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmiz9wlr8ehnmz918rl"
+      },
+      {
+        "date": "2026/03/10",
+        "teamName": "SCH(キッズエリートクラス)",
+        "location": "SCH",
+        "category": "スクール",
+        "goodPoints": "かわすときに無駄なタッチがなかった",
+        "improvements": [
+          {
+            "text": "声がせてない",
+            "done": true
+          }
+        ],
+        "id": "mmkdz89hjo090yv9i2r"
+      },
+      {
+        "date": "2026/03/14",
+        "location": "中村小",
+        "category": "自主練",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mmra9rark5p393l538p"
+      },
+      {
+        "date": "2026/03/16",
+        "teamName": "シーガルズ",
+        "location": "トリコロール",
+        "category": "スクール",
+        "goodPoints": "相手がきても焦らなく落ち着いてプレーできた。",
+        "improvements": [
+          {
+            "text": "相手の方が体が大きかったから足からボールを撮りにいってしまった。",
+            "done": true
+          }
+        ],
+        "id": "mmszbpy26u7bztdcgvq"
+      },
+      {
+        "date": "2026/03/17",
+        "teamName": "SCH(キッズエリートクラス)",
+        "location": "SCH",
+        "category": "スクール",
+        "goodPoints": "かわしてからスピードに乗った後、周りを見てパスするのが早かった",
+        "improvements": [
+          {
+            "text": "シュートをトラップミス相手のゴールに繋がってしまった",
+            "done": true
+          }
+        ],
+        "id": "mmudx0d4mkll80p05wb"
+      },
+      {
+        "date": "2026/03/18",
+        "teamName": "ゴールドスクール",
+        "location": "ノジマ",
+        "category": "スクール",
+        "goodPoints": "トラップをしっかりできた。",
+        "improvements": [
+          {
+            "text": "判断も足も遅い",
+            "done": true
+          }
+        ],
+        "id": "mmvtml0bximxxcez2b"
+      },
+      {
+        "date": "2026/03/19",
+        "location": "家",
+        "category": "自主練",
+        "teamName": "",
+        "goodPoints": "自主練メニューを全部できた！",
+        "improvements": [],
+        "id": "mmwuwyz7wgzmpxqdvor"
+      },
+      {
+        "date": "2026/03/19",
+        "teamName": "ゴールドスクール",
+        "location": "ノジマ",
+        "category": "スクール",
+        "goodPoints": "前に走って、戻るときにディフェンスするのが早かった",
+        "improvements": [
+          {
+            "text": "ドリブルで左ばっかりいってしまった。",
+            "done": false
+          }
+        ],
+        "id": "mmxa8rgbsk0wqjlpxlk"
+      },
+      {
+        "date": "2026/03/21",
+        "teamName": "SCH",
+        "location": "SCH",
+        "category": "チーム練習",
+        "goodPoints": "前からプレスが出来きた。\nずっとポジションが、良かった。\nカバーが早かった",
+        "improvements": [
+          {
+            "text": "ドリブルで交わした後次のプレー早く。",
+            "done": false
+          },
+          {
+            "text": "味方にボールを譲ってしまった。",
+            "done": false
+          },
+          {
+            "text": "ゴールを死ぬ気で守れていない",
+            "done": false
+          }
+        ],
+        "id": "mmzq77c0j4wsh6ai4bh"
+      },
+      {
+        "date": "2026/03/23",
+        "teamName": "リベルダーテ",
+        "location": "久米",
+        "category": "スクール",
+        "goodPoints": "全部全力で走ってプレーした。",
+        "improvements": [
+          {
+            "text": "シュートを強く打ちたい",
+            "done": false
+          }
+        ],
+        "id": "mn311wenwkrat6kluvp"
+      }
+    ],
+    "takuto:perf_config": [
+      {
+        "label": "足裏タップ",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [
+          "10トレ"
+        ],
+        "id": "custom_mn5dtdloqf43p29ftn",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。"
+      },
+      {
+        "label": "クロスタップ",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [
+          "10トレ"
+        ],
+        "id": "custom_mn5frregfzgwtdl08s9"
+      },
+      {
+        "label": "ｲﾝｲﾝ-アウトロール",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [
+          "10トレ"
+        ],
+        "id": "custom_mn5ft2kput8l2s1pb8"
+      },
+      {
+        "label": "ｲﾝｲﾝ-ロール",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [
+          "10トレ"
+        ],
+        "id": "custom_mn5fuzmaistkxbma1o"
+      },
+      {
+        "label": "クロスステップ",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [
+          "10トレ"
+        ],
+        "id": "custom_mn5fvtsb8tgcldtjynu"
+      },
+      {
+        "label": "連続シザース",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [
+          "10トレ"
+        ],
+        "id": "custom_mn5fwfwvqdwnivyp1b"
+      },
+      {
+        "label": "ビハインドターン",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [],
+        "id": "custom_mn5fww5v6h7d7pgr523"
+      },
+      {
+        "label": "ｲﾝｲﾝ-ターン",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [
+          "10トレ"
+        ],
+        "id": "custom_mn5fy0uzgv3zaheehk9"
+      },
+      {
+        "label": "連続ファルカン",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [
+          "10トレ"
+        ],
+        "id": "custom_mn5g4d6got07zdo2qg"
+      },
+      {
+        "label": "アウトイン",
+        "icon": "📺",
+        "unit": "回",
+        "lowerIsBetter": false,
+        "section": "ball",
+        "frequency": "daily",
+        "howToMeasure": "10分トレーニングの動画を見ながらメニューを実施。回数を記録する。",
+        "referenceUrl": "https://youtu.be/AijVmQn_YRc?si=4DT8--eqhLL3KYzR",
+        "tags": [
+          "10トレ"
+        ],
+        "id": "custom_mn5g54h2iw6oplm4hye"
+      }
+    ],
+    "takuto:performance": []
+  }
+}
