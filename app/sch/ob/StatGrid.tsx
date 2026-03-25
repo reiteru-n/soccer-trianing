@@ -83,7 +83,7 @@ export default function StatGrid() {
           >
             <p className={`${s.numColor} text-[22px] font-black leading-none`}>{s.num}</p>
             <p className="text-slate-400 text-[9px] mt-0.5 whitespace-pre-line">{s.icon} {s.label}</p>
-            <p className="text-slate-600 text-[8px] mt-1">{open === s.key ? '▲ 閉じる' : '▼ 誰？'}</p>
+            <p className="text-slate-600 text-[8px] mt-1">{open === s.key ? '▲ 閉じる' : '▼ 一覧'}</p>
           </button>
         ))}
       </div>
