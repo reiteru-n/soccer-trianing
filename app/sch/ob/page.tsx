@@ -236,7 +236,7 @@ export default function ObPage() {
         nameKana="まつむら こうすけ"
         birth="2004年5月2日生（神奈川県鎌倉市出身）"
         position="MF（ミッドフィルダー）"
-        highlight="🏆 2027シーズン 横浜F・マリノス（J1）加入内定！"
+        highlight="🏆 2025年 特別指定選手・2027シーズン 横浜F・マリノス（J1）加入内定！"
         career={[
           { label: '小学', value: 'SCH.FC' },
           { label: '中学', value: '横浜F・マリノス JY追浜', note: '横浜市立谷本中' },
@@ -272,7 +272,7 @@ export default function ObPage() {
         ]}
         tags={[
           { text: 'J3プロ', color: 'blue' },
-          { text: '3/30初得点', color: 'green' },
+          { text: '2025/3/30初得点', color: 'green' },
           { text: 'FXスーパーカップ2020出場', color: 'teal' },
         ]}
         sources={[
@@ -374,6 +374,7 @@ export default function ObPage() {
           name: '土佐 陸翼', kana: 'とさ りくと', birth: '—（SCH JY中学部卒）',
           career: 'SCH FC JY → 栃木シティFC（J3優勝・J2昇格 2025〜）',
           src: 'https://www.sch-fc.com/pages/246/',
+          league: 'J3→J2',
         },
         {
           name: '国本 玲央', kana: 'くにもと れお', birth: '（SCH JY中学部 2013年度卒）',
@@ -392,7 +393,7 @@ export default function ObPage() {
               <p className="text-white text-[14px] font-bold">{p.name}</p>
               <p className="text-[#3f4d6b] text-[9px]">{p.kana}{p.birth !== '—' ? ` · ${p.birth}` : ''}</p>
             </div>
-            <Tag color="blue">JFL</Tag>
+            <Tag color="blue">{'league' in p ? (p as {league: string}).league : 'JFL'}</Tag>
           </div>
           <p className="text-[#60a5fa] text-[11px] mt-1.5 leading-relaxed">{p.career}</p>
           <div className="mt-1.5">
@@ -661,7 +662,7 @@ export default function ObPage() {
         </div>
         <p className="text-[#3f4d6b] text-[9px] mt-3 leading-relaxed">
           ※ 情報の誤り・追加情報がある場合はSCHチームにお知らせください。
-          SCHFCの公式OB情報ページ（sch-fc.com）には小林夏生・佐藤夏樹・角田恵風・金丸希陽選手の情報が掲載されています（取得時点でアクセス制限あり）。
+          SCHFCの公式OB情報ページ（sch-fc.com）には小林夏生・佐藤夏樹・角田惠風・金丸希陽選手の情報が掲載されています（取得時点でアクセス制限あり）。
         </p>
       </div>
 
