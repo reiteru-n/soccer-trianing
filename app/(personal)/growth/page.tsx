@@ -75,6 +75,10 @@ export default function GrowthPage() {
   const [builtinOverrides, setBuiltinOverrides] = useState<Record<string, BuiltinOverride>>(
     () => loadConfig('perf_builtin_overrides', {})
   );
+  const [metricOrder, setMetricOrder] = useState<string[]>(
+    () => loadConfig('perf_metric_order', [])
+  );
+  const [reorderMode, setReorderMode] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showExpiredOnly, setShowExpiredOnly] = useState(false);
   const [showAddMetric, setShowAddMetric] = useState(false);
@@ -101,6 +105,27 @@ export default function GrowthPage() {
     if (!ov) return m;
     return { ...m, ...ov };
   };
+
+  const orderedMetrics = useMemo(() => {
+    const all: Array<{ def: MetricDef; custom?: CustomMetricDef }> = [
+      ...BUILTIN_METRICS.map(m => ({ def: getEffectiveBuiltin(m) })),
+      ...customMetrics.map(m => ({ def: { type: m.id, label: m.label, icon: m.icon, unit: m.unit, lowerIsBetter: m.lowerIsBetter, section: m.section } as MetricDef, custom: m })),
+    ];
+    if (metricOrder.length === 0) return all;
+    const ordered = metricOrder.map(id => all.find(m => m.def.type === id)).filter((x): x is typeof all[number] => !!x);
+    const unordered = all.filter(m => !metricOrder.includes(m.def.type));
+    return [...ordered, ...unordered];
+  }, [customMetrics, metricOrder, builtinOverrides]);
+
+  function moveMetric(type: string, dir: 'up' | 'down') {
+    const ids = orderedMetrics.map(m => m.def.type);
+    const idx = ids.indexOf(type);
+    const next = [...ids];
+    if (dir === 'up' && idx > 0) [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+    else if (dir === 'down' && idx < ids.length - 1) [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+    else return;
+    setMetricOrder(next); saveConfig('perf_metric_order', next);
+  }
 
   // テンプレートから内容をコピー
   const applyTemplate = (id: string) => {
@@ -223,12 +248,6 @@ export default function GrowthPage() {
     );
   }
 
-  const physicalBuiltin = BUILTIN_METRICS.filter(m => m.section === 'physical');
-  const ballBuiltin     = BUILTIN_METRICS.filter(m => m.section === 'ball');
-  const customPhysical  = customMetrics.filter(m => m.section === 'physical');
-  const customBall      = customMetrics.filter(m => m.section === 'ball');
-  const customOther     = customMetrics.filter(m => m.section === 'other');
-
   // All metrics for template selector
   const templateOptions = [
     ...BUILTIN_METRICS.map(m => ({ id: m.type, label: `${m.icon} ${m.label}`, group: '組み込み' })),
@@ -279,9 +298,14 @@ export default function GrowthPage() {
           {showExpiredOnly ? '⚠️ 更新必要のみ' : '全て表示'}
           {needsUpdateCount > 0 && <span className="ml-2 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{needsUpdateCount}</span>}
         </button>
+        <button onClick={() => setReorderMode(f=>!f)}
+          className={'px-3 py-2 rounded-xl text-sm font-semibold border transition-colors ' +
+            (reorderMode ? 'bg-purple-600/40 border-purple-500/60 text-purple-200' : 'bg-slate-800/60 border-white/10 text-slate-400')}>
+          ↕ 並び替え
+        </button>
         <button onClick={() => setShowAddMetric(f=>!f)}
           className="px-4 py-2 rounded-xl text-sm font-semibold border border-blue-500/40 bg-blue-600/20 text-blue-300">
-          ＋ 項目追加
+          ＋ 追加
         </button>
       </div>
 
@@ -403,30 +427,40 @@ export default function GrowthPage() {
         </div>
       )}
 
-      {/* Physical section */}
-      <section className="mb-4">
-        <h2 className="text-xs font-bold text-blue-200 mb-2 tracking-wide uppercase">🏃 フィジカル / アジリティ</h2>
-        <div className="space-y-2">
-          {physicalBuiltin.map(m => renderCard(m))}
-          {customPhysical.map(m => renderCard({ ...m, type: m.id }, m))}
-        </div>
-      </section>
-
-      {/* Ball control section */}
-      <section className="mb-4">
-        <h2 className="text-xs font-bold text-blue-200 mb-2 tracking-wide uppercase">⚽ ボールコントロール技術</h2>
-        <div className="space-y-2">
-          {ballBuiltin.map(m => renderCard(m))}
-          {customBall.map(m => renderCard({ ...m, type: m.id }, m))}
-        </div>
-      </section>
-
-      {/* Other custom section */}
-      {customOther.some(m => shouldShow(m.id, m)) && (
+      {/* Reorder mode */}
+      {reorderMode ? (
         <section className="mb-4">
-          <h2 className="text-xs font-bold text-blue-200 mb-2 tracking-wide uppercase">📌 その他</h2>
+          <p className="text-[11px] text-slate-400 mb-2">↑↓ で順番を変更。変更は自動保存されます。</p>
+          <div className="space-y-1.5">
+            {orderedMetrics.map(({ def, custom }, i) => {
+              const sectionLabel = def.section === 'physical' ? '🏃 フィジカル' : def.section === 'ball' ? '⚽ ボール' : '📌 その他';
+              return (
+                <div key={def.type} className="flex items-center gap-2 bg-slate-800/70 border border-white/10 rounded-xl px-3 py-2.5">
+                  <div className="flex flex-col gap-0.5">
+                    <button onClick={() => moveMetric(def.type, 'up')} disabled={i === 0}
+                      className="text-slate-400 hover:text-white disabled:opacity-20 text-xs leading-none px-1">▲</button>
+                    <button onClick={() => moveMetric(def.type, 'down')} disabled={i === orderedMetrics.length - 1}
+                      className="text-slate-400 hover:text-white disabled:opacity-20 text-xs leading-none px-1">▼</button>
+                  </div>
+                  <span className="text-lg">{def.icon}</span>
+                  <span className="flex-1 text-sm font-semibold text-white">{def.label}</span>
+                  <span className="text-[10px] text-slate-500 bg-slate-700/50 px-2 py-0.5 rounded-full">{sectionLabel}</span>
+                </div>
+              );
+            })}
+          </div>
+          {metricOrder.length > 0 && (
+            <button onClick={() => { setMetricOrder([]); saveConfig('perf_metric_order', []); }}
+              className="mt-2 w-full text-[11px] text-slate-500 hover:text-red-400 py-1.5 border border-white/5 rounded-xl transition-colors">
+              デフォルト順に戻す
+            </button>
+          )}
+        </section>
+      ) : (
+        /* Normal / custom-ordered display */
+        <section className="mb-4">
           <div className="space-y-2">
-            {customOther.map(m => renderCard({ ...m, type: m.id }, m))}
+            {orderedMetrics.map(({ def, custom }) => renderCard(def, custom))}
           </div>
         </section>
       )}
