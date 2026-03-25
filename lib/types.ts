@@ -19,12 +19,6 @@ export interface PerformanceRecord {
   metricType: string; // predefined PerformanceMetricType or custom id
   value: number;
   memo?: string;
-  referenceUrl?: string;
-}
-
-export interface PerformanceMetricConfig {
-  metricType: string;
-  frequency: PerformanceFrequency;
 }
 
 // User-defined custom metric definition
@@ -36,6 +30,8 @@ export interface CustomMetricDef {
   lowerIsBetter: boolean;
   section: 'physical' | 'ball' | 'other';
   frequency: PerformanceFrequency;
+  referenceUrl?: string;
+  tags?: string[];
 }
 
 // --- Existing types ---

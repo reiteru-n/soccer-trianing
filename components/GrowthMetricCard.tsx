@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,7 +12,7 @@ import {
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Line } from 'react-chartjs-2';
-import { PerformanceRecord, PerformanceMetricType, PerformanceFrequency } from '@/lib/types';
+import { PerformanceRecord, PerformanceFrequency } from '@/lib/types';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, ChartDataLabels);
 
@@ -44,7 +44,7 @@ function daysSince(dateStr: string): number {
 }
 
 interface Props {
-  metricType: PerformanceMetricType;
+  metricType: string;
   label: string;
   icon: string;
   unit: string;
@@ -54,19 +54,24 @@ interface Props {
   records: PerformanceRecord[];
   onAdd: (record: Omit<PerformanceRecord, 'id'>) => void;
   onDelete: (id: string) => void;
+  referenceUrl?: string;
+  tags: string[];
+  onTagsChange: (tags: string[]) => void;
 }
 
 export default function GrowthMetricCard({
   metricType, label, icon, unit, lowerIsBetter,
   frequency, onFrequencyChange, records, onAdd, onDelete,
+  referenceUrl, tags, onTagsChange,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showFreqMenu, setShowFreqMenu] = useState(false);
+  const [showTagInput, setShowTagInput] = useState(false);
+  const [newTag, setNewTag] = useState('');
   const [formDate, setFormDate] = useState(todayStr());
   const [formValue, setFormValue] = useState('');
   const [formMemo, setFormMemo] = useState('');
-  const [formUrl, setFormUrl] = useState('');
 
   const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
   const latest = sorted[sorted.length - 1];
@@ -78,37 +83,37 @@ export default function GrowthMetricCard({
       )
     : null;
 
-  // expired badge
   const expireDays = FREQ_EXPIRE_DAYS[frequency];
   const daysSinceLatest = latest ? daysSince(latest.date) : Infinity;
   const isExpired = expireDays !== null && daysSinceLatest >= expireDays;
   const needsUpdate = isExpired || records.length === 0;
 
-  // improved badge
   let improved: boolean | null = null;
   if (latest && prev) {
-    improved = lowerIsBetter
-      ? latest.value < prev.value
-      : latest.value > prev.value;
+    improved = lowerIsBetter ? latest.value < prev.value : latest.value > prev.value;
   }
 
   const handleAdd = () => {
     const val = parseFloat(formValue);
     if (isNaN(val)) return;
-    onAdd({
-      date: formDate,
-      metricType,
-      value: val,
-      memo: formMemo || undefined,
-      referenceUrl: formUrl || undefined,
-    });
-    setFormValue(''); setFormMemo(''); setFormUrl('');
+    onAdd({ date: formDate, metricType, value: val, memo: formMemo || undefined });
+    setFormValue(''); setFormMemo('');
     setFormDate(todayStr());
     setShowForm(false);
     setOpen(true);
   };
 
-  // Chart
+  const handleAddTag = () => {
+    const t = newTag.trim();
+    if (!t || tags.includes(t)) { setNewTag(''); return; }
+    onTagsChange([...tags, t]);
+    setNewTag('');
+  };
+
+  const handleRemoveTag = (t: string) => {
+    onTagsChange(tags.filter(x => x !== t));
+  };
+
   const chartLabels = sorted.map(r => r.date.slice(5));
   const chartData = sorted.map(r => r.value);
 
@@ -136,6 +141,23 @@ export default function GrowthMetricCard({
               {!needsUpdate && improved === false && (
                 <span className="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded-full">↓ 前回より低下</span>
               )}
+            </div>
+            {/* Tags */}
+            <div className="flex items-center flex-wrap gap-1 mt-0.5">
+              {tags.map(t => (
+                <span
+                  key={t}
+                  onClick={(e) => { e.stopPropagation(); handleRemoveTag(t); }}
+                  className="text-[9px] bg-blue-600/30 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-red-600/30 hover:text-red-300 hover:border-red-500/30 transition-colors"
+                  title="タップで削除"
+                >
+                  {t}
+                </span>
+              ))}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowTagInput(i => !i); setOpen(true); }}
+                className="text-[9px] text-slate-600 hover:text-blue-400 px-1"
+              >＋タグ</button>
             </div>
             <div className="flex items-center gap-2 mt-0.5">
               {latest ? (
@@ -176,7 +198,7 @@ export default function GrowthMetricCard({
           )}
         </div>
 
-        {/* Add button */}
+        {/* Add record button */}
         <button
           onClick={() => { setShowForm(f => !f); setOpen(true); }}
           className="shrink-0 w-8 h-8 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center text-lg font-bold transition-colors"
@@ -185,7 +207,25 @@ export default function GrowthMetricCard({
         </button>
       </div>
 
-      {/* Inline form */}
+      {/* Tag input */}
+      {showTagInput && (
+        <div className="px-4 pb-2 border-t border-white/5 pt-2">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newTag}
+              onChange={e => setNewTag(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
+              placeholder="タグ名を入力（例: 10分トレーニング）"
+              className="flex-1 rounded-lg bg-slate-700 border border-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-400"
+            />
+            <button onClick={handleAddTag} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold">追加</button>
+            <button onClick={() => setShowTagInput(false)} className="text-slate-400 px-2 text-sm">✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* Record form */}
       {showForm && (
         <div className="px-4 pb-3 border-t border-white/5">
           <div className="bg-slate-700/40 rounded-xl p-3 mt-2 space-y-2">
@@ -207,7 +247,7 @@ export default function GrowthMetricCard({
                   inputMode="decimal"
                   value={formValue}
                   onChange={e => setFormValue(e.target.value)}
-                  placeholder={`例: ${unit === '秒' ? '12.5' : unit === 'm' ? '20' : '30'}`}
+                  placeholder={unit === '秒' ? '12.5' : unit === 'm' ? '20' : '30'}
                   className="w-full rounded-lg bg-slate-800 border border-white/10 px-2 py-1.5 text-sm text-white focus:outline-none focus:border-blue-400"
                 />
               </div>
@@ -219,13 +259,12 @@ export default function GrowthMetricCard({
               placeholder="メモ（任意）"
               className="w-full rounded-lg bg-slate-800 border border-white/10 px-2 py-1.5 text-sm text-white focus:outline-none focus:border-blue-400"
             />
-            <input
-              type="url"
-              value={formUrl}
-              onChange={e => setFormUrl(e.target.value)}
-              placeholder="参考URL（任意）"
-              className="w-full rounded-lg bg-slate-800 border border-white/10 px-2 py-1.5 text-sm text-white focus:outline-none focus:border-blue-400"
-            />
+            {referenceUrl && (
+              <a href={referenceUrl} target="_blank" rel="noopener noreferrer"
+                className="block text-xs text-blue-400 underline truncate">
+                📎 参考: {referenceUrl}
+              </a>
+            )}
             <div className="flex gap-2">
               <button
                 onClick={handleAdd}
@@ -246,9 +285,8 @@ export default function GrowthMetricCard({
       )}
 
       {/* Expanded: chart + history */}
-      {open && !showForm && sorted.length > 0 && (
+      {open && !showForm && !showTagInput && sorted.length > 0 && (
         <div className="px-4 pb-4 border-t border-white/5">
-          {/* Chart */}
           {sorted.length >= 2 && (
             <div className="h-32 mt-3 mb-3">
               <Line
@@ -287,23 +325,18 @@ export default function GrowthMetricCard({
                   },
                   scales: {
                     x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(148,163,184,0.7)', font: { size: 9 } }, border: { color: 'rgba(255,255,255,0.08)' } },
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(148,163,184,0.7)', font: { size: 9 }, callback: v => `${v}` }, border: { color: 'rgba(255,255,255,0.08)' } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(148,163,184,0.7)', font: { size: 9 } }, border: { color: 'rgba(255,255,255,0.08)' } },
                   },
                 } as ChartOptions<'line'>}
               />
             </div>
           )}
-
-          {/* History list */}
           <div className="space-y-1">
             {[...sorted].reverse().slice(0, 10).map((r, i) => {
-              const isLatestRec = i === 0;
               const nextRec = [...sorted].reverse()[i + 1];
-              const better = nextRec
-                ? (lowerIsBetter ? r.value < nextRec.value : r.value > nextRec.value)
-                : null;
+              const better = nextRec ? (lowerIsBetter ? r.value < nextRec.value : r.value > nextRec.value) : null;
               return (
-                <div key={r.id} className={'flex items-center gap-2 rounded-xl px-3 py-2 ' + (isLatestRec ? 'bg-slate-700/40' : 'bg-slate-700/20')}>
+                <div key={r.id} className={'flex items-center gap-2 rounded-xl px-3 py-2 ' + (i === 0 ? 'bg-slate-700/40' : 'bg-slate-700/20')}>
                   <span className="text-[10px] text-slate-500 w-12 shrink-0">{r.date.slice(5)}</span>
                   <span className="text-sm font-bold text-white flex-1">
                     {r.value}<span className="text-[10px] font-normal text-slate-400 ml-0.5">{unit}</span>
@@ -322,7 +355,7 @@ export default function GrowthMetricCard({
         </div>
       )}
 
-      {open && sorted.length === 0 && !showForm && (
+      {open && sorted.length === 0 && !showForm && !showTagInput && (
         <div className="px-4 pb-4 text-center text-sm text-slate-500 border-t border-white/5 pt-3">
           まだ記録がありません。＋ で追加しよう！
         </div>
