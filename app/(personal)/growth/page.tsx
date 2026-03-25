@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import GrowthMetricCard from '@/components/GrowthMetricCard';
+import TagSummaryChart from '@/components/TagSummaryChart';
 import { PerformanceFrequency, CustomMetricDef } from '@/lib/types';
 
 interface MetricDef {
@@ -256,6 +257,19 @@ export default function GrowthPage() {
           ))}
         </div>
       )}
+
+      {/* Tag summary chart */}
+      {selectedTag && (() => {
+        const tagged = [
+          ...BUILTIN_METRICS
+            .filter(m => getMetricTags(m.type).includes(selectedTag))
+            .map(m => { const e = getEffectiveBuiltin(m); return { type: m.type, label: e.label, icon: e.icon, lowerIsBetter: e.lowerIsBetter }; }),
+          ...customMetrics
+            .filter(m => getMetricTags(m.id, m).includes(selectedTag))
+            .map(m => ({ type: m.id, label: m.label, icon: m.icon, lowerIsBetter: m.lowerIsBetter })),
+        ];
+        return <TagSummaryChart metrics={tagged} records={performanceRecords} />;
+      })()}
 
       {/* Action bar */}
       <div className="flex items-center gap-2 mb-4">
