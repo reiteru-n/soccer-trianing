@@ -14,7 +14,10 @@ interface MetricDef {
   lowerIsBetter: boolean;
   section: 'physical' | 'ball' | 'other';
   howToMeasure?: string;
+  referenceUrl?: string;
 }
+
+type BuiltinOverride = Partial<Omit<MetricDef, 'type'>>;
 
 const BUILTIN_METRICS: MetricDef[] = [
   { type: 'sprint',         label: '坂道ダッシュ',       icon: '🏃', unit: '秒',      lowerIsBetter: true,  section: 'physical',
@@ -68,6 +71,9 @@ export default function GrowthPage() {
   const [tagConfig, setTagConfig] = useState<Record<string, string[]>>(
     () => loadConfig('perf_tag_config', {})
   );
+  const [builtinOverrides, setBuiltinOverrides] = useState<Record<string, BuiltinOverride>>(
+    () => loadConfig('perf_builtin_overrides', {})
+  );
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showExpiredOnly, setShowExpiredOnly] = useState(false);
   const [showAddMetric, setShowAddMetric] = useState(false);
@@ -82,6 +88,17 @@ export default function GrowthPage() {
   const handleTagsChange = (type: string, tags: string[]) => {
     const next = { ...tagConfig, [type]: tags };
     setTagConfig(next); saveConfig('perf_tag_config', next);
+  };
+  const handleBuiltinUpdate = (type: string, updates: Partial<Omit<CustomMetricDef, 'id'>>) => {
+    const next = { ...builtinOverrides, [type]: { ...(builtinOverrides[type] ?? {}), ...updates } };
+    setBuiltinOverrides(next); saveConfig('perf_builtin_overrides', next);
+    // sync frequency to freqConfig if updated
+    if (updates.frequency) handleFreqChange(type, updates.frequency);
+  };
+  const getEffectiveBuiltin = (m: MetricDef): MetricDef => {
+    const ov = builtinOverrides[m.type];
+    if (!ov) return m;
+    return { ...m, ...ov };
   };
 
   // テンプレートから内容をコピー
@@ -176,26 +193,30 @@ export default function GrowthPage() {
   function renderCard(m: MetricDef, custom?: CustomMetricDef) {
     const type = m.type;
     if (!shouldShow(type, custom)) return null;
+    const effective = custom ? m : getEffectiveBuiltin(m);
     const freq = freqConfig[type] ?? (custom?.frequency ?? DEFAULT_FREQ);
     return (
       <GrowthMetricCard
         key={type}
         metricType={type}
-        label={m.label}
-        icon={m.icon}
-        unit={m.unit}
-        lowerIsBetter={m.lowerIsBetter}
-        howToMeasure={m.howToMeasure}
+        label={effective.label}
+        icon={effective.icon}
+        unit={effective.unit}
+        lowerIsBetter={effective.lowerIsBetter}
+        section={effective.section}
+        howToMeasure={effective.howToMeasure}
         frequency={freq}
         onFrequencyChange={f => handleFreqChange(type, f)}
         records={performanceRecords.filter(r => r.metricType === type)}
         onAdd={addPerformanceRecord}
         onDelete={deletePerformanceRecord}
-        referenceUrl={custom?.referenceUrl}
+        referenceUrl={custom?.referenceUrl ?? effective.referenceUrl}
         tags={getMetricTags(type, custom)}
         onTagsChange={t => handleTagsChange(type, t)}
         isCustom={!!custom}
-        onUpdateMetric={custom ? (updates) => updateCustomMetric(custom.id, updates) : undefined}
+        onUpdateMetric={custom
+          ? (updates) => updateCustomMetric(custom.id, updates)
+          : (updates) => handleBuiltinUpdate(type, updates)}
         onDeleteMetric={custom ? () => deleteCustomMetric(custom.id) : undefined}
       />
     );
@@ -311,7 +332,7 @@ export default function GrowthPage() {
             <div className="flex items-end min-w-[100px]">
               <label className="flex items-center gap-2 text-sm text-slate-300 pb-2">
                 <input type="checkbox" checked={newMetric.lowerIsBetter} onChange={e=>setNewMetric(m=>({...m,lowerIsBetter:e.target.checked}))} className="rounded" />
-                小さい方が良い
+                値が小さい方が良い
               </label>
             </div>
           </div>

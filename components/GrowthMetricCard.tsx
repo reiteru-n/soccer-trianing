@@ -34,6 +34,7 @@ interface Props {
   icon: string;
   unit: string;
   lowerIsBetter: boolean;
+  section: CustomMetricDef['section'];
   howToMeasure?: string;
   frequency: PerformanceFrequency;
   onFrequencyChange: (f: PerformanceFrequency) => void;
@@ -49,7 +50,7 @@ interface Props {
 }
 
 export default function GrowthMetricCard({
-  metricType, label, icon, unit, lowerIsBetter, howToMeasure,
+  metricType, label, icon, unit, lowerIsBetter, section, howToMeasure,
   frequency, onFrequencyChange, records, onAdd, onDelete,
   referenceUrl, tags, onTagsChange,
   isCustom, onUpdateMetric, onDeleteMetric,
@@ -65,15 +66,17 @@ export default function GrowthMetricCard({
   const [formValue, setFormValue] = useState('');
   const [formMemo, setFormMemo] = useState('');
 
-  // Edit form state (custom metrics only)
+  // Edit form state
   const [editLabel, setEditLabel] = useState(label);
   const [editIcon, setEditIcon] = useState(icon);
   const [editUnit, setEditUnit] = useState(unit);
   const [editLower, setEditLower] = useState(lowerIsBetter);
-  const [editSection, setEditSection] = useState<CustomMetricDef['section']>('other');
+  const [editSection, setEditSection] = useState<CustomMetricDef['section']>(section);
   const [editFreq, setEditFreq] = useState<PerformanceFrequency>(frequency);
   const [editUrl, setEditUrl] = useState(referenceUrl ?? '');
   const [editHow, setEditHow] = useState(howToMeasure ?? '');
+  const [editTags, setEditTags] = useState<string[]>(tags);
+  const [editTagInput, setEditTagInput] = useState('');
 
   // Swipe detection
   const touchStartX = useRef(0);
@@ -113,12 +116,14 @@ export default function GrowthMetricCard({
 
   const openEdit = () => {
     setEditLabel(label); setEditIcon(icon); setEditUnit(unit);
-    setEditLower(lowerIsBetter); setEditFreq(frequency);
+    setEditLower(lowerIsBetter); setEditSection(section); setEditFreq(frequency);
     setEditUrl(referenceUrl ?? ''); setEditHow(howToMeasure ?? '');
+    setEditTags([...tags]); setEditTagInput('');
     setShowEdit(true); setOpen(true); setShowForm(false);
   };
 
   const handleSaveEdit = () => {
+    onTagsChange(editTags);
     onUpdateMetric?.({
       label: editLabel.trim() || label,
       icon: editIcon || icon,
@@ -130,6 +135,13 @@ export default function GrowthMetricCard({
       howToMeasure: editHow.trim() || undefined,
     });
     setShowEdit(false);
+  };
+
+  const handleAddEditTag = () => {
+    const t = editTagInput.trim();
+    if (!t || editTags.includes(t)) { setEditTagInput(''); return; }
+    setEditTags(prev => [...prev, t]);
+    setEditTagInput('');
   };
 
   const chartLabels = sorted.map(r => r.date.slice(5));
@@ -192,8 +204,8 @@ export default function GrowthMetricCard({
             <span className="text-slate-400 text-xs ml-1">{open ? '▲' : '▼'}</span>
           </button>
 
-          {/* Edit button (custom only) */}
-          {isCustom && onUpdateMetric && (
+          {/* Edit button */}
+          {onUpdateMetric && (
             <button onClick={(e) => { e.stopPropagation(); openEdit(); }}
               className="shrink-0 w-8 h-8 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl flex items-center justify-center text-sm transition-colors">✏️</button>
           )}
@@ -258,8 +270,8 @@ export default function GrowthMetricCard({
           </div>
         )}
 
-        {/* Inline edit form (custom only) */}
-        {showEdit && isCustom && (
+        {/* Inline edit form */}
+        {showEdit && onUpdateMetric && (
           <div className="px-4 pb-3 border-t border-white/5">
             <div className="bg-slate-700/30 rounded-xl p-3 mt-2 space-y-2">
               <p className="text-xs font-bold text-blue-200 mb-1">✏️ メニューを編集</p>
@@ -281,15 +293,27 @@ export default function GrowthMetricCard({
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <select value={editFreq} onChange={e=>setEditFreq(e.target.value as PerformanceFrequency)}
-                  className="flex-1 min-w-[100px] rounded-lg bg-slate-800 border border-white/10 px-2 py-1.5 text-sm text-white focus:outline-none">
-                  {(Object.entries(FREQ_LABELS) as [PerformanceFrequency,string][]).map(([f,l]) => <option key={f} value={f}>{l}</option>)}
-                </select>
-                <label className="flex items-center gap-1.5 text-sm text-slate-300">
-                  <input type="checkbox" checked={editLower} onChange={e=>setEditLower(e.target.checked)} className="rounded" />
-                  小さい方が良い
-                </label>
+                <div className="flex-1 min-w-[120px]">
+                  <label className="block text-[10px] text-slate-400 mb-1">カテゴリ</label>
+                  <select value={editSection} onChange={e=>setEditSection(e.target.value as CustomMetricDef['section'])}
+                    className="w-full rounded-lg bg-slate-800 border border-white/10 px-2 py-1.5 text-sm text-white focus:outline-none">
+                    <option value="physical">フィジカル</option>
+                    <option value="ball">ボールコントロール</option>
+                    <option value="other">その他</option>
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[100px]">
+                  <label className="block text-[10px] text-slate-400 mb-1">頻度</label>
+                  <select value={editFreq} onChange={e=>setEditFreq(e.target.value as PerformanceFrequency)}
+                    className="w-full rounded-lg bg-slate-800 border border-white/10 px-2 py-1.5 text-sm text-white focus:outline-none">
+                    {(Object.entries(FREQ_LABELS) as [PerformanceFrequency,string][]).map(([f,l]) => <option key={f} value={f}>{l}</option>)}
+                  </select>
+                </div>
               </div>
+              <label className="flex items-center gap-2 text-sm text-slate-300">
+                <input type="checkbox" checked={editLower} onChange={e=>setEditLower(e.target.checked)} className="rounded" />
+                値が小さい方が良い
+              </label>
               <div>
                 <label className="block text-[10px] text-slate-400 mb-1">📋 計測方法</label>
                 <textarea value={editHow} onChange={e=>setEditHow(e.target.value)} rows={2} placeholder="計測方法の説明（任意）"
@@ -299,6 +323,22 @@ export default function GrowthMetricCard({
                 <label className="block text-[10px] text-slate-400 mb-1">📎 参考URL</label>
                 <input type="url" value={editUrl} onChange={e=>setEditUrl(e.target.value)} placeholder="https://..."
                   className="w-full rounded-lg bg-slate-800 border border-white/10 px-2 py-1.5 text-sm text-white focus:outline-none focus:border-blue-400" />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">🏷️ タグ</label>
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                  {editTags.map(t => (
+                    <span key={t} onClick={() => setEditTags(prev => prev.filter(x=>x!==t))}
+                      className="text-[10px] bg-blue-600/30 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-red-600/30 hover:text-red-300 hover:border-red-500/30 transition-colors">{t} ✕</span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input type="text" value={editTagInput} onChange={e=>setEditTagInput(e.target.value)}
+                    onKeyDown={e=>{ if(e.key==='Enter'){e.preventDefault();handleAddEditTag();} }}
+                    placeholder="タグ名（例: 10分トレーニング）"
+                    className="flex-1 rounded-lg bg-slate-800 border border-white/10 px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-400" />
+                  <button onClick={handleAddEditTag} className="bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs">追加</button>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button onClick={handleSaveEdit} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-sm">保存</button>
