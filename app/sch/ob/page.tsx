@@ -206,7 +206,7 @@ export default function ObPage() {
         </div>
 
         {/* サマリー数字 */}
-        <div className="relative z-10 grid grid-cols-3 gap-2 mt-5">
+        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
           <div className="bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.2)] rounded-xl px-3 py-2.5 text-center">
             <p className="text-[#f59e0b] text-[22px] font-black leading-none">1+</p>
             <p className="text-slate-400 text-[9px] mt-0.5">🌍 海外リーグ<br />（現役）</p>
@@ -218,6 +218,10 @@ export default function ObPage() {
           <div className="bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] rounded-xl px-3 py-2.5 text-center">
             <p className="text-[#60a5fa] text-[22px] font-black leading-none">5+</p>
             <p className="text-slate-400 text-[9px] mt-0.5">🏅 JFL<br />（準プロ）</p>
+          </div>
+          <div className="bg-[rgba(220,38,38,0.08)] border border-[rgba(220,38,38,0.2)] rounded-xl px-3 py-2.5 text-center">
+            <p className="text-[#f87171] text-[22px] font-black leading-none">7+</p>
+            <p className="text-slate-400 text-[9px] mt-0.5">🇯🇵 日本代表OB<br />（歴代）</p>
           </div>
         </div>
       </div>
@@ -468,6 +472,13 @@ export default function ObPage() {
         sub="SCH出身の日本代表選手たち"
       />
 
+      <TrecenCard
+        year="2025"
+        name="對馬 羽琉"
+        level="日本代表"
+        event="U-15日本代表選出 / クロアチア遠征（Vlatko Marković Tournament）"
+        note="SCH.FC → 川崎フロンターレU-15生田"
+      />
       <TrecenCard
         year="2025"
         name="浅田大翔"
