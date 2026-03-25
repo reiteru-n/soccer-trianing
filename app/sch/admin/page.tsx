@@ -360,7 +360,7 @@ function RecentAccessSummary({
   }
 
   const sorted = Object.values(groups)
-    .sort((a, b) => b.count - a.count)
+    .sort((a, b) => new Date(b.lastTs).getTime() - new Date(a.lastTs).getTime())
     .filter(g => showExcluded || !g.excluded);
 
   const hasExcluded = Object.values(groups).some(g => g.excluded);
