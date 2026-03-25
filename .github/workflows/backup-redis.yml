@@ -1,0 +1,103 @@
+name: Backup Redis to GitHub
+
+on:
+  schedule:
+    - cron: '0 15 * * *'   # 毎日 0:00 JST (= 15:00 UTC)
+  workflow_dispatch:         # 手動実行も可
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch all Redis data
+        env:
+          UPSTASH_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+        run: |
+          python3 << 'PYEOF'
+          import json, os, sys, urllib.request, urllib.parse
+          from datetime import datetime, timezone, timedelta
+
+          url   = os.environ['UPSTASH_REST_URL'].rstrip('/')
+          token = os.environ['UPSTASH_REST_TOKEN']
+          JST   = timezone(timedelta(hours=9))
+
+          def api_get(path):
+              req = urllib.request.Request(
+                  f"{url}{path}",
+                  headers={'Authorization': f'Bearer {token}'},
+              )
+              with urllib.request.urlopen(req) as r:
+                  return json.loads(r.read())
+
+          def fetch_key(key):
+              try:
+                  raw = api_get(f"/get/{urllib.parse.quote(key, safe='')}").get('result')
+                  if isinstance(raw, str):
+                      try:    return json.loads(raw)
+                      except: return raw
+                  return raw
+              except Exception as e:
+                  print(f"  ⚠️  {key}: {e}", file=sys.stderr)
+                  return None
+
+          def scan_all(pattern):
+              keys, cursor = [], 0
+              while True:
+                  res = api_get(f"/scan/{cursor}?match={urllib.parse.quote(pattern)}&count=200").get('result', [0, []])
+                  cursor, batch = int(res[0]), res[1]
+                  keys.extend(batch)
+                  if cursor == 0:
+                      break
+              return keys
+
+          # ── 全キーをスキャンして取得（新しいキーが増えても自動対応）──
+          print("Scanning Redis keys...")
+          all_keys = set()
+          for pattern in ['takuto:*', 'sch:*']:
+              found = scan_all(pattern)
+              all_keys.update(found)
+              print(f"  {pattern}: {len(found)} keys found")
+
+          backup = {
+              'timestamp': datetime.now(JST).isoformat(),
+              'total_keys': len(all_keys),
+              'keys': {},
+          }
+
+          for key in sorted(all_keys):
+              backup['keys'][key] = fetch_key(key)
+              print(f"  ✓ {key}")
+
+          date = datetime.now(JST).strftime('%Y-%m-%d')
+          os.makedirs('.github/backups', exist_ok=True)
+
+          # 日付ファイル
+          dated = f'.github/backups/{date}.json'
+          with open(dated, 'w', encoding='utf-8') as f:
+              json.dump(backup, f, ensure_ascii=False, indent=2)
+
+          # latest.json（常に最新）
+          with open('.github/backups/latest.json', 'w', encoding='utf-8') as f:
+              json.dump(backup, f, ensure_ascii=False, indent=2)
+
+          print(f"\n✅ {len(all_keys)} keys → {dated}")
+          PYEOF
+
+      - name: Commit backup
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/backups/
+          if git diff --staged --quiet; then
+            echo "No changes — backup already up to date."
+          else
+            DATE=$(TZ=Asia/Tokyo date +"%Y-%m-%d")
+            git commit -m "backup: Redis snapshot ${DATE}"
+            git push
+          fi
