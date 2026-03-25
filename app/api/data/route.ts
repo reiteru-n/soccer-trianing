@@ -4,12 +4,13 @@ import { logAccess, getIp, getUa, getDeviceId } from '@/lib/logger';
 
 // キーを種別ごとに分割してサイズ上限を回避
 const KEYS = {
-  notes:    'takuto:notes',
-  lifting:  'takuto:lifting',
-  body:     'takuto:body',
-  menu:     'takuto:menu',
-  logs:     'takuto:logs',
-  config:   'takuto:config',
+  notes:       'takuto:notes',
+  lifting:     'takuto:lifting',
+  body:        'takuto:body',
+  menu:        'takuto:menu',
+  logs:        'takuto:logs',
+  config:      'takuto:config',
+  performance: 'takuto:performance',
 } as const;
 
 // 旧キー（初回のみマイグレーション用）
@@ -22,6 +23,7 @@ interface AppData {
   trainingMenu: unknown[];
   trainingLogs: unknown[];
   childBirthDate: string;
+  performanceRecords: unknown[];
 }
 
 // ----- Redis helpers -----
@@ -43,19 +45,20 @@ async function readData(): Promise<AppData | null> {
     const redis = await getRedis();
 
     // 新キーから一括読み込み
-    const [notes, lifting, body, menu, logs, config] = await redis.mget<unknown[]>(
-      KEYS.notes, KEYS.lifting, KEYS.body, KEYS.menu, KEYS.logs, KEYS.config
+    const [notes, lifting, body, menu, logs, config, perf] = await redis.mget<unknown[]>(
+      KEYS.notes, KEYS.lifting, KEYS.body, KEYS.menu, KEYS.logs, KEYS.config, KEYS.performance
     );
 
     // いずれかのキーがあれば新形式
     if (notes || lifting || body || menu || logs || config) {
       return {
-        practiceNotes:  (notes   as unknown[]) ?? [],
-        liftingRecords: (lifting as unknown[]) ?? [],
-        bodyRecords:    (body    as unknown[]) ?? [],
-        trainingMenu:   (menu    as unknown[]) ?? [],
-        trainingLogs:   (logs    as unknown[]) ?? [],
-        childBirthDate: ((config as any)?.childBirthDate) ?? '',
+        practiceNotes:     (notes   as unknown[]) ?? [],
+        liftingRecords:    (lifting as unknown[]) ?? [],
+        bodyRecords:       (body    as unknown[]) ?? [],
+        trainingMenu:      (menu    as unknown[]) ?? [],
+        trainingLogs:      (logs    as unknown[]) ?? [],
+        childBirthDate:    ((config as any)?.childBirthDate) ?? '',
+        performanceRecords: (perf   as unknown[]) ?? [],
       };
     }
 
@@ -98,12 +101,13 @@ async function writePartial(body: Partial<Record<string, unknown>>): Promise<voi
   if (hasRedis()) {
     const redis = await getRedis();
     const updates: Record<string, unknown> = {};
-    if ('practiceNotes'  in body) updates[KEYS.notes]   = body.practiceNotes;
-    if ('liftingRecords' in body) updates[KEYS.lifting] = body.liftingRecords;
-    if ('bodyRecords'    in body) updates[KEYS.body]    = body.bodyRecords;
-    if ('trainingMenu'   in body) updates[KEYS.menu]    = body.trainingMenu;
-    if ('trainingLogs'   in body) updates[KEYS.logs]    = body.trainingLogs;
-    if ('childBirthDate' in body) updates[KEYS.config]  = { childBirthDate: body.childBirthDate };
+    if ('practiceNotes'      in body) updates[KEYS.notes]       = body.practiceNotes;
+    if ('liftingRecords'     in body) updates[KEYS.lifting]     = body.liftingRecords;
+    if ('bodyRecords'        in body) updates[KEYS.body]        = body.bodyRecords;
+    if ('trainingMenu'       in body) updates[KEYS.menu]        = body.trainingMenu;
+    if ('trainingLogs'       in body) updates[KEYS.logs]        = body.trainingLogs;
+    if ('childBirthDate'     in body) updates[KEYS.config]      = { childBirthDate: body.childBirthDate };
+    if ('performanceRecords' in body) updates[KEYS.performance] = body.performanceRecords;
     if (Object.keys(updates).length > 0) {
       await redis.mset(updates);
     }
@@ -133,12 +137,13 @@ export async function GET(req: Request) {
     });
   }
   return NextResponse.json({
-    liftingRecords: data.liftingRecords ?? INITIAL_LIFTING_RECORDS,
-    practiceNotes:  data.practiceNotes  ?? INITIAL_PRACTICE_NOTES,
-    bodyRecords:    data.bodyRecords    ?? INITIAL_BODY_RECORDS,
-    trainingMenu:   data.trainingMenu   ?? INITIAL_TRAINING_MENU,
-    trainingLogs:   data.trainingLogs   ?? [],
-    childBirthDate: (data as any).childBirthDate ?? '',
+    liftingRecords:    data.liftingRecords    ?? INITIAL_LIFTING_RECORDS,
+    practiceNotes:     data.practiceNotes     ?? INITIAL_PRACTICE_NOTES,
+    bodyRecords:       data.bodyRecords       ?? INITIAL_BODY_RECORDS,
+    trainingMenu:      data.trainingMenu      ?? INITIAL_TRAINING_MENU,
+    trainingLogs:      data.trainingLogs      ?? [],
+    childBirthDate:    (data as any).childBirthDate ?? '',
+    performanceRecords: (data as any).performanceRecords ?? [],
   });
 }
 

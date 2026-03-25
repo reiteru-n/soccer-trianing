@@ -9,7 +9,7 @@ const navItems = [
   { href: '/lifting',     label: 'リフティング',  icon: '⚽' },
   { href: '/notes',       label: 'ノート',        icon: '📝' },
   { href: '/training',    label: '自主練\nメニュー', icon: '🏃' },
-  { href: '/performance', label: '成長記録',      icon: '📊' },
+  { href: '/growth',      label: '成長記録',      icon: '📈' },
 ];
 
 export default function BottomNav() {

@@ -1,4 +1,4 @@
-import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog } from './types';
+import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord } from './types';
 import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS } from './data';
 
 export function generateId(): string {
@@ -23,6 +23,7 @@ export interface AllData {
   trainingMenu: TrainingMenuItem[];
   trainingLogs: TrainingLog[];
   childBirthDate: string;
+  performanceRecords: PerformanceRecord[];
 }
 
 export async function fetchAllData(): Promise<AllData> {
@@ -34,6 +35,7 @@ export async function fetchAllData(): Promise<AllData> {
       trainingMenu: INITIAL_TRAINING_MENU,
       trainingLogs: [],
       childBirthDate: "",
+      performanceRecords: [],
     };
   }
   try {
@@ -46,6 +48,7 @@ export async function fetchAllData(): Promise<AllData> {
       trainingMenu: data.trainingMenu ?? INITIAL_TRAINING_MENU,
       trainingLogs: data.trainingLogs ?? [],
       childBirthDate: data.childBirthDate ?? "",
+      performanceRecords: data.performanceRecords ?? [],
     };
   } catch {
     return {
@@ -55,6 +58,7 @@ export async function fetchAllData(): Promise<AllData> {
       trainingMenu: INITIAL_TRAINING_MENU,
       trainingLogs: [],
       childBirthDate: "",
+      performanceRecords: [],
     };
   }
 }
@@ -73,6 +77,7 @@ export function saveBodyRecords(records: BodyRecord[]): void { savePartial({ bod
 export function saveTrainingMenu(menu: TrainingMenuItem[]): void { savePartial({ trainingMenu: menu }); }
 export function saveBirthDate(date: string): void { savePartial({ childBirthDate: date }); }
 export function saveTrainingLogs(logs: TrainingLog[]): void { savePartial({ trainingLogs: logs }); }
+export function savePerformanceRecords(records: PerformanceRecord[]): void { savePartial({ performanceRecords: records }); }
 
 export async function exportData(): Promise<void> {
   const data = await fetchAllData();

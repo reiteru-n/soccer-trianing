@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog } from './types';
-import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, generateId } from './storage';
+import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord } from './types';
+import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, generateId } from './storage';
 import { MILESTONES } from './data';
 
 interface AppContextType {
@@ -31,6 +31,9 @@ interface AppContextType {
   clearNewMilestone: () => void;
   childBirthDate: string;
   setChildBirthDate: (d: string) => void;
+  performanceRecords: PerformanceRecord[];
+  addPerformanceRecord: (record: Omit<PerformanceRecord, 'id'>) => void;
+  deletePerformanceRecord: (id: string) => void;
   isLoading: boolean;
 }
 
@@ -54,6 +57,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [trainingMenu, setTrainingMenu] = useState<TrainingMenuItem[]>([]);
   const [trainingLogs, setTrainingLogs] = useState<TrainingLog[]>([]);
   const [childBirthDate, setChildBirthDateState] = useState("");
+  const [performanceRecords, setPerformanceRecords] = useState<PerformanceRecord[]>([]);
   const [newMilestoneAchieved, setNewMilestoneAchieved] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -66,6 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setTrainingMenu(data.trainingMenu);
       setTrainingLogs(data.trainingLogs);
       setChildBirthDateState(data.childBirthDate ?? "");
+      setPerformanceRecords(data.performanceRecords ?? []);
       setIsLoading(false);
     }
     load();
@@ -188,6 +193,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setChildBirthDate = useCallback((d: string) => { setChildBirthDateState(d); saveBirthDate(d); }, []);
   const clearNewMilestone = useCallback(() => setNewMilestoneAchieved(null), []);
 
+  const addPerformanceRecord = useCallback((record: Omit<PerformanceRecord, 'id'>) => {
+    const updated = [...performanceRecords, { ...record, id: generateId() }];
+    setPerformanceRecords(updated);
+    savePerformanceRecords(updated);
+  }, [performanceRecords]);
+
+  const deletePerformanceRecord = useCallback((id: string) => {
+    const updated = performanceRecords.filter((r) => r.id !== id);
+    setPerformanceRecords(updated);
+    savePerformanceRecords(updated);
+  }, [performanceRecords]);
+
   return (
     <AppContext.Provider
       value={{
@@ -198,6 +215,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         trainingLogs, toggleTrainingLogItem,
         milestones, maxCount, newMilestoneAchieved, clearNewMilestone,
         childBirthDate, setChildBirthDate,
+        performanceRecords, addPerformanceRecord, deletePerformanceRecord,
         isLoading,
       }}
     >

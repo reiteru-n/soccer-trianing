@@ -1,3 +1,32 @@
+// --- Performance / Growth tracking ---
+export type PerformanceMetricType =
+  | 'sprint'
+  | 'rope_endurance'
+  | 'rope_speed'
+  | 'side_jump'
+  | 'pass_direct'
+  | 'pass_trap'
+  | 'dribble'
+  | 'kick_height'
+  | 'kick_distance';
+
+export type PerformanceFrequency = 'daily' | 'weekly' | 'monthly' | 'irregular';
+
+export interface PerformanceRecord {
+  id: string;
+  date: string; // yyyy/mm/dd
+  metricType: PerformanceMetricType;
+  value: number;
+  memo?: string;
+  referenceUrl?: string;
+}
+
+export interface PerformanceMetricConfig {
+  metricType: PerformanceMetricType;
+  frequency: PerformanceFrequency;
+}
+
+// --- Existing types ---
 export type LiftingPart = 'インステップ' | 'インサイド' | 'アウトサイド' | 'もも' | '頭' | '胸→足';
 export type LiftingSide = '左足' | '右足' | '両足';
 
