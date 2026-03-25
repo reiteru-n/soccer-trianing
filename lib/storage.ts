@@ -1,4 +1,4 @@
-import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord } from './types';
+import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef } from './types';
 import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS } from './data';
 
 export function generateId(): string {
@@ -24,6 +24,7 @@ export interface AllData {
   trainingLogs: TrainingLog[];
   childBirthDate: string;
   performanceRecords: PerformanceRecord[];
+  customMetrics: CustomMetricDef[];
 }
 
 export async function fetchAllData(): Promise<AllData> {
@@ -36,6 +37,7 @@ export async function fetchAllData(): Promise<AllData> {
       trainingLogs: [],
       childBirthDate: "",
       performanceRecords: [],
+      customMetrics: [],
     };
   }
   try {
@@ -49,6 +51,7 @@ export async function fetchAllData(): Promise<AllData> {
       trainingLogs: data.trainingLogs ?? [],
       childBirthDate: data.childBirthDate ?? "",
       performanceRecords: data.performanceRecords ?? [],
+      customMetrics: data.customMetrics ?? [],
     };
   } catch {
     return {
@@ -59,6 +62,7 @@ export async function fetchAllData(): Promise<AllData> {
       trainingLogs: [],
       childBirthDate: "",
       performanceRecords: [],
+      customMetrics: [],
     };
   }
 }
@@ -78,6 +82,7 @@ export function saveTrainingMenu(menu: TrainingMenuItem[]): void { savePartial({
 export function saveBirthDate(date: string): void { savePartial({ childBirthDate: date }); }
 export function saveTrainingLogs(logs: TrainingLog[]): void { savePartial({ trainingLogs: logs }); }
 export function savePerformanceRecords(records: PerformanceRecord[]): void { savePartial({ performanceRecords: records }); }
+export function saveCustomMetrics(metrics: CustomMetricDef[]): void { savePartial({ customMetrics: metrics }); }
 
 export async function exportData(): Promise<void> {
   const data = await fetchAllData();

@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord } from './types';
-import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, generateId } from './storage';
+import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef } from './types';
+import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, saveCustomMetrics, generateId } from './storage';
 import { MILESTONES } from './data';
 
 interface AppContextType {
@@ -34,6 +34,9 @@ interface AppContextType {
   performanceRecords: PerformanceRecord[];
   addPerformanceRecord: (record: Omit<PerformanceRecord, 'id'>) => void;
   deletePerformanceRecord: (id: string) => void;
+  customMetrics: CustomMetricDef[];
+  addCustomMetric: (metric: Omit<CustomMetricDef, 'id'>) => void;
+  deleteCustomMetric: (id: string) => void;
   isLoading: boolean;
 }
 
@@ -58,6 +61,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [trainingLogs, setTrainingLogs] = useState<TrainingLog[]>([]);
   const [childBirthDate, setChildBirthDateState] = useState("");
   const [performanceRecords, setPerformanceRecords] = useState<PerformanceRecord[]>([]);
+  const [customMetrics, setCustomMetrics] = useState<CustomMetricDef[]>([]);
   const [newMilestoneAchieved, setNewMilestoneAchieved] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -71,6 +75,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setTrainingLogs(data.trainingLogs);
       setChildBirthDateState(data.childBirthDate ?? "");
       setPerformanceRecords(data.performanceRecords ?? []);
+      setCustomMetrics(data.customMetrics ?? []);
       setIsLoading(false);
     }
     load();
@@ -205,6 +210,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     savePerformanceRecords(updated);
   }, [performanceRecords]);
 
+  const addCustomMetric = useCallback((metric: Omit<CustomMetricDef, 'id'>) => {
+    const id = 'custom_' + generateId();
+    const updated = [...customMetrics, { ...metric, id }];
+    setCustomMetrics(updated);
+    saveCustomMetrics(updated);
+  }, [customMetrics]);
+
+  const deleteCustomMetric = useCallback((id: string) => {
+    const updated = customMetrics.filter((m) => m.id !== id);
+    setCustomMetrics(updated);
+    saveCustomMetrics(updated);
+  }, [customMetrics]);
+
   return (
     <AppContext.Provider
       value={{
@@ -216,6 +234,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         milestones, maxCount, newMilestoneAchieved, clearNewMilestone,
         childBirthDate, setChildBirthDate,
         performanceRecords, addPerformanceRecord, deletePerformanceRecord,
+        customMetrics, addCustomMetric, deleteCustomMetric,
         isLoading,
       }}
     >

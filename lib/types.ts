@@ -8,21 +8,33 @@ export type PerformanceMetricType =
   | 'pass_trap'
   | 'dribble'
   | 'kick_height'
-  | 'kick_distance';
+  | 'kick_distance'
+  | string; // allows custom metric ids
 
 export type PerformanceFrequency = 'daily' | 'weekly' | 'monthly' | 'irregular';
 
 export interface PerformanceRecord {
   id: string;
   date: string; // yyyy/mm/dd
-  metricType: PerformanceMetricType;
+  metricType: string; // predefined PerformanceMetricType or custom id
   value: number;
   memo?: string;
   referenceUrl?: string;
 }
 
 export interface PerformanceMetricConfig {
-  metricType: PerformanceMetricType;
+  metricType: string;
+  frequency: PerformanceFrequency;
+}
+
+// User-defined custom metric definition
+export interface CustomMetricDef {
+  id: string; // unique, e.g. "custom_xxxx"
+  label: string;
+  icon: string;
+  unit: string;
+  lowerIsBetter: boolean;
+  section: 'physical' | 'ball' | 'other';
   frequency: PerformanceFrequency;
 }
 

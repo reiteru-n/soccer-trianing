@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import GrowthMetricCard from '@/components/GrowthMetricCard';
-import { PerformanceMetricType, PerformanceFrequency } from '@/lib/types';
+import { PerformanceMetricType, PerformanceFrequency, CustomMetricDef } from '@/lib/types';
 
 // Static metric definitions
 interface MetricDef {
@@ -13,114 +13,122 @@ interface MetricDef {
   icon: string;
   unit: string;
   lowerIsBetter: boolean;
-  section: 'physical' | 'ball';
+  section: 'physical' | 'ball' | 'other';
 }
 
-const METRICS: MetricDef[] = [
-  // フィジカル/アジリティ
-  { type: 'sprint',         label: '坂道ダッシュ',      icon: '🏃', unit: '秒',     lowerIsBetter: true,  section: 'physical' },
-  { type: 'rope_endurance', label: '縄跳び耐久',        icon: '⏱️', unit: '秒',     lowerIsBetter: false, section: 'physical' },
-  { type: 'rope_speed',     label: '縄跳びスピード',    icon: '🪢', unit: '回/30秒', lowerIsBetter: false, section: 'physical' },
-  { type: 'side_jump',      label: '反復横跳び',        icon: '↔️', unit: '回/20秒', lowerIsBetter: false, section: 'physical' },
-  // ボールコントロール
-  { type: 'pass_direct',    label: '連続パスダイレクト', icon: '⚡', unit: '回',     lowerIsBetter: false, section: 'ball' },
-  { type: 'pass_trap',      label: '連続パストラップ',  icon: '🎯', unit: '回',     lowerIsBetter: false, section: 'ball' },
-  { type: 'dribble',        label: 'ドリブル',          icon: '🌀', unit: '任意',   lowerIsBetter: false, section: 'ball' },
-  { type: 'kick_height',    label: 'キック高さ',        icon: '📏', unit: 'cm',     lowerIsBetter: false, section: 'ball' },
-  { type: 'kick_distance',  label: 'キック距離',        icon: '📐', unit: 'm',      lowerIsBetter: false, section: 'ball' },
+const BUILTIN_METRICS: MetricDef[] = [
+  { type: 'sprint',         label: '坂道ダッシュ',       icon: '🏃', unit: '秒',      lowerIsBetter: true,  section: 'physical' },
+  { type: 'rope_endurance', label: '縄跳び耐久',         icon: '⏱️', unit: '秒',      lowerIsBetter: false, section: 'physical' },
+  { type: 'rope_speed',     label: '縄跳びスピード',     icon: '🪢', unit: '回/30秒', lowerIsBetter: false, section: 'physical' },
+  { type: 'side_jump',      label: '反復横跳び',         icon: '↔️', unit: '回/20秒', lowerIsBetter: false, section: 'physical' },
+  { type: 'pass_direct',    label: '連続パスダイレクト', icon: '⚡', unit: '回',      lowerIsBetter: false, section: 'ball' },
+  { type: 'pass_trap',      label: '連続パストラップ',   icon: '🎯', unit: '回',      lowerIsBetter: false, section: 'ball' },
+  { type: 'dribble',        label: 'ドリブル',           icon: '🌀', unit: '任意',    lowerIsBetter: false, section: 'ball' },
+  { type: 'kick_height',    label: 'キック高さ',         icon: '📏', unit: 'cm',      lowerIsBetter: false, section: 'ball' },
+  { type: 'kick_distance',  label: 'キック距離',         icon: '📐', unit: 'm',       lowerIsBetter: false, section: 'ball' },
 ];
 
 const DEFAULT_FREQ: PerformanceFrequency = 'weekly';
 
+const SECTION_ICONS: Record<string, string> = {
+  physical: '🏃 フィジカル / アジリティ',
+  ball:     '⚽ ボールコントロール技術',
+  other:    '📌 その他',
+};
+
+const FREQ_LABELS: Record<PerformanceFrequency, string> = {
+  daily: '毎日', weekly: '週1', monthly: '月1', irregular: '不定期',
+};
+
+// blank form state
+const EMPTY_CUSTOM = (): Omit<CustomMetricDef, 'id'> => ({
+  label: '', icon: '📊', unit: '', lowerIsBetter: false, section: 'other', frequency: 'weekly',
+});
+
 export default function GrowthPage() {
   const {
     performanceRecords, addPerformanceRecord, deletePerformanceRecord,
+    customMetrics, addCustomMetric, deleteCustomMetric,
     liftingRecords, bodyRecords, maxCount, isLoading,
   } = useApp();
 
-  // Per-metric frequency config (stored in local state; persisted via localStorage)
-  const [freqConfig, setFreqConfig] = useState<Partial<Record<PerformanceMetricType, PerformanceFrequency>>>(() => {
+  const [freqConfig, setFreqConfig] = useState<Partial<Record<string, PerformanceFrequency>>>(() => {
     if (typeof window === 'undefined') return {};
-    try {
-      return JSON.parse(localStorage.getItem('perf_freq_config') ?? '{}');
-    } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem('perf_freq_config') ?? '{}'); } catch { return {}; }
   });
 
   const [showExpiredOnly, setShowExpiredOnly] = useState(false);
+  const [showAddMetric, setShowAddMetric] = useState(false);
+  const [newMetric, setNewMetric] = useState<Omit<CustomMetricDef, 'id'>>(EMPTY_CUSTOM());
 
-  const handleFreqChange = (type: PerformanceMetricType, freq: PerformanceFrequency) => {
+  const handleFreqChange = (type: string, freq: PerformanceFrequency) => {
     const next = { ...freqConfig, [type]: freq };
     setFreqConfig(next);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('perf_freq_config', JSON.stringify(next));
-    }
+    if (typeof window !== 'undefined') localStorage.setItem('perf_freq_config', JSON.stringify(next));
   };
 
-  // Latest body
-  const sortedBody = [...bodyRecords].sort((a, b) => b.date.localeCompare(a.date));
-  const latestHeight = sortedBody.find(r => r.height != null);
-  const latestWeight = sortedBody.find(r => r.weight != null);
+  const handleAddMetric = () => {
+    if (!newMetric.label.trim() || !newMetric.unit.trim()) return;
+    addCustomMetric({ ...newMetric, label: newMetric.label.trim(), unit: newMetric.unit.trim() });
+    setNewMetric(EMPTY_CUSTOM());
+    setShowAddMetric(false);
+  };
 
-  const needsUpdateCount = useMemo(() => {
-    return METRICS.filter(m => {
-      const freq = freqConfig[m.type] ?? DEFAULT_FREQ;
-      const recs = performanceRecords.filter(r => r.metricType === m.type);
-      if (recs.length === 0) return true;
-      const latest = [...recs].sort((a, b) => b.date.localeCompare(a.date))[0];
-      const [y, mo, d] = latest.date.split('/').map(Number);
-      const latestD = new Date(y, mo - 1, d);
-      const now = new Date(); now.setHours(0, 0, 0, 0);
-      const days = Math.floor((now.getTime() - latestD.getTime()) / 86400000);
-      const expire = freq === 'daily' ? 1 : freq === 'weekly' ? 7 : freq === 'monthly' ? 30 : null;
-      return expire !== null && days >= expire;
-    }).length;
-  }, [performanceRecords, freqConfig]);
+  const latestBody = [...bodyRecords].sort((a, b) => b.date.localeCompare(a.date));
+  const latestHeight = latestBody.find(r => r.height != null);
+  const latestWeight = latestBody.find(r => r.weight != null);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24 text-gray-400">
-        <div className="text-center"><p className="text-4xl mb-3">📈</p><p className="text-sm">読み込み中...</p></div>
-      </div>
-    );
+  function isExpiredMetric(type: string): boolean {
+    const freq = freqConfig[type] ?? DEFAULT_FREQ;
+    const recs = performanceRecords.filter(r => r.metricType === type);
+    if (recs.length === 0) return true;
+    const latest = [...recs].sort((a, b) => b.date.localeCompare(a.date))[0];
+    const [y, mo, d] = latest.date.split('/').map(Number);
+    const daysDiff = Math.floor((Date.now() - new Date(y, mo - 1, d).getTime()) / 86400000);
+    const expire = freq === 'daily' ? 1 : freq === 'weekly' ? 7 : freq === 'monthly' ? 30 : null;
+    return expire !== null && daysDiff >= expire;
   }
 
-  const physicalMetrics = METRICS.filter(m => m.section === 'physical');
-  const ballMetrics = METRICS.filter(m => m.section === 'ball');
+  const needsUpdateCount = useMemo(
+    () => BUILTIN_METRICS.filter(m => isExpiredMetric(m.type)).length
+        + customMetrics.filter(m => isExpiredMetric(m.id)).length,
+    [performanceRecords, freqConfig, customMetrics]
+  );
 
-  function renderMetricCard(m: MetricDef) {
-    const freq = freqConfig[m.type] ?? DEFAULT_FREQ;
-    const recs = performanceRecords.filter(r => r.metricType === m.type);
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-24 text-gray-400">
+      <div className="text-center"><p className="text-4xl mb-3">📈</p><p className="text-sm">読み込み中...</p></div>
+    </div>
+  );
 
-    if (showExpiredOnly) {
-      if (recs.length === 0) { /* show */ }
-      else {
-        const latest = [...recs].sort((a, b) => b.date.localeCompare(a.date))[0];
-        const [y, mo, d] = latest.date.split('/').map(Number);
-        const latestD = new Date(y, mo - 1, d);
-        const now = new Date(); now.setHours(0, 0, 0, 0);
-        const days = Math.floor((now.getTime() - latestD.getTime()) / 86400000);
-        const expire = freq === 'daily' ? 1 : freq === 'weekly' ? 7 : freq === 'monthly' ? 30 : null;
-        const isExpired = expire !== null && days >= expire;
-        if (!isExpired) return null;
-      }
-    }
-
+  function renderCard(type: string, label: string, icon: string, unit: string, lowerIsBetter: boolean) {
+    const freq = freqConfig[type] ?? DEFAULT_FREQ;
+    const recs = performanceRecords.filter(r => r.metricType === type);
+    if (showExpiredOnly && !isExpiredMetric(type)) return null;
     return (
       <GrowthMetricCard
-        key={m.type}
-        metricType={m.type}
-        label={m.label}
-        icon={m.icon}
-        unit={m.unit}
-        lowerIsBetter={m.lowerIsBetter}
+        key={type}
+        metricType={type}
+        label={label}
+        icon={icon}
+        unit={unit}
+        lowerIsBetter={lowerIsBetter}
         frequency={freq}
-        onFrequencyChange={(f) => handleFreqChange(m.type, f)}
+        onFrequencyChange={(f) => handleFreqChange(type, f)}
         records={recs}
         onAdd={addPerformanceRecord}
         onDelete={deletePerformanceRecord}
       />
     );
   }
+
+  const physicalMetrics = BUILTIN_METRICS.filter(m => m.section === 'physical');
+  const ballMetrics     = BUILTIN_METRICS.filter(m => m.section === 'ball');
+  const customPhysical  = customMetrics.filter(m => m.section === 'physical');
+  const customBall      = customMetrics.filter(m => m.section === 'ball');
+  const customOther     = customMetrics.filter(m => m.section === 'other');
+
+  const hasCustomSection = (section: string) => customMetrics.some(m => m.section === section);
 
   return (
     <>
@@ -134,24 +142,126 @@ export default function GrowthPage() {
         <button
           onClick={() => setShowExpiredOnly(f => !f)}
           className={'flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ' +
-            (showExpiredOnly
-              ? 'bg-orange-600/30 border-orange-500/50 text-orange-300'
-              : 'bg-slate-800/60 border-white/10 text-slate-400')}
+            (showExpiredOnly ? 'bg-orange-600/30 border-orange-500/50 text-orange-300' : 'bg-slate-800/60 border-white/10 text-slate-400')}
         >
-          {showExpiredOnly ? '⚠️ 更新必要のみ表示中' : '全て表示'}
+          {showExpiredOnly ? '⚠️ 更新必要のみ' : '全て表示'}
           {needsUpdateCount > 0 && (
-            <span className="ml-2 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-              {needsUpdateCount}
-            </span>
+            <span className="ml-2 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{needsUpdateCount}</span>
           )}
+        </button>
+        <button
+          onClick={() => setShowAddMetric(f => !f)}
+          className="px-4 py-2 rounded-xl text-sm font-semibold border border-blue-500/40 bg-blue-600/20 text-blue-300"
+        >
+          ＋ 項目追加
         </button>
       </div>
 
-      {/* Physical / Agility section */}
+      {/* Add custom metric form */}
+      {showAddMetric && (
+        <div className="mb-4 bg-slate-800/90 rounded-2xl border border-blue-500/30 p-4 space-y-3">
+          <p className="text-sm font-bold text-blue-200">新しい指標を追加</p>
+          <div className="flex gap-2">
+            <div className="w-16">
+              <label className="block text-[10px] text-slate-400 mb-1">アイコン</label>
+              <input
+                type="text"
+                value={newMetric.icon}
+                onChange={e => setNewMetric(m => ({ ...m, icon: e.target.value }))}
+                className="w-full rounded-lg bg-slate-700 border border-white/10 px-2 py-2 text-sm text-white text-center focus:outline-none focus:border-blue-400"
+                placeholder="📊"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-[10px] text-slate-400 mb-1">名前 *</label>
+              <input
+                type="text"
+                value={newMetric.label}
+                onChange={e => setNewMetric(m => ({ ...m, label: e.target.value }))}
+                className="w-full rounded-lg bg-slate-700 border border-white/10 px-2 py-2 text-sm text-white focus:outline-none focus:border-blue-400"
+                placeholder="例: シュート距離"
+              />
+            </div>
+            <div className="w-20">
+              <label className="block text-[10px] text-slate-400 mb-1">単位 *</label>
+              <input
+                type="text"
+                value={newMetric.unit}
+                onChange={e => setNewMetric(m => ({ ...m, unit: e.target.value }))}
+                className="w-full rounded-lg bg-slate-700 border border-white/10 px-2 py-2 text-sm text-white focus:outline-none focus:border-blue-400"
+                placeholder="m"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <div className="flex-1 min-w-[120px]">
+              <label className="block text-[10px] text-slate-400 mb-1">セクション</label>
+              <select
+                value={newMetric.section}
+                onChange={e => setNewMetric(m => ({ ...m, section: e.target.value as CustomMetricDef['section'] }))}
+                className="w-full rounded-lg bg-slate-700 border border-white/10 px-2 py-2 text-sm text-white focus:outline-none"
+              >
+                <option value="physical">フィジカル</option>
+                <option value="ball">ボールコントロール</option>
+                <option value="other">その他</option>
+              </select>
+            </div>
+            <div className="flex-1 min-w-[120px]">
+              <label className="block text-[10px] text-slate-400 mb-1">頻度</label>
+              <select
+                value={newMetric.frequency}
+                onChange={e => setNewMetric(m => ({ ...m, frequency: e.target.value as PerformanceFrequency }))}
+                className="w-full rounded-lg bg-slate-700 border border-white/10 px-2 py-2 text-sm text-white focus:outline-none"
+              >
+                {(Object.entries(FREQ_LABELS) as [PerformanceFrequency, string][]).map(([f, l]) => (
+                  <option key={f} value={f}>{l}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end min-w-[100px]">
+              <label className="flex items-center gap-2 text-sm text-slate-300 pb-2">
+                <input
+                  type="checkbox"
+                  checked={newMetric.lowerIsBetter}
+                  onChange={e => setNewMetric(m => ({ ...m, lowerIsBetter: e.target.checked }))}
+                  className="rounded"
+                />
+                小さい方が良い
+              </label>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleAddMetric}
+              disabled={!newMetric.label.trim() || !newMetric.unit.trim()}
+              className="flex-1 bg-blue-600 disabled:opacity-40 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-sm"
+            >
+              追加
+            </button>
+            <button
+              onClick={() => { setShowAddMetric(false); setNewMetric(EMPTY_CUSTOM()); }}
+              className="flex-1 bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-sm"
+            >
+              キャンセル
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Physical section */}
       <section className="mb-4">
         <h2 className="text-xs font-bold text-blue-200 mb-2 tracking-wide uppercase">🏃 フィジカル / アジリティ</h2>
         <div className="space-y-2">
-          {physicalMetrics.map(m => renderMetricCard(m))}
+          {physicalMetrics.map(m => renderCard(m.type, m.label, m.icon, m.unit, m.lowerIsBetter))}
+          {customPhysical.map(m => (
+            <div key={m.id} className="relative">
+              {renderCard(m.id, m.label, m.icon, m.unit, m.lowerIsBetter)}
+              <button
+                onClick={() => { if (window.confirm(`「${m.label}」を削除しますか？`)) deleteCustomMetric(m.id); }}
+                className="absolute top-2 right-2 text-slate-600 hover:text-red-400 text-xs z-10"
+              >🗑️</button>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -159,9 +269,36 @@ export default function GrowthPage() {
       <section className="mb-4">
         <h2 className="text-xs font-bold text-blue-200 mb-2 tracking-wide uppercase">⚽ ボールコントロール技術</h2>
         <div className="space-y-2">
-          {ballMetrics.map(m => renderMetricCard(m))}
+          {ballMetrics.map(m => renderCard(m.type, m.label, m.icon, m.unit, m.lowerIsBetter))}
+          {customBall.map(m => (
+            <div key={m.id} className="relative">
+              {renderCard(m.id, m.label, m.icon, m.unit, m.lowerIsBetter)}
+              <button
+                onClick={() => { if (window.confirm(`「${m.label}」を削除しますか？`)) deleteCustomMetric(m.id); }}
+                className="absolute top-2 right-2 text-slate-600 hover:text-red-400 text-xs z-10"
+              >🗑️</button>
+            </div>
+          ))}
         </div>
       </section>
+
+      {/* Other custom section */}
+      {customOther.length > 0 && (
+        <section className="mb-4">
+          <h2 className="text-xs font-bold text-blue-200 mb-2 tracking-wide uppercase">📌 その他</h2>
+          <div className="space-y-2">
+            {customOther.map(m => (
+              <div key={m.id} className="relative">
+                {renderCard(m.id, m.label, m.icon, m.unit, m.lowerIsBetter)}
+                <button
+                  onClick={() => { if (window.confirm(`「${m.label}」を削除しますか？`)) deleteCustomMetric(m.id); }}
+                  className="absolute top-2 right-2 text-slate-600 hover:text-red-400 text-xs z-10"
+                >🗑️</button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Lifting (read-only) */}
       <section className="mb-4">

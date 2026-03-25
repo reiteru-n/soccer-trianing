@@ -11,6 +11,7 @@ const KEYS = {
   logs:        'takuto:logs',
   config:      'takuto:config',
   performance: 'takuto:performance',
+  perfConfig:  'takuto:perf_config',
 } as const;
 
 // 旧キー（初回のみマイグレーション用）
@@ -24,6 +25,7 @@ interface AppData {
   trainingLogs: unknown[];
   childBirthDate: string;
   performanceRecords: unknown[];
+  customMetrics: unknown[];
 }
 
 // ----- Redis helpers -----
@@ -45,8 +47,8 @@ async function readData(): Promise<AppData | null> {
     const redis = await getRedis();
 
     // 新キーから一括読み込み
-    const [notes, lifting, body, menu, logs, config, perf] = await redis.mget<unknown[]>(
-      KEYS.notes, KEYS.lifting, KEYS.body, KEYS.menu, KEYS.logs, KEYS.config, KEYS.performance
+    const [notes, lifting, body, menu, logs, config, perf, perfCfg] = await redis.mget<unknown[]>(
+      KEYS.notes, KEYS.lifting, KEYS.body, KEYS.menu, KEYS.logs, KEYS.config, KEYS.performance, KEYS.perfConfig
     );
 
     // いずれかのキーがあれば新形式
@@ -59,6 +61,7 @@ async function readData(): Promise<AppData | null> {
         trainingLogs:      (logs    as unknown[]) ?? [],
         childBirthDate:    ((config as any)?.childBirthDate) ?? '',
         performanceRecords: (perf   as unknown[]) ?? [],
+        customMetrics:     (perfCfg as unknown[]) ?? [],
       };
     }
 
@@ -108,6 +111,7 @@ async function writePartial(body: Partial<Record<string, unknown>>): Promise<voi
     if ('trainingLogs'       in body) updates[KEYS.logs]        = body.trainingLogs;
     if ('childBirthDate'     in body) updates[KEYS.config]      = { childBirthDate: body.childBirthDate };
     if ('performanceRecords' in body) updates[KEYS.performance] = body.performanceRecords;
+    if ('customMetrics'      in body) updates[KEYS.perfConfig]  = body.customMetrics;
     if (Object.keys(updates).length > 0) {
       await redis.mset(updates);
     }
@@ -144,6 +148,7 @@ export async function GET(req: Request) {
     trainingLogs:      data.trainingLogs      ?? [],
     childBirthDate:    (data as any).childBirthDate ?? '',
     performanceRecords: (data as any).performanceRecords ?? [],
+    customMetrics:      (data as any).customMetrics ?? [],
   });
 }
 
