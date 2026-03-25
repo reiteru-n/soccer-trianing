@@ -33,6 +33,18 @@ function formatTs(ts: string): string {
   }
 }
 
+function timeAgo(ts: string): string {
+  try {
+    const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+    if (diff < 1) return 'たった今';
+    if (diff < 60) return `${diff}分前`;
+    if (diff < 24 * 60) return `${Math.floor(diff / 60)}時間前`;
+    return `${Math.floor(diff / 60 / 24)}日前`;
+  } catch {
+    return '';
+  }
+}
+
 function shortUa(ua: string): string {
   if (ua === 'unknown') return '不明';
   if (/iPhone|iPad/.test(ua)) return '📱 iOS';
@@ -398,7 +410,7 @@ function RecentAccessSummary({
                   {g.keyType === 'device' && <span className="text-[9px] text-slate-600 font-mono">{g.ip}</span>}
                 </div>
                 <p className="text-[10px] text-slate-500 mt-0.5">{shortUa(g.ua)}</p>
-                <p className="text-[11px] font-semibold text-slate-300 mt-0.5">🕐 {formatTs(g.lastTs)}</p>
+                <p className="text-[11px] font-semibold text-slate-300 mt-0.5">🕐 {formatTs(g.lastTs)} <span className="text-[10px] text-slate-500 font-normal">({timeAgo(g.lastTs)})</span></p>
               </div>
               <span className="text-[11px] text-amber-300 font-bold tabular-nums flex-shrink-0">{g.count}回</span>
               {!g.excluded ? (
