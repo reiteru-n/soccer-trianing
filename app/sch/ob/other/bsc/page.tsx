@@ -83,7 +83,6 @@ function PlayerCard({ name, nameKana, birth, position, career, tags, sources, hi
         </div>
       </summary>
 
-      {/* 展開コンテンツ */}
       <div className="border-t border-[#C2410C]/8 px-4 py-3">
         {birth && <p className="text-slate-400 text-[9px] mb-2">{birth}</p>}
         <div className="space-y-1.5">
@@ -104,19 +103,6 @@ function PlayerCard({ name, nameKana, birth, position, career, tags, sources, hi
         )}
       </div>
     </details>
-  );
-}
-
-/* ───────────── サマリーカード ───────────── */
-
-function StatBadge({ num, icon, label, numColor, bg, border }: {
-  num: string; icon: string; label: string; numColor: string; bg: string; border: string;
-}) {
-  return (
-    <div className={`${bg} ${border} border rounded-xl px-3 py-2.5 text-center`}>
-      <p className={`${numColor} text-[22px] font-black leading-none`}>{num}</p>
-      <p className="text-slate-400 text-[9px] mt-0.5 whitespace-pre-line">{icon} {label}</p>
-    </div>
   );
 }
 
@@ -143,99 +129,48 @@ export default function BuddyScObPage() {
 
         <div className="relative z-10">
           <p className="text-[#FCA58A] text-[9px] font-bold tracking-[0.22em] uppercase border border-white/20 bg-white/10 px-2.5 py-0.5 rounded inline-block mb-2">
-            SINCE 1992 · BUDDY SPORTS CLUB OB
+            BUDDY SPORTS CLUB · 横浜 OB
           </p>
           <h1 className="text-white text-[22px] font-black leading-tight">
-            バディーSC OBの<br />
-            <span className="text-[#FCD34D]">進路・実績まとめ</span>
+            バディーSC（横浜）<br />
+            <span className="text-[#FCD34D]">OB進路・実績まとめ</span>
           </h1>
           <p className="text-[#FCA58A] text-[11px] mt-1.5">
-            バディスポーツクラブが育てたOBたちの軌跡
+            バディスポーツクラブ横浜支部出身の選手たちの軌跡
           </p>
         </div>
 
-        {/* サマリー数字 */}
-        <div className="relative z-10 mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <StatBadge
-            num="3+"
-            icon="🌍"
-            label={'海外リーグ\n（現役）'}
-            numColor="text-[#f59e0b]"
-            bg="bg-[rgba(245,158,11,0.08)]"
-            border="border-[rgba(245,158,11,0.2)]"
-          />
-          <StatBadge
-            num="5+"
-            icon="⚽"
-            label={'Jリーグ\n（J1〜・WE）'}
-            numColor="text-[#4ade80]"
-            bg="bg-[rgba(34,197,94,0.08)]"
-            border="border-[rgba(34,197,94,0.2)]"
-          />
-          <StatBadge
-            num="3+"
-            icon="🇯🇵"
-            label={'日本A代表\nOB'}
-            numColor="text-[#f87171]"
-            bg="bg-[rgba(220,38,38,0.08)]"
-            border="border-[rgba(220,38,38,0.2)]"
-          />
-          <StatBadge
-            num="1"
-            icon="🏅"
-            label={'五輪出場\n（女子）'}
-            numColor="text-[#c084fc]"
-            bg="bg-[rgba(168,85,247,0.08)]"
-            border="border-[rgba(168,85,247,0.2)]"
-          />
+        {/* サマリー */}
+        <div className="relative z-10 mt-5 grid grid-cols-3 gap-2">
+          <div className="bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.2)] rounded-xl px-3 py-2.5 text-center">
+            <p className="text-[#f59e0b] text-[22px] font-black leading-none">1+</p>
+            <p className="text-slate-400 text-[9px] mt-0.5">🌍 海外リーグ</p>
+          </div>
+          <div className="bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] rounded-xl px-3 py-2.5 text-center">
+            <p className="text-[#4ade80] text-[22px] font-black leading-none">2+</p>
+            <p className="text-slate-400 text-[9px] mt-0.5">⚽ Jリーグ</p>
+          </div>
+          <div className="bg-[rgba(220,38,38,0.08)] border border-[rgba(220,38,38,0.2)] rounded-xl px-3 py-2.5 text-center">
+            <p className="text-[#f87171] text-[22px] font-black leading-none">1</p>
+            <p className="text-slate-400 text-[9px] mt-0.5">🇯🇵 日本A代表</p>
+          </div>
         </div>
       </div>
 
       {/* ─── 注意書き ─── */}
       <div className="mx-4 mt-4 bg-[#FFF7ED] border border-[#C2410C]/10 rounded-xl px-4 py-3">
         <p className="text-[#7C2D12]/70 text-[10px] leading-relaxed">
-          ※ バディスポーツクラブは横浜・東京・千葉・埼玉・名古屋など全国に展開するスポーツクラブです。
-          本ページのデータはバディスポーツクラブ公式サイト・Jリーグ公式・Wikipedia等の公開情報をもとに作成しています。
-          各選手の記載内容は取得時点の情報です。
+          ※ 本ページはバディスポーツクラブ<strong>横浜支部</strong>（横浜センター南・横浜バディCFCなど）出身の選手のみ掲載しています。
+          バディスポーツクラブには世田谷・江東（東京）など他支部もあり、それらは別途掲載しておりません。
+          公開情報をもとに作成。最新情報は各リンク先をご確認ください。
         </p>
       </div>
 
-      {/* ─── プロ選手（男子） ─── */}
+      {/* ─── プロ選手 ─── */}
       <SectionHeader
         icon="⚽"
-        title="プロサッカー選手（男子）"
-        sub="世界で活躍するバディーSC出身選手"
-      />
-
-      <PlayerCard
-        name="武藤 嘉紀"
-        nameKana="むとう よしのり"
-        birth="1992年7月15日生（東京都世田谷区出身）"
-        position="FW（フォワード）"
-        highlight="🌍 プレミアリーグ・ブンデスリーガ出場／日本A代表29試合／ロシアW杯出場"
-        career={[
-          { label: '幼少期', value: 'バディスポーツ幼児園世田谷', note: 'バディSC世田谷' },
-          { label: '中学', value: 'FC東京U-15', note: '慶應義塾高校' },
-          { label: '高校', value: 'FC東京U-18', note: '慶應義塾高校' },
-          { label: '大学', value: '慶應義塾大学', note: '体育会サッカー部' },
-          { label: 'プロ', value: 'FC東京', note: 'J1 2014〜2015' },
-          { label: '海外', value: 'マインツ05', note: 'ブンデスリーガ 2015〜2018' },
-          { label: '海外', value: 'ニューカッスルU', note: 'プレミアリーグ 2018〜2019' },
-          { label: '海外', value: 'エイバル', note: 'ラ・リーガ（loan） 2019〜2020' },
-          { label: '現在', value: 'ヴィッセル神戸', note: 'J1 2020〜' },
-        ]}
-        tags={[
-          { text: 'J1プロ', color: 'green' },
-          { text: 'A代表', color: 'red' },
-          { text: 'W杯2018', color: 'red' },
-          { text: 'プレミア', color: 'gold' },
-          { text: 'ブンデスリーガ', color: 'gold' },
-          { text: 'Jベストイレブン', color: 'orange' },
-        ]}
-        sources={[
-          { href: 'https://ja.wikipedia.org/wiki/%E6%AD%A6%E8%97%A4%E5%98%89%E7%B4%80', label: 'Wikipedia' },
-          { href: 'https://www.buddy-sports.co.jp/news/1852/', label: 'バディスポーツ公式' },
-        ]}
+        title="プロサッカー選手"
+        sub="横浜バディSC出身のプロ選手"
       />
 
       <PlayerCard
@@ -243,14 +178,13 @@ export default function BuddyScObPage() {
         nameKana="たなか あお"
         birth="2001年9月10日生（神奈川県横浜市出身）"
         position="MF（ミッドフィルダー）"
-        highlight="🌍 ブンデスリーガ活躍中／日本A代表／カタールW杯出場"
+        highlight="🌍 ブンデスリーガ活躍・日本A代表／カタールW杯 スペイン戦決勝ゴール"
         career={[
-          { label: '幼少期', value: 'バディスポーツ幼児園横浜センター南' },
+          { label: '幼少期', value: 'バディスポーツ幼児園 横浜センター南校', note: '4期生' },
           { label: '中学', value: '川崎フロンターレU-15' },
           { label: '高校', value: '川崎フロンターレU-18' },
           { label: 'プロ', value: '川崎フロンターレ', note: 'J1 2020〜2022' },
-          { label: '海外', value: 'フォルトゥナ・デュッセルドルフ', note: 'ブンデス2部 2022〜2023' },
-          { label: '海外', value: 'フォルトゥナ・デュッセルドルフ', note: 'ブンデスリーガ1部昇格 2023〜2024' },
+          { label: '海外', value: 'フォルトゥナ・デュッセルドルフ', note: 'ブンデスリーガ 2022〜2024' },
           { label: '現在', value: 'リーズ・ユナイテッドFC', note: 'チャンピオンシップ 2024〜' },
         ]}
         tags={[
@@ -261,149 +195,46 @@ export default function BuddyScObPage() {
           { text: 'J1連覇', color: 'orange' },
         ]}
         sources={[
-          { href: 'https://www.buddy-sports.co.jp/news/2672/', label: 'バディスポーツ公式' },
+          { href: 'https://www.buddy-sports.co.jp/news/2768/', label: 'バディスポーツ公式（W杯ゴール）' },
+          { href: 'https://www.buddy-sports.co.jp/news/1292/', label: 'バディスポーツ公式（東京五輪）' },
           { href: 'https://ja.wikipedia.org/wiki/%E7%94%B0%E4%B8%AD%E7%A2%A7_(%E3%82%B5%E3%83%83%E3%82%AB%E3%83%BC%E9%81%B8%E6%89%8B)', label: 'Wikipedia' },
         ]}
       />
 
       <PlayerCard
-        name="塩貝 健人"
-        nameKana="しおがい けんと"
-        birth="2005年3月26日生（東京都出身）"
-        position="FW（フォワード）"
-        highlight="🌍 ブンデスリーガ VfLヴォルフスブルク所属／日本代表招集"
+        name="藤本 裕也"
+        nameKana="ふじもと ゆうや"
+        position="MF / FW"
         career={[
-          { label: '小学', value: 'バディSC江東' },
-          { label: '中学', value: '横浜FCジュニアユース' },
-          { label: '高校', value: '國學院久我山高校' },
-          { label: '大学', value: '慶應義塾大学', note: '在学中に海外移籍' },
-          { label: '海外', value: 'NECナイメヘン', note: 'エールディビジ（オランダ） 2024' },
-          { label: '現在', value: 'VfLヴォルフスブルク', note: 'ブンデスリーガ 2024〜' },
-        ]}
-        tags={[
-          { text: '海外プロ', color: 'gold' },
-          { text: 'ブンデスリーガ', color: 'gold' },
-          { text: '日本代表招集', color: 'red' },
-          { text: '特別指定・J1', color: 'green' },
-        ]}
-        sources={[
-          { href: 'https://ja.wikipedia.org/wiki/%E5%A1%A9%E8%B2%9D%E5%81%A5%E4%BA%BA', label: 'Wikipedia' },
-          { href: 'https://www.buddy-sports.co.jp/news/4295/', label: 'バディスポーツ公式' },
-        ]}
-      />
-
-      <PlayerCard
-        name="池谷 銀姿郎"
-        nameKana="いけや ぎんじろう"
-        birth="2004年6月19日生（東京都出身）"
-        position="DF（サイドバック）"
-        highlight="🏅 2026シーズン ガンバ大阪（J1）加入内定"
-        career={[
-          { label: '小学', value: 'バディSC江東' },
+          { label: '小学', value: '横浜バディSC（横浜CFC）' },
           { label: '中学', value: '横浜FCジュニアユース' },
           { label: '高校', value: '横浜FCユース' },
-          { label: '大学', value: '筑波大学', note: '3年在学中にプロ内定' },
-          { label: 'プロ', value: 'ガンバ大阪', note: 'J1 2026シーズン加入内定' },
+          { label: '大学', value: '関東学院大学' },
+          { label: 'プロ', value: '松本山雅FC', note: 'J2/J3' },
+          { label: '現在', value: 'ラインメール青森', note: 'JFL' },
         ]}
         tags={[
-          { text: 'J1内定', color: 'green' },
-          { text: '大学MVPスタン', color: 'orange' },
-          { text: '身長183cm', color: 'blue' },
+          { text: 'JFL', color: 'blue' },
+          { text: '横浜バディCFC', color: 'teal' },
         ]}
         sources={[
-          { href: 'https://www.buddy-sports.co.jp/news/6008/', label: 'バディスポーツ公式' },
-        ]}
-      />
-
-      <PlayerCard
-        name="カウン・ゼン・マラ"
-        nameKana="かうん ぜん まら"
-        birth="2002年11月11日生（東京都出身）"
-        position="GK（ゴールキーパー）"
-        highlight="🏅 FC町田ゼルビア（J1）加入"
-        career={[
-          { label: '小学', value: 'バディSC江東', note: '7期生' },
-          { label: '中学', value: '東京ヴェルディジュニアユース' },
-          { label: '高校', value: '東京ヴェルディユース' },
-          { label: '大学', value: '産業能率大学' },
-          { label: 'プロ', value: 'FC町田ゼルビア', note: 'J1 2025シーズン加入' },
-        ]}
-        tags={[
-          { text: 'J1プロ', color: 'green' },
-          { text: 'GK', color: 'blue' },
-          { text: '身長190cm', color: 'blue' },
-        ]}
-        sources={[
-          { href: 'https://www.buddy-sports.co.jp/news/5087/', label: 'バディスポーツ公式' },
-        ]}
-      />
-
-      {/* ─── プロ選手（女子） ─── */}
-      <SectionHeader
-        icon="👩‍⚽"
-        title="プロサッカー選手（女子）"
-        sub="なでしこ・五輪を経て世界へ"
-      />
-
-      <PlayerCard
-        name="籾木 結花"
-        nameKana="もみき ゆか"
-        birth="1996年4月9日生（ニューヨーク出身）"
-        position="MF/FW"
-        highlight="🏅 東京五輪出場（バディ出身者初）／なでしこジャパン10番"
-        career={[
-          { label: '小学', value: 'バディFC世田谷', note: '女子チーム' },
-          { label: '中高', value: '日テレ・メニーナ' },
-          { label: 'プロ', value: '日テレ・東京ヴェルディベレーザ', note: 'WEリーグ' },
-          { label: '海外', value: 'OL Reign', note: 'NWSL（アメリカ）' },
-          { label: '海外', value: 'リンシェーピングFC', note: 'スウェーデン' },
-          { label: '海外', value: 'レスター・シティ', note: 'イングランド' },
-          { label: '現在', value: 'エヴァートンFC', note: 'イングランド' },
-        ]}
-        tags={[
-          { text: '海外プロ', color: 'gold' },
-          { text: '東京五輪2021', color: 'purple' },
-          { text: 'なでしこ代表', color: 'red' },
-          { text: 'W杯2019', color: 'red' },
-          { text: 'なでしこ10番', color: 'orange' },
-        ]}
-        sources={[
-          { href: 'https://ja.wikipedia.org/wiki/%E7%B1%BE%E6%9C%A8%E7%B5%90%E8%8A%B1', label: 'Wikipedia' },
-          { href: 'https://www.buddy-sports.co.jp/news/1277/', label: 'バディスポーツ公式' },
-        ]}
-      />
-
-      <PlayerCard
-        name="小川 愛"
-        nameKana="おがわ あい"
-        position="FW（フォワード）"
-        career={[
-          { label: '小学', value: 'バディFC', note: '女子チーム' },
-          { label: 'プロ', value: 'サンフレッチェ広島レジーナ', note: 'WEリーグ' },
-        ]}
-        tags={[
-          { text: 'WEリーグ', color: 'green' },
-          { text: '皇后杯優勝', color: 'gold' },
-        ]}
-        sources={[
-          { href: 'https://www.buddy-sports.co.jp/cat_news/obog/', label: 'バディスポーツ公式OB' },
+          { href: 'https://www.buddy-sports.co.jp/club_school/club/soccer/yokocfc/', label: 'バディスポーツ 横浜CFC' },
         ]}
       />
 
       {/* ─── 代表実績 ─── */}
       <SectionHeader
         icon="🇯🇵"
-        title="日本代表・五輪の主な実績"
-        sub="バディーSC出身の代表OB"
+        title="日本代表・国際大会の実績"
+        sub="田中碧の主な代表歴"
       />
 
       <div className="mx-4 space-y-2">
         {[
-          { year: '2018', name: '武藤 嘉紀', event: 'FIFAワールドカップ ロシア大会', note: '日本A代表 グループステージ' },
-          { year: '2019', name: '籾木 結花', event: 'FIFA女子ワールドカップ フランス大会', note: 'なでしこジャパン グループステージ突破' },
-          { year: '2021', name: '籾木 結花', event: '東京オリンピック 女子サッカー', note: 'バディ出身者初のオリンピアン' },
-          { year: '2022', name: '田中 碧', event: 'FIFAワールドカップ カタール大会', note: '日本A代表 ベスト16' },
-          { year: '2025', name: '塩貝 健人', event: '日本A代表招集', note: '2026 W杯最終予選活動' },
+          { year: '2021', name: '田中 碧', event: '東京オリンピック 男子サッカー日本代表', note: 'U-24日本代表 4位入賞' },
+          { year: '2021', name: '田中 碧', event: 'U-24日本代表 スタメン定着', note: '五輪本番・グループリーグ全試合出場' },
+          { year: '2022', name: '田中 碧', event: 'FIFAワールドカップ カタール大会', note: 'スペイン戦 決勝ゴール／ベスト16' },
+          { year: '2022', name: '田中 碧', event: 'ドイツ戦・スペイン戦で2試合連続ゴール', note: '日本代表の「ドーハの歓喜」を支えた中心選手' },
         ].map((item, i) => (
           <div key={i} className="bg-white border border-[#C2410C]/10 rounded-xl px-4 py-3 flex items-start gap-3">
             <div className="shrink-0 w-10 h-10 rounded-lg bg-[#FFF7ED] flex items-center justify-center">
@@ -421,27 +252,22 @@ export default function BuddyScObPage() {
       {/* ─── クラブ概要 ─── */}
       <SectionHeader
         icon="🏫"
-        title="バディスポーツクラブについて"
-        sub="選手を育てるクラブの背景"
+        title="バディスポーツクラブ横浜について"
+        sub="選手を育てる横浜の拠点"
       />
 
       <div className="mx-4 bg-[#FFF7ED] border border-[#C2410C]/10 rounded-xl px-4 py-4 space-y-2">
-        <div className="flex items-start gap-2">
-          <span className="text-[#C2410C] text-[10px] w-16 shrink-0 font-bold pt-0.5">設立</span>
-          <span className="text-[#7C2D12] text-[12px]">1992年</span>
-        </div>
-        <div className="flex items-start gap-2">
-          <span className="text-[#C2410C] text-[10px] w-16 shrink-0 font-bold pt-0.5">拠点</span>
-          <span className="text-[#7C2D12] text-[12px]">横浜・東京・千葉・埼玉・名古屋ほか全国展開</span>
-        </div>
-        <div className="flex items-start gap-2">
-          <span className="text-[#C2410C] text-[10px] w-16 shrink-0 font-bold pt-0.5">規模</span>
-          <span className="text-[#7C2D12] text-[12px]">約6,000名以上（幼児〜小学生）</span>
-        </div>
-        <div className="flex items-start gap-2">
-          <span className="text-[#C2410C] text-[10px] w-16 shrink-0 font-bold pt-0.5">特徴</span>
-          <span className="text-[#7C2D12] text-[12px]">幼児園でのサッカー教育が出発点。卒団後はJクラブアカデミー・強豪校へ進む選手多数</span>
-        </div>
+        {[
+          { label: '設立', value: '1992年（バディスポーツクラブ全体）' },
+          { label: '横浜拠点', value: '横浜センター南・横浜センター北・横浜みどり 等' },
+          { label: 'カテゴリ', value: '幼児園〜小学生（卒団後はJクラブアカデミーへ）' },
+          { label: '特徴', value: '「続けることが力」の理念のもと幼少期から本格指導' },
+        ].map((row, i) => (
+          <div key={i} className="flex items-start gap-2">
+            <span className="text-[#C2410C] text-[10px] w-20 shrink-0 font-bold pt-0.5">{row.label}</span>
+            <span className="text-[#7C2D12] text-[12px]">{row.value}</span>
+          </div>
+        ))}
       </div>
 
       {/* ─── 出典 ─── */}
@@ -449,10 +275,8 @@ export default function BuddyScObPage() {
         <p className="text-slate-400 text-[9px] mb-2 font-bold">出典・参考</p>
         <div className="flex flex-wrap gap-2">
           <Src href="https://www.buddy-sports.co.jp/cat_news/obog/" label="バディスポーツクラブ 公式OB情報" />
-          <Src href="https://ja.wikipedia.org/wiki/%E6%AD%A6%E8%97%A4%E5%98%89%E7%B4%80" label="武藤嘉紀 Wikipedia" />
+          <Src href="https://www.buddy-sports.co.jp/club_school/club/soccer/yokocfc/" label="横浜バディCFC" />
           <Src href="https://ja.wikipedia.org/wiki/%E7%94%B0%E4%B8%AD%E7%A2%A7_(%E3%82%B5%E3%83%83%E3%82%AB%E3%83%BC%E9%81%B8%E6%89%8B)" label="田中碧 Wikipedia" />
-          <Src href="https://ja.wikipedia.org/wiki/%E5%A1%A9%E8%B2%9D%E5%81%A5%E4%BA%BA" label="塩貝健人 Wikipedia" />
-          <Src href="https://ja.wikipedia.org/wiki/%E7%B1%BE%E6%9C%A8%E7%B5%90%E8%8A%B1" label="籾木結花 Wikipedia" />
         </div>
       </div>
 
