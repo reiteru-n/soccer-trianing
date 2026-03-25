@@ -190,6 +190,30 @@ git push github master
 
 ---
 
+## Redis バックアップ（自動）
+
+### 設定済み内容
+- **ワークフロー**: `.github/workflows/backup-redis.yml`
+- **スケジュール**: 毎日 0:00 JST に自動実行
+- **保存先**: `.github/backups/YYYY-MM-DD.json`（日付別） + `latest.json`（常に最新）
+- **対象**: `takuto:*` と `sch:*` をパターンスキャンで全取得 → 新キー追加時も自動対応
+
+### 手動で今すぐバックアップを取る手順
+
+1. ブラウザで https://github.com/reiteru-n/soccer-trianing/actions を開く
+2. 左のリスト → **「Backup Redis to GitHub」** をクリック
+3. 右側の **「Run workflow」** ボタン → **「Run workflow」** を押す
+4. 約10〜20秒で完了し、`.github/backups/` にファイルが追加される
+
+### バックアップの確認
+- https://github.com/reiteru-n/soccer-trianing/tree/master/.github/backups
+
+### バックアップからリストアする場合
+`.github/backups/latest.json` を参照し、各キーの値を Upstash REST API で書き戻す。
+（例: `curl -X POST "$URL/set/takuto:lifting" -H "Authorization: Bearer $TOKEN" -d '["SET","takuto:lifting","<JSON文字列>"]'`）
+
+---
+
 ## 技術スタック
 
 - Next.js 16.1.6 (App Router, Turbopack)
