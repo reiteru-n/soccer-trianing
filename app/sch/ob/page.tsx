@@ -25,7 +25,7 @@ function Src({ href, label }: { href: string; label: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-[9px] text-[#3f4d6b] hover:text-[#60a5fa] transition-colors underline"
+      className="inline-flex items-center gap-1 text-[9px] text-[#003087]/50 hover:text-[#0047AB] transition-colors underline"
     >
       📎 {label}
     </a>
@@ -37,9 +37,9 @@ function SectionHeader({ icon, title, sub }: { icon: string; title: string; sub?
     <div className="mx-4 mt-8 mb-3">
       <div className="flex items-center gap-2">
         <span className="text-xl">{icon}</span>
-        <h2 className="text-white text-[17px] font-black">{title}</h2>
+        <h2 className="text-[#001A52] text-[17px] font-black">{title}</h2>
       </div>
-      {sub && <p className="text-[#3f4d6b] text-[11px] mt-0.5 ml-7">{sub}</p>}
+      {sub && <p className="text-slate-500 text-[11px] mt-0.5 ml-7">{sub}</p>}
     </div>
   );
 }
@@ -59,22 +59,22 @@ interface PlayerCardProps {
 
 function PlayerCard({ name, nameKana, birth, position, career, tags, sources, highlight }: PlayerCardProps) {
   return (
-    <details className="mx-4 mb-3 bg-[#0b0e1a] border border-white/8 rounded-2xl overflow-hidden">
+    <details className="mx-4 mb-3 bg-white border border-[#003087]/10 rounded-2xl overflow-hidden">
       <summary className="cursor-pointer [list-style:none] [&::-webkit-details-marker]:hidden">
         {highlight && (
-          <div className="bg-gradient-to-r from-[#1a2744] to-[#0d1530] px-4 py-2 border-b border-white/8">
+          <div className="bg-gradient-to-r from-[#001A52] to-[#0047AB] px-4 py-2 border-b border-[#003087]/10">
             <p className="text-[#f59e0b] text-[11px] font-bold">{highlight}</p>
           </div>
         )}
         <div className="px-4 pt-3 pb-3">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-white text-[17px] font-black leading-tight">{name}</p>
-              <p className="text-[#3f4d6b] text-[10px] mt-0.5">{nameKana}</p>
+              <p className="text-[#001A52] text-[17px] font-black leading-tight">{name}</p>
+              <p className="text-slate-400 text-[10px] mt-0.5">{nameKana}</p>
             </div>
             <div className="text-right shrink-0">
-              {position && <p className="text-[#60a5fa] text-[10px] font-bold">{position}</p>}
-              <span className="text-[#3f4d6b] text-[9px]">▼ 経歴を見る</span>
+              {position && <p className="text-[#0047AB] text-[10px] font-bold">{position}</p>}
+              <span className="text-slate-400 text-[9px]">▼ 経歴を見る</span>
             </div>
           </div>
           <div className="flex flex-wrap gap-1.5 mt-2">
@@ -84,15 +84,15 @@ function PlayerCard({ name, nameKana, birth, position, career, tags, sources, hi
       </summary>
 
       {/* 展開コンテンツ */}
-      <div className="border-t border-white/8 px-4 py-3">
-        {birth && <p className="text-[#3f4d6b] text-[9px] mb-2">{birth}</p>}
+      <div className="border-t border-[#003087]/8 px-4 py-3">
+        {birth && <p className="text-slate-400 text-[9px] mb-2">{birth}</p>}
         <div className="space-y-1.5">
           {career.map((step, i) => (
             <div key={i} className="flex items-start gap-2">
-              <span className="text-[#3f4d6b] text-[10px] w-14 shrink-0 pt-0.5">{step.label}</span>
+              <span className="text-slate-400 text-[10px] w-14 shrink-0 pt-0.5">{step.label}</span>
               <div className="flex-1">
-                <span className="text-white text-[12px] font-semibold">{step.value}</span>
-                {step.note && <span className="text-[#3f4d6b] text-[10px] ml-1">（{step.note}）</span>}
+                <span className="text-[#001A52] text-[12px] font-semibold">{step.value}</span>
+                {step.note && <span className="text-slate-400 text-[10px] ml-1">（{step.note}）</span>}
               </div>
             </div>
           ))}
@@ -117,20 +117,20 @@ function PathCard({
   destinations: string[];
 }) {
   return (
-    <div className="mx-4 mb-2 bg-[#0b0e1a] border border-white/8 rounded-xl px-4 py-3">
+    <div className="mx-4 mb-2 bg-white border border-[#003087]/10 rounded-xl px-4 py-3">
       <p className="text-[#f59e0b] text-[10px] font-bold mb-1">{season}</p>
       <div className="flex gap-4">
         <div className="flex-1">
-          <p className="text-[#3f4d6b] text-[9px] mb-1">選手</p>
+          <p className="text-slate-400 text-[9px] mb-1">選手</p>
           {players.map((p, i) => (
-            <p key={i} className="text-white text-[12px] font-semibold">{p}</p>
+            <p key={i} className="text-[#001A52] text-[12px] font-semibold">{p}</p>
           ))}
         </div>
-        <div className="text-[#3f4d6b] text-lg self-center">→</div>
+        <div className="text-slate-400 text-lg self-center">→</div>
         <div className="flex-1">
-          <p className="text-[#3f4d6b] text-[9px] mb-1">進路</p>
+          <p className="text-slate-400 text-[9px] mb-1">進路</p>
           {destinations.map((d, i) => (
-            <p key={i} className="text-[#60a5fa] text-[12px] font-semibold">{d}</p>
+            <p key={i} className="text-[#0047AB] text-[12px] font-semibold">{d}</p>
           ))}
         </div>
       </div>
@@ -144,17 +144,17 @@ function TrecenCard({ year, name, level, event, note }: {
   year: string; name: string; level: string; event: string; note?: string;
 }) {
   return (
-    <div className="mx-4 mb-2 bg-[#0b0e1a] border border-white/8 rounded-xl px-4 py-3 flex items-start gap-3">
-      <div className="shrink-0 w-10 h-10 rounded-lg bg-[#0d1530] flex items-center justify-center">
-        <span className="text-[#f59e0b] text-[10px] font-black text-center leading-tight">{year}</span>
+    <div className="mx-4 mb-2 bg-white border border-[#003087]/10 rounded-xl px-4 py-3 flex items-start gap-3">
+      <div className="shrink-0 w-10 h-10 rounded-lg bg-[#E8F0FE] flex items-center justify-center">
+        <span className="text-[#003087] text-[10px] font-black text-center leading-tight">{year}</span>
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-0.5">
-          <p className="text-white text-[13px] font-bold">{name}</p>
+          <p className="text-[#001A52] text-[13px] font-bold">{name}</p>
           <Tag color={level === 'ナショナル' ? 'gold' : level === '日本代表' ? 'red' : 'teal'}>{level}</Tag>
         </div>
-        <p className="text-[#3f4d6b] text-[11px]">{event}</p>
-        {note && <p className="text-[#60a5fa] text-[10px] mt-0.5">{note}</p>}
+        <p className="text-slate-500 text-[11px]">{event}</p>
+        {note && <p className="text-[#0047AB] text-[10px] mt-0.5">{note}</p>}
       </div>
     </div>
   );
@@ -164,11 +164,15 @@ function TrecenCard({ year, name, level, event, note }: {
 
 export default function ObPage() {
   return (
-    <div className="min-h-screen bg-[#060810] pb-24">
+    <div className="min-h-screen bg-white pb-24">
 
       {/* ─── ヘッダー ─── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#080c20] to-[#060810] px-5 pt-8 pb-6 border-b border-white/8">
-        <div className="absolute inset-0 pointer-events-none bg-radial-[ellipse_60%_120%_at_85%_50%] from-[rgba(34,197,94,0.06)] to-transparent" />
+      <div className="relative overflow-hidden bg-[#003087] px-5 pt-8 pb-6">
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: 'repeating-linear-gradient(180deg, transparent, transparent 24px, rgba(255,255,255,0.06) 24px, rgba(255,255,255,0.06) 26px)' }}
+        />
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#0047AB] to-[#001A52] opacity-80" />
+        <div className="absolute top-0 right-0 text-white/[0.1] text-[160px] font-black leading-none select-none pointer-events-none translate-x-8 -translate-y-4">↑</div>
 
         <Link
           href="/sch/history"
@@ -178,22 +182,24 @@ export default function ObPage() {
         </Link>
 
         <div className="relative z-10 flex items-end gap-4">
-          <Image
-            src="/sch-logo.png"
-            width={175}
-            height={215}
-            className="object-contain h-16 w-auto drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
-            alt="SCH logo"
-          />
+          <Link href="/sch">
+            <Image
+              src="/sch-logo.png"
+              width={175}
+              height={215}
+              className="object-contain h-16 w-auto drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
+              alt="SCH logo"
+            />
+          </Link>
           <div>
-            <p className="text-[#4ade80] text-[9px] font-bold tracking-[0.22em] uppercase border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.08)] px-2.5 py-0.5 rounded inline-block mb-2">
+            <p className="text-[#A8C4F0] text-[9px] font-bold tracking-[0.22em] uppercase border border-white/20 bg-white/10 px-2.5 py-0.5 rounded inline-block mb-2">
               SINCE 1986 · SCH FC OB
             </p>
             <h1 className="text-white text-[22px] font-black leading-tight">
               OBの進路・実績<br />
-              <span className="text-[#4ade80]">まとめ</span>
+              <span className="text-[#FFD700]">まとめ</span>
             </h1>
-            <p className="text-[#3f4d6b] text-[11px] mt-1.5">
+            <p className="text-[#A8C4F0] text-[11px] mt-1.5">
               SCHが育てたOBたちの軌跡
             </p>
           </div>
@@ -202,23 +208,23 @@ export default function ObPage() {
         {/* サマリー数字 */}
         <div className="relative z-10 grid grid-cols-3 gap-2 mt-5">
           <div className="bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#f59e0b] text-[22px] font-black leading-none">1</p>
-            <p className="text-[#3f4d6b] text-[9px] mt-0.5">🌍 海外リーグ<br />（現役）</p>
+            <p className="text-[#f59e0b] text-[22px] font-black leading-none">1+</p>
+            <p className="text-slate-400 text-[9px] mt-0.5">🌍 海外リーグ<br />（現役）</p>
           </div>
           <div className="bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#4ade80] text-[22px] font-black leading-none">10</p>
-            <p className="text-[#3f4d6b] text-[9px] mt-0.5">⚽ Jリーグ<br />（J1〜J3・WE）</p>
+            <p className="text-[#4ade80] text-[22px] font-black leading-none">10+</p>
+            <p className="text-slate-400 text-[9px] mt-0.5">⚽ Jリーグ<br />（J1〜J3・WE）</p>
           </div>
           <div className="bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#60a5fa] text-[22px] font-black leading-none">5</p>
-            <p className="text-[#3f4d6b] text-[9px] mt-0.5">🏅 JFL<br />（準プロ）</p>
+            <p className="text-[#60a5fa] text-[22px] font-black leading-none">5+</p>
+            <p className="text-slate-400 text-[9px] mt-0.5">🏅 JFL<br />（準プロ）</p>
           </div>
         </div>
       </div>
 
       {/* ─── 注意書き ─── */}
-      <div className="mx-4 mt-4 bg-[#0d1530] border border-[#1e3a6b] rounded-xl px-4 py-3">
-        <p className="text-[#3f4d6b] text-[10px] leading-relaxed">
+      <div className="mx-4 mt-4 bg-[#E8F0FE] border border-[#003087]/10 rounded-xl px-4 py-3">
+        <p className="text-[#003087]/70 text-[10px] leading-relaxed">
           ※ 本ページのデータはSCHFC公式サイト・Jリーグ公式・Wikipedia等の公開情報をもとに作成しています。
           各選手の記載内容は取得時点の情報です。最新情報は各リンク先をご確認ください。
         </p>
@@ -439,16 +445,16 @@ export default function ObPage() {
           src: 'https://www.sch-fc.com/pages/246/',
         },
       ].map((p) => (
-        <div key={p.name} className="mx-4 mb-2 bg-[#0b0e1a] border border-white/8 rounded-xl px-4 py-3">
+        <div key={p.name} className="mx-4 mb-2 bg-white border border-[#003087]/10 rounded-xl px-4 py-3">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-white text-[14px] font-bold">{p.name}</p>
-              <p className="text-[#3f4d6b] text-[9px]">{p.kana}{p.birth !== '—' ? ` · ${p.birth}` : ''}</p>
-              {p.grad !== '—' && <p className="text-[#3f4d6b] text-[9px]">SCH卒: {p.grad}</p>}
+              <p className="text-[#001A52] text-[14px] font-bold">{p.name}</p>
+              <p className="text-slate-400 text-[9px]">{p.kana}{p.birth !== '—' ? ` · ${p.birth}` : ''}</p>
+              {p.grad !== '—' && <p className="text-slate-400 text-[9px]">SCH卒: {p.grad}</p>}
             </div>
             <Tag color="blue">{'league' in p ? (p as {league: string}).league : 'JFL'}</Tag>
           </div>
-          <p className="text-[#60a5fa] text-[11px] mt-1.5 leading-relaxed">{p.career}</p>
+          <p className="text-[#0047AB] text-[11px] mt-1.5 leading-relaxed">{p.career}</p>
           <div className="mt-1.5">
             <Src href={p.src} label="出典" />
           </div>
@@ -588,23 +594,23 @@ export default function ObPage() {
             note: 'WEリーグ / Avvenire（女子育成）',
           },
         ].map((item) => (
-          <div key={item.club} className="bg-[#0b0e1a] border border-white/8 rounded-xl px-4 py-3">
+          <div key={item.club} className="bg-white border border-[#003087]/10 rounded-xl px-4 py-3">
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <p className="text-white text-[13px] font-bold">{item.club}</p>
+              <p className="text-[#001A52] text-[13px] font-bold">{item.club}</p>
               <span className="text-[11px] font-black" style={{ color: item.color }}>{item.count}</span>
             </div>
-            <p className="text-[#a0b4c8] text-[10px] leading-relaxed">{item.players}</p>
-            <p className="text-[#3f4d6b] text-[9px] mt-0.5">{item.note}</p>
+            <p className="text-slate-600 text-[10px] leading-relaxed">{item.players}</p>
+            <p className="text-slate-400 text-[9px] mt-0.5">{item.note}</p>
           </div>
         ))}
       </div>
 
       {/* ── 年度別一覧テーブル ── */}
-      <div className="mx-4 mb-4 bg-[#0b0e1a] border border-white/8 rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-[70px_1fr_1fr] bg-[#0d1530] px-3 py-2 border-b border-white/8">
-          <p className="text-[#3f4d6b] text-[9px] font-bold">卒業年度</p>
-          <p className="text-[#3f4d6b] text-[9px] font-bold">選手 / 人数</p>
-          <p className="text-[#3f4d6b] text-[9px] font-bold">主な進路先</p>
+      <div className="mx-4 mb-4 bg-white border border-[#003087]/10 rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-[70px_1fr_1fr] bg-[#E8F0FE]/40 px-3 py-2 border-b border-[#003087]/8">
+          <p className="text-[#003087]/60 text-[9px] font-bold">卒業年度</p>
+          <p className="text-[#003087]/60 text-[9px] font-bold">選手 / 人数</p>
+          <p className="text-[#003087]/60 text-[9px] font-bold">主な進路先</p>
         </div>
         {[
           { year: '2010年度', a: false, name: '阿部 隼人', dest: '横浜FMアカデミー → FCティアモ枚方（JFL）' },
@@ -628,16 +634,16 @@ export default function ObPage() {
           { year: '2022年度 計18名', a: false, name: '関 一成（FM JY→ユース2025〜）', dest: 'SCH JY6・川崎FR3（生田2+等々力1）・横浜FM JY1+追浜1・横浜FC JY1・湘南BM JY1+EAST1・テアトロ2・他2' },
           { year: '2023年度 計15名', a: false, name: '15名 卒業', dest: 'SCH JY2・川崎FR生田1・横浜FM JY2+追浜2・横浜FC JY2・湘南BM JY1+WAIST3・ノジマAvvenire1・大豆戸FC JY1' },
         ].map((row, i) => (
-          <div key={i} className="grid grid-cols-[70px_1fr_1fr] px-3 py-2 border-b border-white/5 last:border-0 items-start">
-            <p className="text-[#f59e0b] text-[10px] font-bold leading-tight pt-0.5">
-              {row.year}{row.a && <span className="text-[#3f4d6b] text-[8px]">※</span>}
+          <div key={i} className="grid grid-cols-[70px_1fr_1fr] px-3 py-2 border-b border-[#003087]/5 last:border-0 items-start">
+            <p className="text-[#003087] text-[10px] font-bold leading-tight pt-0.5">
+              {row.year}{row.a && <span className="text-slate-400 text-[8px]">※</span>}
             </p>
-            <p className="text-white text-[11px] font-semibold leading-tight pr-2">{row.name}</p>
-            <p className="text-[#60a5fa] text-[10px] leading-tight">{row.dest}</p>
+            <p className="text-[#001A52] text-[11px] font-semibold leading-tight pr-2">{row.name}</p>
+            <p className="text-[#0047AB] text-[10px] leading-tight">{row.dest}</p>
           </div>
         ))}
-        <div className="px-3 py-2 bg-[#0d1530]">
-          <p className="text-[#3f4d6b] text-[8px]">※ 推定年度あり。2018〜2023年度の集計は公式進路先資料より。個人名は公開情報のみ掲載。</p>
+        <div className="px-3 py-2 bg-[#E8F0FE]/40">
+          <p className="text-slate-400 text-[8px]">※ 推定年度あり。2018〜2023年度の集計は公式進路先資料より。個人名は公開情報のみ掲載。</p>
         </div>
       </div>
 
@@ -704,7 +710,7 @@ export default function ObPage() {
         title="データ出典・ソース"
       />
 
-      <div className="mx-4 bg-[#0b0e1a] border border-white/8 rounded-2xl px-4 py-4 mb-4">
+      <div className="mx-4 bg-white border border-[#003087]/10 rounded-2xl px-4 py-4 mb-4">
         <div className="space-y-2">
           {[
             { href: 'https://www.sch-fc.com/', label: 'SCHフットボールクラブ 公式サイト（OB情報ページ）' },
@@ -723,7 +729,7 @@ export default function ObPage() {
             </div>
           ))}
         </div>
-        <p className="text-[#3f4d6b] text-[9px] mt-3 leading-relaxed">
+        <p className="text-slate-400 text-[9px] mt-3 leading-relaxed">
           ※ 情報の誤り・追加情報がある場合はSCHチームにお知らせください。
           SCHFCの公式OB情報ページ（sch-fc.com）には小林夏生・佐藤夏樹・角田惠風・金丸希陽選手の情報が掲載されています（取得時点でアクセス制限あり）。
         </p>
@@ -733,16 +739,16 @@ export default function ObPage() {
       <div className="mx-4 mt-2">
         <Link
           href="/sch/history"
-          className="flex items-center justify-between w-full bg-[#0b0e1a] border border-white/8 rounded-xl px-4 py-3 hover:border-[#4ade80]/40 transition-all group"
+          className="flex items-center justify-between w-full bg-white border border-[#003087]/10 rounded-xl px-4 py-3 hover:border-[#003087]/40 transition-all group"
         >
           <div className="flex items-center gap-3">
-            <span className="text-[#4ade80] text-lg">🏆</span>
+            <span className="text-[#003087] text-lg">🏆</span>
             <div>
-              <p className="text-white text-[13px] font-bold">先輩たちの戦歴</p>
-              <p className="text-[#3f4d6b] text-[10px] mt-0.5">大会成績・記録を見る</p>
+              <p className="text-[#001A52] text-[13px] font-bold">先輩たちの戦歴</p>
+              <p className="text-slate-400 text-[10px] mt-0.5">大会成績・記録を見る</p>
             </div>
           </div>
-          <span className="text-[#4ade80] text-[18px] group-hover:-translate-x-1 transition-transform">←</span>
+          <span className="text-[#003087] text-[18px] group-hover:-translate-x-1 transition-transform">←</span>
         </Link>
       </div>
 

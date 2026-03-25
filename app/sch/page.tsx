@@ -3133,6 +3133,17 @@ export default function SchPage() {
             </div>
           </div>
         </div>
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          <Link href="/sch/history" className="flex items-center gap-1.5 text-[10px] text-slate-300 hover:text-white border border-slate-600 hover:border-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+            🏆 戦歴
+          </Link>
+          <Link href="/sch/ob" className="flex items-center gap-1.5 text-[10px] text-slate-300 hover:text-white border border-slate-600 hover:border-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+            ⚽ OB進路
+          </Link>
+          <Link href="/sch/kanagawa" className="flex items-center gap-1.5 text-[10px] text-slate-300 hover:text-white border border-slate-600 hover:border-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+            📊 神奈川県推移
+          </Link>
+        </div>
       </header>
 
       <div className="flex bg-slate-800/60 rounded-xl p-1 mb-5 border border-white/10">
