@@ -36,6 +36,7 @@ interface AppContextType {
   deletePerformanceRecord: (id: string) => void;
   customMetrics: CustomMetricDef[];
   addCustomMetric: (metric: Omit<CustomMetricDef, 'id'>) => void;
+  updateCustomMetric: (id: string, updates: Partial<Omit<CustomMetricDef, 'id'>>) => void;
   deleteCustomMetric: (id: string) => void;
   isLoading: boolean;
 }
@@ -217,6 +218,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     saveCustomMetrics(updated);
   }, [customMetrics]);
 
+  const updateCustomMetric = useCallback((id: string, updates: Partial<Omit<CustomMetricDef, 'id'>>) => {
+    const updated = customMetrics.map((m) => m.id === id ? { ...m, ...updates } : m);
+    setCustomMetrics(updated);
+    saveCustomMetrics(updated);
+  }, [customMetrics]);
+
   const deleteCustomMetric = useCallback((id: string) => {
     const updated = customMetrics.filter((m) => m.id !== id);
     setCustomMetrics(updated);
@@ -234,7 +241,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         milestones, maxCount, newMilestoneAchieved, clearNewMilestone,
         childBirthDate, setChildBirthDate,
         performanceRecords, addPerformanceRecord, deletePerformanceRecord,
-        customMetrics, addCustomMetric, deleteCustomMetric,
+        customMetrics, addCustomMetric, updateCustomMetric, deleteCustomMetric,
         isLoading,
       }}
     >

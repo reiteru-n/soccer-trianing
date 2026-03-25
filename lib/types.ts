@@ -31,6 +31,7 @@ export interface CustomMetricDef {
   section: 'physical' | 'ball' | 'other';
   frequency: PerformanceFrequency;
   referenceUrl?: string;
+  howToMeasure?: string;
   tags?: string[];
 }
 
