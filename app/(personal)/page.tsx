@@ -55,6 +55,7 @@ export default function DashboardPage() {
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyHeight, setBodyHeight] = useState("");
   const [bodyDate, setBodyDate] = useState(todayStr());
+  const [bodySaved, setBodySaved] = useState(false);
   const [birthDateInput, setBirthDateInput] = useState("");
   const [matchEvents, setMatchEvents] = useState<SchEvent[]>([]);
 
@@ -82,11 +83,16 @@ export default function DashboardPage() {
   };
   const handleBodySave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bodyWeight && !bodyHeight) return;
+    const w = bodyWeight ? parseFloat(bodyWeight.replace(',', '.')) : NaN;
+    const h = bodyHeight ? parseFloat(bodyHeight.replace(',', '.')) : NaN;
+    if (isNaN(w) && isNaN(h)) return;
     const record: Omit<BodyRecord, 'id'> = { date: bodyDate };
-    if (bodyWeight) record.weight = parseFloat(bodyWeight);
-    if (bodyHeight) record.height = parseFloat(bodyHeight);
-    addBodyRecord(record); setBodyWeight(""); setBodyHeight(""); setShowBodyForm(false);
+    if (!isNaN(w) && w > 0) record.weight = w;
+    if (!isNaN(h) && h > 0) record.height = h;
+    addBodyRecord(record);
+    setBodyWeight(""); setBodyHeight("");
+    setBodySaved(true);
+    setTimeout(() => { setBodySaved(false); setShowBodyForm(false); }, 1200);
   };
   // Match stats
   const finishedMatches = matchEvents.filter(e => getMatchScores(e).myScore != null);
@@ -226,30 +232,39 @@ export default function DashboardPage() {
       {showLiftingForm && <LiftingForm onSave={addLiftingRecord} onClose={() => setShowLiftingForm(false)} pastLocations={pastLocations} />}
       {showNoteForm && <NoteForm onSave={addPracticeNote} onClose={() => setShowNoteForm(false)} pastLocations={pastLocations} pastCategories={pastCategories} pastTeamNames={pastTeamNames} />}
       {showBodyForm && (
-        <div className="fixed inset-0 z-50 flex items-end pb-16 sm:pb-0 sm:items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowBodyForm(false)}>
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => !bodySaved && setShowBodyForm(false)}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md shadow-2xl mb-16 sm:mb-0" onClick={e => e.stopPropagation()}>
             <div className="px-6 pt-6 pb-8 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-800">📏 身長・体重を記録</h2>
-                <button onClick={() => setShowBodyForm(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
-              </div>
-              <form onSubmit={handleBodySave} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-600 mb-1">📅 日付</label>
-                  <input type="date" value={bodyDate.split("/").join("-")} onChange={e => setBodyDate(e.target.value.split("-").join("/"))} className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+              {bodySaved ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-3">
+                  <span className="text-5xl">✅</span>
+                  <p className="text-lg font-bold text-gray-800">記録しました！</p>
                 </div>
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label className="block text-sm font-semibold text-gray-600 mb-1">📐 身長 (cm)</label>
-                    <input type="number" step="0.1" inputMode="decimal" value={bodyHeight} onChange={e => setBodyHeight(e.target.value)} placeholder="例: 112.0" className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-gray-800">📏 身長・体重を記録</h2>
+                    <button type="button" onClick={() => setShowBodyForm(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-semibold text-gray-600 mb-1">⚖️ 体重 (kg)</label>
-                    <input type="number" step="0.1" inputMode="decimal" value={bodyWeight} onChange={e => setBodyWeight(e.target.value)} placeholder="例: 18.5" className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
-                  </div>
-                </div>
-                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl text-base">💾 記録する</button>
-              </form>
+                  <form onSubmit={handleBodySave} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-1">📅 日付</label>
+                      <input type="date" value={bodyDate.split("/").join("-")} onChange={e => setBodyDate(e.target.value.split("-").join("/"))} className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <label className="block text-sm font-semibold text-gray-600 mb-1">📐 身長 (cm)</label>
+                        <input type="text" inputMode="decimal" value={bodyHeight} onChange={e => setBodyHeight(e.target.value)} placeholder="例: 112.0" className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-semibold text-gray-600 mb-1">⚖️ 体重 (kg)</label>
+                        <input type="text" inputMode="decimal" value={bodyWeight} onChange={e => setBodyWeight(e.target.value)} placeholder="例: 18.5" className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+                      </div>
+                    </div>
+                    <button type="submit" className="w-full bg-purple-600 active:bg-purple-700 text-white font-bold py-3 rounded-xl text-base">💾 記録する</button>
+                  </form>
+                </>
+              )}
             </div>
           </div>
         </div>
