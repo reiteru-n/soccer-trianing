@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import StatGrid from './StatGrid';
 
 /* ───────────── 共通 UI コンポーネント ───────────── */
 
@@ -206,24 +207,7 @@ export default function ObPage() {
         </div>
 
         {/* サマリー数字 */}
-        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
-          <div className="bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#f59e0b] text-[22px] font-black leading-none">1+</p>
-            <p className="text-slate-400 text-[9px] mt-0.5">🌍 海外リーグ<br />（現役）</p>
-          </div>
-          <div className="bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#4ade80] text-[22px] font-black leading-none">10+</p>
-            <p className="text-slate-400 text-[9px] mt-0.5">⚽ Jリーグ<br />（J1〜J3・WE）</p>
-          </div>
-          <div className="bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#60a5fa] text-[22px] font-black leading-none">5+</p>
-            <p className="text-slate-400 text-[9px] mt-0.5">🏅 JFL<br />（準プロ）</p>
-          </div>
-          <div className="bg-[rgba(220,38,38,0.08)] border border-[rgba(220,38,38,0.2)] rounded-xl px-3 py-2.5 text-center">
-            <p className="text-[#f87171] text-[22px] font-black leading-none">7+</p>
-            <p className="text-slate-400 text-[9px] mt-0.5">🇯🇵 日本代表OB<br />（歴代）</p>
-          </div>
-        </div>
+        <StatGrid />
       </div>
 
       {/* ─── 注意書き ─── */}
