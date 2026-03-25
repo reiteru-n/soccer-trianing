@@ -58,10 +58,8 @@ export default function GrowthMetricCard({
   const [open, setOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showFreqMenu, setShowFreqMenu] = useState(false);
-  const [showTagInput, setShowTagInput] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-  const [newTag, setNewTag] = useState('');
   const [formDate, setFormDate] = useState(todayStr());
   const [formValue, setFormValue] = useState('');
   const [formMemo, setFormMemo] = useState('');
@@ -105,13 +103,6 @@ export default function GrowthMetricCard({
     onAdd({ date: formDate, metricType, value: val, memo: formMemo || undefined });
     setFormValue(''); setFormMemo(''); setFormDate(todayStr());
     setShowForm(false); setOpen(true);
-  };
-
-  const handleAddTag = () => {
-    const t = newTag.trim();
-    if (!t || tags.includes(t)) { setNewTag(''); return; }
-    onTagsChange([...tags, t]);
-    setNewTag('');
   };
 
   const openEdit = () => {
@@ -189,10 +180,9 @@ export default function GrowthMetricCard({
               {/* Tags */}
               <div className="flex items-center flex-wrap gap-1 mt-0.5">
                 {tags.map(t => (
-                  <span key={t} onClick={(e) => { e.stopPropagation(); onTagsChange(tags.filter(x=>x!==t)); }}
-                    className="text-[9px] bg-blue-600/30 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-red-600/30 hover:text-red-300 hover:border-red-500/30 transition-colors" title="タップで削除">{t}</span>
+                  <span key={t}
+                    className="text-[9px] bg-blue-600/30 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded-full">{t}</span>
                 ))}
-                <button onClick={(e) => { e.stopPropagation(); setShowTagInput(i=>!i); setOpen(true); }} className="text-[9px] text-slate-600 hover:text-blue-400 px-1">＋タグ</button>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
                 {latest
@@ -228,19 +218,6 @@ export default function GrowthMetricCard({
             className="shrink-0 w-8 h-8 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center text-lg font-bold transition-colors">+</button>
         </div>
 
-        {/* Tag input */}
-        {showTagInput && (
-          <div className="px-4 pb-2 border-t border-white/5 pt-2">
-            <div className="flex gap-2">
-              <input type="text" value={newTag} onChange={e=>setNewTag(e.target.value)}
-                onKeyDown={e=>{ if(e.key==='Enter'){e.preventDefault();handleAddTag();} }}
-                placeholder="タグ名を入力（例: 10分トレーニング）"
-                className="flex-1 rounded-lg bg-slate-700 border border-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-400" />
-              <button onClick={handleAddTag} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold">追加</button>
-              <button onClick={() => setShowTagInput(false)} className="text-slate-400 px-2 text-sm">✕</button>
-            </div>
-          </div>
-        )}
 
         {/* Record add form */}
         {showForm && !showEdit && (
@@ -353,7 +330,7 @@ export default function GrowthMetricCard({
         )}
 
         {/* Expanded: detail + chart + history */}
-        {open && !showForm && !showEdit && !showTagInput && (
+        {open && !showForm && !showEdit && (
           <div className="px-4 pb-4 border-t border-white/5">
             {/* Detail info */}
             {(howToMeasure || referenceUrl) && (
