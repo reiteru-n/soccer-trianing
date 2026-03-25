@@ -214,7 +214,7 @@ export default function GrowthMetricCard({
           </div>
 
           {/* Add record */}
-          <button onClick={() => { setShowForm(f=>!f); setShowEdit(false); setOpen(true); }}
+          <button onClick={(e) => { e.stopPropagation(); setShowForm(f=>!f); setShowEdit(false); }}
             className="shrink-0 w-8 h-8 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center text-lg font-bold transition-colors">+</button>
         </div>
 
