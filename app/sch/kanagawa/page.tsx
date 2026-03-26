@@ -188,14 +188,15 @@ for (const team of TEAMS) {
 const chartOptions: ChartOptions<'line'> = {
   responsive: true,
   maintainAspectRatio: false,
+  animation: { duration: 1200, easing: 'easeInOutQuart' },
   interaction: { mode: 'index', intersect: false },
   plugins: {
     legend: { display: false },
     tooltip: {
-      backgroundColor: 'rgba(0,20,60,0.95)',
-      borderColor: 'rgba(255,255,255,0.15)',
+      backgroundColor: 'rgba(6,8,16,0.97)',
+      borderColor: 'rgba(245,158,11,0.35)',
       borderWidth: 1,
-      titleColor: '#A8C4F0',
+      titleColor: '#f59e0b',
       bodyColor: '#e2e8f0',
       callbacks: {
         label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y}pt`,
@@ -204,17 +205,19 @@ const chartOptions: ChartOptions<'line'> = {
   },
   scales: {
     x: {
-      grid: { color: 'rgba(0,48,135,0.08)' },
-      ticks: { color: '#64748b', font: { size: 11 } },
+      grid: { color: 'rgba(255,255,255,0.06)' },
+      ticks: { color: 'rgba(148,163,184,0.7)', font: { size: 11 } },
+      border: { color: 'rgba(255,255,255,0.08)' },
     },
     y: {
       beginAtZero: true,
-      grid: { color: 'rgba(0,48,135,0.08)' },
+      grid: { color: 'rgba(255,255,255,0.06)' },
       ticks: {
-        color: '#64748b',
+        color: 'rgba(148,163,184,0.7)',
         font: { size: 11 },
         callback: (v) => `${v}pt`,
       },
+      border: { color: 'rgba(255,255,255,0.08)' },
     },
   },
 };
@@ -225,6 +228,7 @@ export default function KanagawaPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [activeTab, setActiveTab] = useState<'ranking' | 'points'>('ranking');
   const [hiddenTeams, setHiddenTeams] = useState<Set<string>>(new Set());
+  const [chartKey, setChartKey] = useState(0);
 
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
@@ -332,54 +336,111 @@ export default function KanagawaPage() {
         />
       </div>
 
-      {/* Tab 2: 総合ポイント推移 */}
-      <div style={{ display: activeTab === 'points' ? 'block' : 'none' }} className="pb-8">
-        <div className="px-4 pt-4 pb-2">
-          <h2 className="text-[15px] font-black text-[#001A52]">総合ポイント推移</h2>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            全日本・日産カップ・チャンピオンシップ　直近6年加重合計（2015–2025）
-          </p>
-        </div>
+      {/* Tab 2: 総合ポイント推移 — iframeと同一ダークデザイン */}
+      <div style={{ display: activeTab === 'points' ? 'block' : 'none', background: '#060810', minHeight: '100vh' }}>
 
-        {/* チャート */}
-        <div className="px-2" style={{ height: 340 }}>
-          <Line data={chartData} options={chartOptions} />
-        </div>
-
-        {/* チーム表示切替 */}
-        <div className="px-4 pt-4">
-          <p className="text-[10px] text-slate-400 mb-2 font-bold uppercase tracking-widest">チーム表示切替</p>
-          <div className="flex flex-wrap gap-1.5">
-            {TEAMS.map(team => {
-              const hidden = hiddenTeams.has(team);
-              return (
-                <button
-                  key={team}
-                  onClick={() => toggleTeam(team)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold border transition-all active:scale-95"
-                  style={{
-                    borderColor: TEAM_COLORS[team],
-                    color: hidden ? '#94a3b8' : TEAM_COLORS[team],
-                    backgroundColor: hidden ? 'transparent' : TEAM_COLORS[team] + '18',
-                    opacity: hidden ? 0.4 : 1,
-                  }}
-                >
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: TEAM_COLORS[team] }} />
-                  {TEAM_LABELS[team]}
-                </button>
-              );
-            })}
+        {/* ヘッダー */}
+        <div style={{ background: 'linear-gradient(160deg,#080c20,#060810)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: 'clamp(14px,4vw,22px) clamp(14px,4vw,24px) clamp(10px,3vw,16px)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 120% at 85% 50%,rgba(245,158,11,.06),transparent 70%)', pointerEvents: 'none' }} />
+          <div className="flex items-end gap-4 relative">
+            <Link href="/sch">
+              <Image
+                src="/sch-logo.png"
+                width={175}
+                height={215}
+                className="object-contain w-auto drop-shadow-[0_4px_16px_rgba(0,0,0,0.7)]"
+                style={{ height: 'clamp(44px,10vw,64px)' }}
+                alt="SCH logo"
+              />
+            </Link>
+            <div className="flex-1 min-w-0">
+              <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, letterSpacing: '.2em', textTransform: 'uppercase', color: '#f59e0b', background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.2)', padding: '3px 10px', borderRadius: 3, marginBottom: 8 }}>
+                KANAGAWA U-12 2015–2025
+              </span>
+              <h2 style={{ fontFamily: "'Noto Sans JP',sans-serif", fontSize: 'clamp(17px,4.5vw,26px)', fontWeight: 900, lineHeight: 1.2, color: '#fff' }}>
+                総合ポイント<span style={{ color: '#f59e0b' }}>推移</span>
+              </h2>
+              <p style={{ fontSize: 10, color: '#3f4d6b', marginTop: 4 }}>
+                全日本・日産カップ・チャンピオンシップ　直近6年加重合計
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* ポイント説明 */}
-        <div className="mx-4 mt-5 bg-[#E8F0FE] border border-[#003087]/10 rounded-xl px-4 py-3">
-          <p className="text-[#003087]/80 text-[10px] font-bold mb-1">ポイント計算方法</p>
-          <p className="text-[#003087]/60 text-[10px] leading-relaxed">
-            今年度：優勝10 / 準優勝9 / 3位8 / 4位7 / ベスト8=6 / ベスト16=5<br />
-            1年前：各-1、2年前：各-2…（5年前まで、最低1点）<br />
-            対象大会：全日本・日産カップ・チャンピオンシップ（FAリーグ除く）
-          </p>
+        {/* チャートカード */}
+        <div style={{ padding: 'clamp(10px,3vw,16px) clamp(12px,3.5vw,20px)' }}>
+          <div style={{ background: '#0f1321', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', position: 'relative', marginBottom: 12 }}>
+            {/* ゴールドライン上部 */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,#f59e0b,transparent)' }} />
+
+            {/* コントロールバー */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 'clamp(12px,3vw,15px)', fontWeight: 900, color: '#fff', letterSpacing: '.03em' }}>総合ポイント推移グラフ</p>
+                <p style={{ fontSize: 10, color: '#3f4d6b', marginTop: 2 }}>2015〜2025年度　18チーム</p>
+              </div>
+              <button
+                onClick={() => setChartKey(k => k + 1)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 24, background: '#f59e0b', color: '#060810', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 900, flexShrink: 0, whiteSpace: 'nowrap' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5l10 5.5-10 5.5V2.5z"/></svg>
+                再生
+              </button>
+            </div>
+
+            {/* チャート本体 */}
+            <div style={{ padding: '8px 8px 4px', overflowX: 'auto' }}>
+              <div style={{ minWidth: 320, height: 320 }}>
+                <Line key={chartKey} data={chartData} options={chartOptions} />
+              </div>
+            </div>
+
+            {/* チーム選択 */}
+            <div style={{ padding: '10px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.01)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#3f4d6b', letterSpacing: '.12em', textTransform: 'uppercase' }}>チーム表示切替</p>
+                <button
+                  onClick={() => setHiddenTeams(new Set())}
+                  style={{ fontSize: 9, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.25)', padding: '2px 9px', borderRadius: 20, cursor: 'pointer' }}
+                >
+                  全表示
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {TEAMS.map(team => {
+                  const hidden = hiddenTeams.has(team);
+                  return (
+                    <button
+                      key={team}
+                      onClick={() => toggleTeam(team)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        padding: '5px 10px 5px 8px', borderRadius: 20, cursor: 'pointer',
+                        border: `1.5px solid ${hidden ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.2)'}`,
+                        background: hidden ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.07)',
+                        fontSize: 11, fontWeight: 700,
+                        color: hidden ? 'rgba(255,255,255,0.2)' : '#fff',
+                        transition: 'all .15s',
+                      }}
+                    >
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: hidden ? 'rgba(255,255,255,0.15)' : TEAM_COLORS[team] }} />
+                      {TEAM_LABELS[team]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ポイント説明 */}
+          <div style={{ background: '#0f1321', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 16px' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', marginBottom: 4 }}>ポイント計算方法</p>
+            <p style={{ fontSize: 10, color: '#3f4d6b', lineHeight: 1.8 }}>
+              今年度：優勝10 / 準優勝9 / 3位8 / 4位7 / B8=6 / B16=5<br />
+              1年前：各-1、2年前：各-2…（5年前まで、最低1点）<br />
+              対象：全日本・日産カップ・チャンピオンシップ（FAリーグ除く）
+            </p>
+          </div>
         </div>
       </div>
 
