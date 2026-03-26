@@ -7,6 +7,7 @@ import {
   Chart as ChartJS,
   CategoryScale, LinearScale, PointElement, LineElement,
   Title, Tooltip, Legend,
+  type ChartOptions,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
@@ -184,10 +185,10 @@ for (const team of TEAMS) {
 
 /* ──────────────── チャートオプション ──────────────── */
 
-const chartOptions = {
+const chartOptions: ChartOptions<'line'> = {
   responsive: true,
   maintainAspectRatio: false,
-  interaction: { mode: 'index' as const, intersect: false },
+  interaction: { mode: 'index', intersect: false },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -197,8 +198,7 @@ const chartOptions = {
       titleColor: '#A8C4F0',
       bodyColor: '#e2e8f0',
       callbacks: {
-        label: (ctx: { dataset: { label?: string }; parsed: { y: number } }) =>
-          ` ${ctx.dataset.label}: ${ctx.parsed.y}pt`,
+        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y}pt`,
       },
     },
   },
@@ -213,7 +213,7 @@ const chartOptions = {
       ticks: {
         color: '#64748b',
         font: { size: 11 },
-        callback: (v: number | string) => `${v}pt`,
+        callback: (v) => `${v}pt`,
       },
     },
   },
