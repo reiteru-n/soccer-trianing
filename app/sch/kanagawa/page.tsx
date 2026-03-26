@@ -188,7 +188,7 @@ for (const team of TEAMS) {
 const chartOptions: ChartOptions<'line'> = {
   responsive: true,
   maintainAspectRatio: false,
-  animation: { duration: 1200, easing: 'easeInOutQuart' },
+  animation: { duration: 450, easing: 'easeOutQuart' },
   interaction: { mode: 'index', intersect: false },
   plugins: {
     legend: { display: false },
@@ -228,7 +228,9 @@ export default function KanagawaPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [activeTab, setActiveTab] = useState<'ranking' | 'points'>('ranking');
   const [hiddenTeams, setHiddenTeams] = useState<Set<string>>(new Set());
-  const [chartKey, setChartKey] = useState(0);
+  const [revealCount, setRevealCount] = useState(0); // 0=全表示, 1〜11=アニメ中
+  const [isPlaying, setIsPlaying] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
@@ -237,7 +239,10 @@ export default function KanagawaPage() {
       }
     }
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, []);
 
   function toggleTeam(team: string) {
@@ -248,21 +253,54 @@ export default function KanagawaPage() {
     });
   }
 
-  const chartData = useMemo(() => ({
-    labels: CHART_YEAR_LABELS,
-    datasets: TEAMS.map(team => ({
-      label: TEAM_LABELS[team],
-      data: pointsMatrix[team],
-      borderColor: TEAM_COLORS[team],
-      backgroundColor: 'transparent',
-      pointBackgroundColor: TEAM_COLORS[team],
-      pointRadius: 3,
-      pointHoverRadius: 6,
-      borderWidth: 2,
-      hidden: hiddenTeams.has(team),
-      tension: 0.3,
-    })),
-  }), [hiddenTeams]);
+  function startPlay() {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setRevealCount(1);
+    setIsPlaying(true);
+    intervalRef.current = setInterval(() => {
+      setRevealCount(prev => {
+        const next = prev + 1;
+        if (next >= CHART_YEAR_LABELS.length) {
+          clearInterval(intervalRef.current!);
+          intervalRef.current = null;
+          setIsPlaying(false);
+          return 0; // 全表示
+        }
+        return next;
+      });
+    }, 700);
+  }
+
+  function stopPlay() {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    setIsPlaying(false);
+    setRevealCount(0);
+  }
+
+  const chartData = useMemo(() => {
+    const count = revealCount === 0 ? CHART_YEAR_LABELS.length : revealCount;
+    return {
+      labels: CHART_YEAR_LABELS.slice(0, count),
+      datasets: TEAMS.map(team => ({
+        label: TEAM_LABELS[team],
+        data: pointsMatrix[team].slice(0, count),
+        borderColor: TEAM_COLORS[team],
+        backgroundColor: 'transparent',
+        pointBackgroundColor: TEAM_COLORS[team],
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        borderWidth: 2,
+        hidden: hiddenTeams.has(team),
+        tension: 0.3,
+      })),
+    };
+  }, [hiddenTeams, revealCount]);
+
+  const currentYearLabel =
+    revealCount === 0
+      ? CHART_YEAR_LABELS[CHART_YEAR_LABELS.length - 1]
+      : (CHART_YEAR_LABELS[revealCount - 1] ?? CHART_YEAR_LABELS[0]);
 
   return (
     <div className="min-h-screen bg-white pb-16">
@@ -379,19 +417,44 @@ export default function KanagawaPage() {
                 <p style={{ fontSize: 'clamp(12px,3vw,15px)', fontWeight: 900, color: '#fff', letterSpacing: '.03em' }}>総合ポイント推移グラフ</p>
                 <p style={{ fontSize: 10, color: '#3f4d6b', marginTop: 2 }}>2015〜2025年度　18チーム</p>
               </div>
+              {/* 現在年度バッジ */}
+              <span style={{ fontFamily: "'Oswald',sans-serif", fontSize: 22, fontWeight: 900, color: '#f59e0b', letterSpacing: '.04em', opacity: isPlaying ? 1 : 0.35, transition: 'opacity .3s' }}>
+                {currentYearLabel}
+              </span>
+              {/* 再生/停止ボタン */}
               <button
-                onClick={() => setChartKey(k => k + 1)}
+                onClick={isPlaying ? stopPlay : startPlay}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 24, background: '#f59e0b', color: '#060810', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 900, flexShrink: 0, whiteSpace: 'nowrap' }}
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5l10 5.5-10 5.5V2.5z"/></svg>
-                再生
+                {isPlaying ? (
+                  <><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/></svg>停止</>
+                ) : (
+                  <><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5l10 5.5-10 5.5V2.5z"/></svg>再生</>
+                )}
               </button>
             </div>
 
             {/* チャート本体 */}
             <div style={{ padding: '8px 8px 4px', overflowX: 'auto' }}>
-              <div style={{ minWidth: 320, height: 320 }}>
-                <Line key={chartKey} data={chartData} options={chartOptions} />
+              <div style={{ minWidth: 320, height: 320, position: 'relative' }}>
+                {/* 年度ウォーターマーク */}
+                <div
+                  aria-hidden
+                  style={{
+                    position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    pointerEvents: 'none', zIndex: 0,
+                    fontFamily: "'Oswald',sans-serif", fontSize: 'clamp(60px,18vw,110px)',
+                    fontWeight: 900, color: 'rgba(245,158,11,0.07)',
+                    letterSpacing: '.05em', lineHeight: 1,
+                    opacity: isPlaying ? 1 : 0,
+                    transition: 'opacity .4s',
+                  }}
+                >
+                  {currentYearLabel}
+                </div>
+                <div style={{ position: 'relative', zIndex: 1, height: '100%' }}>
+                  <Line data={chartData} options={chartOptions} />
+                </div>
               </div>
             </div>
 
