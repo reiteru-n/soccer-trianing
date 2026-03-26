@@ -122,10 +122,26 @@ git merge claude/<branch-name>
 
 # 2. origin に push → Vercel が自動デプロイ
 git push -u origin master
+
+# 3. ビルド成功を確認してから完了とする（必須）
+# GitHub commit statuses を確認：
+curl -s "https://api.github.com/repos/reiteru-n/soccer-trianing/commits/master/statuses" \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['state'], d[0]['context'], d[0].get('description','')[:80])"
+# → "success Vercel Deployment has completed" が出るまで待つ
+# → "failure" が出たらビルドエラーを修正して再push
 ```
 
 - **`origin`（ローカルプロキシ `127.0.0.1:36439`）への push で本番に反映される**
 - `github` remote は不要（PAT設定なしで `origin` push だけでOK）
+
+### ⚠️ ビルド確認ルール（絶対守ること）
+
+**push 後は必ず Vercel ビルドの成否を確認すること。**
+- push しただけで「デプロイ完了」と報告してはいけない
+- `success Vercel Deployment has completed` を確認して初めて完了
+- `failure` が出たら即修正して再push → 再確認
+- TypeScript エラーはローカルで `node_modules` がなくても Vercel 側でビルドエラーになる
+  → Chart.js 等のコールバック型は `ChartOptions<'line'>` など専用型を使い、手書き型注釈を避ける
 
 ---
 
