@@ -108,7 +108,7 @@ proxy.ts だけ直しても不十分。ログインフローを追うと：
 ## 作業フロー ルール
 
 - **実装完了後は指示を待たずに master へマージ・push まで行うこと**
-- claude/* ブランチで開発 → 完成したら master にマージ → `git push github master` でデプロイ
+- claude/* ブランチで開発 → 完成したら master にマージ → `git push origin master` でデプロイ
 
 ### ⚠️ デプロイのための必須手順（毎回忘れずに）
 
@@ -120,27 +120,25 @@ proxy.ts だけ直しても不十分。ログインフローを追うと：
 git checkout master
 git merge claude/<branch-name>
 
-# 2. GitHub の master に push → Vercel が自動デプロイ
-git push github master
+# 2. origin に push → Vercel が自動デプロイ
+git push -u origin master
 ```
 
-- **`origin` への push だけでは本番に反映されない**（origin はローカルプロキシ）
-- **`github` remote への push が必須**
+- **`origin`（ローカルプロキシ `127.0.0.1:36439`）への push で本番に反映される**
+- `github` remote は不要（PAT設定なしで `origin` push だけでOK）
 
 ---
 
 ## GitHub Push 手順
 
 ```bash
-# github remote にトークンをセット（セッション毎に必要）
-git remote set-url github https://reiteru-n:TOKEN@github.com/reiteru-n/soccer-trianing.git
-
-# master に push → Vercel 自動デプロイ
-git push github master
+# origin に push → Vercel 自動デプロイ（PAT不要）
+git push -u origin master
 ```
 
-- トークン種別: Classic PAT (`ghp_...`)、`repo` 権限必要
-- Fine-grained PAT は Contents:write がないと push 失敗するので使わない
+- origin は `http://local_proxy@127.0.0.1:36439/git/reiteru-n/soccer-trianing`
+- このローカルプロキシが GitHub に転送し、Vercel が自動デプロイする
+- ~~`github` remote・PAT は不要~~（旧情報）
 
 ---
 
