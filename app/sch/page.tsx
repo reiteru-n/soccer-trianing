@@ -1357,13 +1357,15 @@ function EventSection({ events, members, onSave, openDetailId }: {
       {upcoming.length > 0 && (
         <div>
           {/* 1件目：フルサイズ */}
-          <EventCard
-            event={upcoming[0]}
-            members={members}
-            onEdit={() => openEdit(upcoming[0])}
-            onDelete={() => handleDelete(upcoming[0].id)}
-            externalExpanded={detailId === upcoming[0].id}
-          />
+          <div id={`event-card-${upcoming[0].id}`}>
+            <EventCard
+              event={upcoming[0]}
+              members={members}
+              onEdit={() => openEdit(upcoming[0])}
+              onDelete={() => handleDelete(upcoming[0].id)}
+              externalExpanded={detailId === upcoming[0].id}
+            />
+          </div>
           {/* 2・3件目：ミニカード横並び */}
           {upcoming.length >= 2 && (
             <div className="flex gap-2 mt-2">
@@ -1415,7 +1417,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
           </summary>
           <div className="space-y-2 mt-2">
             {upcoming.map(ev => (
-              <div key={ev.id} id={`event-card-${ev.id}`}>
+              <div key={ev.id}>
                 <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} externalExpanded={detailId === ev.id} />
               </div>
             ))}
