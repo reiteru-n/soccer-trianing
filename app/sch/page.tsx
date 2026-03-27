@@ -60,18 +60,25 @@ const TYPE_CFG: Record<string, TypeCfg> = {
   other:      { label: 'その他', icon: '📌', badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
-// 気象庁天気コード: 100台=晴, 200台=曇, 300台=雨, 400台=雪/みぞれ
+// WMO天気コード (Open-Meteo)
 function weatherEmoji(code: number): string {
-  if (code >= 400) return '🌨️';
-  if (code >= 300) return '🌧️';
-  if (code >= 200) return '⛅';
-  return '☀️';
+  if (code === 0) return '☀️';
+  if (code <= 3) return '⛅';
+  if (code <= 48) return '🌫️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '🌨️';
+  if (code <= 82) return '🌦️';
+  return '⛈️';
 }
 function weatherLabel(code: number): string {
-  if (code >= 400) return '雪';
-  if (code >= 300) return '雨';
-  if (code >= 200) return '曇り';
-  return '晴れ';
+  if (code === 0) return '快晴';
+  if (code <= 1) return '晴れ';
+  if (code <= 3) return '曇り';
+  if (code <= 48) return '霧';
+  if (code <= 67) return '雨';
+  if (code <= 77) return '雪';
+  if (code <= 82) return '雨のち晴';
+  return '雷雨';
 }
 // Calendar dot colors per event type
 const EVENT_DOT: Record<string, string> = {
@@ -1824,7 +1831,7 @@ function HomeSection({
   const [parkingShowCount, setParkingShowCount] = useState(3);
   const [nextExpanded, setNextExpanded] = useState(false);
   const [expandedAnnounces, setExpandedAnnounces] = useState<Set<string>>(new Set());
-  const [weather, setWeather] = useState<{ code: number; maxTemp: number | null; minTemp: number | null; precip: number } | null>(null);
+  const [weather, setWeather] = useState<{ code: number; maxTemp: number; minTemp: number; precip: number; place: string } | null>(null);
 
   const upcomingEvents = useMemo(
     () => events.filter(e => !isEventPast(e)).sort((a, b) => a.date.localeCompare(b.date)),
@@ -1834,51 +1841,52 @@ function HomeSection({
 
   useEffect(() => {
     if (!nextEvent) { setWeather(null); return; }
-    const targetDate = nextEvent.date.replace(/\//g, '-'); // "2026-03-27"
-    // 気象庁API（神奈川県 = 140000）— Yahoo天気と同一データソース
-    fetch('https://www.jma.go.jp/bosai/forecast/data/forecast/140000.json')
+    const iso = nextEvent.date.replace(/\//g, '-');
+    const loc = nextEvent.location?.trim();
+
+    const fetchWeather = (lat: number, lon: number, place: string) => {
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+        `&timezone=Asia%2FTokyo&start_date=${iso}&end_date=${iso}`
+      )
+        .then(r => r.json())
+        .then((d: any) => {
+          const daily = d.daily;
+          if (!daily) { setWeather(null); return; }
+          setWeather({
+            code:    daily.weather_code[0],
+            maxTemp: Math.round(daily.temperature_2m_max[0]),
+            minTemp: Math.round(daily.temperature_2m_min[0]),
+            precip:  daily.precipitation_probability_max[0] ?? 0,
+            place,
+          });
+        })
+        .catch(() => setWeather(null));
+    };
+
+    if (!loc) {
+      fetchWeather(35.4437, 139.6380, '横浜');
+      return;
+    }
+
+    fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(loc)}&format=json&limit=1&countrycodes=jp&accept-language=ja`,
+      { headers: { 'User-Agent': 'SCHSoccerApp/1.0' } }
+    )
       .then(r => r.json())
-      .then((data: any[]) => {
-        const ts: any[] = data[0]?.timeSeries;
-        if (!ts) { setWeather(null); return; }
-
-        // 天気コード (ts[0])
-        const wxTs = ts[0];
-        const dayIdx = (wxTs.timeDefines as string[]).findIndex((t: string) => t.startsWith(targetDate));
-        if (dayIdx < 0) { setWeather(null); return; }
-        const wxArea = (wxTs.areas as any[]).find((a: any) => a.area.name === '横浜') ?? wxTs.areas[0];
-        const code = parseInt(wxArea.weatherCodes?.[dayIdx] ?? '200');
-
-        // 降水確率 (ts[1])
-        const popTs = ts[1];
-        const popArea = (popTs.areas as any[]).find((a: any) => a.area.name === '横浜') ?? popTs.areas[0];
-        const pops: string[] = popArea.pops;
-        const maxPop = (popTs.timeDefines as string[])
-          .map((t: string, i: number) => ({ t, i }))
-          .filter(({ t }) => t.startsWith(targetDate))
-          .map(({ i }) => parseInt(pops[i]))
-          .filter((p: number) => !isNaN(p))
-          .reduce((m: number, p: number) => Math.max(m, p), 0);
-
-        // 気温 (ts[2])
-        const tempTs = ts[2];
-        const tempArea = (tempTs.areas as any[]).find((a: any) => a.area.name === '横浜') ?? tempTs.areas[0];
-        const temps: string[] = tempArea.temps;
-        const dayTemps = (tempTs.timeDefines as string[])
-          .map((t: string, i: number) => ({ t, i }))
-          .filter(({ t }) => t.startsWith(targetDate))
-          .map(({ i }) => parseInt(temps[i]))
-          .filter((t: number) => !isNaN(t));
-
-        setWeather({
-          code,
-          minTemp: dayTemps.length > 0 ? Math.min(...dayTemps) : null,
-          maxTemp: dayTemps.length > 0 ? Math.max(...dayTemps) : null,
-          precip:  maxPop,
-        });
+      .then((results: any[]) => {
+        if (results[0]) {
+          const r = results[0];
+          const addr = r.address ?? {};
+          const place = addr.city ?? addr.town ?? addr.county ?? addr.state ?? r.display_name.split('、')[0];
+          fetchWeather(parseFloat(r.lat), parseFloat(r.lon), place);
+        } else {
+          fetchWeather(35.4437, 139.6380, '横浜');
+        }
       })
-      .catch(() => setWeather(null));
-  }, [nextEvent?.date]);
+      .catch(() => fetchWeather(35.4437, 139.6380, '横浜'));
+  }, [nextEvent?.date, nextEvent?.location]);
 
   const toEventItem = (e: SchEvent): EventItem => ({
     id: e.id,
@@ -1945,20 +1953,15 @@ function HomeSection({
                   {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
                   {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
                   {weather && (
-                    <a
-                      href="https://www.jma.go.jp/bosai/forecast/#area_type=offices&area_code=140000"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 mt-1.5 px-2 py-1.5 rounded-xl bg-black/20 border border-white/10 active:opacity-70"
-                    >
+                    <div className="flex items-center gap-2 mt-1.5 px-2 py-1.5 rounded-xl bg-black/20 border border-white/10">
                       <span className="text-xl leading-none">{weatherEmoji(weather.code)}</span>
                       <span className="text-sm font-bold text-white">{weatherLabel(weather.code)}</span>
-                      {weather.minTemp !== null && <span className="text-xs text-blue-300">{weather.minTemp}°</span>}
-                      {weather.minTemp !== null && weather.maxTemp !== null && <span className="text-xs text-slate-400">/</span>}
-                      {weather.maxTemp !== null && <span className="text-xs text-red-300">{weather.maxTemp}°C</span>}
+                      <span className="text-xs text-blue-300">{weather.minTemp}°</span>
+                      <span className="text-xs text-slate-400">/</span>
+                      <span className="text-xs text-red-300">{weather.maxTemp}°C</span>
                       <span className="text-xs text-cyan-300 font-semibold">☔ {weather.precip}%</span>
-                      <span className="ml-auto text-[10px] text-slate-500">気象庁 →</span>
-                    </a>
+                      <span className="ml-auto text-[10px] text-slate-500">📍{weather.place}</span>
+                    </div>
                   )}
                   {(nextEvent.meetingTime || nextEvent.meetingPlace) && (
                     <p className="text-sm font-semibold text-amber-300 mt-1">
