@@ -1841,27 +1841,12 @@ function HomeSection({
   useEffect(() => {
     if (!nextEvent) { setWeather(null); return; }
     const iso = nextEvent.date.replace(/\//g, '-');
-    const loc = nextEvent.location?.trim();
-    const getLatLon = (): Promise<{ lat: number; lon: number }> => {
-      if (!loc) return Promise.resolve({ lat: 35.4437, lon: 139.6380 });
-      return fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(loc)}&count=1&language=ja&format=json`
-      )
-        .then(r => r.json())
-        .then(d => {
-          const r = d.results?.[0];
-          return r ? { lat: r.latitude, lon: r.longitude } : { lat: 35.4437, lon: 139.6380 };
-        })
-        .catch(() => ({ lat: 35.4437, lon: 139.6380 }));
-    };
-    getLatLon()
-      .then(({ lat, lon }) =>
-        fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-          `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
-          `&timezone=Asia%2FTokyo&start_date=${iso}&end_date=${iso}`
-        )
-      )
+    // 横浜市固定（SCH 拠点エリア）
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=35.4437&longitude=139.6380` +
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+      `&timezone=Asia%2FTokyo&start_date=${iso}&end_date=${iso}`
+    )
       .then(r => r.json())
       .then(d => {
         const daily = d.daily;
@@ -1874,7 +1859,7 @@ function HomeSection({
         });
       })
       .catch(() => setWeather(null));
-  }, [nextEvent?.date, nextEvent?.location]);
+  }, [nextEvent?.date]);
 
   const toEventItem = (e: SchEvent): EventItem => ({
     id: e.id,
@@ -1941,14 +1926,20 @@ function HomeSection({
                   {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
                   {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
                   {weather && (
-                    <div className="flex items-center gap-2 mt-1.5 px-2 py-1.5 rounded-xl bg-black/20 border border-white/10">
+                    <a
+                      href="https://weather.yahoo.co.jp/weather/jp/14/4610.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 mt-1.5 px-2 py-1.5 rounded-xl bg-black/20 border border-white/10 active:opacity-70"
+                    >
                       <span className="text-xl leading-none">{weatherEmoji(weather.code)}</span>
                       <span className="text-sm font-bold text-white">{weatherLabel(weather.code)}</span>
                       <span className="text-xs text-blue-300">{Math.round(weather.minTemp)}°</span>
                       <span className="text-xs text-slate-400">/</span>
                       <span className="text-xs text-red-300">{Math.round(weather.maxTemp)}°C</span>
-                      <span className="ml-auto text-xs font-semibold text-cyan-300">☔ {weather.precip}%</span>
-                    </div>
+                      <span className="text-xs text-cyan-300 font-semibold">☔ {weather.precip}%</span>
+                      <span className="ml-auto text-[10px] text-slate-500">横浜 →</span>
+                    </a>
                   )}
                   {(nextEvent.meetingTime || nextEvent.meetingPlace) && (
                     <p className="text-sm font-semibold text-amber-300 mt-1">
