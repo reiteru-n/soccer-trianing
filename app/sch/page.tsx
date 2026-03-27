@@ -2029,15 +2029,20 @@ function HomeSection({
                   {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
                   {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
                   {weather && (
-                    <div className="flex items-center gap-2 mt-1.5 px-2 py-1.5 rounded-xl bg-black/20 border border-white/10">
+                    <a
+                      href={`https://www.google.com/search?q=${encodeURIComponent(weather.place + ' 天気')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 mt-1.5 px-2 py-1.5 rounded-xl bg-black/20 border border-white/10 active:opacity-70"
+                    >
                       <span className="text-xl leading-none">{weatherEmoji(weather.code)}</span>
                       <span className="text-sm font-bold text-white">{weatherLabel(weather.code)}</span>
                       <span className="text-xs text-blue-300">{weather.minTemp}°</span>
                       <span className="text-xs text-slate-400">/</span>
                       <span className="text-xs text-red-300">{weather.maxTemp}°C</span>
                       <span className="text-xs text-cyan-300 font-semibold">☔ {weather.precip}%</span>
-                      <span className="ml-auto text-[10px] text-slate-500">📍{weather.place}</span>
-                    </div>
+                      <span className="ml-auto text-[10px] text-slate-500">📍{weather.place} →</span>
+                    </a>
                   )}
                   {(nextEvent.meetingTime || nextEvent.meetingPlace) && (
                     <p className="text-sm font-semibold text-amber-300 mt-1">
