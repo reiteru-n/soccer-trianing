@@ -1892,8 +1892,8 @@ function HomeSection({
         const res = await geocode(lbl);
         if (res) { fetchWeather(res.lat, res.lon, res.place); return; }
       }
-      // 3. 横浜固定
-      fetchWeather(35.4437, 139.6380, '横浜');
+      // 3. 場所特定不可 → 天気未取得
+      setWeather(null);
     };
 
     run();
