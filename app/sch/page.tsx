@@ -1843,6 +1843,7 @@ function HomeSection({
     if (!nextEvent) { setWeather(null); return; }
     const iso = nextEvent.date.replace(/\//g, '-');
     const loc = nextEvent.location?.trim();
+    const lbl = nextEvent.label?.trim();
 
     const fetchWeather = (lat: number, lon: number, place: string) => {
       fetch(
@@ -1865,28 +1866,38 @@ function HomeSection({
         .catch(() => setWeather(null));
     };
 
-    if (!loc) {
-      fetchWeather(35.4437, 139.6380, '横浜');
-      return;
-    }
-
-    fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(loc)}&format=json&limit=1&countrycodes=jp&accept-language=ja`,
-      { headers: { 'User-Agent': 'SCHSoccerApp/1.0' } }
-    )
-      .then(r => r.json())
-      .then((results: any[]) => {
-        if (results[0]) {
+    const geocode = (query: string): Promise<{ lat: number; lon: number; place: string } | null> =>
+      fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=jp&accept-language=ja`,
+        { headers: { 'User-Agent': 'SCHSoccerApp/1.0' } }
+      )
+        .then(r => r.json())
+        .then((results: any[]) => {
+          if (!results[0]) return null;
           const r = results[0];
           const addr = r.address ?? {};
           const place = addr.city ?? addr.town ?? addr.county ?? addr.state ?? r.display_name.split('、')[0];
-          fetchWeather(parseFloat(r.lat), parseFloat(r.lon), place);
-        } else {
-          fetchWeather(35.4437, 139.6380, '横浜');
-        }
-      })
-      .catch(() => fetchWeather(35.4437, 139.6380, '横浜'));
-  }, [nextEvent?.date, nextEvent?.location]);
+          return { lat: parseFloat(r.lat), lon: parseFloat(r.lon), place };
+        })
+        .catch(() => null);
+
+    const run = async () => {
+      // 1. location で検索
+      if (loc) {
+        const res = await geocode(loc);
+        if (res) { fetchWeather(res.lat, res.lon, res.place); return; }
+      }
+      // 2. label で検索（施設名が見つからない場合のフォールバック）
+      if (lbl) {
+        const res = await geocode(lbl);
+        if (res) { fetchWeather(res.lat, res.lon, res.place); return; }
+      }
+      // 3. 横浜固定
+      fetchWeather(35.4437, 139.6380, '横浜');
+    };
+
+    run();
+  }, [nextEvent?.date, nextEvent?.location, nextEvent?.label]);
 
   const toEventItem = (e: SchEvent): EventItem => ({
     id: e.id,
