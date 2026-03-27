@@ -141,6 +141,7 @@ export interface SchEvent {
   startTime?: string;
   endTime?: string;
   location?: string;
+  weatherArea?: string; // 天気取得用の地域名（例：山梨、横浜）
   label?: string; // event name / tournament name
   note?: string;
   type: SchEventType;

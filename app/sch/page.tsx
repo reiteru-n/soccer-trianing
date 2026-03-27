@@ -575,17 +575,91 @@ function ParkingEventCard({
   );
 }
 
+// ---- WeatherAreaInput ----
+function WeatherAreaInput({ value, onChange, pastAreas }: {
+  value: string;
+  onChange: (v: string) => void;
+  pastAreas: string[];
+}) {
+  const [suggestions, setSuggestions] = useState<{ name: string; display: string }[]>([]);
+  const [open, setOpen] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleChange = (v: string) => {
+    onChange(v);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (v.length < 1) { setSuggestions([]); setOpen(false); return; }
+    timerRef.current = setTimeout(() => {
+      fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(v)}&format=json&limit=5&countrycodes=jp&accept-language=ja&addressdetails=1&featuretype=settlement`,
+        { headers: { 'User-Agent': 'SCHSoccerApp/1.0' } }
+      )
+        .then(r => r.json())
+        .then((results: any[]) => {
+          const items = results.map((r: any) => {
+            const addr = r.address ?? {};
+            const name = addr.city ?? addr.town ?? addr.county ?? addr.state ?? r.display_name.split(',')[0].trim();
+            const display = r.display_name.split(',').slice(0, 3).join(', ');
+            return { name, display };
+          }).filter(i => i.name);
+          const seen = new Set<string>();
+          const unique = items.filter(i => { if (seen.has(i.name)) return false; seen.add(i.name); return true; });
+          setSuggestions(unique);
+          setOpen(unique.length > 0);
+        })
+        .catch(() => {});
+    }, 400);
+  };
+
+  const select = (name: string) => { onChange(name); setSuggestions([]); setOpen(false); };
+
+  return (
+    <div className="relative">
+      {pastAreas.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {pastAreas.map(a => (
+            <button key={a} type="button" onClick={() => select(a)}
+              className="text-[11px] px-2 py-0.5 rounded-full bg-sky-800/50 text-sky-300 border border-sky-700/50 active:opacity-70">
+              📍 {a}
+            </button>
+          ))}
+        </div>
+      )}
+      <input
+        type="text" value={value} onChange={e => handleChange(e.target.value)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onFocus={() => suggestions.length > 0 && setOpen(true)}
+        placeholder="例：山梨、横浜"
+        className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-sky-400 focus:outline-none placeholder-slate-500"
+      />
+      {open && (
+        <div className="absolute z-50 left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded-xl shadow-xl overflow-hidden">
+          {suggestions.map(s => (
+            <button key={s.name} type="button" onMouseDown={() => select(s.name)}
+              className="w-full text-left px-3 py-2.5 text-sm text-white hover:bg-slate-700 border-b border-slate-700/50 last:border-0">
+              <span className="font-semibold">{s.name}</span>
+              <span className="text-[11px] text-slate-400 ml-1.5">{s.display}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---- EventForm ----
 function EventForm({
   initialEvent,
   initialDate,
   members,
+  pastWeatherAreas,
   onSave,
   onClose,
 }: {
   initialEvent?: SchEvent;
   initialDate?: string;
   members: SchMember[];
+  pastWeatherAreas: string[];
   onSave: (event: SchEvent) => void;
   onClose: () => void;
 }) {
@@ -595,6 +669,7 @@ function EventForm({
   const [startTime, setStartTime] = useState(initialEvent?.startTime ?? '');
   const [endTime, setEndTime] = useState(initialEvent?.endTime ?? '');
   const [location, setLocation] = useState(initialEvent?.location ?? '');
+  const [weatherArea, setWeatherArea] = useState(initialEvent?.weatherArea ?? '');
   const [label, setLabel] = useState(initialEvent?.label ?? '');
   const [note, setNote] = useState(initialEvent?.note ?? '');
   const initialParking = initialEvent?.maxParkingSlots ?? DEFAULT_MAX_SLOTS;
@@ -629,6 +704,7 @@ function EventForm({
       startTime: startTime || undefined,
       endTime: endTime || undefined,
       location: location || undefined,
+      weatherArea: weatherArea.trim() || undefined,
       label: label || undefined,
       note: note || undefined,
       meetingTime: (type === 'match' || type === 'camp' || type === 'other') && meetingTime ? meetingTime : undefined,
@@ -694,6 +770,11 @@ function EventForm({
 
             {/* Location & Label */}
             <div><label className={labelCls}>📍 場所</label><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="例: ○○グラウンド" className={inputCls} /></div>
+            <div>
+              <label className={labelCls}>🌤️ 天気の地域（任意）</label>
+              <WeatherAreaInput value={weatherArea} onChange={setWeatherArea} pastAreas={pastWeatherAreas} />
+              <p className="text-[10px] text-slate-500 mt-1">入力すると「次の予定」に天気予報が表示されます</p>
+            </div>
             <div><label className={labelCls}>📋 イベント名{type === 'match' ? '・大会名' : ''}</label><input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={type === 'match' ? '例: 神奈川カップ2026' : '例: 通常練習'} className={inputCls} /></div>
             <div><label className={labelCls}>📝 メモ</label><input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="持ち物・備考など" className={inputCls} /></div>
 
@@ -1224,6 +1305,11 @@ function EventSection({ events, members, onSave }: {
   };
   const openEdit = (ev: SchEvent) => { setEditing(ev); setShowForm(true); };
 
+  const pastWeatherAreas = useMemo(() => {
+    const seen = new Set<string>();
+    return events.flatMap(e => e.weatherArea ? [e.weatherArea] : []).filter(a => { if (seen.has(a)) return false; seen.add(a); return true; });
+  }, [events]);
+
   const filtered = events.filter(e =>
     filter === 'all' ||
     e.type === filter ||
@@ -1350,6 +1436,7 @@ function EventSection({ events, members, onSave }: {
           initialEvent={editing ?? undefined}
           initialDate={editing ? undefined : (calendarDate ?? undefined)}
           members={members}
+          pastWeatherAreas={pastWeatherAreas}
           onSave={handleSave}
           onClose={() => { setShowForm(false); setEditing(null); setCalendarDate(null); }}
         />
@@ -1840,70 +1927,42 @@ function HomeSection({
   const nextEvent = upcomingEvents[0];
 
   useEffect(() => {
-    if (!nextEvent) { setWeather(null); return; }
+    if (!nextEvent?.weatherArea) { setWeather(null); return; }
     const iso = nextEvent.date.replace(/\//g, '-');
-    const loc = nextEvent.location?.trim();
+    const area = nextEvent.weatherArea;
 
-    const fetchWeather = (lat: number, lon: number, place: string) => {
-      fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
-        `&timezone=Asia%2FTokyo&start_date=${iso}&end_date=${iso}`
-      )
-        .then(r => r.json())
-        .then((d: any) => {
-          const daily = d.daily;
-          if (!daily) { setWeather(null); return; }
-          setWeather({
-            code:    daily.weather_code[0],
-            maxTemp: Math.round(daily.temperature_2m_max[0]),
-            minTemp: Math.round(daily.temperature_2m_min[0]),
-            precip:  daily.precipitation_probability_max[0] ?? 0,
-            place,
+    fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(area)}&format=json&limit=1&countrycodes=jp&accept-language=ja&addressdetails=1&featuretype=settlement`,
+      { headers: { 'User-Agent': 'SCHSoccerApp/1.0' } }
+    )
+      .then(r => r.json())
+      .then((results: any[]) => {
+        const r = results[0];
+        const lat = r ? parseFloat(r.lat) : null;
+        const lon = r ? parseFloat(r.lon) : null;
+        if (!lat || !lon) { setWeather(null); return; }
+        const addr = r.address ?? {};
+        const place = addr.city ?? addr.town ?? addr.county ?? addr.state ?? area;
+        return fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+          `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+          `&timezone=Asia%2FTokyo&start_date=${iso}&end_date=${iso}`
+        )
+          .then(r2 => r2.json())
+          .then((d: any) => {
+            const daily = d.daily;
+            if (!daily) { setWeather(null); return; }
+            setWeather({
+              code:    daily.weather_code[0],
+              maxTemp: Math.round(daily.temperature_2m_max[0]),
+              minTemp: Math.round(daily.temperature_2m_min[0]),
+              precip:  daily.precipitation_probability_max[0] ?? 0,
+              place,
+            });
           });
-        })
-        .catch(() => setWeather(null));
-    };
-
-    const geocode = (query: string): Promise<{ lat: number; lon: number; place: string } | null> =>
-      fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=jp&accept-language=ja&addressdetails=1`,
-        { headers: { 'User-Agent': 'SCHSoccerApp/1.0' } }
-      )
-        .then(r => r.json())
-        .then((results: any[]) => {
-          if (!results[0]) return null;
-          const r = results[0];
-          // 建物・施設系（amenity/building/tourism等）は誤マッチしやすいため除外
-          if (!['place', 'boundary', 'natural'].includes(r.class) && r.type !== 'city' && r.type !== 'town' && r.type !== 'village') {
-            const addr = r.address ?? {};
-            const place = addr.city ?? addr.town ?? addr.county ?? addr.state;
-            if (!place) return null; // 住所から都市名が取れないなら除外
-            return { lat: parseFloat(r.lat), lon: parseFloat(r.lon), place };
-          }
-          const addr = r.address ?? {};
-          const place = addr.city ?? addr.town ?? addr.county ?? addr.state ?? r.display_name.split(/[,、]/)[0].trim();
-          return { lat: parseFloat(r.lat), lon: parseFloat(r.lon), place };
-        })
-        .catch(() => null);
-
-    const run = async () => {
-      if (!loc) { setWeather(null); return; }
-      // 1. location フルテキストで検索
-      const res = await geocode(loc);
-      if (res) { fetchWeather(res.lat, res.lon, res.place); return; }
-      // 2. location を空白で分割して各トークンを試す（例：「井戸前旅館　天然芝グランド」→「井戸前旅館」）
-      const tokens = loc.split(/[\s　]+/).filter(t => t.length >= 2);
-      for (const token of tokens) {
-        const r2 = await geocode(token);
-        if (r2) { fetchWeather(r2.lat, r2.lon, r2.place); return; }
-      }
-      // 3. 場所特定不可 → 天気未取得
-      setWeather(null);
-    };
-
-    run();
-  }, [nextEvent?.date, nextEvent?.location]);
+      })
+      .catch(() => setWeather(null));
+  }, [nextEvent?.date, nextEvent?.weatherArea]);
 
   const toEventItem = (e: SchEvent): EventItem => ({
     id: e.id,
