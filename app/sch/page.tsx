@@ -919,14 +919,16 @@ function EventForm({
 
 // ---- EventCard ----
 function EventCard({
-  event, members, onEdit, onDelete,
+  event, members, onEdit, onDelete, externalExpanded = false,
 }: {
   event: SchEvent;
   members: SchMember[];
   onEdit: () => void;
   onDelete: () => void;
+  externalExpanded?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  useEffect(() => { if (externalExpanded) setExpanded(true); }, [externalExpanded]);
   const isPast = isEventPast(event);
   const cfg = tc(event.type);
   const getMember = (id: string) => members.find(m => m.id === id);
@@ -947,7 +949,7 @@ function EventCard({
 
   return (
     <div className={`rounded-xl border overflow-hidden ${isPast ? 'opacity-70 border-white/5' : cfg.border}`}>
-      <div className={`${isPast ? 'bg-slate-800/40' : cfg.bg} px-3 py-3`}>
+      <div className={`${isPast ? 'bg-slate-800/40' : cfg.bg} px-3 py-3 cursor-pointer`} onClick={() => setExpanded(p => !p)}>
         <div className="flex items-start gap-2">
           {/* Date badge */}
           <div className={`text-center px-2 py-1.5 rounded-lg flex-shrink-0 ${event.endDate ? 'min-w-[60px]' : 'min-w-[44px]'} ${isPast ? 'bg-slate-700 text-slate-400' : 'bg-black/20 text-white'}`}>
@@ -1021,17 +1023,10 @@ function EventCard({
             )}
           </div>
           {/* Actions */}
-          <div className="flex flex-col gap-2 flex-shrink-0 items-end">
-            <div className="flex flex-col gap-0.5">
-              <button onClick={onEdit} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
-              <button onClick={onDelete} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button>
-            </div>
-            <button
-              onClick={() => setExpanded(p => !p)}
-              className="text-sm font-bold text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-600 border border-white/10 transition-colors whitespace-nowrap"
-            >
-              {expanded ? '閉じる' : '詳細'}
-            </button>
+          <div className="flex flex-col gap-1 flex-shrink-0 items-end" onClick={e => e.stopPropagation()}>
+            <button onClick={onEdit} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button>
+            <button onClick={onDelete} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button>
+            <span className="text-slate-500 text-xs mt-1 pointer-events-none">{expanded ? '▲' : '▼'}</span>
           </div>
         </div>
       </div>
@@ -1286,16 +1281,20 @@ function SchCalendar({ events, today, onSelectDate }: {
 // ---- EventSection ----
 type EventFilter = 'all' | SchEventType;
 
-function EventSection({ events, members, onSave }: {
+function EventSection({ events, members, onSave, openDetailId }: {
   events: SchEvent[];
   members: SchMember[];
   onSave: (events: SchEvent[]) => void;
+  openDetailId?: string | null;
 }) {
   const [filter, setFilter] = useState<EventFilter>('all');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SchEvent | null>(null);
   const [calendarDate, setCalendarDate] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(openDetailId ?? null);
   const today = todayStr();
+
+  useEffect(() => { if (openDetailId) setDetailId(openDetailId); }, [openDetailId]);
 
   const handleSave = (ev: SchEvent) => {
     const updated = editing
@@ -1307,6 +1306,7 @@ function EventSection({ events, members, onSave }: {
     if (window.confirm('削除しますか？')) onSave(events.filter(e => e.id !== id));
   };
   const openEdit = (ev: SchEvent) => { setEditing(ev); setShowForm(true); };
+  const openDetail = (ev: SchEvent) => { setDetailId(ev.id); setTimeout(() => { document.getElementById(`event-card-${ev.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50); };
 
   const pastWeatherAreas = useMemo(() => {
     const seen = new Set<string>();
@@ -1362,13 +1362,14 @@ function EventSection({ events, members, onSave }: {
             members={members}
             onEdit={() => openEdit(upcoming[0])}
             onDelete={() => handleDelete(upcoming[0].id)}
+            externalExpanded={detailId === upcoming[0].id}
           />
           {/* 2・3件目：ミニカード横並び */}
           {upcoming.length >= 2 && (
             <div className="flex gap-2 mt-2">
               {upcoming.slice(1, 3).map(ev => (
                 <div key={ev.id} className="flex-1 min-w-0">
-                  <MiniEventCard event={ev} members={members} onClick={() => openEdit(ev)} />
+                  <MiniEventCard event={ev} members={members} onClick={() => openDetail(ev)} />
                 </div>
               ))}
             </div>
@@ -1415,7 +1416,7 @@ function EventSection({ events, members, onSave }: {
           <div className="space-y-2 mt-2">
             {upcoming.map(ev => (
               <div key={ev.id} id={`event-card-${ev.id}`}>
-                <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
+                <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} externalExpanded={detailId === ev.id} />
               </div>
             ))}
           </div>
@@ -1899,7 +1900,7 @@ function ParkingHistorySection({
 
 // ---- HomeSection ----
 function HomeSection({
-  events, members, parkingRecords, parkingRotation, nearbyParking, announcements, onGoToAnnounce,
+  events, members, parkingRecords, parkingRotation, nearbyParking, announcements, onGoToAnnounce, onGoToEvent,
   onSkip, onUnskip, onMarkUsed, onMarkPending, onSaveHistory, onUpdateMaxSlots,
 }: {
   events: SchEvent[];
@@ -1909,6 +1910,7 @@ function HomeSection({
   nearbyParking: SchNearbyParking[];
   announcements: SchAnnouncement[];
   onGoToAnnounce: () => void;
+  onGoToEvent: (id: string) => void;
   onSkip: (eventId: string, memberId: string, comment: string) => void;
   onUnskip: (eventId: string, memberId: string) => void;
   onMarkUsed: (eventId: string, memberId: string) => void;
@@ -2007,8 +2009,8 @@ function HomeSection({
         {nextEvent ? (
           <div className={`rounded-2xl border ${tc(nextEvent.type).border} ${tc(nextEvent.type).bg} overflow-hidden`}>
             <div className="flex">
-              {/* メインコンテンツ */}
-              <div className="flex-1 p-4 flex items-start gap-3 min-w-0">
+              {/* メインコンテンツ（タップで予定タブへ） */}
+              <div className="flex-1 p-4 flex items-start gap-3 min-w-0 cursor-pointer active:opacity-80" onClick={() => onGoToEvent(nextEvent.id)}>
                 {(() => {
                   const rel = relativeDayLabel(nextEvent.date, today);
                   const multiDay = (() => {
@@ -2071,66 +2073,9 @@ function HomeSection({
                   )}
                 </div>
               </div>
-              {/* 縦長詳細ボタン */}
-              <button
-                onClick={() => setNextExpanded(p => !p)}
-                className="w-10 flex-shrink-0 grid place-items-center border-l border-white/10 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                <span className="flex flex-col items-center leading-tight">{(nextExpanded ? '閉じる' : '詳細').split('').map((c, i) => <span key={i}>{c}</span>)}</span>
-              </button>
+              {/* 矢印アイコン */}
+              <div className="w-8 flex-shrink-0 grid place-items-center border-l border-white/10 text-slate-500 text-xs pointer-events-none">›</div>
             </div>
-            {/* 展開エリア */}
-            {nextExpanded && (() => {
-              const ms = nextEvent.type === 'match' ? getMatches(nextEvent) : [];
-              const multiMatch = ms.length > 1;
-              const hasNote = !!nextEvent.note;
-              const hasMap = (nextEvent.type === 'camp' || nextEvent.type === 'expedition') && !!nextEvent.mapQuery;
-              const nextPlan = parkingPlan[0];
-              const showParking = !multiMatch && !hasNote && !hasMap;
-
-              return (
-                <div className="px-4 py-3 border-t border-white/10 space-y-2">
-                  {multiMatch && (
-                    <div className="space-y-1">
-                      {ms.map((m, i) => (
-                        <p key={m.id} className="text-xs text-slate-300">
-                          試合{i + 1}{m.roundName ? ` (${m.roundName})` : ''}{m.opponentName ? ` 🆚 ${m.opponentName}` : ''}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                  {hasNote && <p className="text-xs text-slate-300">📝 {nextEvent.note}</p>}
-                  {hasMap && (
-                    <div>
-                      <iframe
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(nextEvent.mapQuery!)}&output=embed&hl=ja&z=8`}
-                        width="100%" height="160"
-                        className="rounded-xl border border-white/10"
-                        loading="lazy"
-                      />
-                      <a href={`https://www.google.co.jp/maps/search/${encodeURIComponent(nextEvent.mapQuery!)}`}
-                        target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-1 text-xs text-blue-400 hover:text-blue-300">
-                        🗺️ Google マップで開く
-                      </a>
-                    </div>
-                  )}
-                  {showParking && (() => {
-                    const hasSlots = (nextPlan?.slots.filter(s => s.status !== 'skipped').length ?? 0) > 0;
-                    const limited = nextPlan && nextPlan.maxSlots !== -1;
-                    return (
-                      <p className="text-xs text-slate-300">
-                        🅿️ 駐車場:{' '}
-                        {hasSlots
-                          ? <span className="text-slate-200">{limited ? 'あり（制限あり）' : 'あり（制限なし）'}</span>
-                          : <span className="text-slate-500">なし</span>
-                        }
-                      </p>
-                    );
-                  })()}
-                </div>
-              );
-            })()}
           </div>
         ) : (
           <div className="rounded-2xl p-5 border bg-slate-800/40 border-white/5 text-center text-slate-400 text-sm">予定がありません</div>
@@ -2995,6 +2940,7 @@ export default function SchPage() {
   const [updateHistory, setUpdateHistory] = useState<SchUpdateHistory[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [scrollTarget, setScrollTarget] = useState<{ tab: Tab; itemId: string } | null>(null);
+  const [openDetailId, setOpenDetailId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'subscribed' | 'denied'>('loading');
@@ -3464,13 +3410,14 @@ export default function SchPage() {
           parkingRecords={parkingRecords} parkingRotation={parkingRotation}
           nearbyParking={nearbyParking}
           announcements={announcements} onGoToAnnounce={() => setTab('announce')}
+          onGoToEvent={(id) => { setTab('events'); setOpenDetailId(id); setScrollTarget({ tab: 'events', itemId: id }); }}
           onSkip={handleSkip} onUnskip={handleUnskip} onMarkUsed={handleMarkUsed} onMarkPending={handleMarkPending}
           onSaveHistory={handleSaveFullRecord}
           onUpdateMaxSlots={handleUpdateMaxSlots}
         />
       )}
       {tab === 'events' && (
-        <EventSection events={events} members={members} onSave={saveEvents} />
+        <EventSection events={events} members={members} onSave={saveEvents} openDetailId={openDetailId} />
       )}
       {tab === 'stats' && (
         <StatsSection events={events} members={members} />
