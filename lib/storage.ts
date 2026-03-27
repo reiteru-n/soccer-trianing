@@ -6,12 +6,18 @@ export function generateId(): string {
 }
 
 function migrateNote(note: any): PracticeNote {
+  if (note.improvements == null) {
+    return { ...note, improvements: [] };
+  }
   if (typeof note.improvements === 'string') {
     const lines = note.improvements.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
     const items: ImprovementItem[] = lines.length > 0
       ? lines.map((text: string) => ({ text, done: false }))
       : [{ text: note.improvements, done: false }];
     return { ...note, improvements: items };
+  }
+  if (!Array.isArray(note.improvements)) {
+    return { ...note, improvements: [] };
   }
   return note as PracticeNote;
 }

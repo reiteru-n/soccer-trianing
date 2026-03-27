@@ -132,7 +132,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toggleImprovementItem = useCallback((noteId: string, index: number) => {
     const updated = practiceNotes.map((n) => {
       if (n.id !== noteId) return n;
-      const improvements = n.improvements.map((item, i) =>
+      const improvements = (n.improvements ?? []).map((item, i) =>
         i === index ? { ...item, done: !item.done } : item
       );
       return { ...n, improvements };
