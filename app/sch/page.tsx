@@ -60,25 +60,28 @@ const TYPE_CFG: Record<string, TypeCfg> = {
   other:      { label: 'その他', icon: '📌', badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
-// WMO天気コード (Open-Meteo)
-function weatherEmoji(code: number): string {
-  if (code === 0) return '☀️';
-  if (code <= 3) return '⛅';
-  if (code <= 48) return '🌫️';
-  if (code <= 67) return '🌧️';
-  if (code <= 77) return '🌨️';
-  if (code <= 82) return '🌦️';
-  return '⛈️';
+// WMO天気コード (Open-Meteo) + 降水確率で判定
+function weatherEmoji(code: number, precip: number): string {
+  if (code >= 95) return '⛈️';                        // 雷雨
+  if (code >= 71 && code <= 77) return '🌨️';          // 雪
+  if (code >= 61 && precip >= 50) return '🌧️';        // 雨（確率高め）
+  if (code >= 51 || (code >= 61 && precip < 50)) return '🌦️'; // 霧雨・小雨
+  if (code >= 80 && code <= 82) return '🌦️';          // にわか雨
+  if (code >= 45) return '🌫️';                        // 霧
+  if (code >= 3) return '☁️';                         // 曇り
+  if (code >= 1) return '⛅';                          // 晴れ時々曇り
+  return '☀️';
 }
-function weatherLabel(code: number): string {
-  if (code === 0) return '快晴';
-  if (code <= 1) return '晴れ';
-  if (code <= 3) return '曇り';
-  if (code <= 48) return '霧';
-  if (code <= 67) return '雨';
-  if (code <= 77) return '雪';
-  if (code <= 82) return '雨のち晴';
-  return '雷雨';
+function weatherLabel(code: number, precip: number): string {
+  if (code >= 95) return '雷雨';
+  if (code >= 71 && code <= 77) return '雪';
+  if (code >= 61 && precip >= 50) return '雨';
+  if (code >= 51 || (code >= 61 && precip < 50)) return '小雨';
+  if (code >= 80 && code <= 82) return 'にわか雨';
+  if (code >= 45) return '霧';
+  if (code >= 3) return '曇り';
+  if (code >= 1) return '晴れ';
+  return '快晴';
 }
 // Calendar dot colors per event type
 const EVENT_DOT: Record<string, string> = {
@@ -2035,8 +2038,8 @@ function HomeSection({
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 mt-1.5 px-2 py-1.5 rounded-xl bg-black/20 border border-white/10 active:opacity-70"
                     >
-                      <span className="text-xl leading-none">{weatherEmoji(weather.code)}</span>
-                      <span className="text-sm font-bold text-white">{weatherLabel(weather.code)}</span>
+                      <span className="text-xl leading-none">{weatherEmoji(weather.code, weather.precip)}</span>
+                      <span className="text-sm font-bold text-white">{weatherLabel(weather.code, weather.precip)}</span>
                       <span className="text-xs text-blue-300">{weather.minTemp}°</span>
                       <span className="text-xs text-slate-400">/</span>
                       <span className="text-xs text-red-300">{weather.maxTemp}°C</span>
