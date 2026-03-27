@@ -60,6 +60,25 @@ const TYPE_CFG: Record<string, TypeCfg> = {
   other:      { label: 'その他', icon: '📌', badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
+function weatherEmoji(code: number): string {
+  if (code === 0) return '☀️';
+  if (code <= 3) return '⛅';
+  if (code <= 48) return '🌫️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '🌨️';
+  if (code <= 82) return '🌦️';
+  return '⛈️';
+}
+function weatherLabel(code: number): string {
+  if (code === 0) return '快晴';
+  if (code <= 1) return '晴れ';
+  if (code <= 3) return '曇り';
+  if (code <= 48) return '霧';
+  if (code <= 67) return '雨';
+  if (code <= 77) return '雪';
+  if (code <= 82) return '雨のち晴';
+  return '雷雨';
+}
 // Calendar dot colors per event type
 const EVENT_DOT: Record<string, string> = {
   practice: 'bg-green-400', schedule: 'bg-green-400',
@@ -1811,12 +1830,51 @@ function HomeSection({
   const [parkingShowCount, setParkingShowCount] = useState(3);
   const [nextExpanded, setNextExpanded] = useState(false);
   const [expandedAnnounces, setExpandedAnnounces] = useState<Set<string>>(new Set());
+  const [weather, setWeather] = useState<{ code: number; maxTemp: number; minTemp: number; precip: number } | null>(null);
 
   const upcomingEvents = useMemo(
     () => events.filter(e => !isEventPast(e)).sort((a, b) => a.date.localeCompare(b.date)),
     [events, today]
   );
   const nextEvent = upcomingEvents[0];
+
+  useEffect(() => {
+    if (!nextEvent) { setWeather(null); return; }
+    const iso = nextEvent.date.replace(/\//g, '-');
+    const loc = nextEvent.location?.trim();
+    const getLatLon = (): Promise<{ lat: number; lon: number }> => {
+      if (!loc) return Promise.resolve({ lat: 35.4437, lon: 139.6380 });
+      return fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(loc)}&count=1&language=ja&format=json`
+      )
+        .then(r => r.json())
+        .then(d => {
+          const r = d.results?.[0];
+          return r ? { lat: r.latitude, lon: r.longitude } : { lat: 35.4437, lon: 139.6380 };
+        })
+        .catch(() => ({ lat: 35.4437, lon: 139.6380 }));
+    };
+    getLatLon()
+      .then(({ lat, lon }) =>
+        fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+          `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+          `&timezone=Asia%2FTokyo&start_date=${iso}&end_date=${iso}`
+        )
+      )
+      .then(r => r.json())
+      .then(d => {
+        const daily = d.daily;
+        if (!daily) { setWeather(null); return; }
+        setWeather({
+          code:    daily.weather_code[0],
+          maxTemp: daily.temperature_2m_max[0],
+          minTemp: daily.temperature_2m_min[0],
+          precip:  daily.precipitation_probability_max[0] ?? 0,
+        });
+      })
+      .catch(() => setWeather(null));
+  }, [nextEvent?.date, nextEvent?.location]);
 
   const toEventItem = (e: SchEvent): EventItem => ({
     id: e.id,
@@ -1882,6 +1940,16 @@ function HomeSection({
                   </p>
                   {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
                   {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
+                  {weather && (
+                    <div className="flex items-center gap-2 mt-1.5 px-2 py-1.5 rounded-xl bg-black/20 border border-white/10">
+                      <span className="text-xl leading-none">{weatherEmoji(weather.code)}</span>
+                      <span className="text-sm font-bold text-white">{weatherLabel(weather.code)}</span>
+                      <span className="text-xs text-blue-300">{Math.round(weather.minTemp)}°</span>
+                      <span className="text-xs text-slate-400">/</span>
+                      <span className="text-xs text-red-300">{Math.round(weather.maxTemp)}°C</span>
+                      <span className="ml-auto text-xs font-semibold text-cyan-300">☔ {weather.precip}%</span>
+                    </div>
+                  )}
                   {(nextEvent.meetingTime || nextEvent.meetingPlace) && (
                     <p className="text-sm font-semibold text-amber-300 mt-1">
                       🚩 集合{nextEvent.meetingTime ? ` ${nextEvent.meetingTime}` : ''}{nextEvent.meetingPlace ? ` ${nextEvent.meetingPlace}` : ''}
