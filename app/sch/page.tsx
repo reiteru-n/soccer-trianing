@@ -1931,7 +1931,10 @@ function HomeSection({
 
   useEffect(() => {
     if (!nextEvent?.weatherArea) { setWeather(null); return; }
-    const iso = nextEvent.date.replace(/\//g, '-');
+    // 進行中のイベントは今日の天気、未来のイベントは開始日の天気
+    const weatherDate = (today >= nextEvent.date && today <= (nextEvent.endDate ?? nextEvent.date))
+      ? today : nextEvent.date;
+    const iso = weatherDate.replace(/\//g, '-');
     const area = nextEvent.weatherArea;
 
     fetch(
@@ -1965,7 +1968,7 @@ function HomeSection({
           });
       })
       .catch(() => setWeather(null));
-  }, [nextEvent?.date, nextEvent?.weatherArea]);
+  }, [nextEvent?.date, nextEvent?.endDate, nextEvent?.weatherArea, today]);
 
   const toEventItem = (e: SchEvent): EventItem => ({
     id: e.id,
@@ -2008,11 +2011,25 @@ function HomeSection({
               <div className="flex-1 p-4 flex items-start gap-3 min-w-0">
                 {(() => {
                   const rel = relativeDayLabel(nextEvent.date, today);
+                  const multiDay = (() => {
+                    if (!nextEvent.endDate || nextEvent.endDate === nextEvent.date) return null;
+                    const s = new Date(nextEvent.date.replace(/\//g, '-'));
+                    const e = new Date(nextEvent.endDate.replace(/\//g, '-'));
+                    const t = new Date(today.replace(/\//g, '-'));
+                    const total = Math.round((e.getTime() - s.getTime()) / 86400000) + 1;
+                    const current = t >= s && t <= e ? Math.round((t.getTime() - s.getTime()) / 86400000) + 1 : null;
+                    return { total, current };
+                  })();
                   return (
                     <div className="text-center px-3 py-2 rounded-xl min-w-[56px] bg-black/20 text-white flex-shrink-0">
                       <p className="text-[10px] leading-tight text-slate-300">{nextEvent.date.slice(5)}</p>
                       <p className="text-lg font-extrabold leading-tight">{dayLabel(nextEvent.date)}</p>
                       <p className={`text-[10px] font-bold leading-tight mt-0.5 ${rel.color}`}>{rel.label}</p>
+                      {multiDay && (
+                        <p className="text-[10px] font-bold leading-tight mt-0.5 text-amber-300">
+                          {multiDay.total}日間{multiDay.current ? `(${multiDay.current}日目)` : ''}
+                        </p>
+                      )}
                     </div>
                   );
                 })()}
