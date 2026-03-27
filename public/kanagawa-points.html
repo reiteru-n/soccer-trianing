@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<title>神奈川U-12 総合ポイント推移</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--bg:#060810;--panel:#0b0e1a;--card:#0f1321;--card2:#131829;--border:rgba(255,255,255,.08);--gold:#f59e0b;--text:#e2e8f0;--muted:#3f4d6b;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow-x:hidden;}
+header{padding:clamp(16px,4vw,26px) clamp(14px,4vw,24px) clamp(12px,3vw,18px);background:linear-gradient(160deg,#080c20,#060810);border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
+header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 120% at 85% 50%,rgba(245,158,11,.06),transparent 70%);pointer-events:none;}
+.hd{max-width:1120px;margin:0 auto;position:relative;display:flex;align-items:flex-end;gap:14px;}
+.hd img{height:clamp(44px,10vw,60px);width:auto;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,.7));flex-shrink:0;}
+.hd-text{flex:1;min-width:0;}
+.badge-lbl{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);padding:3px 10px;border-radius:3px;margin-bottom:8px;}
+.hd h1{font-family:'Oswald',sans-serif;font-size:clamp(20px,5vw,38px);font-weight:700;line-height:1.1;color:#fff;}
+.hd h1 em{color:var(--gold);font-style:normal;}
+.hd .sub{font-size:clamp(10px,2.5vw,12px);color:var(--muted);margin-top:6px;line-height:1.6;}
+main{max-width:1120px;margin:0 auto;padding:clamp(12px,3vw,18px) clamp(14px,4vw,24px) 24px;}
+.cshell{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px;position:relative;}
+.cshell::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),transparent);}
+.ctrl-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);}
+.ctrl-title{font-family:'Oswald',sans-serif;font-size:clamp(13px,3vw,16px);letter-spacing:.04em;color:#fff;flex:1;min-width:0;}
+.ctrl-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.btn-play{display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:24px;background:var(--gold);color:#060810;border:none;cursor:pointer;font-size:12px;font-weight:900;font-family:'Noto Sans JP',sans-serif;transition:all .2s;flex-shrink:0;white-space:nowrap;}
+.btn-play:hover{background:#fbbf24;transform:scale(1.04);}
+.btn-play svg{width:14px;height:14px;flex-shrink:0;}
+.speed-wrap{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);flex-shrink:0;}
+.speed-btn{padding:4px 10px;border-radius:16px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:10px;font-weight:700;font-family:'Noto Sans JP',sans-serif;transition:all .15s;}
+.speed-btn.on{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:var(--gold);}
+.year-indicator{font-family:'Oswald',sans-serif;font-size:clamp(22px,5.5vw,36px);font-weight:700;color:var(--gold);letter-spacing:.04em;padding:3px 12px;flex-shrink:0;min-width:74px;text-align:center;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:7px;}
+.seek-wrap{display:flex;align-items:center;gap:8px;padding:6px 20px 10px;}
+.seek-label{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+input[type=range].seeker{-webkit-appearance:none;flex:1;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer;}
+input[type=range].seeker::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--gold);border-radius:50%;cursor:pointer;box-shadow:0 0 8px rgba(245,158,11,.5);}
+input[type=range].seeker::-moz-range-thumb{width:16px;height:16px;background:var(--gold);border-radius:50%;cursor:pointer;border:none;}
+.cscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 4px 6px;scrollbar-width:thin;scrollbar-color:rgba(245,158,11,.3) transparent;}
+.cscroll::-webkit-scrollbar{height:4px;}
+.cscroll::-webkit-scrollbar-thumb{background:rgba(245,158,11,.3);border-radius:2px;}
+.legend{display:flex;gap:8px;flex-wrap:wrap;padding:10px 20px;border-top:1px solid var(--border);background:rgba(255,255,255,.01);}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
+.ld{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+.selector{padding:12px 20px;border-top:1px solid var(--border);background:rgba(255,255,255,.015);}
+.stitle{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.sall{font-size:9px;font-weight:700;color:var(--gold);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);padding:2px 9px;border-radius:20px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{display:flex;align-items:center;gap:5px;padding:5px 11px 5px 8px;border-radius:20px;cursor:pointer;user-select:none;border:1.5px solid transparent;background:rgba(255,255,255,.03);transition:all .15s;font-size:11px;font-weight:700;color:rgba(255,255,255,.35);min-height:36px;}
+.chip:hover,.chip:active{color:rgba(255,255,255,.7);}
+.chip.on{color:#fff;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.07);}
+.chip .cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.info-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;padding:12px 16px;}
+.info-card p{font-size:10px;color:var(--muted);line-height:1.7;}
+.info-card strong{color:var(--gold);}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd">
+    <img src="/sch-logo.png" alt="SCH">
+    <div class="hd-text">
+      <span class="badge-lbl">KANAGAWA U-12 2015–2025</span>
+      <h1>総合ポイント<em>推移</em></h1>
+      <p class="sub">全日本・日産カップ・チャンピオンシップ　直近6年加重合計<br>縦軸：上が高ポイント　／　★=首位</p>
+    </div>
+  </div>
+</header>
+<main>
+  <div id="shell-root"></div>
+  <div class="info-card">
+    <p><strong>ポイント計算:</strong> 当年度 優勝10/準優勝9/3位8/4位7/B8=6/B16=5、前年−1、2年前−2…（5年前まで、最低1pt）<br>
+    対象大会: 全日本U-12 ／ 日産カップ ／ 神奈川県CS　｜　FAリーグ除く</p>
+  </div>
+</main>
+<script>
+'use strict';
+/* ── TEAMS ── */
+const TEAMS=[
+  {id:'buddy',      short:'BSC', color:'#1b5e20',text:'#fff',name:'バディーSC'},
+  {id:'frontale',   short:'川F', color:'#00a0e9',text:'#fff',name:'川崎フロンターレ'},
+  {id:'marinos',    short:'MFM',color:'#003087',text:'#fff',name:'マリノスPr（新横）'},
+  {id:'sch',        short:'SCH',color:'#0d47a1',text:'#fff',name:'SCH.FC'},
+  {id:'nakanoshima',short:'中野',color:'#c62828',text:'#fff',name:'中野島FC'},
+  {id:'marinoso',   short:'MOP',color:'#0277bd',text:'#fff',name:'マリノスPr（追浜）'},
+  {id:'futuro',     short:'FUT',color:'#b71c1c',text:'#fff',name:'JFC FUTURO'},
+  {id:'azamino',    short:'AZM',color:'#d32f2f',text:'#fff',name:'あざみ野FC'},
+  {id:'persimmon',  short:'PRS',color:'#e65100',text:'#fff',name:'FCパーシモン'},
+  {id:'sumire',     short:'SMR',color:'#6a1b9a',text:'#fff',name:'横浜すみれSC'},
+  {id:'porta',      short:'POR',color:'#2e7d32',text:'#fff',name:'FC PORTA'},
+  {id:'higashi',    short:'HGS',color:'#e65100',text:'#fff',name:'東住吉SC'},
+  {id:'sfat',       short:'SFT',color:'#37474f',text:'#fff',name:'SFAT ISEHARA'},
+  {id:'cfg',        short:'CFG',color:'#0277bd',text:'#fff',name:'CFG-YOKOHAMA'},
+  {id:'testigo',    short:'TST',color:'#00695c',text:'#fff',name:'FC Testigo'},
+  {id:'vinculo',    short:'VNK',color:'#4527a0',text:'#fff',name:'FCヴィンクーロ'},
+  {id:'ashigara',   short:'ASH',color:'#f57f17',text:'#fff',name:'足柄FC'},
+  {id:'littlejumbo',short:'LJB',color:'#880e4f',text:'#fff',name:'リトルジャンボSC'},
+];
+const LOGOS={sch:'/sch-logo.png',marinos:'/marinos-badge.svg',frontale:'/frontale-badge.svg'};
+
+/* ── TOURNAMENT DATA (2010-2025, index 0-15) ── */
+const ZEN={
+  buddy:       [1,null,1,3,null,2,2,null,2,2,1,null,8,3,1,8],
+  frontale:    [null,1,null,null,3,8,null,1,1,null,8,null,3,2,2,1],
+  marinos:     [null,null,null,1,1,1,1,null,3,1,2,null,3,1,3,8],
+  sch:         [null,null,2,null,null,null,null,null,null,8,3,1,1,4,16,8],
+  nakanoshima: [null,null,null,null,null,null,null,null,null,null,null,null,2,8,4,4],
+  marinoso:    [null,null,null,16,null,8,8,16,8,16,null,null,3,null,8,8],
+  futuro:      [null,null,null,null,null,null,null,null,3,8,null,null,null,8,4,8],
+  azamino:     [null,null,null,null,2,null,null,2,null,null,null,null,8,null,null,null],
+  persimmon:   [null,null,null,null,null,null,null,16,null,null,8,16,16,null,16,8],
+  sumire:      [null,null,null,null,null,null,null,null,null,null,null,null,8,null,8,null],
+  porta:       [null,null,null,null,null,null,null,null,null,null,null,null,null,8,16,8],
+  higashi:     [null,null,null,null,null,null,null,null,null,null,null,null,8,8,null,null],
+  sfat:        [null,null,null,null,null,null,null,null,null,8,16,null,8,null,null,null],
+  cfg:         [null,null,null,null,null,null,null,null,null,null,3,null,null,null,null,null],
+  testigo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,8,null,null],
+  vinculo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,null,8,null],
+  ashigara:    [null,null,null,null,null,null,null,null,null,null,null,null,null,null,8,null],
+  littlejumbo: [null,null,null,2,null,null,null,null,null,null,null,null,null,null,null,null],
+};
+const NIS={
+  buddy:       [1,null,null,null,null,1,null,null,1,1,null,null,3,1,8,1],
+  frontale:    [null,null,2,null,null,null,null,2,null,null,null,null,null,null,3,null],
+  marinos:     [null,null,1,1,null,null,null,1,null,2,null,null,null,2,1,8],
+  sch:         [null,null,null,null,1,3,null,null,8,null,null,1,null,null,4,3],
+  nakanoshima: [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,4],
+  marinoso:    [null,null,3,null,null,null,null,null,null,null,null,null,null,null,null,8],
+  futuro:      [null,null,null,null,null,4,null,3,4,null,null,2,null,null,8,null],
+  azamino:     [null,null,null,null,null,null,null,4,null,null,null,null,null,null,null,null],
+  persimmon:   [null,null,null,null,null,null,null,null,2,null,null,null,null,null,8,null],
+  sumire:      [null,null,null,null,null,null,null,null,null,null,null,null,null,null,8,null],
+  porta:       [null,null,null,null,null,null,null,null,null,null,null,null,null,8,2,null],
+  higashi:     [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  sfat:        [null,null,null,null,null,null,1,null,null,null,null,null,1,null,null,null],
+  cfg:         [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  testigo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,3,null,null],
+  vinculo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  ashigara:    [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  littlejumbo: [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+};
+const CS={
+  buddy:       [null,null,null,null,null,null,1,1,1,null,null,null,1,null,1,8],
+  frontale:    [null,null,null,null,null,null,null,2,3,null,null,3,null,1,null,1],
+  marinos:     [null,null,null,null,null,null,null,null,null,null,null,null,null,null,8,null],
+  sch:         [null,null,null,null,null,null,null,null,null,null,null,null,3,3,2,null],
+  nakanoshima: [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  marinoso:    [null,null,null,null,null,null,null,null,null,null,null,null,4,4,8,null],
+  futuro:      [null,null,null,null,null,null,null,null,null,3,null,2,null,2,3,3],
+  azamino:     [null,null,null,null,null,null,null,null,null,4,null,null,2,null,null,4],
+  persimmon:   [null,null,null,null,null,null,null,null,2,null,null,1,null,null,null,null],
+  sumire:      [null,null,null,null,null,null,null,null,null,null,null,null,null,null,3,null],
+  porta:       [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  higashi:     [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  sfat:        [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  cfg:         [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  testigo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  vinculo:     [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  ashigara:    [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  littlejumbo: [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+};
+
+/* ── POINTS CALC ── */
+const BASE={1:10,2:9,3:8,4:7,8:6,16:5};
+function calcPoints(tid,yearIdx){
+  let total=0;
+  for(let offset=0;offset<=5;offset++){
+    const idx=yearIdx-offset;
+    if(idx<0)continue;
+    for(const comp of[ZEN,NIS,CS]){
+      const r=comp[tid]?.[idx];
+      if(r==null)continue;
+      const b=BASE[r];
+      if(b==null)continue;
+      total+=Math.max(b-offset,1);
+    }
+  }
+  return total;
+}
+const DISPLAY_START=5, NY=11;
+const YEARS_DISP=[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+const POINTS_DATA={};
+for(const t of TEAMS){
+  POINTS_DATA[t.id]=[];
+  for(let di=0;di<NY;di++) POINTS_DATA[t.id].push(calcPoints(t.id,DISPLAY_START+di));
+}
+let MAX_PTS=0;
+for(const t of TEAMS)for(const v of POINTS_DATA[t.id])MAX_PTS=Math.max(MAX_PTS,v);
+MAX_PTS=Math.ceil(MAX_PTS/10)*10||60;
+
+/* ── COORDS ── */
+const W=880,H=300,PL=64,PR=20,PT=22,PB=44;
+const CW=W-PL-PR,CH=H-PT-PB;
+const BADGE_R=14,COLL_THRESH=BADGE_R*1.1,SPREAD_X=BADGE_R*2.2,SPREAD_Y=BADGE_R*2.2;
+const NS='http://www.w3.org/2000/svg';
+function mk(tag,attrs){
+  const el=document.createElementNS(NS,tag);
+  for(const[k,v]of Object.entries(attrs))el.setAttribute(k,String(v));
+  return el;
+}
+function rx(i){return PL+(i/(NY-1))*CW;}
+function ry(pts){return PT+(1-Math.min(pts,MAX_PTS)/MAX_PTS)*CH;}
+
+/* ── STATE ── */
+const state={playing:false,frame:0,speed:0.5,raf:null,activeTeams:new Set(TEAMS.map(t=>t.id))};
+
+/* ── STATIC LAYER ── */
+function buildStaticLayer(){
+  const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,style:'min-width:560px;width:100%;display:block;'});
+  svg.id='svg-static';
+  svg.appendChild(mk('rect',{x:0,y:0,width:W,height:H,fill:'#0f1321'}));
+
+  /* band stripes (every 20pt) */
+  for(let p=0;p<MAX_PTS;p+=20){
+    const y1=ry(p+10),y2=ry(p);
+    if(y2>y1)svg.appendChild(mk('rect',{x:PL,y:y1,width:CW,height:y2-y1,fill:'rgba(255,255,255,.012)'}));
+  }
+
+  /* H grid */
+  for(let p=0;p<=MAX_PTS;p+=10){
+    const y=ry(p);
+    svg.appendChild(mk('line',{x1:PL,x2:W-PR,y1:y,y2:y,
+      stroke:p===0?'rgba(255,255,255,.12)':'rgba(255,255,255,.05)',
+      'stroke-dasharray':p===0?'':'3 5'}));
+  }
+
+  /* V grid + year labels */
+  YEARS_DISP.forEach((yr,i)=>{
+    const x=rx(i);
+    svg.appendChild(mk('line',{x1:x,x2:x,y1:PT,y2:H-PB+4,stroke:'rgba(255,255,255,.03)'}));
+    const t=mk('text',{x,y:H-PB+16,'text-anchor':'middle',fill:'#3f4d6b','font-size':'9.5','font-family':'Oswald,sans-serif'});
+    t.textContent=(i%2===0)?String(yr):"'"+String(yr).slice(2);
+    svg.appendChild(t);
+  });
+
+  /* axes */
+  svg.appendChild(mk('line',{x1:PL,x2:PL,y1:PT,y2:H-PB,stroke:'rgba(255,255,255,.08)'}));
+  svg.appendChild(mk('line',{x1:PL,x2:W-PR,y1:H-PB,y2:H-PB,stroke:'rgba(255,255,255,.08)'}));
+
+  /* team lines */
+  TEAMS.forEach(team=>{
+    const d=POINTS_DATA[team.id];
+    const isOn=state.activeTeams.has(team.id);
+    const g=mk('g',{'data-team':team.id,opacity:isOn?'1':'0.07'});
+    g.id=`g-line-${team.id}`;
+    const pts=d.map((v,i)=>({x:rx(i),y:ry(v)}));
+    if(pts.length>=2){
+      /* area */
+      let aD=`M${pts[0].x},${pts[0].y}`;
+      for(let k=1;k<pts.length;k++){const c=(pts[k-1].x+pts[k].x)/2;aD+=` C${c},${pts[k-1].y} ${c},${pts[k].y} ${pts[k].x},${pts[k].y}`;}
+      aD+=` L${pts[pts.length-1].x},${H-PB} L${pts[0].x},${H-PB} Z`;
+      g.appendChild(mk('path',{d:aD,fill:team.color,opacity:'.06','stroke-width':'0'}));
+      /* line */
+      let lD=`M${pts[0].x},${pts[0].y}`;
+      for(let k=1;k<pts.length;k++){const c=(pts[k-1].x+pts[k].x)/2;lD+=` C${c},${pts[k-1].y} ${c},${pts[k].y} ${pts[k].x},${pts[k].y}`;}
+      g.appendChild(mk('path',{d:lD,fill:'none',stroke:team.color,'stroke-width':'2.2','stroke-linecap':'round',opacity:'.6'}));
+    }
+    /* dots */
+    d.forEach((v,i)=>{
+      g.appendChild(mk('circle',{cx:rx(i),cy:ry(v),r:'3',fill:team.color,stroke:'rgba(6,8,16,.7)','stroke-width':'1.5',opacity:'.85'}));
+    });
+    svg.appendChild(g);
+  });
+
+  /* current position vertical line */
+  svg.appendChild(mk('line',{id:'cur-line',x1:rx(0),x2:rx(0),y1:PT,y2:H-PB,
+    stroke:'rgba(245,158,11,0.6)','stroke-width':'1.5','stroke-dasharray':'4 3'}));
+  return svg;
+}
+
+// ═══════════════════════════════════════
+// BADGE LAYER
+// ═══════════════════════════════════════
+function buildBadgeLayer(){
+  const svg=mk('svg',{viewBox:`0 0 ${W} ${H}`,style:'min-width:560px;width:100%;display:block;position:absolute;top:0;left:0;pointer-events:none;'});
+  svg.id='svg-badge';
+
+  const defs=mk('defs',{});
+  Object.keys(LOGOS).forEach(tid=>{
+    const cp=mk('clipPath',{id:`clip-${tid}`});
+    cp.appendChild(mk('circle',{cx:'0',cy:'0',r:String(BADGE_R)}));
+    defs.appendChild(cp);
+  });
+  svg.appendChild(defs);
+
+  const curYearBig=mk('text',{id:'cur-year-big',x:rx(0),y:PT+CH/2,
+    'text-anchor':'middle','dominant-baseline':'middle',
+    fill:'rgba(245,158,11,0.07)','font-size':'110','font-weight':'900',
+    'font-family':'Oswald,sans-serif','pointer-events':'none'});
+  curYearBig.textContent=String(YEARS_DISP[0]);
+  svg.appendChild(curYearBig);
+
+  TEAMS.filter(t=>state.activeTeams.has(t.id)).forEach(team=>{
+    const leader=mk('line',{x1:0,y1:0,x2:0,y2:0,
+      stroke:team.color,'stroke-width':'1.2','stroke-dasharray':'2 2',opacity:'0'});
+    leader.id=`leader-${team.id}`;
+    svg.appendChild(leader);
+
+    const g=mk('g',{id:`badge-${team.id}`});
+
+    const glow=mk('circle',{cx:0,cy:0,r:BADGE_R+4,fill:team.color,opacity:'.2'});
+    glow.id=`glow-${team.id}`;
+
+    const hasLogo=!!LOGOS[team.id];
+    const circle=mk('circle',{cx:0,cy:0,r:BADGE_R,
+      fill:hasLogo?'#fff':team.color,
+      stroke:hasLogo?team.color:'rgba(255,255,255,.25)',
+      'stroke-width':'2'});
+    circle.id=`badge-circle-${team.id}`;
+
+    g.appendChild(glow);g.appendChild(circle);
+    if(hasLogo){
+      const img=document.createElementNS(NS,'image');
+      img.setAttribute('href',LOGOS[team.id]);
+      img.setAttribute('x',String(-BADGE_R+1));
+      img.setAttribute('y',String(-BADGE_R+1));
+      img.setAttribute('width',String((BADGE_R-1)*2));
+      img.setAttribute('height',String((BADGE_R-1)*2));
+      img.setAttribute('clip-path',`url(#clip-${team.id})`);
+      img.setAttribute('preserveAspectRatio','xMidYMid meet');
+      g.appendChild(img);
+    } else {
+      const txt=mk('text',{x:0,y:0,'text-anchor':'middle','dominant-baseline':'middle','font-size':'8.5','font-weight':'900',fill:team.text,'font-family':'Noto Sans JP, sans-serif'});
+      txt.textContent=team.short;
+      g.appendChild(txt);
+    }
+    svg.appendChild(g);
+
+    const d=POINTS_DATA[team.id];
+    const initY=ry(d[0]), initX=rx(0);
+    g.setAttribute('transform',`translate(${initX},${initY})`);
+  });
+
+  const curLine=mk('line',{id:'cur-line-badge',
+    x1:rx(0),x2:rx(0),y1:PT-10,y2:H-PB,
+    stroke:'rgba(245,158,11,0.5)','stroke-width':'1.5','stroke-dasharray':'4 3'});
+  svg.appendChild(curLine);
+  const curPill=mk('rect',{id:'cur-pill',
+    x:rx(0)-20,y:PT-22,width:40,height:16,rx:'4',
+    fill:'rgba(245,158,11,0.18)',stroke:'rgba(245,158,11,0.6)','stroke-width':'1'});
+  svg.appendChild(curPill);
+  const curYearTxt=mk('text',{id:'cur-year-svg',
+    x:rx(0),y:PT-8,'text-anchor':'middle','dominant-baseline':'auto',
+    fill:'#f59e0b','font-size':'11.5','font-weight':'900',
+    'font-family':'Oswald,sans-serif','pointer-events':'none'});
+  curYearTxt.textContent=String(YEARS_DISP[0]);
+  svg.appendChild(curYearTxt);
+
+  // Y軸マスク（バッジの上に重ねて左端を隠す）
+  svg.appendChild(mk('rect',{
+    x:'0',y:String(PT-12),width:String(PL-1),height:String(CH+20),
+    fill:'#0f1321',opacity:'0.95'
+  }));
+
+  return svg;
+}
+
+// ═══════════════════════════════════════
+// INTERPOLATION (no null data)
+// ═══════════════════════════════════════
+function getInterpolatedPos(teamId, frame){
+  const d=POINTS_DATA[teamId];
+  const i0=Math.min(Math.max(Math.floor(frame),0),NY-2);
+  const i1=i0+1;
+  const t=frame-i0;
+  const et=t<0.5?4*t*t*t:(1-Math.pow(-2*t+2,3)/2);
+  const pts=d[i0]+(d[i1]-d[i0])*et;
+  return { x:rx(frame), y:ry(pts), pts };
+}
+
+// ═══════════════════════════════════════
+// COLLISION AVOIDANCE
+// ═══════════════════════════════════════
+function resolveCollisions(positions){
+  const visible=positions.filter(p=>p.visible);
+  const result={};
+  positions.forEach(p=>{result[p.id]={x:p.rawX,y:p.rawY,visible:p.visible};});
+
+  const used=new Set();
+  const groups=[];
+  visible.forEach(p=>{
+    if(used.has(p.id))return;
+    const group=[p];used.add(p.id);
+    visible.forEach(q=>{
+      if(used.has(q.id))return;
+      if(Math.abs(q.rawY-p.rawY)<COLL_THRESH){group.push(q);used.add(q.id);}
+    });
+    groups.push(group);
+  });
+
+  groups.forEach(group=>{
+    if(group.length===1)return;
+    const n=group.length;
+    const baseX=group[0].rawX;
+    const baseY=group.reduce((s,p)=>s+p.rawY,0)/n;
+    if(n<=4){
+      const totalW=(n-1)*SPREAD_X;
+      const startX=baseX-totalW/2;
+      group.forEach((p,i)=>{result[p.id].x=startX+i*SPREAD_X;result[p.id].y=baseY;});
+    } else {
+      const row1=group.slice(0,Math.ceil(n/2));
+      const row2=group.slice(Math.ceil(n/2));
+      const r1W=(row1.length-1)*SPREAD_X;
+      row1.forEach((p,i)=>{result[p.id].x=baseX-r1W/2+i*SPREAD_X;result[p.id].y=baseY-SPREAD_Y/2;});
+      const r2W=(row2.length-1)*SPREAD_X;
+      row2.forEach((p,i)=>{result[p.id].x=baseX-r2W/2+i*SPREAD_X;result[p.id].y=baseY+SPREAD_Y/2;});
+    }
+  });
+  return result;
+}
+
+// ═══════════════════════════════════════
+// ANIMATE
+// ═══════════════════════════════════════
+function animateBadges(){
+  const frameFloat=state.frame;
+
+  const yEl=document.getElementById('year-ind');
+  if(yEl) yEl.textContent=YEARS_DISP[Math.min(Math.round(frameFloat),NY-1)];
+
+  const seeker=document.getElementById('seeker');
+  if(seeker) seeker.value=(frameFloat/(NY-1)*100).toFixed(2);
+
+  const curX=rx(frameFloat);
+  const curYr=YEARS_DISP[Math.min(Math.round(frameFloat),NY-1)];
+  const clEl=document.getElementById('cur-line');
+  if(clEl){clEl.setAttribute('x1',curX);clEl.setAttribute('x2',curX);}
+  const clbEl=document.getElementById('cur-line-badge');
+  if(clbEl){clbEl.setAttribute('x1',curX);clbEl.setAttribute('x2',curX);}
+  const cpEl=document.getElementById('cur-pill');
+  if(cpEl){cpEl.setAttribute('x',(curX-20).toFixed(1));}
+  const ctEl=document.getElementById('cur-year-svg');
+  if(ctEl){ctEl.setAttribute('x',curX);ctEl.textContent=String(curYr);}
+  const cbEl=document.getElementById('cur-year-big');
+  if(cbEl){cbEl.setAttribute('x',curX);cbEl.textContent=String(curYr);}
+
+  const scEl=document.querySelector('.cscroll');
+  if(scEl){
+    const svgEl=scEl.querySelector('svg');
+    const svgW=svgEl?svgEl.getBoundingClientRect().width:W;
+    const tgt=curX*(svgW/W)-scEl.clientWidth/2;
+    scEl.scrollLeft=Math.max(0,tgt);
+  }
+
+  const activeTeams=TEAMS.filter(t=>state.activeTeams.has(t.id));
+  const rawPositions=activeTeams.map(team=>{
+    const pos=getInterpolatedPos(team.id,frameFloat);
+    return {id:team.id,rawX:pos.x,rawY:pos.y,visible:true,pts:pos.pts};
+  });
+
+  // leader = highest pts
+  let maxPts=-1, leaderId=null;
+  rawPositions.forEach(p=>{if(p.pts>maxPts){maxPts=p.pts;leaderId=p.id;}});
+
+  const resolved=resolveCollisions(rawPositions);
+
+  activeTeams.forEach(team=>{
+    const g=document.getElementById(`badge-${team.id}`);
+    if(!g)return;
+    const r=resolved[team.id];
+    const rawP=rawPositions.find(p=>p.id===team.id);
+    if(!r||!r.visible){g.setAttribute('opacity','0');return;}
+
+    g.setAttribute('opacity','1');
+    g.setAttribute('transform',`translate(${r.x.toFixed(2)},${r.y.toFixed(2)})`);
+
+    const lineEl=document.getElementById(`leader-${team.id}`);
+    if(lineEl&&rawP){
+      const dx=r.x-rawP.rawX, dy=r.y-rawP.rawY;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist>BADGE_R+2){
+        const angle=Math.atan2(dy,dx);
+        lineEl.setAttribute('x1',rawP.rawX.toFixed(2));
+        lineEl.setAttribute('y1',rawP.rawY.toFixed(2));
+        lineEl.setAttribute('x2',(r.x-Math.cos(angle)*(BADGE_R+1)).toFixed(2));
+        lineEl.setAttribute('y2',(r.y-Math.sin(angle)*(BADGE_R+1)).toFixed(2));
+        lineEl.setAttribute('opacity','0.5');
+      } else {
+        lineEl.setAttribute('opacity','0');
+      }
+    }
+
+    const circle=document.getElementById(`badge-circle-${team.id}`);
+    const glow=document.getElementById(`glow-${team.id}`);
+    if(team.id===leaderId&&circle){
+      circle.setAttribute('r','17');
+      if(glow)glow.setAttribute('r','24');
+    } else if(circle){
+      circle.setAttribute('r',String(BADGE_R));
+      if(glow)glow.setAttribute('r',String(BADGE_R+4));
+    }
+  });
+}
+
+// ═══════════════════════════════════════
+// PLAYBACK
+// ═══════════════════════════════════════
+function startAnimation(){
+  if(state.raf)cancelAnimationFrame(state.raf);
+  let lastTs=null;
+  function loop(ts){
+    if(!state.playing){state.raf=null;return;}
+    if(!lastTs)lastTs=ts;
+    const dt=(ts-lastTs)/1000;
+    lastTs=ts;
+    state.frame+=dt*state.speed;
+    if(state.frame>=NY-1){
+      state.frame=NY-1;
+      animateBadges();
+      state.playing=false;
+      updatePlayBtn();
+      state.raf=null;
+      return;
+    }
+    animateBadges();
+    state.raf=requestAnimationFrame(loop);
+  }
+  state.raf=requestAnimationFrame(loop);
+}
+
+function togglePlay(){
+  if(state.frame>=NY-1)state.frame=0;
+  state.playing=!state.playing;
+  updatePlayBtn();
+  if(state.playing)startAnimation();
+}
+
+function updatePlayBtn(){
+  const btn=document.getElementById('btn-play');
+  if(!btn)return;
+  if(state.playing){
+    btn.innerHTML=`<svg viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/></svg>一時停止`;
+  } else {
+    btn.innerHTML=`<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>${state.frame>0&&state.frame<NY-1?'再開':'▶ 再生'}`;
+  }
+}
+
+function setSpeed(spd,btn){
+  state.speed=spd;
+  document.querySelectorAll('[data-speed]').forEach(b=>b.classList.toggle('on',parseFloat(b.dataset.speed)===spd));
+}
+
+// ═══════════════════════════════════════
+// SCORE helper (for chip sort)
+// ═══════════════════════════════════════
+function score(tid){
+  return POINTS_DATA[tid].reduce((s,v)=>s+v,0);
+}
+
+// ═══════════════════════════════════════
+// REBUILD BADGE LAYER
+// ═══════════════════════════════════════
+function rebuildBadgeLayer(container){
+  const old=document.getElementById('svg-badge');
+  if(old)old.remove();
+  container.appendChild(buildBadgeLayer());
+  animateBadges();
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function init(){
+  TEAMS.forEach(t=>state.activeTeams.add(t.id));
+
+  const shellRoot=document.getElementById('shell-root');
+  const sh=document.createElement('div');
+  sh.className='cshell';
+
+  // controls bar
+  const ctrl=document.createElement('div');
+  ctrl.className='ctrl-bar';
+  ctrl.innerHTML=`
+    <div style="flex:1;min-width:0;">
+      <div class="ctrl-title">総合ポイント推移</div>
+      <div class="ctrl-sub">全日本・日産カップ・チャンピオンシップ 直近6年加重合計</div>
+    </div>
+    <div class="year-indicator" id="year-ind">${YEARS_DISP[0]}</div>
+    <button class="btn-play" id="btn-play">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>▶ 再生
+    </button>
+    <div class="speed-wrap">
+      速度：
+      ${[0.5,1,2,3].map(s=>`<button class="speed-btn${s===0.5?' on':''}" data-speed="${s}" onclick="setSpeed(${s},this)">${s}x</button>`).join('')}
+    </div>
+  `;
+  sh.appendChild(ctrl);
+
+  // seeker
+  const seekWrap=document.createElement('div');
+  seekWrap.className='seek-wrap';
+  seekWrap.innerHTML=`
+    <span class="seek-label">${YEARS_DISP[0]}</span>
+    <input type="range" class="seeker" id="seeker" min="0" max="100" step="0.1" value="0"/>
+    <span class="seek-label">${YEARS_DISP[NY-1]}</span>
+  `;
+  sh.appendChild(seekWrap);
+
+  // svg container
+  const svgWrap=document.createElement('div');
+  svgWrap.className='cscroll';
+  const svgContainer=document.createElement('div');
+  svgContainer.style.position='relative';
+  const staticSvg=buildStaticLayer();
+  const badgeSvg=buildBadgeLayer();
+  svgContainer.appendChild(staticSvg);
+  svgContainer.appendChild(badgeSvg);
+  svgWrap.appendChild(svgContainer);
+
+  const chartWrap=document.createElement('div');
+  chartWrap.style.cssText='position:relative;';
+  chartWrap.appendChild(svgWrap);
+
+  // Y-axis overlay (fixed, outside scroll)
+  const axisOverlay=document.createElement('div');
+  axisOverlay.style.cssText=`
+    position:absolute;left:0;top:0;bottom:0;
+    width:${PL+4}px;z-index:20;pointer-events:none;
+    background:linear-gradient(90deg,#0b0e1a 78%,transparent 100%);
+  `;
+  const ptLevels=[];
+  for(let p=MAX_PTS;p>=0;p-=10) ptLevels.push(p);
+  ptLevels.forEach(p=>{
+    const pct=ry(p)/H*100;
+    const sp=document.createElement('span');
+    sp.style.cssText=`
+      position:absolute;right:8px;top:${pct}%;
+      transform:translateY(-50%);
+      font-size:10.5px;font-weight:700;
+      color:#c0cce0;font-family:'Noto Sans JP',sans-serif;
+      white-space:nowrap;letter-spacing:.02em;
+    `;
+    sp.textContent=p+'pt';
+    axisOverlay.appendChild(sp);
+  });
+  chartWrap.appendChild(axisOverlay);
+  sh.appendChild(chartWrap);
+
+  // legend
+  const lg=document.createElement('div');
+  lg.className='legend';
+  lg.innerHTML=`
+    <div class="leg"><span class="ld" style="background:var(--gold);box-shadow:0 0 0 2px rgba(245,158,11,.35)"></span>首位（★パルス）</div>
+    <div class="leg" style="font-size:10px;color:var(--muted);">バッジ＝チームロゴ ／ 色＝ユニフォームカラー</div>
+  `;
+  sh.appendChild(lg);
+
+  // team chips
+  const sel=document.createElement('div');
+  sel.className='selector';
+  const st2=document.createElement('div');
+  st2.className='stitle';
+  st2.textContent='チーム表示切替';
+  const ab=document.createElement('button');
+  ab.className='sall';ab.textContent='全て切替';
+  let ao=true;
+  ab.onclick=()=>{
+    ao=!ao;
+    TEAMS.forEach(t=>{
+      if(ao)state.activeTeams.add(t.id);else state.activeTeams.delete(t.id);
+      document.querySelector(`[data-t="${t.id}"]`)?.classList.toggle('on',ao);
+      const gl=document.getElementById(`g-line-${t.id}`);
+      if(gl)gl.setAttribute('opacity',ao?'1':'0.07');
+    });
+    rebuildBadgeLayer(svgContainer);
+  };
+  st2.appendChild(ab);sel.appendChild(st2);
+
+  const chips=document.createElement('div');chips.className='chips';
+  TEAMS.sort((a,b)=>score(b.id)-score(a.id)).forEach(team=>{
+    const c=document.createElement('div');
+    c.className='chip on';
+    c.dataset.t=team.id;
+    c.innerHTML=`<span class="cdot" style="background:${team.color}"></span>${team.name}`;
+    c.onclick=()=>{
+      const on=state.activeTeams.has(team.id);
+      if(on)state.activeTeams.delete(team.id);else state.activeTeams.add(team.id);
+      c.classList.toggle('on',!on);
+      const gl=document.getElementById(`g-line-${team.id}`);
+      if(gl)gl.setAttribute('opacity',!on?'1':'0.07');
+      rebuildBadgeLayer(svgContainer);
+    };
+    chips.appendChild(c);
+  });
+  sel.appendChild(chips);
+  sh.appendChild(sel);
+  shellRoot.appendChild(sh);
+
+  document.getElementById('btn-play').addEventListener('click',togglePlay);
+  document.getElementById('seeker').addEventListener('input',function(){
+    state.frame=(this.value/100)*(NY-1);
+    if(state.playing){state.playing=false;cancelAnimationFrame(state.raf);updatePlayBtn();}
+    animateBadges();
+  });
+
+  animateBadges();
+}
+
+init();
+
+// height notification
+function notifyHeight(){
+  const h=document.documentElement.scrollHeight;
+  window.parent.postMessage({type:'pointsIframeHeight',height:h},'*');
+}
+new MutationObserver(notifyHeight).observe(document.body,{childList:true,subtree:true,attributes:true});
+window.addEventListener('resize',notifyHeight);
+notifyHeight();
+</script>
+</body>
+</html>
