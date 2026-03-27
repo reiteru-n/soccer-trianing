@@ -1843,7 +1843,6 @@ function HomeSection({
     if (!nextEvent) { setWeather(null); return; }
     const iso = nextEvent.date.replace(/\//g, '-');
     const loc = nextEvent.location?.trim();
-    const lbl = nextEvent.label?.trim();
 
     const fetchWeather = (lat: number, lon: number, place: string) => {
       fetch(
@@ -1868,36 +1867,43 @@ function HomeSection({
 
     const geocode = (query: string): Promise<{ lat: number; lon: number; place: string } | null> =>
       fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=jp&accept-language=ja`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=jp&accept-language=ja&addressdetails=1`,
         { headers: { 'User-Agent': 'SCHSoccerApp/1.0' } }
       )
         .then(r => r.json())
         .then((results: any[]) => {
           if (!results[0]) return null;
           const r = results[0];
+          // 建物・施設系（amenity/building/tourism等）は誤マッチしやすいため除外
+          if (!['place', 'boundary', 'natural'].includes(r.class) && r.type !== 'city' && r.type !== 'town' && r.type !== 'village') {
+            const addr = r.address ?? {};
+            const place = addr.city ?? addr.town ?? addr.county ?? addr.state;
+            if (!place) return null; // 住所から都市名が取れないなら除外
+            return { lat: parseFloat(r.lat), lon: parseFloat(r.lon), place };
+          }
           const addr = r.address ?? {};
-          const place = addr.city ?? addr.town ?? addr.county ?? addr.state ?? r.display_name.split('、')[0];
+          const place = addr.city ?? addr.town ?? addr.county ?? addr.state ?? r.display_name.split(/[,、]/)[0].trim();
           return { lat: parseFloat(r.lat), lon: parseFloat(r.lon), place };
         })
         .catch(() => null);
 
     const run = async () => {
-      // 1. location で検索
-      if (loc) {
-        const res = await geocode(loc);
-        if (res) { fetchWeather(res.lat, res.lon, res.place); return; }
-      }
-      // 2. label で検索（施設名が見つからない場合のフォールバック）
-      if (lbl) {
-        const res = await geocode(lbl);
-        if (res) { fetchWeather(res.lat, res.lon, res.place); return; }
+      if (!loc) { setWeather(null); return; }
+      // 1. location フルテキストで検索
+      const res = await geocode(loc);
+      if (res) { fetchWeather(res.lat, res.lon, res.place); return; }
+      // 2. location を空白で分割して各トークンを試す（例：「井戸前旅館　天然芝グランド」→「井戸前旅館」）
+      const tokens = loc.split(/[\s　]+/).filter(t => t.length >= 2);
+      for (const token of tokens) {
+        const r2 = await geocode(token);
+        if (r2) { fetchWeather(r2.lat, r2.lon, r2.place); return; }
       }
       // 3. 場所特定不可 → 天気未取得
       setWeather(null);
     };
 
     run();
-  }, [nextEvent?.date, nextEvent?.location, nextEvent?.label]);
+  }, [nextEvent?.date, nextEvent?.location]);
 
   const toEventItem = (e: SchEvent): EventItem => ({
     id: e.id,
