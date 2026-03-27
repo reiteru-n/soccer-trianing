@@ -2031,7 +2031,7 @@ function HomeSection({
                       <p className={`text-[10px] font-bold leading-tight mt-0.5 ${rel.color}`}>{rel.label}</p>
                       {multiDay && (
                         <p className="text-[10px] font-bold leading-tight mt-0.5 text-amber-300">
-                          {multiDay.total}日間{multiDay.current ? `(${multiDay.current}日目)` : ''}
+                          {multiDay.current ? `${multiDay.current}/` : ''}{multiDay.total}日目
                         </p>
                       )}
                     </div>
@@ -2070,7 +2070,7 @@ function HomeSection({
                   )}
                   {(nextEvent.meetingTime || nextEvent.meetingPlace) && (
                     <p className="text-sm font-semibold text-amber-300 mt-1">
-                      🚩 集合{nextEvent.meetingTime ? ` ${nextEvent.meetingTime}` : ''}{nextEvent.meetingPlace ? ` ${nextEvent.meetingPlace}` : ''}
+                      🚩 集合{nextEvent.meetingTime ? ` ${nextEvent.meetingTime}` : ''}{nextEvent.meetingPlace ? <span className="text-xs font-medium"> {nextEvent.meetingPlace}</span> : ''}
                     </p>
                   )}
                 </div>
