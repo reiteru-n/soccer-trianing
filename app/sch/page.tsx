@@ -17,17 +17,11 @@ function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
 }
-// 終了時間＋1時間が経過していたら「過去」とみなす
-function isEventPast(event: { date: string; endDate?: string; endTime?: string }): boolean {
+// 終了日が今日より前なら「過去」とみなす（同日イベントは日付が変わるまで表示）
+function isEventPast(event: { date: string; endDate?: string }): boolean {
   const today = todayStr();
   const endDate = event.endDate ?? event.date;
-  if (endDate < today) return true;
-  if (endDate === today && event.endTime) {
-    const [h, m] = event.endTime.split(':').map(Number);
-    const now = new Date();
-    return now.getHours() * 60 + now.getMinutes() >= h * 60 + m + 60;
-  }
-  return false;
+  return endDate < today;
 }
 const DAYS = ['日', '月', '火', '水', '木', '金', '土'];
 function dayLabel(dateStr: string) {
