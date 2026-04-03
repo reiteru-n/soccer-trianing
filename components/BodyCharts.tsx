@@ -52,7 +52,7 @@ export default function BodyCharts({ records }: { records: BodyRecord[] }) {
 
   if (!showTimeSeries && !showCorr && !showSleep) return null;
 
-  const tickStyle = { font: { size: 9 as const }, color: '#94a3b8' };
+  const tickStyle = { font: { size: 9 as const }, color: '#94a3b8', maxTicksLimit: 5 as const };
   const gridColor = 'rgba(255,255,255,0.05)';
 
   return (
@@ -102,13 +102,15 @@ export default function BodyCharts({ records }: { records: BodyRecord[] }) {
                     x: { ticks: tickStyle, grid: { color: gridColor } },
                     yH: {
                       type: 'linear', position: 'left',
-                      ticks: { ...tickStyle, callback: v => `${v}cm` },
+                      ticks: { ...tickStyle, maxTicksLimit: 4, callback: v => `${v}` },
                       grid: { color: gridColor },
+                      title: { display: true, text: 'cm', color: '#64748b', font: { size: 9 } },
                     },
                     yW: {
                       type: 'linear', position: 'right',
-                      ticks: { ...tickStyle, callback: v => `${v}kg` },
+                      ticks: { ...tickStyle, maxTicksLimit: 4, callback: v => `${v}` },
                       grid: { drawOnChartArea: false },
+                      title: { display: true, text: 'kg', color: '#64748b', font: { size: 9 } },
                     },
                   },
                 }}
@@ -156,12 +158,12 @@ export default function BodyCharts({ records }: { records: BodyRecord[] }) {
                   },
                   scales: {
                     x: {
-                      ticks: tickStyle,
+                      ticks: { ...tickStyle, maxTicksLimit: 5 },
                       grid: { color: gridColor },
                       title: { display: true, text: '体重変化 (kg)', color: '#64748b', font: { size: 9 } },
                     },
                     y: {
-                      ticks: tickStyle,
+                      ticks: { ...tickStyle, maxTicksLimit: 4 },
                       grid: { color: gridColor },
                       title: { display: true, text: '身長変化 (cm)', color: '#64748b', font: { size: 9 } },
                     },
@@ -210,7 +212,7 @@ export default function BodyCharts({ records }: { records: BodyRecord[] }) {
                   scales: {
                     x: { ticks: tickStyle, grid: { color: gridColor } },
                     y: {
-                      ticks: { ...tickStyle, callback: v => decimalToTime(v as number) },
+                      ticks: { ...tickStyle, maxTicksLimit: 4, callback: v => decimalToTime(v as number) },
                       grid: { color: gridColor },
                     },
                   },
