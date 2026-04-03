@@ -68,6 +68,7 @@ export interface BodyRecord {
   date: string; // yyyy/mm/dd
   weight?: number; // kg
   height?: number; // cm
+  sleepTime?: string; // HH:MM (例: 22:30)
 }
 
 export interface TrainingMenuItem {

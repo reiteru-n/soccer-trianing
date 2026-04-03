@@ -13,6 +13,7 @@ import ConfettiEffect from '@/components/ConfettiEffect';
 import { BodyRecord, SchEvent } from '@/lib/types';
 import { exportData, importData } from '@/lib/storage';
 import BodyChart from '@/components/BodyChart';
+import BodyCharts from '@/components/BodyCharts';
 
 function todayStr() {
   const d = new Date();
@@ -54,6 +55,7 @@ export default function DashboardPage() {
   const [showBodyForm, setShowBodyForm] = useState(false);
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyHeight, setBodyHeight] = useState("");
+  const [bodySleep, setBodySleep] = useState("");
   const [bodyDate, setBodyDate] = useState(todayStr());
   const [bodySaved, setBodySaved] = useState(false);
   const [birthDateInput, setBirthDateInput] = useState("");
@@ -89,8 +91,9 @@ export default function DashboardPage() {
     const record: Omit<BodyRecord, 'id'> = { date: bodyDate };
     if (!isNaN(w) && w > 0) record.weight = w;
     if (!isNaN(h) && h > 0) record.height = h;
+    if (bodySleep) record.sleepTime = bodySleep;
     addBodyRecord(record);
-    setBodyWeight(""); setBodyHeight("");
+    setBodyWeight(""); setBodyHeight(""); setBodySleep("");
     setBodySaved(true);
     setTimeout(() => { setBodySaved(false); setShowBodyForm(false); }, 1200);
   };
@@ -204,8 +207,8 @@ export default function DashboardPage() {
       <section id="section-body" className="mb-6">
         <div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📏 体重・身長</h2><button onClick={() => setShowBodyForm(true)} className="text-xs bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-bold px-3 py-1.5 rounded-lg transition-colors">+ 追加</button></div>
         {sortedBody.length > 0 ? (<div className="bg-white/95 rounded-2xl shadow-xl shadow-blue-900/30 border border-white/20 overflow-hidden">
-          <div className="flex bg-slate-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-16 text-center">体重</span><span className="w-16 text-center">身長</span><span className="w-6"></span></div>
-          {sortedBody.slice(0,5).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-16 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-16 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="w-6 text-gray-300 hover:text-red-400 text-lg">×</button></div>))}
+          <div className="flex bg-slate-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-14 text-center">体重</span><span className="w-14 text-center">身長</span><span className="w-12 text-center">就寝</span><span className="w-6"></span></div>
+          {sortedBody.slice(0,5).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-14 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-14 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><span className="w-12 text-center text-gray-500 text-xs">{r.sleepTime ?? "-"}</span><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="w-6 text-gray-300 hover:text-red-400 text-lg">×</button></div>))}
         </div>) : (<p className="text-sm text-blue-200/60 text-center py-4">まだ記録がありません</p>)}
         {sortedBody.length >= 1 && (
           <div className="mt-3 bg-white/95 rounded-2xl p-4 shadow-xl shadow-blue-900/30 border border-white/20">
@@ -226,6 +229,7 @@ export default function DashboardPage() {
             <BodyChart records={bodyRecords} birthDate={childBirthDate} />
           </div>
         )}
+        <BodyCharts records={bodyRecords} />
       </section>
       <section id="section-notes" className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📝 最新の練習ノート</h2><Link href="/notes" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div>{latestNotes.length === 0 ? (<p className="text-sm text-blue-200/60 text-center py-4">まだノートがありません</p>) : (<div className="space-y-3">{latestNotes.map((n) => <NoteCard key={n.id} note={n} />)}</div>)}</section>
       <section className="mb-2"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase mb-3">💾 データ管理</h2><div className="flex gap-3"><button onClick={exportData} className="flex-1 bg-blue-600/80 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm border border-blue-400/30">📤 エクスポート</button><label className="flex-1 bg-slate-600/80 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-sm cursor-pointer text-center border border-slate-400/30">📥 インポート<input type="file" accept=".json" onChange={handleImport} className="hidden" /></label></div></section>
@@ -260,6 +264,10 @@ export default function DashboardPage() {
                         <label className="block text-sm font-semibold text-gray-600 mb-1">⚖️ 体重 (kg)</label>
                         <input type="text" inputMode="decimal" value={bodyWeight} onChange={e => setBodyWeight(e.target.value)} placeholder="例: 18.5" className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
                       </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-1">😴 就寝時刻 <span className="text-gray-400 font-normal text-xs">（任意）</span></label>
+                      <input type="time" value={bodySleep} onChange={e => setBodySleep(e.target.value)} className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
                     </div>
                     <button type="submit" className="w-full bg-purple-600 active:bg-purple-700 text-white font-bold py-3 rounded-xl text-base">💾 記録する</button>
                   </form>
