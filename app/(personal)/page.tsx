@@ -49,7 +49,7 @@ function getMatchResult(event: SchEvent): 'win' | 'loss' | 'draw' | null {
 }
 
 export default function DashboardPage() {
-  const { liftingRecords, addLiftingRecord, practiceNotes, addPracticeNote, milestones, maxCount, newMilestoneAchieved, clearNewMilestone, bodyRecords, addBodyRecord, deleteBodyRecord, childBirthDate, setChildBirthDate, isLoading } = useApp();
+  const { liftingRecords, addLiftingRecord, practiceNotes, addPracticeNote, milestones, maxCount, newMilestoneAchieved, clearNewMilestone, bodyRecords, addBodyRecord, updateBodyRecord, deleteBodyRecord, childBirthDate, setChildBirthDate, isLoading } = useApp();
   const [showLiftingForm, setShowLiftingForm] = useState(false);
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [showBodyForm, setShowBodyForm] = useState(false);
@@ -58,6 +58,12 @@ export default function DashboardPage() {
   const [bodySleep, setBodySleep] = useState("");
   const [bodyDate, setBodyDate] = useState(todayStr());
   const [bodySaved, setBodySaved] = useState(false);
+  type MergeConflict = {
+    existing: BodyRecord;
+    incoming: Omit<BodyRecord, 'id'>;
+    choices: { weight: 'existing'|'new'; height: 'existing'|'new'; sleepTime: 'existing'|'new' };
+  };
+  const [mergeConflict, setMergeConflict] = useState<MergeConflict | null>(null);
   const [birthDateInput, setBirthDateInput] = useState("");
   const [matchEvents, setMatchEvents] = useState<SchEvent[]>([]);
 
@@ -83,19 +89,49 @@ export default function DashboardPage() {
     reader.onload = async (ev) => { try { await importData(ev.target?.result as string); window.location.reload(); } catch { alert('インポートに失敗しました。'); } };
     reader.readAsText(file);
   };
+  const finishBodySave = () => {
+    setBodyWeight(""); setBodyHeight(""); setBodySleep(""); setMergeConflict(null);
+    setBodySaved(true);
+    setTimeout(() => { setBodySaved(false); setShowBodyForm(false); }, 1200);
+  };
   const handleBodySave = (e: React.FormEvent) => {
     e.preventDefault();
     const w = bodyWeight ? parseFloat(bodyWeight.replace(',', '.')) : NaN;
     const h = bodyHeight ? parseFloat(bodyHeight.replace(',', '.')) : NaN;
-    if (isNaN(w) && isNaN(h)) return;
-    const record: Omit<BodyRecord, 'id'> = { date: bodyDate };
-    if (!isNaN(w) && w > 0) record.weight = w;
-    if (!isNaN(h) && h > 0) record.height = h;
-    if (bodySleep) record.sleepTime = bodySleep;
-    addBodyRecord(record);
-    setBodyWeight(""); setBodyHeight(""); setBodySleep("");
-    setBodySaved(true);
-    setTimeout(() => { setBodySaved(false); setShowBodyForm(false); }, 1200);
+    if (isNaN(w) && isNaN(h) && !bodySleep) return;
+    const incoming: Omit<BodyRecord, 'id'> = { date: bodyDate };
+    if (!isNaN(w) && w > 0) incoming.weight = w;
+    if (!isNaN(h) && h > 0) incoming.height = h;
+    if (bodySleep) incoming.sleepTime = bodySleep;
+    const existing = bodyRecords.find(r => r.date === bodyDate);
+    if (existing) {
+      const wConflict = incoming.weight != null && existing.weight != null && incoming.weight !== existing.weight;
+      const hConflict = incoming.height != null && existing.height != null && incoming.height !== existing.height;
+      const sConflict = incoming.sleepTime && existing.sleepTime && incoming.sleepTime !== existing.sleepTime;
+      if (wConflict || hConflict || sConflict) {
+        setMergeConflict({ existing, incoming, choices: { weight: 'new', height: 'new', sleepTime: 'new' } });
+        return;
+      }
+      // no conflict: auto-merge (fill blanks)
+      updateBodyRecord(existing.id, {
+        weight: incoming.weight ?? existing.weight,
+        height: incoming.height ?? existing.height,
+        sleepTime: incoming.sleepTime ?? existing.sleepTime,
+      });
+    } else {
+      addBodyRecord(incoming);
+    }
+    finishBodySave();
+  };
+  const handleMergeApply = () => {
+    if (!mergeConflict) return;
+    const { existing, incoming, choices } = mergeConflict;
+    updateBodyRecord(existing.id, {
+      weight: choices.weight === 'new' ? (incoming.weight ?? existing.weight) : existing.weight,
+      height: choices.height === 'new' ? (incoming.height ?? existing.height) : existing.height,
+      sleepTime: choices.sleepTime === 'new' ? (incoming.sleepTime ?? existing.sleepTime) : existing.sleepTime,
+    });
+    finishBodySave();
   };
   // Match stats
   const finishedMatches = matchEvents.filter(e => getMatchScores(e).myScore != null);
@@ -243,6 +279,55 @@ export default function DashboardPage() {
                 <div className="flex flex-col items-center justify-center py-8 gap-3">
                   <span className="text-5xl">✅</span>
                   <p className="text-lg font-bold text-gray-800">記録しました！</p>
+                </div>
+              ) : mergeConflict ? (
+                /* ── マージ確認UI ── */
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-base font-bold text-gray-800">⚠️ 同じ日のデータがあります</h2>
+                    <button type="button" onClick={() => setMergeConflict(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+                  </div>
+                  <p className="text-xs text-gray-500">{bodyDate} — どちらの値を使うか選んでください。</p>
+                  {(['weight', 'height', 'sleepTime'] as const).map(field => {
+                    const existVal = field === 'weight' ? (mergeConflict.existing.weight != null ? `${mergeConflict.existing.weight}kg` : null)
+                      : field === 'height' ? (mergeConflict.existing.height != null ? `${mergeConflict.existing.height}cm` : null)
+                      : mergeConflict.existing.sleepTime ?? null;
+                    const newVal = field === 'weight' ? (mergeConflict.incoming.weight != null ? `${mergeConflict.incoming.weight}kg` : null)
+                      : field === 'height' ? (mergeConflict.incoming.height != null ? `${mergeConflict.incoming.height}cm` : null)
+                      : mergeConflict.incoming.sleepTime ?? null;
+                    const label = field === 'weight' ? '⚖️ 体重' : field === 'height' ? '📐 身長' : '😴 就寝時刻';
+                    if (!existVal && !newVal) return null;
+                    if (!existVal || !newVal) return (
+                      <div key={field} className="bg-gray-50 rounded-xl px-3 py-2 text-sm text-gray-600">
+                        {label}: {existVal ?? newVal} <span className="text-xs text-gray-400">（自動マージ）</span>
+                      </div>
+                    );
+                    const isConflict = existVal !== newVal;
+                    if (!isConflict) return (
+                      <div key={field} className="bg-gray-50 rounded-xl px-3 py-2 text-sm text-gray-600">
+                        {label}: {existVal} <span className="text-xs text-gray-400">（同じ値）</span>
+                      </div>
+                    );
+                    return (
+                      <div key={field} className="border-2 border-orange-200 rounded-xl p-3 space-y-2">
+                        <p className="text-xs font-bold text-orange-600">{label} — 値が異なります</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setMergeConflict(c => c && ({ ...c, choices: { ...c.choices, [field]: 'existing' } }))}
+                            className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${mergeConflict.choices[field] === 'existing' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600'}`}>
+                            既存: {existVal}
+                          </button>
+                          <button onClick={() => setMergeConflict(c => c && ({ ...c, choices: { ...c.choices, [field]: 'new' } }))}
+                            className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${mergeConflict.choices[field] === 'new' ? 'bg-purple-600 text-white border-purple-600' : 'border-gray-200 text-gray-600'}`}>
+                            新: {newVal}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={handleMergeApply} className="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl text-sm">✅ マージして保存</button>
+                    <button onClick={() => setMergeConflict(null)} className="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl text-sm">キャンセル</button>
+                  </div>
                 </div>
               ) : (
                 <>

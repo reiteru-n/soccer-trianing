@@ -17,6 +17,7 @@ interface AppContextType {
   toggleImprovementItem: (noteId: string, index: number) => void;
   bodyRecords: BodyRecord[];
   addBodyRecord: (record: Omit<BodyRecord, 'id'>) => void;
+  updateBodyRecord: (id: string, data: Partial<Omit<BodyRecord, 'id'>>) => void;
   deleteBodyRecord: (id: string) => void;
   trainingMenu: TrainingMenuItem[];
   addTrainingMenuItem: (item: Omit<TrainingMenuItem, 'id' | 'order'>) => void;
@@ -147,6 +148,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     saveBodyRecords(updated);
   }, [bodyRecords]);
 
+  const updateBodyRecord = useCallback((id: string, data: Partial<Omit<BodyRecord, 'id'>>) => {
+    const updated = bodyRecords.map((r) => r.id === id ? { ...r, ...data } : r);
+    setBodyRecords(updated);
+    saveBodyRecords(updated);
+  }, [bodyRecords]);
+
   const deleteBodyRecord = useCallback((id: string) => {
     const updated = bodyRecords.filter((r) => r.id !== id);
     setBodyRecords(updated);
@@ -235,7 +242,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         liftingRecords, addLiftingRecord, updateLiftingRecord, deleteLiftingRecord,
         practiceNotes, addPracticeNote, updatePracticeNote, deletePracticeNote, toggleImprovementItem,
-        bodyRecords, addBodyRecord, deleteBodyRecord,
+        bodyRecords, addBodyRecord, updateBodyRecord, deleteBodyRecord,
         trainingMenu, addTrainingMenuItem, updateTrainingMenuItem, deleteTrainingMenuItem, reorderTrainingMenu,
         trainingLogs, toggleTrainingLogItem,
         milestones, maxCount, newMilestoneAchieved, clearNewMilestone,
