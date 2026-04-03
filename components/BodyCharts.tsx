@@ -94,16 +94,23 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
   const sleepSeries = sorted.filter(r => r.sleepTime);
   const sleepCombinedData = useMemo(() => {
     if (!hasAge) return null;
-    // 身長：全記録
-    const hLine = sorted.filter(r => r.height != null).map(r => ({
-      x: ageYears(birthDate, r.date), y: r.height!,
-    }));
-    // 就寝時刻：就寝記録がある日 + その日の補完身長
-    const sBars = sleepSeries.map(r => ({
-      x: ageYears(birthDate, r.date),
-      y: sleepToDecimal(r.sleepTime!),
-    }));
-    return { hLine, sBars };
+    const todayStr = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/');
+    const oneYearAgoTs = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    const oneYearAgoStr = new Date(oneYearAgoTs).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/');
+    const xMax = ageYears(birthDate, todayStr);
+    const xMin = ageYears(birthDate, oneYearAgoStr);
+    // 身長：1年前〜今日の範囲のみ
+    const hLine = sorted
+      .filter(r => r.height != null && dateToTs(r.date) >= oneYearAgoTs - 1)
+      .map(r => ({ x: ageYears(birthDate, r.date), y: r.height! }));
+    // 就寝時刻：1年前〜今日の範囲のみ
+    const sBars = sleepSeries
+      .filter(r => dateToTs(r.date) >= oneYearAgoTs - 1)
+      .map(r => ({
+        x: ageYears(birthDate, r.date),
+        y: sleepToDecimal(r.sleepTime!),
+      }));
+    return { hLine, sBars, xMin, xMax };
   }, [sorted, sleepSeries, birthDate, hasAge]);
 
   const showTimeSeries = hasAge && (heightAgePoints.length > 1 || weightAgePoints.length > 1);
@@ -296,6 +303,8 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                   scales: {
                     x: {
                       type: 'linear',
+                      min: sleepCombinedData.xMin,
+                      max: sleepCombinedData.xMax,
                       ticks: { ...TICK, callback: (v: number | string) => `${(Number(v)).toFixed(1)}歳` },
                       grid: { color: GRID },
                     },
