@@ -271,11 +271,11 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
           <div className={`${CHART_BG} rounded-2xl p-3`}>
             <p className="text-[9px] text-slate-500 mb-1">
               <span style={{ color: COLOR_H }}>━</span> 身長 (左軸) &nbsp;
-              <span style={{ color: 'rgba(129,140,248,1)' }}>▊</span> 就寝時刻 (右軸)
+              <span style={{ color: 'rgba(129,140,248,1)' }}>●━</span> 就寝時刻 (右軸・早い=上)
             </p>
             <div style={{ height: 175 }}>
               <ReactChart
-                type="bar"
+                type="line"
                 data={{
                   datasets: [
                     {
@@ -294,13 +294,14 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                       type: 'line' as const,
                       label: '就寝時刻',
                       data: sleepCombinedData.sBars,
-                      borderColor: 'rgba(129,140,248,0.7)',
+                      borderColor: 'rgba(129,140,248,0.8)',
                       backgroundColor: 'rgba(129,140,248,0.9)',
                       yAxisID: 'yS',
-                      showLine: false,
-                      pointRadius: 5,
-                      pointHoverRadius: 7,
-                      pointStyle: 'circle',
+                      showLine: true,
+                      tension: 0.3,
+                      pointRadius: 4,
+                      pointHoverRadius: 6,
+                      borderWidth: 2,
                       order: 2,
                     },
                   ],
@@ -313,8 +314,8 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                     legend: { display: false },
                     tooltip: {
                       callbacks: {
-                        title: (items: import('chart.js').TooltipItem<'bar'>[]) => `${(items[0]?.parsed.x ?? 0).toFixed(1)}歳`,
-                        label: (ctx: import('chart.js').TooltipItem<'bar'>) => ctx.datasetIndex === 0
+                        title: (items: import('chart.js').TooltipItem<'line'>[]) => `${(items[0]?.parsed.x ?? 0).toFixed(1)}歳`,
+                        label: (ctx: import('chart.js').TooltipItem<'line'>) => ctx.datasetIndex === 0
                           ? `身長: ${ctx.parsed.y}cm`
                           : `就寝: ${decimalToTime(ctx.parsed.y ?? 0)}`,
                       },
@@ -338,9 +339,10 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                     },
                     yS: {
                       type: 'linear', position: 'right',
+                      reverse: true,
                       min: sleepCombinedData.ySMin,
                       max: sleepCombinedData.ySMax,
-                      ticks: { ...TICK, maxTicksLimit: 4, callback: (v: number | string) => decimalToTime(Number(v)) },
+                      ticks: { ...TICK, maxTicksLimit: 5, callback: (v: number | string) => decimalToTime(Number(v)) },
                       grid: { drawOnChartArea: false },
                       title: { display: true, text: '就寝時刻', color: 'rgba(129,140,248,1)', font: { size: 9 } },
                     },
