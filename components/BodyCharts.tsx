@@ -94,23 +94,39 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
   const sleepSeries = sorted.filter(r => r.sleepTime);
   const sleepCombinedData = useMemo(() => {
     if (!hasAge) return null;
-    const todayStr = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/');
-    const oneYearAgoTs = Date.now() - 365 * 24 * 60 * 60 * 1000;
-    const oneYearAgoStr = new Date(oneYearAgoTs).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/');
+    const nowTs = Date.now();
+    const periodMs = 1.5 * 365 * 24 * 60 * 60 * 1000;
+    const periodStartTs = nowTs - periodMs;
+    const todayStr = new Date(nowTs).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/');
+    const periodStartStr = new Date(periodStartTs).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/');
     const xMax = ageYears(birthDate, todayStr);
-    const xMin = ageYears(birthDate, oneYearAgoStr);
-    // 身長：1年前〜今日の範囲のみ
+    const xMin = ageYears(birthDate, periodStartStr);
+
+    // 身長：全記録を含める（左端でグラフが途切れて見えないよう期間外も含む）
     const hLine = sorted
-      .filter(r => r.height != null && dateToTs(r.date) >= oneYearAgoTs - 1)
+      .filter(r => r.height != null)
       .map(r => ({ x: ageYears(birthDate, r.date), y: r.height! }));
-    // 就寝時刻：1年前〜今日の範囲のみ
+
+    // 就寝時刻：期間内のみ
     const sBars = sleepSeries
-      .filter(r => dateToTs(r.date) >= oneYearAgoTs - 1)
+      .filter(r => dateToTs(r.date) >= periodStartTs - 1)
       .map(r => ({
         x: ageYears(birthDate, r.date),
         y: sleepToDecimal(r.sleepTime!),
       }));
-    return { hLine, sBars, xMin, xMax };
+
+    // 期間内のデータから Y 軸レンジを計算
+    const hInPeriod = sorted
+      .filter(r => r.height != null && dateToTs(r.date) >= periodStartTs - 1)
+      .map(r => r.height!);
+    const yHMin = hInPeriod.length > 0 ? Math.min(...hInPeriod) - 5 : undefined;
+    const yHMax = hInPeriod.length > 0 ? Math.max(...hInPeriod) + 5 : undefined;
+
+    const sVals = sBars.map(r => r.y);
+    const ySMin = sVals.length > 0 ? Math.min(...sVals) - 0.5 : undefined;
+    const ySMax = sVals.length > 0 ? Math.max(...sVals) + 0.5 : undefined;
+
+    return { hLine, sBars, xMin, xMax, yHMin, yHMax, ySMin, ySMax };
   }, [sorted, sleepSeries, birthDate, hasAge]);
 
   const showTimeSeries = hasAge && (heightAgePoints.length > 1 || weightAgePoints.length > 1);
@@ -310,12 +326,16 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                     },
                     yH: {
                       type: 'linear', position: 'left',
+                      min: sleepCombinedData.yHMin,
+                      max: sleepCombinedData.yHMax,
                       ticks: { ...TICK, maxTicksLimit: 4, callback: (v: number | string) => `${v}cm` },
                       grid: { color: GRID },
                       title: { display: true, text: '身長 (cm)', color: 'rgb(234,88,12)', font: { size: 9 } },
                     },
                     yS: {
                       type: 'linear', position: 'right',
+                      min: sleepCombinedData.ySMin,
+                      max: sleepCombinedData.ySMax,
                       ticks: { ...TICK, maxTicksLimit: 4, callback: (v: number | string) => decimalToTime(Number(v)) },
                       grid: { drawOnChartArea: false },
                       title: { display: true, text: '就寝時刻', color: 'rgba(129,140,248,1)', font: { size: 9 } },
