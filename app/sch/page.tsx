@@ -1093,7 +1093,7 @@ function EventCard({
                   </div>
                 </div>
               )}
-              {m.memo && <p className="text-xs text-slate-300 italic">💬 {m.memo}</p>}
+              {m.memo && <p className="text-xs text-slate-300 italic whitespace-pre-wrap">💬 {m.memo}</p>}
               {/* 動画URL */}
               {m.videoUrl && (
                 <a href={m.videoUrl} target="_blank" rel="noopener noreferrer"
@@ -1105,7 +1105,7 @@ function EventCard({
           ))}
 
           {/* Note */}
-          {event.note && <p className="text-xs text-slate-400">📝 {event.note}</p>}
+          {event.note && <p className="text-xs text-slate-400 whitespace-pre-wrap">📝 {event.note}</p>}
 
           {/* Google Maps */}
           {(event.type === 'camp' || event.type === 'expedition') && event.mapQuery && (
@@ -2290,7 +2290,7 @@ function EventSummaryCard({ event }: { event: SchEvent }) {
         {event.location && <p className="text-xs text-slate-400">📍 {event.location}</p>}
         {event.meetingTime && <p className="text-xs text-slate-400">🕐 集合 {event.meetingTime}{event.meetingPlace ? `　${event.meetingPlace}` : ''}</p>}
         {event.startTime && <p className="text-xs text-slate-400">⏰ {event.startTime} 開始</p>}
-        {event.note && <p className="text-xs text-slate-500 mt-0.5">{event.note}</p>}
+        {event.note && <p className="text-xs text-slate-500 mt-0.5 whitespace-pre-wrap">{event.note}</p>}
       </div>
     </div>
   );
