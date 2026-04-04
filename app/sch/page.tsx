@@ -375,7 +375,7 @@ function MatchEntry({
           )}
 
           {/* メモ */}
-          <div><label className={labelCls}>💬 一言メモ</label><input type="text" value={value.memo} onChange={e => upd({ memo: e.target.value })} placeholder="試合の感想・特記事項" className={inputCls} /></div>
+          <div><label className={labelCls}>💬 メモ</label><textarea value={value.memo} onChange={e => upd({ memo: e.target.value })} placeholder="試合の感想・特記事項など" rows={3} className={inputCls + ' resize-none'} /></div>
 
           {/* 動画URL */}
           <div><label className={labelCls}>🎬 動画URL（BAND / YouTube など）</label><input type="url" value={value.videoUrl} onChange={e => upd({ videoUrl: e.target.value })} placeholder="https://..." className={inputCls} /></div>
@@ -773,7 +773,7 @@ function EventForm({
               <p className="text-[10px] text-slate-500 mt-1">入力すると「次の予定」に天気予報が表示されます</p>
             </div>
             <div><label className={labelCls}>📋 イベント名{type === 'match' ? '・大会名' : ''}</label><input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={type === 'match' ? '例: 神奈川カップ2026' : '例: 通常練習'} className={inputCls} /></div>
-            <div><label className={labelCls}>📝 メモ</label><input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="持ち物・備考など" className={inputCls} /></div>
+            <div><label className={labelCls}>📝 メモ</label><textarea value={note} onChange={e => setNote(e.target.value)} placeholder="持ち物・備考など" rows={3} className={inputCls + ' resize-none'} /></div>
 
             {/* Meeting info (match / camp / other) */}
             {(type === 'match' || type === 'camp' || type === 'other') && (
