@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useApp } from '@/lib/context';
 import SummaryCards from '@/components/SummaryCards';
 import MilestoneSection from '@/components/MilestoneSection';
@@ -10,7 +10,7 @@ import NoteCard from '@/components/NoteCard';
 import LiftingForm from '@/components/LiftingForm';
 import NoteForm from '@/components/NoteForm';
 import ConfettiEffect from '@/components/ConfettiEffect';
-import { BodyRecord, SchEvent } from '@/lib/types';
+import { BodyRecord } from '@/lib/types';
 import { exportData, importData } from '@/lib/storage';
 import BodyChart from '@/components/BodyChart';
 import BodyCharts from '@/components/BodyCharts';
@@ -20,33 +20,6 @@ function todayStr() {
   return d.getFullYear()+"/"+(String(d.getMonth()+1).padStart(2,"0"))+"/"+(String(d.getDate()).padStart(2,"0"));
 }
 
-function getOpponentDisplay(e: SchEvent): string {
-  if (e.matches && e.matches.length > 0) {
-    const names = e.matches.map(m => m.opponentName).filter(Boolean) as string[];
-    if (names.length > 0) return `vs ${names.join('・')}`;
-  }
-  return e.opponentName ? `vs ${e.opponentName}` : '相手未定';
-}
-
-function getMatchScores(e: SchEvent): { myScore: number | undefined; oppScore: number | undefined } {
-  const m = (e.matches && e.matches.length > 0) ? e.matches[0] : e;
-  const homeScore = m.homeScore;
-  const awayScore = m.awayScore;
-  const isHome = (m.isHome ?? e.isHome) !== false;
-  if (homeScore == null || awayScore == null) return { myScore: undefined, oppScore: undefined };
-  return {
-    myScore: isHome ? homeScore : awayScore,
-    oppScore: isHome ? awayScore : homeScore,
-  };
-}
-
-function getMatchResult(event: SchEvent): 'win' | 'loss' | 'draw' | null {
-  const { myScore, oppScore } = getMatchScores(event);
-  if (myScore == null || oppScore == null) return null;
-  if (myScore > oppScore) return 'win';
-  if (myScore < oppScore) return 'loss';
-  return 'draw';
-}
 
 export default function DashboardPage() {
   const { liftingRecords, addLiftingRecord, practiceNotes, addPracticeNote, milestones, maxCount, newMilestoneAchieved, clearNewMilestone, bodyRecords, addBodyRecord, updateBodyRecord, deleteBodyRecord, childBirthDate, setChildBirthDate, isLoading } = useApp();
@@ -65,18 +38,7 @@ export default function DashboardPage() {
   };
   const [mergeConflict, setMergeConflict] = useState<MergeConflict | null>(null);
   const [birthDateInput, setBirthDateInput] = useState("");
-  const [matchEvents, setMatchEvents] = useState<SchEvent[]>([]);
-
-  useEffect(() => {
-    fetch('/api/sch')
-      .then(r => r.json())
-      .then(data => {
-        const matches: SchEvent[] = (data.events ?? []).filter((e: SchEvent) => e.type === 'match');
-        setMatchEvents(matches.sort((a: SchEvent, b: SchEvent) => b.date.localeCompare(a.date)));
-      })
-      .catch(() => {});
-  }, []);
-  const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
+const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
   const sortedBody = [...bodyRecords].sort((a, b) => b.date.localeCompare(a.date));
   const latestH = sortedBody.find(r => r.height != null);
   const latestW = sortedBody.find(r => r.weight != null);
@@ -133,16 +95,7 @@ export default function DashboardPage() {
     });
     finishBodySave();
   };
-  // Match stats
-  const finishedMatches = matchEvents.filter(e => getMatchScores(e).myScore != null);
-  const wins = finishedMatches.filter(e => getMatchResult(e) === 'win').length;
-  const draws = finishedMatches.filter(e => getMatchResult(e) === 'draw').length;
-  const losses = finishedMatches.filter(e => getMatchResult(e) === 'loss').length;
-  const goalsFor = finishedMatches.reduce((s, e) => s + (getMatchScores(e).myScore ?? 0), 0);
-  const goalsAgainst = finishedMatches.reduce((s, e) => s + (getMatchScores(e).oppScore ?? 0), 0);
-  const recentMatches = matchEvents.slice(0, 5);
-
-  if (isLoading) return (<div className="flex items-center justify-center py-24 text-gray-400"><div className="text-center"><p className="text-4xl mb-3">⚽</p><p className="text-sm">読み込み中...</p></div></div>);
+if (isLoading) return (<div className="flex items-center justify-center py-24 text-gray-400"><div className="text-center"><p className="text-4xl mb-3">⚽</p><p className="text-sm">読み込み中...</p></div></div>);
   return (
     <>
       <ConfettiEffect trigger={!!newMilestoneAchieved} onDone={clearNewMilestone} />
@@ -175,60 +128,6 @@ export default function DashboardPage() {
           </button>
         </div>
       </section>
-      {matchEvents.length > 0 && (
-        <section id="section-matches" className="mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">🏆 SCH チーム戦績</h2>
-            <Link href="/sch" className="text-xs text-blue-300 font-medium">詳細 →</Link>
-          </div>
-          {/* Summary row */}
-          <div className="grid grid-cols-5 gap-1.5 mb-3">
-            <div className="bg-slate-800/80 rounded-xl p-2 text-center border border-white/10">
-              <p className="text-[10px] text-slate-400">試合</p>
-              <p className="text-lg font-extrabold text-white">{matchEvents.length}</p>
-            </div>
-            <div className="bg-blue-900/60 rounded-xl p-2 text-center border border-blue-500/30">
-              <p className="text-[10px] text-blue-300">勝</p>
-              <p className="text-lg font-extrabold text-blue-200">{wins}</p>
-            </div>
-            <div className="bg-slate-700/60 rounded-xl p-2 text-center border border-slate-500/30">
-              <p className="text-[10px] text-slate-400">分</p>
-              <p className="text-lg font-extrabold text-slate-300">{draws}</p>
-            </div>
-            <div className="bg-red-900/50 rounded-xl p-2 text-center border border-red-500/30">
-              <p className="text-[10px] text-red-300">負</p>
-              <p className="text-lg font-extrabold text-red-300">{losses}</p>
-            </div>
-            <div className="bg-emerald-900/40 rounded-xl p-2 text-center border border-emerald-500/20">
-              <p className="text-[9px] text-emerald-400 leading-tight">得点/<br/>失点</p>
-              <p className="text-sm font-extrabold text-emerald-300 leading-tight">{goalsFor}<span className="text-[10px] font-normal text-slate-400">/{goalsAgainst}</span></p>
-            </div>
-          </div>
-          {/* Recent matches */}
-          <div className="bg-slate-800/80 rounded-2xl overflow-hidden border border-white/10 shadow-lg">
-            {recentMatches.map((e, i) => {
-              const result = getMatchResult(e);
-              const { myScore, oppScore } = getMatchScores(e);
-              const resultColor = result === 'win' ? 'text-blue-300' : result === 'loss' ? 'text-red-400' : 'text-slate-400';
-              const resultLabel = result === 'win' ? '勝' : result === 'loss' ? '負' : result === 'draw' ? '分' : '-';
-              return (
-                <div key={e.id} className={`flex items-center gap-2 px-3 py-2 ${i < recentMatches.length - 1 ? 'border-b border-white/5' : ''}`}>
-                  <span className="text-[10px] text-slate-500 w-12 shrink-0">{e.date.slice(5).replace('/', '/')}</span>
-                  <span className="text-xs text-slate-300 flex-1 truncate">{getOpponentDisplay(e)}</span>
-                  {result != null ? (
-                    <>
-                      <span className={`text-sm font-bold ${resultColor}`}>{myScore} - {oppScore}</span>
-                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${result === 'win' ? 'bg-blue-600/30 text-blue-300' : result === 'loss' ? 'bg-red-600/30 text-red-400' : 'bg-slate-600/40 text-slate-400'}`}>{resultLabel}</span>
-                    </>
-                  ) : (
-                    <span className="text-xs text-slate-500">結果なし</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
       <section className="mb-6">
         <h2 className="text-sm font-bold text-blue-200 mb-3 tracking-wide uppercase">✏️ 今日の記録を追加</h2>
         <div className="flex gap-2">
