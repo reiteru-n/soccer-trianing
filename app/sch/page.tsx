@@ -226,7 +226,7 @@ function MatchEntry({
 
   const inputCls = 'w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500';
   const labelCls = 'block text-xs font-semibold text-slate-400 mb-1';
-  const hasDetail = !!(value.scorers.length || value.assists.length || value.hasPK || value.hasExtraTime || value.htHome || value.htAway || value.memo || value.videoUrl);
+  const hasDetail = !!(value.scorers.length || value.assists.length || value.hasPK || value.hasExtraTime || value.htHome || value.htAway || value.memo);
 
   return (
     <div className="border border-slate-600/50 rounded-xl p-3 space-y-3 bg-slate-800/30">
@@ -262,9 +262,9 @@ function MatchEntry({
       <div>
         <label className={labelCls}>最終スコア（SCH − 相手）</label>
         <div className="flex items-center gap-3">
-          <input type="number" min="0" value={value.homeScore} onChange={e => upd({ homeScore: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
+          <input type="text" inputMode="numeric" pattern="[0-9]*" value={value.homeScore} onChange={e => upd({ homeScore: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
           <span className="text-slate-400 font-bold text-lg">−</span>
-          <input type="number" min="0" value={value.awayScore} onChange={e => upd({ awayScore: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
+          <input type="text" inputMode="numeric" pattern="[0-9]*" value={value.awayScore} onChange={e => upd({ awayScore: e.target.value })} placeholder="-" className="w-16 rounded-lg border border-slate-600 bg-slate-900 text-white px-2 py-2 text-lg font-bold text-center focus:border-red-400 focus:outline-none" />
         </div>
       </div>
 
@@ -378,11 +378,11 @@ function MatchEntry({
 
           {/* メモ */}
           <div><label className={labelCls}>💬 メモ</label><textarea value={value.memo} onChange={e => upd({ memo: e.target.value })} placeholder="試合の感想・特記事項など" rows={3} className={inputCls + ' resize-none'} /></div>
-
-          {/* 動画URL */}
-          <div><label className={labelCls}>🎬 動画URL（BAND / YouTube など）</label><input type="url" value={value.videoUrl} onChange={e => upd({ videoUrl: e.target.value })} placeholder="https://..." className={inputCls} /></div>
         </div>
       </details>
+
+      {/* 動画URL — 常に表示 */}
+      <div><label className={labelCls}>🎬 動画URL（BAND / YouTube など）</label><input type="url" value={value.videoUrl} onChange={e => upd({ videoUrl: e.target.value })} placeholder="https://..." className={inputCls} /></div>
     </div>
   );
 }
@@ -727,8 +727,8 @@ function EventForm({
   const labelCls = 'block text-xs font-semibold text-slate-400 mb-1';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg border border-white/10 shadow-2xl max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg border border-white/10 shadow-2xl max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}>
         <div className="px-5 pt-5 pb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-white">{initialEvent ? '予定を編集' : '予定を追加'}</h3>
@@ -894,7 +894,11 @@ function EventForm({
                 })}
 
                 {/* 試合追加ボタン */}
-                <button type="button" onClick={() => setMatches(prev => [...prev, emptyMatchState()])}
+                <button type="button" onClick={() => setMatches(prev => {
+                    const m = emptyMatchState();
+                    if (matchType === 'トレマ' && prev.length > 0) m.opponentName = prev[prev.length - 1].opponentName;
+                    return [...prev, m];
+                  })}
                   className="w-full text-xs py-2.5 rounded-xl border border-dashed border-slate-500 text-slate-400 hover:text-white hover:border-slate-400 transition-colors">
                   + 試合を追加
                 </button>
@@ -1210,8 +1214,14 @@ function SchCalendar({ events, today, onSelectDate }: {
 
   const firstDow = new Date(viewYear, viewMonth - 1, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+  const prevMonthDays = new Date(viewYear, viewMonth - 1, 0).getDate();
   const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
   while (cells.length % 7 !== 0) cells.push(null);
+  // prev/next month actual dates for faded display
+  const prevM = viewMonth === 1 ? 12 : viewMonth - 1;
+  const prevY = viewMonth === 1 ? viewYear - 1 : viewYear;
+  const nextM = viewMonth === 12 ? 1 : viewMonth + 1;
+  const nextY = viewMonth === 12 ? viewYear + 1 : viewYear;
 
   return (
     <div className="bg-slate-800/60 border border-white/10 rounded-xl p-3">
@@ -1227,7 +1237,29 @@ function SchCalendar({ events, today, onSelectDate }: {
       </div>
       <div className="grid grid-cols-7">
         {cells.map((day, i) => {
-          if (!day) return <div key={i} className="h-12" />;
+          if (!day) {
+            // prev / next month faded cell
+            const isNextMonth = i >= firstDow + daysInMonth;
+            const fadedDay = isNextMonth ? i - firstDow - daysInMonth + 1 : prevMonthDays - firstDow + 1 + i;
+            const fadedY = isNextMonth ? nextY : prevY;
+            const fadedM = isNextMonth ? nextM : prevM;
+            const fadedStr = `${fadedY}/${String(fadedM).padStart(2,'0')}/${String(fadedDay).padStart(2,'0')}`;
+            const fadedDots = dotMap[fadedStr] ?? [];
+            const fadedDow = i % 7;
+            return (
+              <button key={i} onClick={() => onSelectDate(fadedStr)}
+                className="relative flex flex-col items-center pt-1 h-12 rounded-lg hover:bg-slate-700/30 transition-colors opacity-35">
+                <span className={`text-xs font-semibold leading-none ${fadedDow === 0 ? 'text-red-400' : fadedDow === 6 ? 'text-blue-400' : 'text-slate-400'}`}>{fadedDay}</span>
+                {fadedDots.length > 0 && (
+                  <div className="flex gap-0.5 mt-1">
+                    {fadedDots.slice(0, 2).map((e, j) => (
+                      <span key={j} className={`w-1.5 h-1.5 rounded-full ${EVENT_DOT[e.type] ?? 'bg-slate-400'}`} />
+                    ))}
+                  </div>
+                )}
+              </button>
+            );
+          }
           const dateStr = `${viewYear}/${String(viewMonth).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
           const dots = dotMap[dateStr] ?? [];
           const spanning = spanMap[dateStr] ?? [];
@@ -1294,6 +1326,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
   const [editing, setEditing] = useState<SchEvent | null>(null);
   const [calendarDate, setCalendarDate] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(openDetailId ?? null);
+  const [popupDay, setPopupDay] = useState<{ date: string; events: SchEvent[] } | null>(null);
   const today = todayStr();
 
   useEffect(() => { if (openDetailId) setDetailId(openDetailId); }, [openDetailId]);
@@ -1309,6 +1342,18 @@ function EventSection({ events, members, onSave, openDetailId }: {
   };
   const openEdit = (ev: SchEvent) => { setEditing(ev); setShowForm(true); };
   const openDetail = (ev: SchEvent) => { setDetailId(ev.id); setTimeout(() => { document.getElementById(`event-card-${ev.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50); };
+  const closePopup = () => setPopupDay(null);
+  const scrollToEvent = (ev: SchEvent) => {
+    closePopup();
+    if (isEventPast(ev)) {
+      const el = document.getElementById('past-events-details') as HTMLDetailsElement | null;
+      if (el) el.open = true;
+    }
+    setTimeout(() => {
+      const card = document.getElementById(`event-card-${ev.id}`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+  };
 
   const pastWeatherAreas = useMemo(() => {
     const seen = new Set<string>();
@@ -1391,16 +1436,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
             e.date === date || (e.endDate && e.date <= date && e.endDate >= date)
           );
           if (eventsOnDate.length > 0) {
-            const firstEv = eventsOnDate.sort((a, b) => a.date.localeCompare(b.date))[0];
-            const isUpcoming = !isEventPast(firstEv);
-            if (!isUpcoming) {
-              const pastDetails = document.getElementById('past-events-details') as HTMLDetailsElement | null;
-              if (pastDetails) pastDetails.open = true;
-            }
-            setTimeout(() => {
-              const el = document.getElementById(`event-card-${firstEv.id}`);
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 50);
+            setPopupDay({ date, events: eventsOnDate.sort((a, b) => a.date.localeCompare(b.date)) });
           } else {
             setCalendarDate(date);
             setEditing(null);
@@ -1449,6 +1485,60 @@ function EventSection({ events, members, onSave, openDetailId }: {
           onSave={handleSave}
           onClose={() => { setShowForm(false); setEditing(null); setCalendarDate(null); }}
         />
+      )}
+
+      {/* ── カレンダー日別ポップアップ ── */}
+      {popupDay && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-end"
+          onClick={e => { if (e.target === e.currentTarget) closePopup(); }}
+        >
+          <div
+            className="w-full max-w-lg mx-auto bg-slate-800 rounded-t-2xl shadow-2xl"
+            onPointerDown={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-slate-700">
+              <h3 className="text-sm font-bold text-white">
+                {popupDay.date.replace(/(\d{4})\/(\d{2})\/(\d{2})/, '$1年$2月$3日')}（{dayLabel(popupDay.date)}）の予定
+              </h3>
+              <button onClick={closePopup} className="text-slate-400 hover:text-white w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-700 text-lg leading-none">×</button>
+            </div>
+            {/* Event list */}
+            <div className="px-4 py-3 space-y-2 max-h-72 overflow-y-auto">
+              {popupDay.events.map(ev => {
+                const cfg = tc(ev.type);
+                const title = ev.label || (ev.type === 'match' && ev.opponentName ? `vs ${ev.opponentName}` : cfg.label);
+                const time = ev.startTime ? `${ev.startTime}${ev.endTime ? '〜' + ev.endTime : ''}` : null;
+                return (
+                  <button
+                    key={ev.id}
+                    onClick={() => scrollToEvent(ev)}
+                    className="w-full text-left flex items-center gap-3 p-3 rounded-xl bg-slate-700/60 hover:bg-slate-600/60 active:bg-slate-600 transition-colors"
+                  >
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>{cfg.icon} {cfg.label}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-semibold truncate">{title}</p>
+                      {(time || ev.location) && (
+                        <p className="text-xs text-slate-400 truncate">{[time, ev.location].filter(Boolean).join(' · ')}</p>
+                      )}
+                    </div>
+                    <span className="text-slate-500 text-sm shrink-0">›</span>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Add event shortcut */}
+            <div className="px-4 py-3 border-t border-slate-700">
+              <button
+                onClick={() => { closePopup(); setCalendarDate(popupDay.date); setEditing(null); setShowForm(true); }}
+                className="w-full text-center text-xs text-blue-400 hover:text-blue-300 py-1"
+              >
+                ＋ この日に予定を追加
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
