@@ -104,7 +104,7 @@ export interface SchSchedule {
 }
 
 // Unified event type (replaces SchSchedule + SchMatch)
-export type SchEventType = 'practice' | 'match' | 'camp' | 'expedition' | 'other';
+export type SchEventType = 'practice' | 'match' | 'camp' | 'expedition' | 'other' | 'off';
 export type SchMatchType = 'トレマ' | '公式戦' | 'CUP戦' | 'その他';
 export type SchMatchFormat = 'tournament' | 'league_tournament' | 'friendly';
 

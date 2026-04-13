@@ -52,6 +52,7 @@ const TYPE_CFG: Record<string, TypeCfg> = {
   camp:       { label: '合宿/遠征', icon: '🏕️', badge: 'bg-amber-600/40 text-amber-300', border: 'border-amber-500/30', bg: 'bg-amber-900/20' },
   expedition: { label: '合宿/遠征', icon: '🏕️', badge: 'bg-amber-600/40 text-amber-300', border: 'border-amber-500/30', bg: 'bg-amber-900/20' },
   other:      { label: 'その他', icon: '📌', badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
+  off:        { label: 'OFF',   icon: '🏖️', badge: 'bg-sky-600/40 text-sky-300',      border: 'border-sky-500/30',    bg: 'bg-sky-900/20'    },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
 // WMO天気コード (Open-Meteo) + 降水確率で判定
@@ -83,6 +84,7 @@ const EVENT_DOT: Record<string, string> = {
   match: 'bg-red-400',
   camp: 'bg-amber-400', expedition: 'bg-amber-400',
   other: 'bg-slate-400',
+  off:   'bg-sky-400',
 };
 
 const MATCH_TYPES: SchMatchType[] = ['公式戦', 'CUP戦', 'トレマ', 'その他'];
@@ -697,16 +699,16 @@ function EventForm({
     const base: SchEvent = {
       id: initialEvent?.id ?? generateId(),
       date, type,
-      endDate: (type === 'match' || type === 'camp') && endDate ? endDate : undefined,
-      startTime: startTime || undefined,
-      endTime: endTime || undefined,
-      location: location || undefined,
-      weatherArea: weatherArea.trim() || undefined,
-      label: label || undefined,
+      endDate: (type === 'match' || type === 'camp' || type === 'off') && endDate ? endDate : undefined,
+      startTime: type !== 'off' && startTime ? startTime : undefined,
+      endTime: type !== 'off' && endTime ? endTime : undefined,
+      location: type !== 'off' && location ? location : undefined,
+      weatherArea: type !== 'off' && weatherArea.trim() ? weatherArea.trim() : undefined,
+      label: type !== 'off' && label ? label : undefined,
       note: note || undefined,
       meetingTime: (type === 'match' || type === 'camp' || type === 'other') && meetingTime ? meetingTime : undefined,
       meetingPlace: (type === 'match' || type === 'camp' || type === 'other') && meetingPlace ? meetingPlace : undefined,
-      maxParkingSlots: parkingAvailable ? (parkingUnlimited ? -1 : (maxParkingSlots !== DEFAULT_MAX_SLOTS ? maxParkingSlots : undefined)) : 0,
+      maxParkingSlots: type !== 'off' ? (parkingAvailable ? (parkingUnlimited ? -1 : (maxParkingSlots !== DEFAULT_MAX_SLOTS ? maxParkingSlots : undefined)) : 0) : undefined,
     };
     if (type === 'match') {
       Object.assign(base, {
@@ -738,7 +740,7 @@ function EventForm({
             <div>
               <label className={labelCls}>種別</label>
               <div className="flex flex-wrap gap-1.5">
-                {(['practice','match','camp','other'] as SchEventType[]).map(t => (
+                {(['practice','match','camp','other','off'] as SchEventType[]).map(t => (
                   <button key={t} type="button" onClick={() => setType(t)}
                     className={`text-xs px-3 py-1.5 rounded-lg font-semibold border transition-colors ${type === t ? `${tc(t).badge} border-transparent` : 'text-slate-400 border-slate-600 hover:border-slate-500'}`}>
                     {tc(t).icon} {tc(t).label}
@@ -753,27 +755,31 @@ function EventForm({
                 <label className={labelCls}>📅 開始日</label>
                 <input type="date" value={toInputDate(date)} onChange={e => setDate(fromInputDate(e.target.value))} required className={inputCls} />
               </div>
-              {(type === 'match' || type === 'camp') && (
+              {(type === 'match' || type === 'camp' || type === 'off') && (
                 <div className="flex-1">
-                  <label className={labelCls}>📅 終了日（複数日）</label>
+                  <label className={labelCls}>📅 終了日（期間の場合）</label>
                   <input type="date" value={endDate ? toInputDate(endDate) : ''} onChange={e => setEndDate(e.target.value ? fromInputDate(e.target.value) : '')} className={inputCls} />
                 </div>
               )}
             </div>
-            <div className="flex gap-2">
-              <div className="flex-1"><label className={labelCls}>⏰ 開始</label><input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className={inputCls} /></div>
-              <div className="flex-1"><label className={labelCls}>⏰ 終了</label><input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className={inputCls} /></div>
-            </div>
+            {type !== 'off' && (
+              <div className="flex gap-2">
+                <div className="flex-1"><label className={labelCls}>⏰ 開始</label><input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className={inputCls} /></div>
+                <div className="flex-1"><label className={labelCls}>⏰ 終了</label><input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className={inputCls} /></div>
+              </div>
+            )}
 
             {/* Location & Label */}
-            <div><label className={labelCls}>📍 場所</label><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="例: ○○グラウンド" className={inputCls} /></div>
-            <div>
-              <label className={labelCls}>🌤️ 天気の地域（任意）</label>
-              <WeatherAreaInput value={weatherArea} onChange={setWeatherArea} pastAreas={pastWeatherAreas} />
-              <p className="text-[10px] text-slate-500 mt-1">入力すると「次の予定」に天気予報が表示されます</p>
-            </div>
-            <div><label className={labelCls}>📋 イベント名{type === 'match' ? '・大会名' : ''}</label><input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={type === 'match' ? '例: 神奈川カップ2026' : '例: 通常練習'} className={inputCls} /></div>
-            <div><label className={labelCls}>📝 メモ</label><textarea value={note} onChange={e => setNote(e.target.value)} placeholder="持ち物・備考など" rows={3} className={inputCls + ' resize-none'} /></div>
+            {type !== 'off' && <div><label className={labelCls}>📍 場所</label><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="例: ○○グラウンド" className={inputCls} /></div>}
+            {type !== 'off' && (
+              <div>
+                <label className={labelCls}>🌤️ 天気の地域（任意）</label>
+                <WeatherAreaInput value={weatherArea} onChange={setWeatherArea} pastAreas={pastWeatherAreas} />
+                <p className="text-[10px] text-slate-500 mt-1">入力すると「次の予定」に天気予報が表示されます</p>
+              </div>
+            )}
+            {type !== 'off' && <div><label className={labelCls}>📋 イベント名{type === 'match' ? '・大会名' : ''}</label><input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={type === 'match' ? '例: 神奈川カップ2026' : '例: 通常練習'} className={inputCls} /></div>}
+            <div><label className={labelCls}>{type === 'off' ? '📝 理由・メモ（任意）' : '📝 メモ'}</label><textarea value={note} onChange={e => setNote(e.target.value)} placeholder={type === 'off' ? '例: 雨天中止、祝日、夏季休暇など' : '持ち物・備考など'} rows={3} className={inputCls + ' resize-none'} /></div>
 
             {/* Meeting info (match / camp / other) */}
             {(type === 'match' || type === 'camp' || type === 'other') && (
@@ -801,7 +807,7 @@ function EventForm({
             )}
 
             {/* Parking */}
-            <div>
+            {type !== 'off' && <div>
               <label className={labelCls}>🅿️ 駐車場</label>
               <div className="flex gap-2 mb-2">
                 <button type="button" onClick={() => setParkingAvailable(true)}
@@ -834,7 +840,7 @@ function EventForm({
                   )}
                 </>
               )}
-            </div>
+            </div>}
 
             {/* Match-specific fields */}
             {type === 'match' && (
@@ -982,6 +988,8 @@ function EventCard({
                   {firstMatch?.opponentName ? `🆚 ${firstMatch.opponentName}` : '相手未定'}
                 </p>
               )
+            ) : event.type === 'off' ? (
+              <p className="text-sm font-semibold text-sky-200 mt-1">{event.note || '休みの日'}</p>
             ) : (
               <p className="text-sm font-semibold text-white mt-1 truncate">{event.label || event.location || '（タイトルなし）'}</p>
             )}
@@ -999,16 +1007,16 @@ function EventCard({
               <p className="text-[11px] text-amber-400/80 italic mt-0.5">🙏 誰か戦績を入力して頂けるとありがたいです</p>
             )}
             {event.type === 'match' && !hasScore && event.startTime && <p className="text-xs text-slate-400">⏰ {event.startTime} K.O.</p>}
-            {event.type !== 'match' && (event.startTime || event.endTime) && (
+            {event.type !== 'match' && event.type !== 'off' && (event.startTime || event.endTime) && (
               <p className="text-xs text-slate-400">⏰ {event.startTime ?? ''}{event.startTime && event.endTime ? ' 〜 ' : ''}{event.endTime ?? ''}</p>
             )}
-            {event.location && <p className="text-xs text-slate-400 truncate">📍 {event.location}</p>}
-            {(event.meetingTime || event.meetingPlace) && (
+            {event.type !== 'off' && event.location && <p className="text-xs text-slate-400 truncate">📍 {event.location}</p>}
+            {event.type !== 'off' && (event.meetingTime || event.meetingPlace) && (
               <p className="text-xs text-amber-300/90 mt-0.5">
                 🚩 集合{event.meetingTime ? ` ${event.meetingTime}` : ''}{event.meetingPlace ? ` ${event.meetingPlace}` : ''}
               </p>
             )}
-            {event.maxParkingSlots !== undefined && (
+            {event.type !== 'off' && event.maxParkingSlots !== undefined && (
               event.maxParkingSlots === 0
                 ? <p className="text-xs text-red-400/80 mt-0.5">🚫 駐車場なし</p>
                 : event.maxParkingSlots === -1
@@ -1322,6 +1330,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
     { key: 'match',    icon: '🏆', label: '試合' },
     { key: 'camp',     icon: '🏕️', label: '合宿/遠征' },
     { key: 'other',    icon: '📌', label: 'その他' },
+    { key: 'off',      icon: '🏖️', label: 'OFF' },
   ];
 
   return (
