@@ -2074,7 +2074,7 @@ function HomeSection({
     endTime: e.endTime,
     type: e.type,
     label: e.type === 'match' ? (() => { const opp = getMatches(e)[0]?.opponentName || e.opponentName; return opp ? `🆚 ${opp}` : '相手未定'; })() : (e.label || e.location || tc(e.type).label),
-    maxSlots: e.maxParkingSlots ?? DEFAULT_MAX_SLOTS,
+    maxSlots: e.type === 'off' ? 0 : (e.maxParkingSlots ?? DEFAULT_MAX_SLOTS),
   });
 
   const eventItems: EventItem[] = useMemo(
@@ -2084,7 +2084,7 @@ function HomeSection({
 
   const pastEvents = useMemo(
     () => [...events]
-      .filter(e => e.date < today && e.maxParkingSlots !== 0)
+      .filter(e => e.date < today && e.type !== 'off' && e.maxParkingSlots !== 0)
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 10),
     [events, today]
