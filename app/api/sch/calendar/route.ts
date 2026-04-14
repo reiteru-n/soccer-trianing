@@ -41,6 +41,7 @@ function eventSummary(e: SchEvent): string {
     case 'camp':       return e.label ? `SCH 合宿-${e.label}` : 'SCH 合宿';
     case 'expedition': return e.label ? `SCH 遠征-${e.label}` : 'SCH 遠征';
     case 'other':      return e.label ? `SCH その他-${e.label}` : 'SCH その他';
+    case 'off':        return e.note ? `SCH OFF-${e.note}` : 'SCH OFF';
     case 'match': {
       const base = e.matchType ? `SCH 試合-${e.matchType}` : 'SCH 試合';
       const opponents: string[] = [];
