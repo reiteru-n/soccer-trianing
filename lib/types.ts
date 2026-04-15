@@ -222,6 +222,17 @@ export interface SchParkingRecord {
   rotationStartIndex: number;
 }
 
+export type SchParkingCommentType = 'skip_request' | 'want_slot' | 'order_issue' | 'other';
+
+export interface SchParkingComment {
+  id: string;
+  createdAt: string; // ISO8601
+  memberId: string;
+  type: SchParkingCommentType;
+  message?: string;
+  resolved?: boolean;
+}
+
 export interface SchNearbyParking {
   id: string;
   name: string;

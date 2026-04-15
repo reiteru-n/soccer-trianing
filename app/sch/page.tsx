@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   SchEvent, SchEventType, SchMatchType, SchMatchFormat, SchScorer, SchMatch,
   SchAnnouncement, SchMember, SchMemberParent, SchParkingRecord, SchParkingSlot, SchNearbyParking,
-  SchUpdateHistory,
+  SchUpdateHistory, SchParkingComment, SchParkingCommentType,
 } from '@/lib/types';
 
 // ---- Utilities ----
@@ -94,6 +94,13 @@ const MATCH_FORMATS: { value: SchMatchFormat; label: string }[] = [
   { value: 'league_tournament', label: '予選+決勝T' },
 ];
 const DEFAULT_MAX_SLOTS = 4;
+
+const COMMENT_TYPE_CFG: Record<SchParkingCommentType, { label: string; icon: string; color: string }> = {
+  skip_request: { label: 'スキップしたい',   icon: '⏭️', color: 'bg-amber-900/30 text-amber-300 border-amber-500/40' },
+  want_slot:    { label: '使わせて欲しい',   icon: '🙋', color: 'bg-blue-900/30 text-blue-300 border-blue-500/40' },
+  order_issue:  { label: '順番の不具合かも', icon: '⚠️', color: 'bg-red-900/30 text-red-300 border-red-500/40' },
+  other:        { label: 'その他',           icon: '💬', color: 'bg-slate-700/50 text-slate-300 border-slate-600/50' },
+};
 
 // ---- Match helpers ----
 /** レガシー単一試合 or 新形式複数試合を統一して返す */
@@ -447,10 +454,11 @@ function buildParkingPlan(
 
 // ---- ParkingEventCard ----
 function ParkingEventCard({
-  plan, members, onSkip, onUnskip, onMarkUsed, onUpdateMaxSlots,
+  plan, members, isAdmin, onSkip, onUnskip, onMarkUsed, onUpdateMaxSlots,
 }: {
   plan: EventPlan;
   members: SchMember[];
+  isAdmin?: boolean;
   onSkip: (eventId: string, memberId: string, comment: string) => void;
   onUnskip: (eventId: string, memberId: string) => void;
   onMarkUsed: (eventId: string, memberId: string) => void;
@@ -476,7 +484,7 @@ function ParkingEventCard({
         <span className="text-sm font-semibold text-white">{plan.date.slice(5).replace('/', '/')}</span>
         <span className="text-xs text-slate-400">({dayLabel(plan.date)})</span>
         <span className="text-xs text-slate-400 truncate flex-1">{plan.label}</span>
-        {editingSlots ? (
+        {isAdmin && editingSlots ? (
           <div className="flex items-center gap-1">
             <input
               type="number" min="1" max="20" value={slotsInput}
@@ -494,10 +502,12 @@ function ParkingEventCard({
           <span className="text-[10px] text-red-400/70 whitespace-nowrap">🚫 駐車場なし</span>
         ) : plan.maxSlots === -1 ? (
           <span className="text-[10px] text-emerald-400/80 whitespace-nowrap">🅿️ 制限なし</span>
-        ) : (
+        ) : isAdmin ? (
           <button onClick={() => { setEditingSlots(true); setSlotsInput(String(plan.maxSlots)); }} className="text-[10px] text-slate-500 hover:text-slate-300 whitespace-nowrap">
             🅿️ {plan.maxSlots}台
           </button>
+        ) : (
+          <span className="text-[10px] text-slate-500 whitespace-nowrap">🅿️ {plan.maxSlots}台</span>
         )}
       </div>
 
@@ -517,10 +527,12 @@ function ParkingEventCard({
                     ? <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1 py-0.5 rounded-full">使用予定</span>
                     : <span className="text-[9px] text-slate-500">─</span>
                   }
-                  {slot.status === 'pending' && (
+                  {isAdmin && slot.status === 'pending' && (
                     <button onClick={() => onMarkUsed(plan.id, slot.memberId)} className="text-[9px] text-slate-500 hover:text-green-400 px-1.5 py-0.5 rounded border border-slate-700 hover:border-green-500/50 transition-colors">使用</button>
                   )}
-                  <button onClick={() => setSkipTarget(slot.memberId)} className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded border border-slate-700 hover:border-amber-500/50 transition-colors">スキップ</button>
+                  {isAdmin && (
+                    <button onClick={() => setSkipTarget(slot.memberId)} className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded border border-slate-700 hover:border-amber-500/50 transition-colors">スキップ</button>
+                  )}
                 </div>
               )}
               {(slot.status === 'used' || slot.status === 'pending') && isPast && (
@@ -542,7 +554,7 @@ function ParkingEventCard({
               <div key={slot.memberId} className="flex items-center gap-2 text-[10px]">
                 <span className="text-slate-500 line-through">#{member?.number} {member?.nameKana || member?.name}</span>
                 {slot.skipComment && <span className="text-slate-500 italic">「{slot.skipComment}」</span>}
-                {!isPast && (
+                {isAdmin && !isPast && (
                   <button onClick={() => onUnskip(plan.id, slot.memberId)} className="ml-auto text-slate-400 hover:text-white text-[9px] px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors">取消</button>
                 )}
               </div>
@@ -1855,11 +1867,12 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
 
 // ---- ParkingHistorySection ----
 function ParkingHistorySection({
-  pastEvents, sortedMembers, parkingRecords, onSaveHistory,
+  pastEvents, sortedMembers, parkingRecords, isAdmin, onSaveHistory,
 }: {
   pastEvents: SchEvent[];
   sortedMembers: SchMember[];
   parkingRecords: SchParkingRecord[];
+  isAdmin?: boolean;
   onSaveHistory: (eventId: string, slots: SchParkingSlot[]) => void;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -1912,14 +1925,14 @@ function ParkingHistorySection({
                 <span className="text-[10px] text-slate-400">{ev.date.slice(5).replace('/', '/')}({dayLabel(ev.date)})</span>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tc(ev.type).badge}`}>{tc(ev.type).icon}</span>
                 <span className="text-xs text-white font-medium truncate flex-1">{evLabel(ev)}</span>
-                {isEditing ? (
+                {isAdmin && isEditing ? (
                   <div className="flex gap-1 flex-shrink-0">
                     <button onClick={() => saveEdit(ev.id)} className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded font-bold">保存</button>
                     <button onClick={() => setEditingId(null)} className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded border border-slate-600">取消</button>
                   </div>
-                ) : (
+                ) : isAdmin ? (
                   <button onClick={() => openEdit(ev)} className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded border border-slate-600 hover:border-slate-400 flex-shrink-0">編集</button>
-                )}
+                ) : null}
               </div>
 
               {/* Body */}
@@ -1993,9 +2006,170 @@ function ParkingHistorySection({
   );
 }
 
+// ---- ParkingCommentForm ----
+function ParkingCommentForm({
+  members, onSubmit, onClose,
+}: {
+  members: SchMember[];
+  onSubmit: (c: SchParkingComment) => void;
+  onClose: () => void;
+}) {
+  const [memberId, setMemberId] = useState('');
+  const [type, setType] = useState<SchParkingCommentType>('other');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = () => {
+    if (!memberId) return;
+    onSubmit({ id: generateId(), createdAt: new Date().toISOString(), memberId, type, message: message.trim() || undefined });
+  };
+
+  const types = Object.entries(COMMENT_TYPE_CFG) as [SchParkingCommentType, typeof COMMENT_TYPE_CFG[SchParkingCommentType]][];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-end" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-lg mx-auto bg-slate-800 rounded-t-2xl shadow-2xl" onPointerDown={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-700">
+          <h3 className="text-sm font-bold text-white">🅿️ 駐車場について連絡する</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-white w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-700 text-lg leading-none">×</button>
+        </div>
+        <div className="px-4 py-4 space-y-4 max-h-[80vh] overflow-y-auto">
+          {/* ① 投稿者 */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2">① 投稿者を選択</label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {members.map(m => (
+                <button key={m.id} type="button" onClick={() => setMemberId(m.id)}
+                  className={`text-xs px-3 py-2 rounded-xl border text-left transition-colors ${memberId === m.id ? 'bg-blue-600/40 border-blue-500/50 text-blue-200' : 'border-slate-600 text-slate-300 hover:border-slate-500'}`}>
+                  #{m.number} {m.nameKana || m.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* ② 種別 */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2">② コメント種別</label>
+            <div className="space-y-1.5">
+              {types.map(([key, cfg]) => (
+                <button key={key} type="button" onClick={() => setType(key)}
+                  className={`w-full text-left text-xs px-3 py-2.5 rounded-xl border transition-colors ${type === key ? cfg.color : 'border-slate-600 text-slate-300 hover:border-slate-500'}`}>
+                  {cfg.icon} {cfg.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* ③ メッセージ */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2">③ コメント（任意）</label>
+            <textarea value={message} onChange={e => setMessage(e.target.value)}
+              placeholder="詳細があれば入力してください" rows={3}
+              className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500 resize-none" />
+          </div>
+          <button type="button" disabled={!memberId} onClick={handleSubmit}
+            className="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-700 text-white disabled:opacity-40 active:scale-95 transition-transform">
+            送信
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- ParkingCommentSection ----
+function ParkingCommentSection({
+  comments, members, isAdmin, onSave,
+}: {
+  comments: SchParkingComment[];
+  members: SchMember[];
+  isAdmin: boolean;
+  onSave: (c: SchParkingComment[]) => void;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const sortedMembers = useMemo(() => [...members].sort((a, b) => a.number - b.number), [members]);
+  const getMember = (id: string) => members.find(m => m.id === id);
+  const unresolved = comments.filter(c => !c.resolved);
+  const resolved = comments.filter(c => c.resolved);
+
+  const resolve = (id: string) => onSave(comments.map(c => c.id === id ? { ...c, resolved: true } : c));
+  const deleteComment = (id: string) => onSave(comments.filter(c => c.id !== id));
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          💬 駐車場連絡
+          {unresolved.length > 0 && (
+            <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">{unresolved.length}</span>
+          )}
+        </h2>
+        <button onClick={() => setShowForm(true)}
+          className="text-xs text-blue-400 hover:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:border-blue-400/50">
+          ＋ 連絡を追加
+        </button>
+      </div>
+
+      {comments.length === 0 ? (
+        <p className="text-xs text-slate-500 text-center py-3">連絡はありません</p>
+      ) : (
+        <div className="space-y-2">
+          {unresolved.map(c => {
+            const member = getMember(c.memberId);
+            const cfg = COMMENT_TYPE_CFG[c.type] ?? COMMENT_TYPE_CFG.other;
+            return (
+              <div key={c.id} className="bg-slate-800/60 border border-white/10 rounded-xl px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cfg.color}`}>{cfg.icon} {cfg.label}</span>
+                  {member && <span className="text-xs text-slate-400">#{member.number} {member.nameKana || member.name}</span>}
+                  <span className="text-[10px] text-slate-600 ml-auto">
+                    {new Date(c.createdAt).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })} {new Date(c.createdAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                {c.message && <p className="text-sm text-white leading-relaxed">{c.message}</p>}
+                {isAdmin && (
+                  <div className="flex gap-2 pt-0.5">
+                    <button onClick={() => resolve(c.id)} className="text-[10px] text-emerald-400 hover:text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/40 hover:border-emerald-400/60 transition-colors">✓ 解決済み</button>
+                    <button onClick={() => deleteComment(c.id)} className="text-[10px] text-slate-500 hover:text-red-400 px-2 py-0.5 rounded border border-slate-700 hover:border-red-500/30 transition-colors">削除</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {resolved.length > 0 && (
+            <details>
+              <summary className="text-[10px] text-slate-600 cursor-pointer select-none py-1">解決済み {resolved.length}件</summary>
+              <div className="space-y-1.5 mt-1.5 opacity-50">
+                {resolved.map(c => {
+                  const member = getMember(c.memberId);
+                  const cfg = COMMENT_TYPE_CFG[c.type] ?? COMMENT_TYPE_CFG.other;
+                  return (
+                    <div key={c.id} className="bg-slate-800/40 border border-white/5 rounded-xl px-3 py-2 flex items-center gap-2">
+                      <span className="text-[9px] text-slate-600 line-through">{cfg.label}</span>
+                      {member && <span className="text-[10px] text-slate-600">#{member.number}</span>}
+                      {isAdmin && <button onClick={() => deleteComment(c.id)} className="ml-auto text-[9px] text-slate-600 hover:text-red-400">削除</button>}
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
+
+      {showForm && (
+        <ParkingCommentForm
+          members={sortedMembers}
+          onSubmit={(c) => { onSave([c, ...comments]); setShowForm(false); }}
+          onClose={() => setShowForm(false)}
+        />
+      )}
+    </div>
+  );
+}
+
 // ---- HomeSection ----
 function HomeSection({
-  events, members, parkingRecords, parkingRotation, nearbyParking, announcements, onGoToAnnounce, onGoToEvent,
+  events, members, parkingRecords, parkingRotation, nearbyParking, announcements,
+  isAdmin, parkingComments, onSaveParkingComments,
+  onGoToAnnounce, onGoToEvent,
   onSkip, onUnskip, onMarkUsed, onMarkPending, onSaveHistory, onUpdateMaxSlots,
 }: {
   events: SchEvent[];
@@ -2004,6 +2178,9 @@ function HomeSection({
   parkingRotation: number;
   nearbyParking: SchNearbyParking[];
   announcements: SchAnnouncement[];
+  isAdmin: boolean;
+  parkingComments: SchParkingComment[];
+  onSaveParkingComments: (c: SchParkingComment[]) => void;
   onGoToAnnounce: () => void;
   onGoToEvent: (id: string) => void;
   onSkip: (eventId: string, memberId: string, comment: string) => void;
@@ -2264,6 +2441,7 @@ function HomeSection({
                 key={plan.id}
                 plan={plan}
                 members={sortedMembers}
+                isAdmin={isAdmin}
                 onSkip={onSkip}
                 onUnskip={onUnskip}
                 onMarkUsed={onMarkUsed}
@@ -2305,12 +2483,21 @@ function HomeSection({
         </div>
       )}
 
+      {/* Parking comment section */}
+      <ParkingCommentSection
+        comments={parkingComments}
+        members={members}
+        isAdmin={isAdmin}
+        onSave={onSaveParkingComments}
+      />
+
       {/* Parking history */}
       {pastEvents.length > 0 && (
         <ParkingHistorySection
           pastEvents={pastEvents}
           sortedMembers={sortedMembers}
           parkingRecords={parkingRecords}
+          isAdmin={isAdmin}
           onSaveHistory={onSaveHistory}
         />
       )}
@@ -2678,6 +2865,7 @@ function MemberSection({
   nearbyParking, onSaveNearbyParking,
   parkingRotation, onResetRotation,
   teamLogo, onSaveTeamLogo,
+  isAdmin, onAddAnnouncement,
 }: {
   members: SchMember[];
   onSaveMember: (m: SchMember[]) => void;
@@ -2687,6 +2875,8 @@ function MemberSection({
   onResetRotation: (index: number) => void;
   teamLogo: string | null;
   onSaveTeamLogo: (logo: string | null) => void;
+  isAdmin?: boolean;
+  onAddAnnouncement?: (ann: SchAnnouncement) => void;
 }) {
   const [viewingMember, setViewingMember] = useState<SchMember | null>(null);
   const [showMemberForm, setShowMemberForm] = useState(false);
@@ -2705,6 +2895,7 @@ function MemberSection({
   const [pNote, setPNote] = useState('');
 
   const [logoWarning, setLogoWarning] = useState('');
+  const [rotationConfirm, setRotationConfirm] = useState<{ index: number; memberName: string } | null>(null);
 
   const resetMemberForm = () => { setMNumber(''); setMName(''); setMNameKana(''); setMBirthDate(''); setMParents([]); setEditingMember(null); setShowMemberForm(false); };
   const openEditMember = (m: SchMember) => { setEditingMember(m); setMNumber(String(m.number)); setMName(m.name); setMNameKana(m.nameKana ?? ''); setMBirthDate(m.birthDate ?? ''); setMParents(m.parents ? [...m.parents] : []); setShowMemberForm(true); };
@@ -2791,34 +2982,76 @@ function MemberSection({
         )}
       </div>
 
-      {/* Parking rotation */}
-      <div>
-        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">🅿️ ローテーション管理</h2>
-        <div className="bg-slate-800/60 border border-white/10 rounded-xl p-4 space-y-3">
-          <div>
-            <p className="text-xs text-slate-400">次の割当開始</p>
-            {nextMember ? (
-              <p className="text-sm font-bold text-white mt-0.5">#{nextMember.number} {nextMember.nameKana || nextMember.name} から</p>
-            ) : (
-              <p className="text-sm text-slate-500 mt-0.5">メンバーなし</p>
-            )}
-          </div>
-          <div>
-            <p className="text-xs text-slate-400 mb-1.5">開始メンバーを変更</p>
-            <div className="flex flex-wrap gap-1.5">
-              {sorted.map((m, i) => (
-                <button
-                  key={m.id}
-                  onClick={() => onResetRotation(i)}
-                  className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${parkingRotation % Math.max(sorted.length, 1) === i ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white'}`}
-                >
-                  #{m.number}
-                </button>
-              ))}
+      {/* Parking rotation — admin only */}
+      {isAdmin && (
+        <div>
+          <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">🅿️ ローテーション管理</h2>
+          <div className="bg-slate-800/60 border border-white/10 rounded-xl p-4 space-y-3">
+            <div>
+              <p className="text-xs text-slate-400">次の割当開始</p>
+              {nextMember ? (
+                <p className="text-sm font-bold text-white mt-0.5">#{nextMember.number} {nextMember.nameKana || nextMember.name} から</p>
+              ) : (
+                <p className="text-sm text-slate-500 mt-0.5">メンバーなし</p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 mb-1.5">開始メンバーを変更</p>
+              <div className="flex flex-wrap gap-1.5">
+                {sorted.map((m, i) => (
+                  <button
+                    key={m.id}
+                    onClick={() => setRotationConfirm({ index: i, memberName: `#${m.number} ${m.nameKana || m.name}` })}
+                    className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${parkingRotation % Math.max(sorted.length, 1) === i ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white'}`}
+                  >
+                    #{m.number}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Rotation confirm dialog */}
+      {rotationConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4" onClick={e => { if (e.target === e.currentTarget) setRotationConfirm(null); }}>
+          <div className="bg-slate-800 rounded-2xl p-5 w-full max-w-sm border border-white/10 shadow-2xl space-y-4" onPointerDown={e => e.stopPropagation()}>
+            <h3 className="text-sm font-bold text-white">ローテーションを変更</h3>
+            <p className="text-sm text-slate-300">{rotationConfirm.memberName} から開始するよう変更します。</p>
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  onResetRotation(rotationConfirm.index);
+                  const today = todayStr();
+                  const ann: SchAnnouncement = {
+                    id: `parking-rotation-${Date.now()}`,
+                    date: today,
+                    title: '🅿️ 駐車場順番を変更しました',
+                    content: `駐車場のローテーションを調整しました。\n次回は ${rotationConfirm.memberName} から開始となります。\nご確認ください。`,
+                    important: false,
+                    createdAt: new Date().toISOString(),
+                  };
+                  onAddAnnouncement?.(ann);
+                  setRotationConfirm(null);
+                }}
+                className="w-full py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-700 text-white"
+              >
+                変更して連絡に追加
+              </button>
+              <button
+                onClick={() => { onResetRotation(rotationConfirm.index); setRotationConfirm(null); }}
+                className="w-full py-2.5 rounded-xl font-bold text-sm border border-slate-600 text-slate-300 hover:text-white hover:border-slate-500"
+              >
+                変更のみ（連絡に追加しない）
+              </button>
+              <button onClick={() => setRotationConfirm(null)} className="w-full py-2 text-xs text-slate-500 hover:text-slate-400">
+                キャンセル
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Nearby parking */}
       <div>
@@ -3031,6 +3264,7 @@ export default function SchPage() {
   const [parkingRecords, setParkingRecords] = useState<SchParkingRecord[]>([]);
   const [parkingRotation, setParkingRotation] = useState(5);
   const [nearbyParking, setNearbyParking] = useState<SchNearbyParking[]>([]);
+  const [parkingComments, setParkingComments] = useState<SchParkingComment[]>([]);
   const [teamLogo, setTeamLogo] = useState<string | null>(null);
   const [updateHistory, setUpdateHistory] = useState<SchUpdateHistory[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -3143,6 +3377,7 @@ export default function SchPage() {
       setParkingRecords(d.parkingRecords ?? []);
       setParkingRotation(d.parkingRotation ?? 5);
       setNearbyParking(d.nearbyParking ?? []);
+      setParkingComments(d.parkingComments ?? []);
       setTeamLogo(d.teamLogo ?? null);
       setUpdateHistory(d.updateHistory ?? []);
       setIsLoading(false);
@@ -3194,11 +3429,12 @@ export default function SchPage() {
       setUpdateHistory(h); post({ updateHistory: h });
     }
   }, [post, announcements, updateHistory]);
-  const saveMembers      = useCallback((m: SchMember[])       => { setMembers(m);      post({ members: m }); }, [post]);
-  const saveNearby       = useCallback((p: SchNearbyParking[])=> { setNearbyParking(p);post({ nearbyParking: p }); }, [post]);
-  const saveRotation     = useCallback((i: number)            => { setParkingRotation(i); post({ parkingRotation: i }); }, [post]);
-  const saveRecords      = useCallback((r: SchParkingRecord[])=> { setParkingRecords(r); post({ parkingRecords: r }); }, [post]);
-  const saveTeamLogo     = useCallback((logo: string | null)  => { setTeamLogo(logo);  post({ teamLogo: logo }); }, [post]);
+  const saveMembers         = useCallback((m: SchMember[])          => { setMembers(m);         post({ members: m }); }, [post]);
+  const saveNearby          = useCallback((p: SchNearbyParking[])   => { setNearbyParking(p);   post({ nearbyParking: p }); }, [post]);
+  const saveRotation        = useCallback((i: number)               => { setParkingRotation(i); post({ parkingRotation: i }); }, [post]);
+  const saveRecords         = useCallback((r: SchParkingRecord[])   => { setParkingRecords(r);  post({ parkingRecords: r }); }, [post]);
+  const saveParkingComments = useCallback((c: SchParkingComment[])  => { setParkingComments(c); post({ parkingComments: c }); }, [post]);
+  const saveTeamLogo        = useCallback((logo: string | null)     => { setTeamLogo(logo);     post({ teamLogo: logo }); }, [post]);
 
   const upsertParkingRecord = useCallback((eventId: string, updater: (slots: SchParkingSlot[]) => SchParkingSlot[]) => {
     setParkingRecords(prev => {
@@ -3505,6 +3741,9 @@ export default function SchPage() {
           parkingRecords={parkingRecords} parkingRotation={parkingRotation}
           nearbyParking={nearbyParking}
           announcements={announcements} onGoToAnnounce={() => setTab('announce')}
+          isAdmin={isAdmin}
+          parkingComments={parkingComments}
+          onSaveParkingComments={saveParkingComments}
           onGoToEvent={(id) => { setTab('events'); setOpenDetailId(id); setScrollTarget({ tab: 'events', itemId: id }); }}
           onSkip={handleSkip} onUnskip={handleUnskip} onMarkUsed={handleMarkUsed} onMarkPending={handleMarkPending}
           onSaveHistory={handleSaveFullRecord}
@@ -3526,6 +3765,8 @@ export default function SchPage() {
           nearbyParking={nearbyParking} onSaveNearbyParking={saveNearby}
           parkingRotation={parkingRotation} onResetRotation={saveRotation}
           teamLogo={teamLogo} onSaveTeamLogo={saveTeamLogo}
+          isAdmin={isAdmin}
+          onAddAnnouncement={(ann) => saveAnnounce([ann, ...announcements])}
         />
       )}
     </>
