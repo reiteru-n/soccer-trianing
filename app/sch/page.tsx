@@ -2108,7 +2108,7 @@ function ParkingCommentSection({
       </div>
 
       {comments.length === 0 ? (
-        <p className="text-xs text-slate-500 text-center py-3">連絡はありません</p>
+        <p className="text-xs text-slate-500 text-center py-3">スキップ/使わせて欲しい/不具合かも など連絡</p>
       ) : (
         <div className="space-y-2">
           {unresolved.map(c => {
