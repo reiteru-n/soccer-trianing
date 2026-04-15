@@ -2427,6 +2427,14 @@ function HomeSection({
         );
       })()}
 
+      {/* Parking comment section */}
+      <ParkingCommentSection
+        comments={parkingComments}
+        members={members}
+        isAdmin={isAdmin}
+        onSave={onSaveParkingComments}
+      />
+
       {/* Parking forecast */}
       <div>
         <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">🅿️ 駐車場予定</h2>
@@ -2482,14 +2490,6 @@ function HomeSection({
           </div>
         </div>
       )}
-
-      {/* Parking comment section */}
-      <ParkingCommentSection
-        comments={parkingComments}
-        members={members}
-        isAdmin={isAdmin}
-        onSave={onSaveParkingComments}
-      />
 
       {/* Parking history */}
       {pastEvents.length > 0 && (
