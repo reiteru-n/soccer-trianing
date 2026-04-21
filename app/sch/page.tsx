@@ -1175,7 +1175,7 @@ function MiniEventCard({ event, members, onClick }: { event: SchEvent; members: 
             <p className="text-xs font-bold text-white mt-0.5 truncate">
               {event.type === 'match'
                 ? (() => { const ms = getMatches(event); return ms.length > 1 ? `🆚 ${ms[0]?.opponentName ?? '?'} 他${ms.length - 1}試合` : (ms[0]?.opponentName ? `🆚 ${ms[0].opponentName}` : '相手未定'); })()
-                : (event.label || event.location || '詳細未定')}
+                : (event.label || event.location || (event.type === 'off' ? event.note : undefined) || '詳細未定')}
             </p>
             {event.startTime && <p className="text-[10px] text-slate-400 leading-tight">⏰ {event.startTime}</p>}
           </div>
