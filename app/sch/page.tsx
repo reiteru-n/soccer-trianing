@@ -2356,15 +2356,24 @@ function HomeSection({
 
       {/* 最近のお知らせ（過去7日以内・最大3件） */}
       {(() => {
-        const sevenDaysAgo = (() => {
+        if (announcements.length === 0) return null;
+        // Sort newest first (createdAt preferred, fallback to date)
+        const sorted = [...announcements].sort((a, b) => {
+          const ta = a.createdAt ?? a.date;
+          const tb = b.createdAt ?? b.date;
+          return tb.localeCompare(ta);
+        });
+        const fiveDaysAgo = (() => {
           const d = new Date(today.replace(/\//g, '-'));
-          d.setDate(d.getDate() - 7);
+          d.setDate(d.getDate() - 5);
           return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
         })();
-        const recent = announcements.filter(a => a.date >= sevenDaysAgo);
-        if (recent.length === 0) return null;
-        const shown = recent.slice(0, 3);
-        const hasMore = recent.length > 3;
+        // Always show latest 1 + all within past 5 days (deduplicated)
+        const shownIds = new Set<string>();
+        shownIds.add(sorted[0].id);
+        sorted.filter(a => a.date >= fiveDaysAgo).forEach(a => shownIds.add(a.id));
+        const shown = sorted.filter(a => shownIds.has(a.id));
+        const hasMore = announcements.length > shown.length;
         return (
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -2419,7 +2428,7 @@ function HomeSection({
               {hasMore && (
                 <button onClick={onGoToAnnounce}
                   className="w-full text-xs py-2.5 rounded-xl border border-dashed border-slate-600 text-slate-400 hover:text-purple-300 hover:border-purple-500/50 transition-colors">
-                  他 {recent.length - 3} 件のお知らせを見る
+                  他 {announcements.length - shown.length} 件のお知らせを見る
                 </button>
               )}
             </div>
