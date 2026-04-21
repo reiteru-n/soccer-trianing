@@ -2254,9 +2254,9 @@ function HomeSection({
     maxSlots: e.type === 'off' ? 0 : (e.maxParkingSlots ?? DEFAULT_MAX_SLOTS),
   });
 
-  const eventItems: EventItem[] = useMemo(
-    () => upcomingEvents.slice(0, 20).map(toEventItem),
-    [upcomingEvents]
+  const allEventItems: EventItem[] = useMemo(
+    () => [...events].sort((a, b) => a.date.localeCompare(b.date)).map(toEventItem),
+    [events]
   );
 
   const pastEvents = useMemo(
@@ -2268,9 +2268,9 @@ function HomeSection({
   );
 
   const parkingPlan = useMemo(
-    () => buildParkingPlan(sortedMembers, eventItems, parkingRotation, parkingRecords)
-            .filter(p => p.maxSlots !== -1),
-    [sortedMembers, eventItems, parkingRotation, parkingRecords]
+    () => buildParkingPlan(sortedMembers, allEventItems, parkingRotation, parkingRecords)
+            .filter(p => !isEventPast(p) && p.maxSlots !== 0),
+    [sortedMembers, allEventItems, parkingRotation, parkingRecords]
   );
 
   return (
@@ -2866,6 +2866,7 @@ function MemberSection({
   parkingRotation, onResetRotation,
   teamLogo, onSaveTeamLogo,
   isAdmin, onAddAnnouncement,
+  events, parkingRecords,
 }: {
   members: SchMember[];
   onSaveMember: (m: SchMember[]) => void;
@@ -2877,6 +2878,8 @@ function MemberSection({
   onSaveTeamLogo: (logo: string | null) => void;
   isAdmin?: boolean;
   onAddAnnouncement?: (ann: SchAnnouncement) => void;
+  events?: SchEvent[];
+  parkingRecords?: SchParkingRecord[];
 }) {
   const [viewingMember, setViewingMember] = useState<SchMember | null>(null);
   const [showMemberForm, setShowMemberForm] = useState(false);
@@ -2895,7 +2898,7 @@ function MemberSection({
   const [pNote, setPNote] = useState('');
 
   const [logoWarning, setLogoWarning] = useState('');
-  const [rotationConfirm, setRotationConfirm] = useState<{ index: number; memberName: string } | null>(null);
+  const [rotationConfirm, setRotationConfirm] = useState<{ index: number; memberName: string; newRotation: number } | null>(null);
 
   const resetMemberForm = () => { setMNumber(''); setMName(''); setMNameKana(''); setMBirthDate(''); setMParents([]); setEditingMember(null); setShowMemberForm(false); };
   const openEditMember = (m: SchMember) => { setEditingMember(m); setMNumber(String(m.number)); setMName(m.name); setMNameKana(m.nameKana ?? ''); setMBirthDate(m.birthDate ?? ''); setMParents(m.parents ? [...m.parents] : []); setShowMemberForm(true); };
@@ -2943,7 +2946,25 @@ function MemberSection({
   };
 
   const sorted = [...members].sort((a, b) => a.number - b.number);
-  const nextMember = sorted[parkingRotation % Math.max(sorted.length, 1)];
+
+  // Compute full parking plan (all events) to derive correct rotation display
+  const allEventItemsForRotation: EventItem[] = useMemo(
+    () => [...(events ?? [])].sort((a, b) => a.date.localeCompare(b.date)).map(e => ({
+      id: e.id, date: e.date, endDate: e.endDate, endTime: e.endTime, type: e.type,
+      label: e.label || e.type,
+      maxSlots: e.type === 'off' ? 0 : (e.maxParkingSlots ?? DEFAULT_MAX_SLOTS),
+    })),
+    [events]
+  );
+  const [fullParkingPlan, pastConsumed] = useMemo(() => {
+    const plan = buildParkingPlan(sorted, allEventItemsForRotation, parkingRotation, parkingRecords ?? []);
+    const consumed = plan.filter(p => isEventPast(p)).reduce((sum, p) => sum + p.consumedCount, 0);
+    return [plan, consumed] as const;
+  }, [sorted, allEventItemsForRotation, parkingRotation, parkingRecords]);
+  const nextParkingEntry = fullParkingPlan.find(p => !isEventPast(p) && p.maxSlots > 0);
+  const nextMember = nextParkingEntry
+    ? sorted[nextParkingEntry.rotationStartIndex % Math.max(sorted.length, 1)]
+    : null;
 
   return (
     <div className="space-y-6">
@@ -3001,8 +3022,12 @@ function MemberSection({
                 {sorted.map((m, i) => (
                   <button
                     key={m.id}
-                    onClick={() => setRotationConfirm({ index: i, memberName: `#${m.number} ${m.nameKana || m.name}` })}
-                    className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${parkingRotation % Math.max(sorted.length, 1) === i ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white'}`}
+                    onClick={() => {
+                      const n = sorted.length;
+                      const nr = n > 0 ? ((i - (pastConsumed % n)) % n + n) % n : 0;
+                      setRotationConfirm({ index: i, memberName: `#${m.number} ${m.nameKana || m.name}`, newRotation: nr });
+                    }}
+                    className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${nextParkingEntry?.rotationStartIndex === i ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white'}`}
                   >
                     #{m.number}
                   </button>
@@ -3022,7 +3047,7 @@ function MemberSection({
             <div className="space-y-2">
               <button
                 onClick={() => {
-                  onResetRotation(rotationConfirm.index);
+                  onResetRotation(rotationConfirm.newRotation);
                   const today = todayStr();
                   const ann: SchAnnouncement = {
                     id: `parking-rotation-${Date.now()}`,
@@ -3040,7 +3065,7 @@ function MemberSection({
                 変更して連絡に追加
               </button>
               <button
-                onClick={() => { onResetRotation(rotationConfirm.index); setRotationConfirm(null); }}
+                onClick={() => { onResetRotation(rotationConfirm.newRotation); setRotationConfirm(null); }}
                 className="w-full py-2.5 rounded-xl font-bold text-sm border border-slate-600 text-slate-300 hover:text-white hover:border-slate-500"
               >
                 変更のみ（連絡に追加しない）
@@ -3767,6 +3792,8 @@ export default function SchPage() {
           teamLogo={teamLogo} onSaveTeamLogo={saveTeamLogo}
           isAdmin={isAdmin}
           onAddAnnouncement={(ann) => saveAnnounce([ann, ...announcements])}
+          events={events}
+          parkingRecords={parkingRecords}
         />
       )}
     </>
