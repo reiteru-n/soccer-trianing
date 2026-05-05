@@ -1775,7 +1775,7 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
           {byOpponent.length === 0 && <p className="text-center text-slate-400 text-sm py-4">対戦相手が登録されていません</p>}
           {byOpponent.map(o => (
             <div key={o.opp} className="bg-slate-800/60 border border-white/10 rounded-xl px-4 py-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-sm font-semibold text-white truncate max-w-[160px]">{o.opp}</p>
                   <p className="text-xs text-slate-500">{o.total}試合</p>
@@ -1786,6 +1786,11 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
                   <span className="text-red-400 font-bold">{o.l}敗</span>
                   <span className="text-slate-500 text-xs">({o.gf}−{o.ga})</span>
                 </div>
+              </div>
+              <div className="flex rounded-full overflow-hidden h-2 bg-slate-700">
+                <div className="bg-green-500 transition-all" style={{ width: `${o.w / o.total * 100}%` }} />
+                <div className="bg-slate-500 transition-all" style={{ width: `${o.d / o.total * 100}%` }} />
+                <div className="bg-red-500 transition-all" style={{ width: `${o.l / o.total * 100}%` }} />
               </div>
             </div>
           ))}
