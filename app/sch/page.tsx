@@ -1614,6 +1614,92 @@ function VideoLink({ url, index = 0, total = 1 }: { url: string; index?: number;
 }
 
 // ---- VideoSection ----
+const SCH_PLAYLIST_URL = 'https://youtube.com/playlist?list=PLo9LruwA1kPSBNtamp53j4AVZup6aVrin&si=Ws4AaH83BTEiaQRN';
+
+interface YtVideo { videoId: string; title: string; publishedAt: string; thumbnail: string; url: string; }
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 60) return `${m}分前`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}時間前`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}日前`;
+  const w = Math.floor(d / 7);
+  if (w < 5) return `${w}週間前`;
+  const mo = Math.floor(d / 30);
+  return `${mo}ヶ月前`;
+}
+
+function YtChannelSection() {
+  const [videos, setVideos] = useState<YtVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetch('/api/sch/yt-playlist')
+      .then(r => r.json())
+      .then((d: YtVideo[]) => { setVideos(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="space-y-2">
+      {/* チャンネルボタン */}
+      <a
+        href={SCH_PLAYLIST_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between w-full bg-red-700/30 hover:bg-red-700/50 border border-red-500/40 rounded-xl px-4 py-3 transition-colors"
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">▶️</span>
+          <div>
+            <p className="text-sm font-bold text-white">SCH チーム動画チャンネル</p>
+            <p className="text-[10px] text-slate-400">YouTube プレイリスト</p>
+          </div>
+        </div>
+        <span className="text-slate-400 text-sm">→</span>
+      </a>
+
+      {/* 直近4本 */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex-none w-36 aspect-video rounded-lg bg-slate-700/60 animate-pulse snap-start" />
+          ))
+        ) : videos.length === 0 ? null : (
+          videos.map(v => (
+            <a
+              key={v.videoId}
+              href={v.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-none w-36 relative rounded-lg overflow-hidden bg-slate-800 snap-start group"
+            >
+              <div className="aspect-video relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                {/* タイトル（上部グラデーション） */}
+                <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/70 to-transparent p-1.5 pb-3">
+                  <p className="text-[9px] font-semibold text-white leading-snug line-clamp-2">{v.title}</p>
+                </div>
+                {/* 投稿時刻（右下） */}
+                <div className="absolute bottom-1 right-1">
+                  <span className="text-[8px] bg-black/70 text-slate-300 px-1 py-0.5 rounded">{relativeTime(v.publishedAt)}</span>
+                </div>
+                {/* 再生ボタン */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                  <span className="text-white text-2xl">▶</span>
+                </div>
+              </div>
+            </a>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function getYoutubeThumbnail(url: string): string | null {
   const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null;
@@ -1954,6 +2040,9 @@ function VideoSection({
 
   return (
     <div className="space-y-5">
+      {/* SCH チャンネルと直近動画 */}
+      <YtChannelSection />
+
       {/* 投稿ボタン */}
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">🎬 動画ライブラリ</p>
