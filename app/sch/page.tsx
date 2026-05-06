@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   SchEvent, SchEventType, SchMatchType, SchMatchFormat, SchScorer, SchMatch,
   SchAnnouncement, SchMember, SchMemberParent, SchParkingRecord, SchParkingSlot, SchNearbyParking,
-  SchUpdateHistory, SchParkingComment, SchParkingCommentType,
+  SchUpdateHistory, SchParkingComment, SchParkingCommentType, SchStandaloneVideo,
 } from '@/lib/types';
 
 // ---- Utilities ----
@@ -1610,6 +1610,253 @@ function VideoLink({ url, index = 0, total = 1 }: { url: string; index?: number;
       className="text-[10px] text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-1.5 py-0.5 rounded transition-colors shrink-0">
       {label}
     </a>
+  );
+}
+
+// ---- VideoSection ----
+function getYoutubeThumbnail(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null;
+}
+
+type VideoItem = {
+  id: string;
+  url: string;
+  date: string;
+  postedAt: string;
+  tournamentName?: string;
+  opponent?: string;
+  score?: { home: number; away: number };
+  source: 'event' | 'standalone';
+  title?: string;
+  eventId?: string;
+};
+
+function VideoSection({
+  events, standaloneVideos, onSaveStandaloneVideos,
+}: {
+  events: SchEvent[];
+  standaloneVideos: SchStandaloneVideo[];
+  onSaveStandaloneVideos: (v: SchStandaloneVideo[]) => void;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [formUrl, setFormUrl] = useState('');
+  const [formTitle, setFormTitle] = useState('');
+  const [formEventId, setFormEventId] = useState('');
+
+  // 試合イベント一覧（フォームのセレクタ用）
+  const matchEvents = useMemo(
+    () => [...events].filter(e => e.type === 'match').sort((a, b) => b.date.localeCompare(a.date)),
+    [events]
+  );
+
+  // イベント動画をフラット化
+  const eventVideos = useMemo<VideoItem[]>(() => {
+    const items: VideoItem[] = [];
+    for (const ev of events) {
+      if (ev.type !== 'match') continue;
+      const matches = getMatches(ev);
+      for (const m of matches) {
+        const urls = m.videoUrls ?? (m.videoUrl ? [m.videoUrl] : []);
+        for (const url of urls) {
+          items.push({
+            id: `ev_${ev.id}_${m.id}_${url}`,
+            url,
+            date: ev.date,
+            postedAt: ev.date,
+            tournamentName: ev.label,
+            opponent: m.opponentName,
+            score: m.homeScore != null && m.awayScore != null
+              ? { home: m.homeScore, away: m.awayScore } : undefined,
+            source: 'event',
+            eventId: ev.id,
+          });
+        }
+      }
+    }
+    return items;
+  }, [events]);
+
+  // スタンドアロン動画（イベント紐づけ情報を付与）
+  const standaloneItems = useMemo<VideoItem[]>(() => {
+    return standaloneVideos.map(sv => {
+      const ev = sv.eventId ? events.find(e => e.id === sv.eventId) : undefined;
+      const m = ev && sv.matchId ? getMatches(ev).find(x => x.id === sv.matchId) : undefined;
+      return {
+        id: sv.id,
+        url: sv.url,
+        date: ev?.date ?? sv.postedAt.slice(0, 10).replace(/-/g, '/'),
+        postedAt: sv.postedAt,
+        tournamentName: ev?.label ?? undefined,
+        opponent: m?.opponentName ?? undefined,
+        score: (m?.homeScore != null && m?.awayScore != null)
+          ? { home: m.homeScore, away: m.awayScore } : undefined,
+        source: 'standalone' as const,
+        title: sv.title,
+        eventId: sv.eventId,
+      };
+    });
+  }, [standaloneVideos, events]);
+
+  // 全動画を新しい順にソートしてグループ化
+  const allVideos = useMemo(() => {
+    const all = [...eventVideos, ...standaloneItems].sort((a, b) => {
+      return b.date.localeCompare(a.date) || b.postedAt.localeCompare(a.postedAt);
+    });
+    // グループ化 key: 大会名 or '(大会名なし)'
+    const groups: { key: string; items: VideoItem[] }[] = [];
+    const seen = new Map<string, VideoItem[]>();
+    for (const v of all) {
+      const key = v.tournamentName || '（大会名なし）';
+      if (!seen.has(key)) { seen.set(key, []); groups.push({ key, items: seen.get(key)! }); }
+      seen.get(key)!.push(v);
+    }
+    return groups;
+  }, [eventVideos, standaloneItems]);
+
+  const inputCls = 'w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500';
+
+  const handlePost = () => {
+    if (!formUrl.trim()) return;
+    const sv: SchStandaloneVideo = {
+      id: generateId(),
+      url: formUrl.trim(),
+      title: formTitle.trim() || undefined,
+      postedAt: new Date().toISOString(),
+      eventId: formEventId || undefined,
+    };
+    onSaveStandaloneVideos([sv, ...standaloneVideos]);
+    setFormUrl(''); setFormTitle(''); setFormEventId('');
+    setShowForm(false);
+  };
+
+  const handleDelete = (id: string) => {
+    onSaveStandaloneVideos(standaloneVideos.filter(v => v.id !== id));
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* 投稿ボタン */}
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">🎬 動画ライブラリ</p>
+        <button
+          onClick={() => setShowForm(p => !p)}
+          className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+        >
+          ＋ 動画を投稿
+        </button>
+      </div>
+
+      {/* 投稿フォーム */}
+      {showForm && (
+        <div className="bg-slate-800/80 border border-white/10 rounded-2xl p-4 space-y-3">
+          <p className="text-sm font-bold text-white">動画URLを投稿</p>
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1">🎬 動画URL（YouTube / BAND）</label>
+            <input type="url" value={formUrl} onChange={e => setFormUrl(e.target.value)} placeholder="https://..." className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1">📝 タイトル（任意）</label>
+            <input type="text" value={formTitle} onChange={e => setFormTitle(e.target.value)} placeholder="例: 準決勝ハイライト" className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1">🔗 イベントに紐づける（任意）</label>
+            <select value={formEventId} onChange={e => setFormEventId(e.target.value)} className={inputCls}>
+              <option value="">紐づけなし</option>
+              {matchEvents.map(ev => {
+                const ms = getMatches(ev);
+                const opp = ms[0]?.opponentName;
+                return (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.date} {ev.label ? `🏆 ${ev.label}` : ''}{opp ? ` 🆚 ${opp}` : ''}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button onClick={handlePost} disabled={!formUrl.trim()} className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">
+              投稿する
+            </button>
+            <button onClick={() => setShowForm(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold py-2.5 rounded-xl transition-colors">
+              キャンセル
+            </button>
+          </div>
+        </div>
+      )}
+
+      {allVideos.length === 0 && (
+        <div className="text-center py-12 text-slate-400">
+          <p className="text-3xl mb-3">🎬</p>
+          <p className="text-sm">動画がありません</p>
+          <p className="text-xs mt-1">試合のURLまたは上の「動画を投稿」から追加できます</p>
+        </div>
+      )}
+
+      {/* 大会別グループ */}
+      {allVideos.map(group => (
+        <div key={group.key}>
+          <p className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1.5">
+            🏆 {group.key}
+            <span className="text-slate-600 font-normal">({group.items.length}本)</span>
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {group.items.map(v => {
+              const thumb = getYoutubeThumbnail(v.url);
+              const won = v.score ? v.score.home > v.score.away : null;
+              const drew = v.score ? v.score.home === v.score.away : null;
+              return (
+                <a
+                  key={v.id}
+                  href={v.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative bg-slate-800/80 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/50 transition-colors"
+                >
+                  {/* サムネイル */}
+                  <div className="aspect-video bg-slate-700 relative overflow-hidden">
+                    {thumb ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={thumb} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-2xl text-slate-500">🎬</div>
+                    )}
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-white text-2xl">▶</span>
+                    </div>
+                    {/* スコアバッジ */}
+                    {v.score && (
+                      <div className={`absolute top-1 right-1 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${won ? 'bg-green-600/90 text-white' : drew ? 'bg-slate-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
+                        {v.score.home}−{v.score.away}
+                      </div>
+                    )}
+                    {/* スタンドアロンバッジ */}
+                    {v.source === 'standalone' && (
+                      <button
+                        onClick={e => { e.preventDefault(); if (window.confirm('この動画を削除しますか？')) handleDelete(v.id); }}
+                        className="absolute top-1 left-1 text-[9px] bg-slate-900/80 text-slate-400 hover:text-red-400 px-1.5 py-0.5 rounded-full transition-colors"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  {/* メタ情報 */}
+                  <div className="px-2 py-1.5">
+                    {v.opponent && (
+                      <p className="text-[11px] font-semibold text-white truncate">🆚 {v.opponent}</p>
+                    )}
+                    {!v.opponent && v.title && (
+                      <p className="text-[11px] font-semibold text-white truncate">{v.title}</p>
+                    )}
+                    <p className="text-[10px] text-slate-500 mt-0.5">{v.date}</p>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -3327,7 +3574,7 @@ function MemberSection({
 }
 
 // ---- Main Page ----
-type Tab = 'home' | 'events' | 'stats' | 'announce' | 'member';
+type Tab = 'home' | 'events' | 'video' | 'stats' | 'announce' | 'member';
 
 /** Base64URL文字列 → ArrayBuffer（iOS Safariは文字列キーを受け付けないため必須） */
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
@@ -3350,6 +3597,7 @@ export default function SchPage() {
   const [parkingComments, setParkingComments] = useState<SchParkingComment[]>([]);
   const [teamLogo, setTeamLogo] = useState<string | null>(null);
   const [updateHistory, setUpdateHistory] = useState<SchUpdateHistory[]>([]);
+  const [standaloneVideos, setStandaloneVideos] = useState<SchStandaloneVideo[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [scrollTarget, setScrollTarget] = useState<{ tab: Tab; itemId: string } | null>(null);
   const [openDetailId, setOpenDetailId] = useState<string | null>(null);
@@ -3463,6 +3711,7 @@ export default function SchPage() {
       setParkingComments(d.parkingComments ?? []);
       setTeamLogo(d.teamLogo ?? null);
       setUpdateHistory(d.updateHistory ?? []);
+      setStandaloneVideos(d.standaloneVideos ?? []);
       setIsLoading(false);
     }).catch(() => setIsLoading(false));
   }, []);
@@ -3518,6 +3767,7 @@ export default function SchPage() {
   const saveRecords         = useCallback((r: SchParkingRecord[])   => { setParkingRecords(r);  post({ parkingRecords: r }); }, [post]);
   const saveParkingComments = useCallback((c: SchParkingComment[])  => { setParkingComments(c); post({ parkingComments: c }); }, [post]);
   const saveTeamLogo        = useCallback((logo: string | null)     => { setTeamLogo(logo);     post({ teamLogo: logo }); }, [post]);
+  const saveStandaloneVideos = useCallback((v: SchStandaloneVideo[]) => { setStandaloneVideos(v); post({ standaloneVideos: v }); }, [post]);
 
   const upsertParkingRecord = useCallback((eventId: string, updater: (slots: SchParkingSlot[]) => SchParkingSlot[]) => {
     setParkingRecords(prev => {
@@ -3582,6 +3832,7 @@ export default function SchPage() {
   const tabs = [
     { key: 'home'    as Tab, label: 'ホーム',   icon: '🏠' },
     { key: 'events'  as Tab, label: '予定',     icon: '📅' },
+    { key: 'video'   as Tab, label: '動画',     icon: '🎬' },
     { key: 'stats'   as Tab, label: '戦績',     icon: '🏆' },
     { key: 'announce'as Tab, label: '連絡',     icon: '📢' },
     { key: 'member'  as Tab, label: 'メンバー', icon: '🪪' },
@@ -3835,6 +4086,9 @@ export default function SchPage() {
       )}
       {tab === 'events' && (
         <EventSection events={events} members={members} onSave={saveEvents} openDetailId={openDetailId} />
+      )}
+      {tab === 'video' && (
+        <VideoSection events={events} standaloneVideos={standaloneVideos} onSaveStandaloneVideos={saveStandaloneVideos} />
       )}
       {tab === 'stats' && (
         <StatsSection events={events} members={members} />

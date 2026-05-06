@@ -136,6 +136,15 @@ export interface SchMatch {
   videoUrls?: string[];     // BAND / YouTube など（複数）
 }
 
+export interface SchStandaloneVideo {
+  id: string;
+  url: string;
+  title?: string;     // タイトル（任意）
+  postedAt: string;   // ISO date string
+  eventId?: string;   // 紐づけ先イベントID（任意）
+  matchId?: string;   // 紐づけ先試合ID（任意）
+}
+
 export interface SchEvent {
   id: string;
   date: string;     // yyyy/mm/dd（開始日）

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SchSchedule, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent, SchUpdateHistory, SchParkingComment } from '@/lib/types';
+import { SchSchedule, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent, SchUpdateHistory, SchParkingComment, SchStandaloneVideo } from '@/lib/types';
 import { sendPushToAll } from '@/lib/webpush';
 
 // Legacy SchMatch shape (from sch:matches Redis key) — kept only for migration
@@ -7,17 +7,18 @@ type LegacySchMatch = { id: string; date: string; startTime?: string; opponent?:
 import { logAccess, logChange, getIp, getUa, getDeviceId } from '@/lib/logger';
 
 const KEYS = {
-  events:          'sch:events',
-  schedules:       'sch:schedules',
-  matches:         'sch:matches',
-  announcements:   'sch:announcements',
-  members:         'sch:members',
-  parkingRecords:  'sch:parking_records',
-  parkingRotation: 'sch:parking_rotation',
-  nearbyParking:   'sch:nearby_parking',
-  parkingComments: 'sch:parking_comments',
-  teamLogo:        'sch:team_logo',
-  updateHistory:   'sch:update_history',
+  events:            'sch:events',
+  schedules:         'sch:schedules',
+  matches:           'sch:matches',
+  announcements:     'sch:announcements',
+  members:           'sch:members',
+  parkingRecords:    'sch:parking_records',
+  parkingRotation:   'sch:parking_rotation',
+  nearbyParking:     'sch:nearby_parking',
+  parkingComments:   'sch:parking_comments',
+  teamLogo:          'sch:team_logo',
+  updateHistory:     'sch:update_history',
+  standaloneVideos:  'sch:standalone_videos',
 } as const;
 
 const DEFAULT_MEMBERS: SchMember[] = [
@@ -60,6 +61,7 @@ interface SchData {
   parkingComments: SchParkingComment[];
   teamLogo: string | null;
   updateHistory: SchUpdateHistory[];
+  standaloneVideos: SchStandaloneVideo[];
   // Legacy (kept for backward compat read)
   schedules: SchSchedule[];
   matches: LegacySchMatch[];
@@ -95,11 +97,11 @@ async function readSchData(): Promise<SchData> {
   if (hasRedis()) {
     const redis = await getRedis();
     const [eventsRaw, schedulesRaw, matchesRaw, announcements, membersRaw,
-           parkingRecordsRaw, parkingRotationRaw, nearbyParkingRaw, parkingCommentsRaw, teamLogoRaw, updateHistoryRaw] =
+           parkingRecordsRaw, parkingRotationRaw, nearbyParkingRaw, parkingCommentsRaw, teamLogoRaw, updateHistoryRaw, standaloneVideosRaw] =
       await redis.mget<unknown[]>(
         KEYS.events, KEYS.schedules, KEYS.matches, KEYS.announcements,
         KEYS.members, KEYS.parkingRecords, KEYS.parkingRotation,
-        KEYS.nearbyParking, KEYS.parkingComments, KEYS.teamLogo, KEYS.updateHistory
+        KEYS.nearbyParking, KEYS.parkingComments, KEYS.teamLogo, KEYS.updateHistory, KEYS.standaloneVideos
       );
 
     let members = membersRaw as SchMember[] | null;
@@ -146,10 +148,11 @@ async function readSchData(): Promise<SchData> {
       parkingRotation,
       nearbyParking:   (nearbyParkingRaw  as SchNearbyParking[])  ?? [],
       parkingComments: (parkingCommentsRaw as SchParkingComment[]) ?? [],
-      teamLogo:        (teamLogoRaw as string | null) ?? null,
-      updateHistory:  (updateHistoryRaw as SchUpdateHistory[]) ?? [],
-      schedules:      (schedulesRaw as SchSchedule[]) ?? [],
-      matches:        (matchesRaw as LegacySchMatch[]) ?? [],
+      teamLogo:          (teamLogoRaw as string | null) ?? null,
+      updateHistory:     (updateHistoryRaw as SchUpdateHistory[]) ?? [],
+      standaloneVideos:  (standaloneVideosRaw as SchStandaloneVideo[]) ?? [],
+      schedules:         (schedulesRaw as SchSchedule[]) ?? [],
+      matches:           (matchesRaw as LegacySchMatch[]) ?? [],
     };
   }
 
@@ -168,7 +171,7 @@ async function readSchData(): Promise<SchData> {
       members: DEFAULT_MEMBERS,
       parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
       parkingComments: [],
-      teamLogo: null, updateHistory: [], schedules: [], matches: [],
+      teamLogo: null, updateHistory: [], standaloneVideos: [], schedules: [], matches: [],
       ...data,
     };
   } catch {
@@ -177,7 +180,7 @@ async function readSchData(): Promise<SchData> {
       members: DEFAULT_MEMBERS,
       parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
       parkingComments: [],
-      teamLogo: null, updateHistory: [], schedules: [], matches: [],
+      teamLogo: null, updateHistory: [], standaloneVideos: [], schedules: [], matches: [],
     };
   }
 }
@@ -194,10 +197,11 @@ async function writeSchPartial(body: Partial<Record<string, unknown>>): Promise<
     if ('nearbyParking'   in body) updates[KEYS.nearbyParking]   = body.nearbyParking;
     if ('parkingComments' in body) updates[KEYS.parkingComments] = body.parkingComments;
     if ('teamLogo'        in body) updates[KEYS.teamLogo]        = body.teamLogo;
-    if ('updateHistory'  in body) updates[KEYS.updateHistory]  = body.updateHistory;
+    if ('updateHistory'    in body) updates[KEYS.updateHistory]    = body.updateHistory;
+    if ('standaloneVideos' in body) updates[KEYS.standaloneVideos] = body.standaloneVideos;
     // Legacy keys (still writable for backward compat)
-    if ('schedules'      in body) updates[KEYS.schedules]      = body.schedules;
-    if ('matches'        in body) updates[KEYS.matches]        = body.matches;
+    if ('schedules'        in body) updates[KEYS.schedules]        = body.schedules;
+    if ('matches'          in body) updates[KEYS.matches]          = body.matches;
     if (Object.keys(updates).length > 0) await redis.mset(updates);
     return;
   }
