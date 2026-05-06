@@ -1681,7 +1681,7 @@ function VideoThumbCell({ entry, index, total, onDelete, onEditThumb }: {
   );
 }
 
-function VideoTile({ v, onDelete, onEditThumb }: { v: VideoItem; onDelete?: (standaloneId: string) => void; onEditThumb?: (url: string) => void }) {
+function VideoTile({ v, onDelete, onEditThumb, groupIndex }: { v: VideoItem; onDelete?: (standaloneId: string) => void; onEditThumb?: (url: string) => void; groupIndex?: number }) {
   const won = v.score ? v.score.home > v.score.away : null;
   const drew = v.score ? v.score.home === v.score.away : null;
   return (
@@ -1713,10 +1713,19 @@ function VideoTile({ v, onDelete, onEditThumb }: { v: VideoItem; onDelete?: (sta
           </span>
         )}
         {v.opponent && (
-          <p className="text-[11px] font-semibold text-white truncate pr-10">🆚 {v.opponent}</p>
+          <p className="text-[11px] font-semibold text-white truncate pr-10">
+            {v.matchType === 'トレマ' && groupIndex != null && <span className="text-slate-400 font-normal mr-1">第{groupIndex + 1}試合</span>}
+            🆚 {v.opponent}
+          </p>
         )}
         {!v.opponent && v.title && (
-          <p className="text-[11px] font-semibold text-white truncate">{v.title}</p>
+          <p className="text-[11px] font-semibold text-white truncate">
+            {v.matchType === 'トレマ' && groupIndex != null && <span className="text-slate-400 font-normal mr-1">第{groupIndex + 1}試合</span>}
+            {v.title}
+          </p>
+        )}
+        {!v.opponent && !v.title && v.matchType === 'トレマ' && groupIndex != null && (
+          <p className="text-[11px] text-slate-400 truncate">第{groupIndex + 1}試合</p>
         )}
         <p className="text-[10px] text-slate-500 mt-0.5">{v.date}{v.entries.length > 1 ? ` · ${v.entries.length}本` : ''}</p>
       </div>
@@ -2069,10 +2078,11 @@ function VideoSection({
             <span className="text-slate-600 font-normal">({group.items.length}本)</span>
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {group.items.map(v => (
+            {group.items.map((v, gi) => (
               <VideoTile
                 key={v.id}
                 v={v}
+                groupIndex={gi}
                 onDelete={v.source === 'standalone' ? handleDelete : undefined}
                 onEditThumb={openEditThumb}
               />
