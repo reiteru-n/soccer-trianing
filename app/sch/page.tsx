@@ -147,10 +147,10 @@ type MatchFormState = {
   scorers: SchScorer[];
   assists: SchScorer[];
   memo: string;
-  videoUrl: string;
+  videoUrls: string[];
 };
 function emptyMatchState(): MatchFormState {
-  return { id: generateId(), opponentName: '', roundName: '', dayNumber: '1', isHome: true, homeScore: '', awayScore: '', htHome: '', htAway: '', hasExtraTime: false, etHome: '', etAway: '', hasPK: false, pkHome: '', pkAway: '', scorers: [], assists: [], memo: '', videoUrl: '' };
+  return { id: generateId(), opponentName: '', roundName: '', dayNumber: '1', isHome: true, homeScore: '', awayScore: '', htHome: '', htAway: '', hasExtraTime: false, etHome: '', etAway: '', hasPK: false, pkHome: '', pkAway: '', scorers: [], assists: [], memo: '', videoUrls: [] };
 }
 function matchToFormState(m: SchMatch): MatchFormState {
   return {
@@ -172,7 +172,7 @@ function matchToFormState(m: SchMatch): MatchFormState {
     scorers: m.scorers ?? [],
     assists: m.assists ?? [],
     memo: m.memo ?? '',
-    videoUrl: m.videoUrl ?? '',
+    videoUrls: m.videoUrls ?? (m.videoUrl ? [m.videoUrl] : []),
   };
 }
 function formStateToMatch(s: MatchFormState): SchMatch {
@@ -195,7 +195,7 @@ function formStateToMatch(s: MatchFormState): SchMatch {
     scorers: s.scorers.length > 0 ? s.scorers : undefined,
     assists: s.assists.length > 0 ? s.assists : undefined,
     memo: s.memo || undefined,
-    videoUrl: s.videoUrl || undefined,
+    videoUrls: s.videoUrls.length > 0 ? s.videoUrls.filter(u => u.trim()) : undefined,
   };
 }
 
@@ -388,8 +388,39 @@ function MatchEntry({
         </div>
       </details>
 
-      {/* 動画URL — 常に表示 */}
-      <div><label className={labelCls}>🎬 動画URL（BAND / YouTube など）</label><input type="url" value={value.videoUrl} onChange={e => upd({ videoUrl: e.target.value })} placeholder="https://..." className={inputCls} /></div>
+      {/* 動画URL — 複数登録可 */}
+      <div>
+        <label className={labelCls}>🎬 動画URL（BAND / YouTube など）</label>
+        <div className="space-y-1.5">
+          {(value.videoUrls.length === 0 ? [''] : value.videoUrls).map((url, i) => (
+            <div key={i} className="flex gap-1.5">
+              <input
+                type="url"
+                value={url}
+                onChange={e => {
+                  const next = [...(value.videoUrls.length === 0 ? [''] : value.videoUrls)];
+                  next[i] = e.target.value;
+                  upd({ videoUrls: next });
+                }}
+                placeholder="https://..."
+                className={inputCls + ' flex-1'}
+              />
+              {value.videoUrls.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => upd({ videoUrls: value.videoUrls.filter((_, j) => j !== i) })}
+                  className="text-slate-400 hover:text-red-400 text-lg leading-none px-1"
+                >×</button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => upd({ videoUrls: [...value.videoUrls, ''] })}
+            className="text-xs text-blue-400 hover:text-blue-300 mt-0.5"
+          >＋ URLを追加</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1118,13 +1149,13 @@ function EventCard({
                 </div>
               )}
               {m.memo && <p className="text-xs text-slate-300 italic whitespace-pre-wrap">💬 {m.memo}</p>}
-              {/* 動画URL */}
-              {m.videoUrl && (
-                <a href={m.videoUrl} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 mt-1 text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2">
-                  🎬 動画を見る
+              {/* 動画URL（複数対応） */}
+              {(m.videoUrls ?? (m.videoUrl ? [m.videoUrl] : [])).map((url, vi) => (
+                <a key={vi} href={url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-1 mr-2 text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2">
+                  🎬 動画{(m.videoUrls ?? (m.videoUrl ? [m.videoUrl] : [])).length > 1 ? `${vi + 1}` : 'を見る'}
                 </a>
-              )}
+              ))}
             </div>
           ))}
 
@@ -1557,7 +1588,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
 }
 
 // ---- VideoLink ----
-function VideoLink({ url }: { url: string }) {
+function VideoLink({ url, index = 0, total = 1 }: { url: string; index?: number; total?: number }) {
   const [state, setState] = useState<'loading' | 'ok' | 'broken'>('loading');
   useEffect(() => {
     let cancelled = false;
@@ -1567,12 +1598,13 @@ function VideoLink({ url }: { url: string }) {
       .catch(() => { if (!cancelled) setState('broken'); });
     return () => { cancelled = true; };
   }, [url]);
+  const label = total > 1 ? `🎬 動画${index + 1}` : '🎬 動画';
   if (state === 'loading') return <span className="text-[10px] text-slate-500 animate-pulse">🎬…</span>;
   if (state === 'broken') return <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">リンク切れ</span>;
   return (
     <a href={url} target="_blank" rel="noopener noreferrer"
       className="text-[10px] text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-1.5 py-0.5 rounded transition-colors shrink-0">
-      🎬 動画
+      {label}
     </a>
   );
 }
@@ -1851,7 +1883,9 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
                           <span className="text-sm font-bold text-white tabular-nums">{m.homeScore} − {m.awayScore}</span>
                           {m.opponentName && <span className="text-xs text-slate-400 truncate">vs {m.opponentName}</span>}
                           {m.roundName && <span className="text-[10px] text-slate-500 shrink-0">({m.roundName})</span>}
-                          {m.videoUrl && <VideoLink url={m.videoUrl} />}
+                          {(m.videoUrls ?? (m.videoUrl ? [m.videoUrl] : [])).map((url, vi) => (
+                            <VideoLink key={vi} url={url} index={vi} total={(m.videoUrls ?? (m.videoUrl ? [m.videoUrl] : [])).length} />
+                          ))}
                         </div>
                       );
                     })}

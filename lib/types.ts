@@ -132,7 +132,8 @@ export interface SchMatch {
   scorers?: SchScorer[];
   assists?: SchScorer[];
   memo?: string;
-  videoUrl?: string;        // BAND / YouTube など
+  videoUrl?: string;        // レガシー（1件のみ）
+  videoUrls?: string[];     // BAND / YouTube など（複数）
 }
 
 export interface SchEvent {
