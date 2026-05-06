@@ -3020,7 +3020,7 @@ function HomeSection({
         )}
       </div>
 
-      {/* 最近のお知らせ（過去7日以内・最大3件） */}
+      {/* 最近のお知らせ（過去14日以内・最大3件） */}
       {(() => {
         if (announcements.length === 0) return null;
         // Sort newest first (createdAt preferred, fallback to date)
@@ -3029,16 +3029,14 @@ function HomeSection({
           const tb = b.createdAt ?? b.date;
           return tb.localeCompare(ta);
         });
-        const fiveDaysAgo = (() => {
+        const cutoff = (() => {
           const d = new Date(today.replace(/\//g, '-'));
-          d.setDate(d.getDate() - 5);
+          d.setDate(d.getDate() - 14);
           return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
         })();
-        // Always show latest 1 + all within past 5 days (deduplicated)
-        const shownIds = new Set<string>();
-        shownIds.add(sorted[0].id);
-        sorted.filter(a => a.date >= fiveDaysAgo).forEach(a => shownIds.add(a.id));
-        const shown = sorted.filter(a => shownIds.has(a.id));
+        // 過去14日以内のみ表示（最大3件）
+        const shown = sorted.filter(a => a.date >= cutoff).slice(0, 3);
+        if (shown.length === 0) return null;
         const hasMore = announcements.length > shown.length;
         return (
           <div>
