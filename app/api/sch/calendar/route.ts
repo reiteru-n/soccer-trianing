@@ -87,6 +87,8 @@ function buildVEvent(e: SchEvent): string {
 
   lines.push(`SUMMARY:${icsEscape(eventSummary(e))}`);
 
+  lines.push('URL:https://soccer-trianing.vercel.app/sch');
+
   if (e.location) {
     lines.push(`LOCATION:${icsEscape(e.location)}`);
   }
