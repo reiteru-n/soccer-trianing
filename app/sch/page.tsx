@@ -821,7 +821,7 @@ function EventForm({
                 <p className="text-[10px] text-slate-500 mt-1">入力すると「次の予定」に天気予報が表示されます</p>
               </div>
             )}
-            {type !== 'off' && <div><label className={labelCls}>📋 イベント名{type === 'match' ? '・大会名' : ''}</label><input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={type === 'match' ? '例: 神奈川カップ2026' : '例: 通常練習'} className={inputCls} /></div>}
+            {type !== 'off' && <div><label className={labelCls}>{type === 'match' ? '🏆 大会名（任意）' : '📋 イベント名'}</label><input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={type === 'match' ? '例: 神奈川カップ2026' : '例: 通常練習'} className={inputCls} /></div>}
             <div><label className={labelCls}>{type === 'off' ? '📝 理由・メモ（任意）' : '📝 メモ'}</label><textarea value={note} onChange={e => setNote(e.target.value)} placeholder={type === 'off' ? '例: 雨天中止、祝日、夏季休暇など' : '持ち物・備考など'} rows={3} className={inputCls + ' resize-none'} /></div>
 
             {/* Meeting info (match / camp / other) */}
@@ -1026,21 +1026,21 @@ function EventCard({
             </div>
             {/* Title */}
             {event.type === 'match' ? (
-              matchCount > 1 ? (
-                <p className="text-sm font-semibold text-white mt-1 truncate">
-                  {firstMatch?.opponentName ? `🆚 ${firstMatch.opponentName} ほか${matchCount - 1}試合` : `🏆 ${matchCount}試合`}
+              <>
+                {event.label && (
+                  <p className="text-sm font-semibold text-white mt-1 truncate">🏆 {event.label}</p>
+                )}
+                <p className={`${event.label ? 'text-xs text-slate-300 mt-0.5' : 'text-sm font-semibold text-white mt-1'} truncate`}>
+                  {matchCount > 1
+                    ? (firstMatch?.opponentName ? `🆚 ${firstMatch.opponentName} ほか${matchCount - 1}試合` : `${matchCount}試合`)
+                    : (firstMatch?.opponentName ? `🆚 ${firstMatch.opponentName}` : '相手未定')}
                 </p>
-              ) : (
-                <p className="text-sm font-semibold text-white mt-1 truncate">
-                  {firstMatch?.opponentName ? `🆚 ${firstMatch.opponentName}` : '相手未定'}
-                </p>
-              )
+              </>
             ) : event.type === 'off' ? (
               <p className="text-sm font-semibold text-sky-200 mt-1">{event.note || '休みの日'}</p>
             ) : (
               <p className="text-sm font-semibold text-white mt-1 truncate">{event.label || event.location || '（タイトルなし）'}</p>
             )}
-            {event.type === 'match' && event.label && <p className="text-xs text-slate-400 truncate">{event.label}</p>}
             {/* スコア表示 */}
             {event.type === 'match' && matchCount === 1 && firstMatch && firstMatch.homeScore != null && firstMatch.awayScore != null && (
               <p className="text-xl font-extrabold text-white leading-tight">{firstMatch.homeScore} <span className="text-slate-400 text-sm font-normal">−</span> {firstMatch.awayScore}</p>
@@ -1551,7 +1551,11 @@ function EventSection({ events, members, onSave, openDetailId }: {
             <div className="px-4 py-3 space-y-2 max-h-72 overflow-y-auto">
               {popupDay.events.map(ev => {
                 const cfg = tc(ev.type);
-                const title = ev.label || (ev.type === 'match' && ev.opponentName ? `vs ${ev.opponentName}` : cfg.label);
+                const evMs = ev.type === 'match' ? getMatches(ev) : [];
+                const evOpp = evMs[0]?.opponentName || ev.opponentName;
+                const title = ev.type === 'match'
+                  ? [ev.label ? `🏆 ${ev.label}` : null, evOpp ? `🆚 ${evOpp}` : null].filter(Boolean).join(' ') || cfg.label
+                  : (ev.label || cfg.label);
                 const time = ev.startTime ? `${ev.startTime}${ev.endTime ? '〜' + ev.endTime : ''}` : null;
                 return (
                   <button
@@ -2350,15 +2354,21 @@ function HomeSection({
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tc(nextEvent.type).badge}`}>
                     {tc(nextEvent.type).icon} {tc(nextEvent.type).label}
                   </span>
-                  <p className="text-base font-bold text-white mt-1.5 truncate">
-                    {nextEvent.type === 'match' ? (() => {
-                      const ms = getMatches(nextEvent);
-                      const first = ms[0];
-                      return ms.length > 1
-                        ? (first?.opponentName ? `🆚 ${first.opponentName} ほか${ms.length - 1}試合` : `🏆 ${ms.length}試合`)
-                        : (first?.opponentName ? `🆚 ${first.opponentName}` : '相手未定');
-                    })() : (nextEvent.label || nextEvent.location || '詳細未定')}
-                  </p>
+                  {nextEvent.type === 'match' ? (() => {
+                    const ms = getMatches(nextEvent);
+                    const first = ms[0];
+                    const oppText = ms.length > 1
+                      ? (first?.opponentName ? `🆚 ${first.opponentName} ほか${ms.length - 1}試合` : `${ms.length}試合`)
+                      : (first?.opponentName ? `🆚 ${first.opponentName}` : '相手未定');
+                    return (
+                      <>
+                        {nextEvent.label && <p className="text-base font-bold text-white mt-1.5 truncate">🏆 {nextEvent.label}</p>}
+                        <p className={`${nextEvent.label ? 'text-sm text-slate-300 mt-0.5' : 'text-base font-bold text-white mt-1.5'} truncate`}>{oppText}</p>
+                      </>
+                    );
+                  })() : (
+                    <p className="text-base font-bold text-white mt-1.5 truncate">{nextEvent.label || nextEvent.location || '詳細未定'}</p>
+                  )}
                   {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
                   {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
                   {weather && (
