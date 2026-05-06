@@ -1067,7 +1067,7 @@ function EventImageGallery({ images }: { images: string[] }) {
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">📷 添付画像</p>
         <div className="flex gap-2 overflow-x-auto pb-1">
           {images.map((src, i) => (
-            <button key={i} type="button" onClick={() => setLightbox(i)}
+            <button key={i} type="button" onClick={(e) => { e.stopPropagation(); setLightbox(i); }}
               className="flex-none w-28 aspect-video rounded-lg overflow-hidden bg-slate-700 hover:opacity-90 transition-opacity">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" className="w-full h-full object-cover" />
@@ -1077,19 +1077,19 @@ function EventImageGallery({ images }: { images: string[] }) {
       </div>
       {lightbox !== null && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-          onClick={() => setLightbox(null)}>
+          onClick={(e) => { e.stopPropagation(); setLightbox(null); }}>
           <div className="relative max-w-full max-h-full p-4" onClick={e => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={images[lightbox]} alt="" className="max-w-[90vw] max-h-[80vh] rounded-xl object-contain" />
             <div className="flex items-center justify-between mt-3 gap-4">
-              <button disabled={lightbox === 0} onClick={() => setLightbox(p => p! - 1)}
+              <button disabled={lightbox === 0} onClick={(e) => { e.stopPropagation(); setLightbox(p => p! - 1); }}
                 className="text-white text-2xl disabled:opacity-30 px-3">‹</button>
               <span className="text-slate-400 text-sm">{lightbox + 1} / {images.length}</span>
-              <button disabled={lightbox === images.length - 1} onClick={() => setLightbox(p => p! + 1)}
+              <button disabled={lightbox === images.length - 1} onClick={(e) => { e.stopPropagation(); setLightbox(p => p! + 1); }}
                 className="text-white text-2xl disabled:opacity-30 px-3">›</button>
             </div>
           </div>
-          <button onClick={() => setLightbox(null)}
+          <button onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
             className="absolute top-4 right-4 text-white text-3xl leading-none">✕</button>
         </div>
       )}
