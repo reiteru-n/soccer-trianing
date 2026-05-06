@@ -1668,7 +1668,7 @@ function VideoThumbCell({ entry, index, total, onDelete, onEditThumb }: {
       {onEditThumb && (
         <button
           onClick={e => { e.preventDefault(); e.stopPropagation(); onEditThumb(); }}
-          className="absolute bottom-0.5 right-0.5 text-[9px] bg-slate-900/80 text-slate-400 hover:text-blue-300 px-1 py-0.5 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+          className="absolute bottom-0.5 right-0.5 text-[9px] bg-slate-900/80 text-slate-400 hover:text-blue-300 px-1 py-0.5 rounded-full transition-colors sm:opacity-0 sm:group-hover:opacity-100"
         >📷</button>
       )}
       {onDelete && (
@@ -1738,6 +1738,7 @@ type VideoItem = {
   date: string;
   postedAt: string;
   tournamentName?: string;
+  matchType?: string;
   opponent?: string;
   score?: { home: number; away: number };
   source: 'event' | 'standalone';
@@ -1831,6 +1832,7 @@ function VideoSection({
           date: ev.date,
           postedAt: ev.date,
           tournamentName: ev.label,
+          matchType: ev.matchType,
           opponent: m.opponentName,
           score: m.homeScore != null && m.awayScore != null
             ? { home: m.homeScore, away: m.awayScore } : undefined,
@@ -1868,12 +1870,13 @@ function VideoSection({
     const all = [...eventVideos, ...standaloneItems].sort((a, b) => {
       return b.date.localeCompare(a.date) || b.postedAt.localeCompare(a.postedAt);
     });
-    // グループ化 key: 大会名 or 日付（大会名なしはトレマ等で日付ごとに分ける）
+    // グループ化 key: トレマは日付ごと、大会名あり→大会名、それ以外→日付
     const groups: { key: string; label: string; items: VideoItem[] }[] = [];
     const seen = new Map<string, VideoItem[]>();
     for (const v of all) {
-      const key = v.tournamentName ? v.tournamentName : `__date__${v.date}`;
-      const label = v.tournamentName || `${v.date}（${dayLabel(v.date)}）`;
+      const useDate = v.matchType === 'トレマ' || !v.tournamentName;
+      const key = useDate ? `__date__${v.date}` : v.tournamentName!;
+      const label = useDate ? `${v.date}（${dayLabel(v.date)}）` : v.tournamentName!;
       if (!seen.has(key)) { seen.set(key, []); groups.push({ key, label, items: seen.get(key)! }); }
       seen.get(key)!.push(v);
     }
