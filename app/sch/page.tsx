@@ -1787,7 +1787,30 @@ function VideoSection({
     });
   }, []);
 
-  // フォームが開いているときグローバルペーストをキャプチャ
+  // クリップボードから画像を取得（モバイル用ボタン経由 + デスクトップ兼用）
+  const pasteFromClipboard = useCallback(async (onData: (d: string) => void) => {
+    if (!navigator.clipboard?.read) {
+      alert('このブラウザはクリップボードの読み取りに対応していません\n画像ファイルを選択してください');
+      return;
+    }
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        for (const type of item.types) {
+          if (type.startsWith('image/')) {
+            const blob = await item.getType(type);
+            const data = await compressImage(blob);
+            if (data) { onData(data); return; }
+          }
+        }
+      }
+      alert('クリップボードに画像がありません');
+    } catch {
+      alert('クリップボードへのアクセスが許可されていません\nブラウザの許可設定を確認してください');
+    }
+  }, [compressImage]);
+
+  // フォームが開いているときグローバルペーストをキャプチャ（デスクトップ Ctrl+V 用）
   useEffect(() => {
     if (!showForm && !editThumbUrl) return;
     const handler = (e: ClipboardEvent) => {
@@ -1994,13 +2017,17 @@ function VideoSection({
                 </button>
               </div>
             ) : (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-5 cursor-pointer hover:border-slate-400 transition-colors text-center"
-              >
-                <span className="text-2xl">📷</span>
-                <p className="text-xs text-slate-400">クリックで画像を選択</p>
-                <p className="text-[10px] text-slate-500">または <kbd className="bg-slate-700 px-1 rounded">Ctrl+V</kbd> / <kbd className="bg-slate-700 px-1 rounded">⌘V</kbd> で貼り付け</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-4 cursor-pointer hover:border-slate-400 transition-colors text-center">
+                  <span className="text-xl">🗂️</span>
+                  <p className="text-xs text-slate-400">ファイルを選択</p>
+                </button>
+                <button type="button" onClick={() => pasteFromClipboard(d => setFormThumb(d))}
+                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-4 cursor-pointer hover:border-slate-400 transition-colors text-center">
+                  <span className="text-xl">📋</span>
+                  <p className="text-xs text-slate-400">貼り付け</p>
+                </button>
               </div>
             )}
             <input
@@ -2072,11 +2099,17 @@ function VideoSection({
                   className="absolute top-1 right-1 bg-slate-900/80 text-white text-xs px-2 py-0.5 rounded-full hover:bg-red-600/80 transition-colors">削除</button>
               </div>
             ) : (
-              <div onClick={() => editFileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-5 cursor-pointer hover:border-slate-400 transition-colors text-center">
-                <span className="text-2xl">📷</span>
-                <p className="text-xs text-slate-400">クリックで画像を選択</p>
-                <p className="text-[10px] text-slate-500">または <kbd className="bg-slate-700 px-1 rounded">Ctrl+V</kbd> / <kbd className="bg-slate-700 px-1 rounded">⌘V</kbd> で貼り付け</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => editFileInputRef.current?.click()}
+                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-4 cursor-pointer hover:border-slate-400 transition-colors text-center">
+                  <span className="text-xl">🗂️</span>
+                  <p className="text-xs text-slate-400">ファイルを選択</p>
+                </button>
+                <button type="button" onClick={() => pasteFromClipboard(d => setEditThumbData(d))}
+                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-4 cursor-pointer hover:border-slate-400 transition-colors text-center">
+                  <span className="text-xl">📋</span>
+                  <p className="text-xs text-slate-400">貼り付け</p>
+                </button>
               </div>
             )}
             <input ref={editFileInputRef} type="file" accept="image/*" className="hidden"
