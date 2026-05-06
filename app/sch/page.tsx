@@ -737,6 +737,47 @@ function EventForm({
   const [meetingTime, setMeetingTime] = useState(initialEvent?.meetingTime ?? '');
   const [meetingPlace, setMeetingPlace] = useState(initialEvent?.meetingPlace ?? '');
 
+  // Attached images
+  const [images, setImages] = useState<string[]>(initialEvent?.images ?? []);
+  const imgFileRef = useRef<HTMLInputElement>(null);
+
+  const compressEventImage = useCallback((blob: Blob): Promise<string> => {
+    return new Promise(resolve => {
+      const img = new window.Image();
+      const objUrl = URL.createObjectURL(blob);
+      img.onload = () => {
+        URL.revokeObjectURL(objUrl);
+        const maxW = 1024;
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = () => { URL.revokeObjectURL(objUrl); resolve(''); };
+      img.src = objUrl;
+    });
+  }, []);
+
+  // クリップボードペースト（フォーム展開中）
+  useEffect(() => {
+    const handler = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) compressEventImage(file).then(d => { if (d) setImages(prev => prev.length < 5 ? [...prev, d] : prev); });
+          break;
+        }
+      }
+    };
+    document.addEventListener('paste', handler);
+    return () => document.removeEventListener('paste', handler);
+  }, [compressEventImage]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const base: SchEvent = {
@@ -752,6 +793,7 @@ function EventForm({
       meetingTime: (type === 'match' || type === 'camp' || type === 'other') && meetingTime ? meetingTime : undefined,
       meetingPlace: (type === 'match' || type === 'camp' || type === 'other') && meetingPlace ? meetingPlace : undefined,
       maxParkingSlots: type !== 'off' ? (parkingAvailable ? (parkingUnlimited ? -1 : (maxParkingSlots !== DEFAULT_MAX_SLOTS ? maxParkingSlots : undefined)) : 0) : undefined,
+      images: images.length > 0 ? images : undefined,
     };
     if (type === 'match') {
       Object.assign(base, {
@@ -956,11 +998,102 @@ function EventForm({
               </div>
             )}
 
+            {/* 画像添付 */}
+            <div>
+              <label className={labelCls}>📷 画像を添付（任意・最大5枚）</label>
+              {images.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto pb-1 mb-2">
+                  {images.map((src, i) => (
+                    <div key={i} className="relative flex-none w-24 aspect-video rounded-lg overflow-hidden bg-slate-700">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => setImages(prev => prev.filter((_, j) => j !== i))}
+                        className="absolute top-0.5 right-0.5 bg-black/70 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {images.length < 5 && (
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => imgFileRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-2.5 text-xs text-slate-400 hover:border-slate-400 transition-colors cursor-pointer">
+                    🗂️ ファイルを選択
+                  </button>
+                  <button type="button" onClick={async () => {
+                    if (!navigator.clipboard?.read) { alert('ファイルを選択してください'); return; }
+                    try {
+                      const items = await navigator.clipboard.read();
+                      for (const item of items) {
+                        for (const t of item.types) {
+                          if (t.startsWith('image/')) {
+                            const blob = await item.getType(t);
+                            const d = await compressEventImage(blob);
+                            if (d) setImages(prev => prev.length < 5 ? [...prev, d] : prev);
+                            return;
+                          }
+                        }
+                      }
+                      alert('クリップボードに画像がありません');
+                    } catch { alert('クリップボードへのアクセスが許可されていません'); }
+                  }}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-2.5 text-xs text-slate-400 hover:border-slate-400 transition-colors cursor-pointer">
+                    📋 貼り付け
+                  </button>
+                </div>
+              )}
+              <input ref={imgFileRef} type="file" accept="image/*" multiple className="hidden"
+                onChange={async e => {
+                  const files = Array.from(e.target.files ?? []).slice(0, 5 - images.length);
+                  const results = await Promise.all(files.map(f => compressEventImage(f)));
+                  setImages(prev => [...prev, ...results.filter(Boolean)].slice(0, 5));
+                  e.target.value = '';
+                }} />
+            </div>
+
             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all">保存</button>
           </form>
         </div>
       </div>
     </div>
+  );
+}
+
+// ---- EventImageGallery ----
+function EventImageGallery({ images }: { images: string[] }) {
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  return (
+    <>
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">📷 添付画像</p>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {images.map((src, i) => (
+            <button key={i} type="button" onClick={() => setLightbox(i)}
+              className="flex-none w-28 aspect-video rounded-lg overflow-hidden bg-slate-700 hover:opacity-90 transition-opacity">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      </div>
+      {lightbox !== null && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+          onClick={() => setLightbox(null)}>
+          <div className="relative max-w-full max-h-full p-4" onClick={e => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={images[lightbox]} alt="" className="max-w-[90vw] max-h-[80vh] rounded-xl object-contain" />
+            <div className="flex items-center justify-between mt-3 gap-4">
+              <button disabled={lightbox === 0} onClick={() => setLightbox(p => p! - 1)}
+                className="text-white text-2xl disabled:opacity-30 px-3">‹</button>
+              <span className="text-slate-400 text-sm">{lightbox + 1} / {images.length}</span>
+              <button disabled={lightbox === images.length - 1} onClick={() => setLightbox(p => p! + 1)}
+                className="text-white text-2xl disabled:opacity-30 px-3">›</button>
+            </div>
+          </div>
+          <button onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 text-white text-3xl leading-none">✕</button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -1161,6 +1294,11 @@ function EventCard({
 
           {/* Note */}
           {event.note && <p className="text-xs text-slate-400 whitespace-pre-wrap">📝 {event.note}</p>}
+
+          {/* 添付画像 */}
+          {event.images && event.images.length > 0 && (
+            <EventImageGallery images={event.images} />
+          )}
 
           {/* Google Maps */}
           {(event.type === 'camp' || event.type === 'expedition') && event.mapQuery && (
@@ -3026,6 +3164,12 @@ function HomeSection({
               {/* 矢印アイコン */}
               <div className="w-8 flex-shrink-0 grid place-items-center border-l border-white/10 text-slate-500 text-xs pointer-events-none">›</div>
             </div>
+            {/* 添付画像ストリップ */}
+            {nextEvent.images && nextEvent.images.length > 0 && (
+              <div className="border-t border-white/10 px-3 py-2">
+                <EventImageGallery images={nextEvent.images} />
+              </div>
+            )}
           </div>
         ) : (
           <div className="rounded-2xl p-5 border bg-slate-800/40 border-white/5 text-center text-slate-400 text-sm">予定がありません</div>

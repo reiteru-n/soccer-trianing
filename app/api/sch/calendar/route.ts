@@ -62,6 +62,7 @@ function eventDescription(e: SchEvent): string {
   if (e.meetingPlace) lines.push(`集合場所: ${e.meetingPlace}`);
   if (e.note)         lines.push(e.note);
   if (e.memo)         lines.push(e.memo);
+  if (e.images && e.images.length > 0) lines.push(`📷 画像添付 ${e.images.length}枚（SCHアプリで確認）`);
   return lines.join('\n');
 }
 

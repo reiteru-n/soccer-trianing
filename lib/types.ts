@@ -184,6 +184,9 @@ export interface SchEvent {
 
   // Camp / expedition only
   mapQuery?: string; // Google Maps embed query
+
+  // Attached images (compressed base64 data URLs)
+  images?: string[];
 }
 
 export interface SchCheckItem {
