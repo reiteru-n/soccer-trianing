@@ -3012,6 +3012,7 @@ function HomeSection({
     [events, today]
   );
   const nextEvent = upcomingEvents[0];
+  const nextNextEvent = upcomingEvents[1];
 
   useEffect(() => {
     if (!nextEvent?.weatherArea) { setWeather(null); return; }
@@ -3175,6 +3176,64 @@ function HomeSection({
           <div className="rounded-2xl p-5 border bg-slate-800/40 border-white/5 text-center text-slate-400 text-sm">予定がありません</div>
         )}
       </div>
+
+      {/* Next next event */}
+      {nextNextEvent && (
+        <div>
+          <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">次の次の予定</h2>
+          <div
+            className={`rounded-2xl border ${tc(nextNextEvent.type).border} ${tc(nextNextEvent.type).bg} overflow-hidden cursor-pointer active:opacity-80`}
+            onClick={() => onGoToEvent(nextNextEvent.id)}
+          >
+            <div className="flex items-center gap-3 px-4 py-3">
+              {/* 日付バッジ */}
+              <div className="text-center px-2.5 py-1.5 rounded-xl min-w-[48px] bg-black/20 text-white flex-shrink-0">
+                <p className="text-[10px] leading-tight text-slate-300">{nextNextEvent.date.slice(5)}</p>
+                <p className="text-base font-extrabold leading-tight">{dayLabel(nextNextEvent.date)}</p>
+                <p className={`text-[9px] font-bold leading-tight mt-0.5 ${relativeDayLabel(nextNextEvent.date, today).color}`}>
+                  {relativeDayLabel(nextNextEvent.date, today).label}
+                </p>
+              </div>
+              {/* 内容 */}
+              <div className="flex-1 min-w-0">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tc(nextNextEvent.type).badge}`}>
+                  {tc(nextNextEvent.type).icon} {tc(nextNextEvent.type).label}
+                </span>
+                {nextNextEvent.type === 'match' ? (() => {
+                  const ms = getMatches(nextNextEvent);
+                  const first = ms[0];
+                  const oppText = ms.length > 1
+                    ? (first?.opponentName ? `🆚 ${first.opponentName} ほか${ms.length - 1}試合` : `${ms.length}試合`)
+                    : (first?.opponentName ? `🆚 ${first.opponentName}` : '相手未定');
+                  return (
+                    <>
+                      {nextNextEvent.label && <p className="text-sm font-bold text-white mt-1 truncate">🏆 {nextNextEvent.label}</p>}
+                      <p className={`${nextNextEvent.label ? 'text-xs text-slate-300 mt-0.5' : 'text-sm font-bold text-white mt-1'} truncate`}>{oppText}</p>
+                    </>
+                  );
+                })() : (
+                  <p className="text-sm font-bold text-white mt-1 truncate">{nextNextEvent.label || nextNextEvent.location || '詳細未定'}</p>
+                )}
+                <div className="flex flex-wrap gap-x-3 mt-0.5">
+                  {nextNextEvent.startTime && <p className="text-xs text-slate-300">⏰ {nextNextEvent.startTime}{nextNextEvent.endTime ? ` 〜 ${nextNextEvent.endTime}` : ''}</p>}
+                  {nextNextEvent.location && <p className="text-xs text-slate-400 truncate">📍 {nextNextEvent.location}</p>}
+                </div>
+                {(nextNextEvent.meetingTime || nextNextEvent.meetingPlace) && (
+                  <p className="text-xs font-semibold text-amber-300 mt-0.5">
+                    🚩 集合{nextNextEvent.meetingTime ? ` ${nextNextEvent.meetingTime}` : ''}{nextNextEvent.meetingPlace ? ` ${nextNextEvent.meetingPlace}` : ''}
+                  </p>
+                )}
+              </div>
+              <span className="text-slate-500 text-xs flex-shrink-0">›</span>
+            </div>
+            {nextNextEvent.images && nextNextEvent.images.length > 0 && (
+              <div className="border-t border-white/10 px-3 py-2">
+                <EventImageGallery images={nextNextEvent.images} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 最近のお知らせ（過去14日以内・最大3件） */}
       {(() => {
