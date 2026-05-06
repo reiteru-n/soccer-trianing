@@ -80,7 +80,7 @@ export async function GET() {
       const thumbnail = thumb?.url ?? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
       if (!videoId || !title) continue;
       videos.push({ videoId, title, publishedAt: timeText, thumbnail, url: `https://www.youtube.com/watch?v=${videoId}` });
-      if (videos.length >= 4) break;
+      if (videos.length >= 6) break;
     }
 
     cache = { data: videos, expires: now + CACHE_TTL };

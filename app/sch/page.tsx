@@ -1661,41 +1661,53 @@ function YtChannelSection() {
         <span className="text-slate-400 text-sm">→</span>
       </a>
 
-      {/* 直近4本 */}
+      {/* 直近6本 + もっと見るボタン */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
         {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
+          Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex-none w-36 aspect-video rounded-lg bg-slate-700/60 animate-pulse snap-start" />
           ))
         ) : videos.length === 0 ? null : (
-          videos.map(v => (
+          <>
+            {videos.map(v => (
+              <a
+                key={v.videoId}
+                href={v.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-none w-36 relative rounded-lg overflow-hidden bg-slate-800 snap-start group"
+              >
+                <div className="aspect-video relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  {/* タイトル（上部グラデーション） */}
+                  <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/75 to-transparent p-1.5 pb-4">
+                    <p className="text-[9px] font-semibold text-white leading-snug line-clamp-2">{v.title}</p>
+                  </div>
+                  {/* 投稿時刻（右下） */}
+                  {v.publishedAt && (
+                    <div className="absolute bottom-1 right-1">
+                      <span className="text-[8px] bg-black/70 text-slate-300 px-1 py-0.5 rounded">{v.publishedAt}</span>
+                    </div>
+                  )}
+                  {/* 再生ボタン */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                    <span className="text-white text-xl">▶</span>
+                  </div>
+                </div>
+              </a>
+            ))}
+            {/* もっと見る */}
             <a
-              key={v.videoId}
-              href={v.url}
+              href={SCH_PLAYLIST_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-none w-36 relative rounded-lg overflow-hidden bg-slate-800 snap-start group"
+              className="flex-none w-24 snap-start flex flex-col items-center justify-center gap-1.5 rounded-lg border border-red-500/30 bg-red-900/20 hover:bg-red-900/40 transition-colors"
             >
-              <div className="aspect-video relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                {/* タイトル（上部グラデーション） */}
-                <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/75 to-transparent p-1.5 pb-4">
-                  <p className="text-[9px] font-semibold text-white leading-snug line-clamp-2">{v.title}</p>
-                </div>
-                {/* 投稿時刻（右下） */}
-                {v.publishedAt && (
-                  <div className="absolute bottom-1 right-1">
-                    <span className="text-[8px] bg-black/70 text-slate-300 px-1 py-0.5 rounded">{v.publishedAt}</span>
-                  </div>
-                )}
-                {/* 再生ボタン */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-                  <span className="text-white text-xl">▶</span>
-                </div>
-              </div>
+              <span className="text-xl">▶️</span>
+              <p className="text-[10px] font-semibold text-red-300 text-center leading-tight">もっと見る</p>
             </a>
-          ))
+          </>
         )}
       </div>
     </div>
