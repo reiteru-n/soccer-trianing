@@ -1635,14 +1635,10 @@ function relativeTime(iso: string): string {
 function YtChannelSection() {
   const [videos, setVideos] = useState<YtVideo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [noKey, setNoKey] = useState(false);
   useEffect(() => {
     fetch('/api/sch/yt-playlist')
-      .then(async r => {
-        if (r.status === 503) { setNoKey(true); setLoading(false); return; }
-        const d: YtVideo[] = await r.json();
-        setVideos(d); setLoading(false);
-      })
+      .then(r => r.json())
+      .then((d: YtVideo[]) => { setVideos(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
@@ -1666,46 +1662,42 @@ function YtChannelSection() {
       </a>
 
       {/* 直近4本 */}
-      {noKey ? (
-        <p className="text-[10px] text-slate-500 text-center py-2">
-          ※ 動画一覧の表示には YOUTUBE_API_KEY の設定が必要です
-        </p>
-      ) : (
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
-          {loading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex-none w-36 aspect-video rounded-lg bg-slate-700/60 animate-pulse snap-start" />
-            ))
-          ) : videos.length === 0 ? null : (
-            videos.map(v => (
-              <a
-                key={v.videoId}
-                href={v.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-none w-36 relative rounded-lg overflow-hidden bg-slate-800 snap-start group"
-              >
-                <div className="aspect-video relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  {/* タイトル（上部グラデーション） */}
-                  <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/75 to-transparent p-1.5 pb-4">
-                    <p className="text-[9px] font-semibold text-white leading-snug line-clamp-2">{v.title}</p>
-                  </div>
-                  {/* 投稿時刻（右下） */}
-                  <div className="absolute bottom-1 right-1">
-                    <span className="text-[8px] bg-black/70 text-slate-300 px-1 py-0.5 rounded">{relativeTime(v.publishedAt)}</span>
-                  </div>
-                  {/* 再生ボタン */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-                    <span className="text-white text-xl">▶</span>
-                  </div>
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex-none w-36 aspect-video rounded-lg bg-slate-700/60 animate-pulse snap-start" />
+          ))
+        ) : videos.length === 0 ? null : (
+          videos.map(v => (
+            <a
+              key={v.videoId}
+              href={v.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-none w-36 relative rounded-lg overflow-hidden bg-slate-800 snap-start group"
+            >
+              <div className="aspect-video relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                {/* タイトル（上部グラデーション） */}
+                <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/75 to-transparent p-1.5 pb-4">
+                  <p className="text-[9px] font-semibold text-white leading-snug line-clamp-2">{v.title}</p>
                 </div>
-              </a>
-            ))
-          )}
-        </div>
-      )}
+                {/* 投稿時刻（右下） */}
+                {v.publishedAt && (
+                  <div className="absolute bottom-1 right-1">
+                    <span className="text-[8px] bg-black/70 text-slate-300 px-1 py-0.5 rounded">{v.publishedAt}</span>
+                  </div>
+                )}
+                {/* 再生ボタン */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                  <span className="text-white text-xl">▶</span>
+                </div>
+              </div>
+            </a>
+          ))
+        )}
+      </div>
     </div>
   );
 }
