@@ -139,10 +139,11 @@ export interface SchMatch {
 export interface SchStandaloneVideo {
   id: string;
   url: string;
-  title?: string;     // タイトル（任意）
-  postedAt: string;   // ISO date string
-  eventId?: string;   // 紐づけ先イベントID（任意）
-  matchId?: string;   // 紐づけ先試合ID（任意）
+  title?: string;            // タイトル（任意）
+  postedAt: string;          // ISO date string
+  eventId?: string;          // 紐づけ先イベントID（任意）
+  matchId?: string;          // 紐づけ先試合ID（任意）
+  thumbnailDataUrl?: string; // ユーザー提供サムネイル（base64）
 }
 
 export interface SchEvent {

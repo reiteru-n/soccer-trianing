@@ -1619,11 +1619,14 @@ function getYoutubeThumbnail(url: string): string | null {
   return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null;
 }
 
-// サムネイルをAPIから取得（YouTube以外）
-function useThumbnail(url: string): string | null | 'loading' {
+// サムネイルをAPIから取得（YouTube以外）。ユーザー提供があればそちらを優先
+function useThumbnail(url: string, overrideDataUrl?: string): string | null | 'loading' {
   const ytThumb = getYoutubeThumbnail(url);
-  const [thumb, setThumb] = useState<string | null | 'loading'>(ytThumb ?? 'loading');
+  const [thumb, setThumb] = useState<string | null | 'loading'>(
+    overrideDataUrl ? overrideDataUrl : (ytThumb ?? 'loading')
+  );
   useEffect(() => {
+    if (overrideDataUrl) { setThumb(overrideDataUrl); return; }
     if (ytThumb) { setThumb(ytThumb); return; }
     let cancelled = false;
     fetch(`/api/og-thumbnail?url=${encodeURIComponent(url)}`)
@@ -1631,67 +1634,100 @@ function useThumbnail(url: string): string | null | 'loading' {
       .then((d: { url: string | null }) => { if (!cancelled) setThumb(d.url); })
       .catch(() => { if (!cancelled) setThumb(null); });
     return () => { cancelled = true; };
-  }, [url, ytThumb]);
+  }, [url, ytThumb, overrideDataUrl]);
   return thumb;
 }
 
-function VideoTile({ v, onDelete }: { v: VideoItem; onDelete?: () => void }) {
-  const thumb = useThumbnail(v.url);
-  const won = v.score ? v.score.home > v.score.away : null;
-  const drew = v.score ? v.score.home === v.score.away : null;
+// 1エントリ分のサムネイルセル（VideoTile内で使用）
+function VideoThumbCell({ entry, index, total, onDelete }: {
+  entry: VideoEntry; index: number; total: number; onDelete?: () => void;
+}) {
+  const thumb = useThumbnail(entry.url, entry.thumbnailDataUrl);
   return (
     <a
-      href={v.url}
+      href={entry.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative bg-slate-800/80 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/50 transition-colors"
+      className="group relative flex-1 min-w-0 overflow-hidden bg-slate-700"
+      style={total > 1 && index > 0 ? { borderLeft: '1px solid rgba(255,255,255,0.08)' } : undefined}
     >
-      {/* サムネイル */}
-      <div className="aspect-video bg-slate-700 relative overflow-hidden">
-        {thumb === 'loading' ? (
-          <div className="w-full h-full flex items-center justify-center text-slate-600 animate-pulse text-2xl">🎬</div>
-        ) : thumb ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumb} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-2xl text-slate-500">🎬</div>
-        )}
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <span className="text-white text-2xl">▶</span>
-        </div>
-        {/* スコアバッジ */}
-        {v.score && (
-          <div className={`absolute top-1 right-1 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${won ? 'bg-green-600/90 text-white' : drew ? 'bg-slate-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
-            {v.score.home}−{v.score.away}
-          </div>
-        )}
-        {/* 削除ボタン（スタンドアロンのみ） */}
-        {onDelete && (
-          <button
-            onClick={e => { e.preventDefault(); if (window.confirm('この動画を削除しますか？')) onDelete(); }}
-            className="absolute top-1 left-1 text-[9px] bg-slate-900/80 text-slate-400 hover:text-red-400 px-1.5 py-0.5 rounded-full transition-colors"
-          >
-            ×
-          </button>
-        )}
+      {thumb === 'loading' ? (
+        <div className="w-full h-full flex items-center justify-center text-slate-600 animate-pulse text-xl">🎬</div>
+      ) : thumb ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={thumb} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-xl text-slate-500">🎬</div>
+      )}
+      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-white text-lg">▶</span>
       </div>
-      {/* メタ情報 */}
-      <div className="px-2 py-1.5">
-        {v.opponent && (
-          <p className="text-[11px] font-semibold text-white truncate">🆚 {v.opponent}</p>
-        )}
-        {!v.opponent && v.title && (
-          <p className="text-[11px] font-semibold text-white truncate">{v.title}</p>
-        )}
-        <p className="text-[10px] text-slate-500 mt-0.5">{v.date}</p>
-      </div>
+      {total > 1 && (
+        <span className="absolute bottom-1 left-1 text-[9px] bg-black/60 text-slate-300 px-1 rounded">{index + 1}</span>
+      )}
+      {onDelete && (
+        <button
+          onClick={e => { e.preventDefault(); if (window.confirm('この動画を削除しますか？')) onDelete(); }}
+          className="absolute top-0.5 right-0.5 text-[9px] bg-slate-900/80 text-slate-400 hover:text-red-400 px-1 py-0.5 rounded-full transition-colors"
+        >×</button>
+      )}
     </a>
   );
 }
 
+function VideoTile({ v, onDelete }: { v: VideoItem; onDelete?: (standaloneId: string) => void }) {
+  const won = v.score ? v.score.home > v.score.away : null;
+  const drew = v.score ? v.score.home === v.score.away : null;
+  return (
+    <div className="bg-slate-800/80 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/30 transition-colors">
+      {/* サムネイルエリア（複数なら横分割） */}
+      <div className="aspect-video flex">
+        {v.entries.map((entry, i) => (
+          <VideoThumbCell
+            key={entry.url}
+            entry={entry}
+            index={i}
+            total={v.entries.length}
+            onDelete={entry.standaloneId && onDelete ? () => onDelete(entry.standaloneId!) : undefined}
+          />
+        ))}
+      </div>
+      {/* スコアバッジ */}
+      {v.score && (
+        <div className={`absolute top-1 right-1 pointer-events-none text-[10px] font-extrabold px-1.5 py-0.5 rounded-full z-10 ${won ? 'bg-green-600/90 text-white' : drew ? 'bg-slate-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
+          {v.score.home}−{v.score.away}
+        </div>
+      )}
+      {/* メタ情報 */}
+      <div className="px-2 py-1.5 relative">
+        {v.score && (
+          <span className={`absolute top-1.5 right-2 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${won ? 'bg-green-600/80 text-white' : drew ? 'bg-slate-600/80 text-white' : 'bg-red-600/80 text-white'}`}>
+            {v.score.home}−{v.score.away}
+          </span>
+        )}
+        {v.opponent && (
+          <p className="text-[11px] font-semibold text-white truncate pr-10">🆚 {v.opponent}</p>
+        )}
+        {!v.opponent && v.title && (
+          <p className="text-[11px] font-semibold text-white truncate">{v.title}</p>
+        )}
+        <p className="text-[10px] text-slate-500 mt-0.5">{v.date}{v.entries.length > 1 ? ` · ${v.entries.length}本` : ''}</p>
+      </div>
+    </div>
+  );
+}
+
+// 1つの動画エントリ（URLひとつ分）
+type VideoEntry = {
+  url: string;
+  thumbnailDataUrl?: string;
+  standaloneId?: string; // 削除対象特定用
+};
+
+// タイル1枚 = 同じ試合・イベント・スタンドアロンをまとめたグループ
 type VideoItem = {
   id: string;
-  url: string;
+  entries: VideoEntry[];
   date: string;
   postedAt: string;
   tournamentName?: string;
@@ -1714,6 +1750,48 @@ function VideoSection({
   const [formTitle, setFormTitle] = useState('');
   const [formEventId, setFormEventId] = useState('');
   const [formMatchId, setFormMatchId] = useState('');
+  const [formThumb, setFormThumb] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 画像をbase64に圧縮（max 640x360, JPEG 0.75）
+  const compressImage = useCallback((blob: Blob): Promise<string> => {
+    return new Promise(resolve => {
+      const img = new window.Image();
+      const objUrl = URL.createObjectURL(blob);
+      img.onload = () => {
+        URL.revokeObjectURL(objUrl);
+        const maxW = 640, maxH = 360;
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = () => { URL.revokeObjectURL(objUrl); resolve(''); };
+      img.src = objUrl;
+    });
+  }, []);
+
+  // フォームが開いているときグローバルペーストをキャプチャ
+  useEffect(() => {
+    if (!showForm) return;
+    const handler = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) compressImage(file).then(d => { if (d) setFormThumb(d); });
+          break;
+        }
+      }
+    };
+    document.addEventListener('paste', handler);
+    return () => document.removeEventListener('paste', handler);
+  }, [showForm, compressImage]);
 
   // 試合イベント一覧（フォームのセレクタ用）
   const matchEvents = useMemo(
@@ -1721,7 +1799,7 @@ function VideoSection({
     [events]
   );
 
-  // イベント動画をフラット化
+  // イベント動画を試合単位でグループ化（1試合→1タイル）
   const eventVideos = useMemo<VideoItem[]>(() => {
     const items: VideoItem[] = [];
     for (const ev of events) {
@@ -1729,33 +1807,32 @@ function VideoSection({
       const matches = getMatches(ev);
       for (const m of matches) {
         const urls = m.videoUrls ?? (m.videoUrl ? [m.videoUrl] : []);
-        for (const url of urls) {
-          items.push({
-            id: `ev_${ev.id}_${m.id}_${url}`,
-            url,
-            date: ev.date,
-            postedAt: ev.date,
-            tournamentName: ev.label,
-            opponent: m.opponentName,
-            score: m.homeScore != null && m.awayScore != null
-              ? { home: m.homeScore, away: m.awayScore } : undefined,
-            source: 'event',
-            eventId: ev.id,
-          });
-        }
+        if (urls.length === 0) continue;
+        items.push({
+          id: `ev_${ev.id}_${m.id}`,
+          entries: urls.map(url => ({ url })),
+          date: ev.date,
+          postedAt: ev.date,
+          tournamentName: ev.label,
+          opponent: m.opponentName,
+          score: m.homeScore != null && m.awayScore != null
+            ? { home: m.homeScore, away: m.awayScore } : undefined,
+          source: 'event',
+          eventId: ev.id,
+        });
       }
     }
     return items;
   }, [events]);
 
-  // スタンドアロン動画（イベント紐づけ情報を付与）
+  // スタンドアロン動画（イベント紐づけ情報を付与、1件→1タイル）
   const standaloneItems = useMemo<VideoItem[]>(() => {
     return standaloneVideos.map(sv => {
       const ev = sv.eventId ? events.find(e => e.id === sv.eventId) : undefined;
       const m = ev && sv.matchId ? getMatches(ev).find(x => x.id === sv.matchId) : undefined;
       return {
         id: sv.id,
-        url: sv.url,
+        entries: [{ url: sv.url, thumbnailDataUrl: sv.thumbnailDataUrl, standaloneId: sv.id }],
         date: ev?.date ?? sv.postedAt.slice(0, 10).replace(/-/g, '/'),
         postedAt: sv.postedAt,
         tournamentName: ev?.label ?? undefined,
@@ -1796,9 +1873,10 @@ function VideoSection({
       postedAt: new Date().toISOString(),
       eventId: formEventId || undefined,
       matchId: formMatchId || undefined,
+      thumbnailDataUrl: formThumb || undefined,
     };
     onSaveStandaloneVideos([sv, ...standaloneVideos]);
-    setFormUrl(''); setFormTitle(''); setFormEventId(''); setFormMatchId('');
+    setFormUrl(''); setFormTitle(''); setFormEventId(''); setFormMatchId(''); setFormThumb(null);
     setShowForm(false);
   };
 
@@ -1864,11 +1942,48 @@ function VideoSection({
               </div>
             );
           })()}
+          {/* サムネイル */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-1">🖼 サムネイル（任意・自動取得できない場合）</label>
+            {formThumb ? (
+              <div className="relative rounded-xl overflow-hidden aspect-video bg-slate-700">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={formThumb} alt="" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setFormThumb(null)}
+                  className="absolute top-1 right-1 bg-slate-900/80 text-white text-xs px-2 py-0.5 rounded-full hover:bg-red-600/80 transition-colors"
+                >
+                  削除
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-5 cursor-pointer hover:border-slate-400 transition-colors text-center"
+              >
+                <span className="text-2xl">📷</span>
+                <p className="text-xs text-slate-400">クリックで画像を選択</p>
+                <p className="text-[10px] text-slate-500">または <kbd className="bg-slate-700 px-1 rounded">Ctrl+V</kbd> / <kbd className="bg-slate-700 px-1 rounded">⌘V</kbd> で貼り付け</p>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async e => {
+                const file = e.target.files?.[0];
+                if (file) { const d = await compressImage(file); if (d) setFormThumb(d); }
+                e.target.value = '';
+              }}
+            />
+          </div>
           <div className="flex gap-2 pt-1">
             <button onClick={handlePost} disabled={!formUrl.trim()} className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">
               投稿する
             </button>
-            <button onClick={() => setShowForm(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold py-2.5 rounded-xl transition-colors">
+            <button onClick={() => { setShowForm(false); setFormThumb(null); }} className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold py-2.5 rounded-xl transition-colors">
               キャンセル
             </button>
           </div>
@@ -1895,7 +2010,7 @@ function VideoSection({
               <VideoTile
                 key={v.id}
                 v={v}
-                onDelete={v.source === 'standalone' ? () => handleDelete(v.id) : undefined}
+                onDelete={v.source === 'standalone' ? handleDelete : undefined}
               />
             ))}
           </div>
