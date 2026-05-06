@@ -1619,6 +1619,76 @@ function getYoutubeThumbnail(url: string): string | null {
   return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null;
 }
 
+// サムネイルをAPIから取得（YouTube以外）
+function useThumbnail(url: string): string | null | 'loading' {
+  const ytThumb = getYoutubeThumbnail(url);
+  const [thumb, setThumb] = useState<string | null | 'loading'>(ytThumb ?? 'loading');
+  useEffect(() => {
+    if (ytThumb) { setThumb(ytThumb); return; }
+    let cancelled = false;
+    fetch(`/api/og-thumbnail?url=${encodeURIComponent(url)}`)
+      .then(r => r.json())
+      .then((d: { url: string | null }) => { if (!cancelled) setThumb(d.url); })
+      .catch(() => { if (!cancelled) setThumb(null); });
+    return () => { cancelled = true; };
+  }, [url, ytThumb]);
+  return thumb;
+}
+
+function VideoTile({ v, onDelete }: { v: VideoItem; onDelete?: () => void }) {
+  const thumb = useThumbnail(v.url);
+  const won = v.score ? v.score.home > v.score.away : null;
+  const drew = v.score ? v.score.home === v.score.away : null;
+  return (
+    <a
+      href={v.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group relative bg-slate-800/80 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/50 transition-colors"
+    >
+      {/* サムネイル */}
+      <div className="aspect-video bg-slate-700 relative overflow-hidden">
+        {thumb === 'loading' ? (
+          <div className="w-full h-full flex items-center justify-center text-slate-600 animate-pulse text-2xl">🎬</div>
+        ) : thumb ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={thumb} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-2xl text-slate-500">🎬</div>
+        )}
+        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="text-white text-2xl">▶</span>
+        </div>
+        {/* スコアバッジ */}
+        {v.score && (
+          <div className={`absolute top-1 right-1 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${won ? 'bg-green-600/90 text-white' : drew ? 'bg-slate-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
+            {v.score.home}−{v.score.away}
+          </div>
+        )}
+        {/* 削除ボタン（スタンドアロンのみ） */}
+        {onDelete && (
+          <button
+            onClick={e => { e.preventDefault(); if (window.confirm('この動画を削除しますか？')) onDelete(); }}
+            className="absolute top-1 left-1 text-[9px] bg-slate-900/80 text-slate-400 hover:text-red-400 px-1.5 py-0.5 rounded-full transition-colors"
+          >
+            ×
+          </button>
+        )}
+      </div>
+      {/* メタ情報 */}
+      <div className="px-2 py-1.5">
+        {v.opponent && (
+          <p className="text-[11px] font-semibold text-white truncate">🆚 {v.opponent}</p>
+        )}
+        {!v.opponent && v.title && (
+          <p className="text-[11px] font-semibold text-white truncate">{v.title}</p>
+        )}
+        <p className="text-[10px] text-slate-500 mt-0.5">{v.date}</p>
+      </div>
+    </a>
+  );
+}
+
 type VideoItem = {
   id: string;
   url: string;
@@ -1801,58 +1871,13 @@ function VideoSection({
             <span className="text-slate-600 font-normal">({group.items.length}本)</span>
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {group.items.map(v => {
-              const thumb = getYoutubeThumbnail(v.url);
-              const won = v.score ? v.score.home > v.score.away : null;
-              const drew = v.score ? v.score.home === v.score.away : null;
-              return (
-                <a
-                  key={v.id}
-                  href={v.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative bg-slate-800/80 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/50 transition-colors"
-                >
-                  {/* サムネイル */}
-                  <div className="aspect-video bg-slate-700 relative overflow-hidden">
-                    {thumb ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={thumb} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl text-slate-500">🎬</div>
-                    )}
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-white text-2xl">▶</span>
-                    </div>
-                    {/* スコアバッジ */}
-                    {v.score && (
-                      <div className={`absolute top-1 right-1 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${won ? 'bg-green-600/90 text-white' : drew ? 'bg-slate-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
-                        {v.score.home}−{v.score.away}
-                      </div>
-                    )}
-                    {/* スタンドアロンバッジ */}
-                    {v.source === 'standalone' && (
-                      <button
-                        onClick={e => { e.preventDefault(); if (window.confirm('この動画を削除しますか？')) handleDelete(v.id); }}
-                        className="absolute top-1 left-1 text-[9px] bg-slate-900/80 text-slate-400 hover:text-red-400 px-1.5 py-0.5 rounded-full transition-colors"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                  {/* メタ情報 */}
-                  <div className="px-2 py-1.5">
-                    {v.opponent && (
-                      <p className="text-[11px] font-semibold text-white truncate">🆚 {v.opponent}</p>
-                    )}
-                    {!v.opponent && v.title && (
-                      <p className="text-[11px] font-semibold text-white truncate">{v.title}</p>
-                    )}
-                    <p className="text-[10px] text-slate-500 mt-0.5">{v.date}</p>
-                  </div>
-                </a>
-              );
-            })}
+            {group.items.map(v => (
+              <VideoTile
+                key={v.id}
+                v={v}
+                onDelete={v.source === 'standalone' ? () => handleDelete(v.id) : undefined}
+              />
+            ))}
           </div>
         </div>
       ))}
