@@ -1292,13 +1292,13 @@ function EventCard({
             </div>
           ))}
 
-          {/* Note */}
-          {event.note && <p className="text-xs text-slate-400 whitespace-pre-wrap">📝 {event.note}</p>}
-
           {/* 添付画像 */}
           {event.images && event.images.length > 0 && (
             <EventImageGallery images={event.images} />
           )}
+
+          {/* Note */}
+          {event.note && <p className="text-xs text-slate-400 whitespace-pre-wrap">📝 {event.note}</p>}
 
           {/* Google Maps */}
           {(event.type === 'camp' || event.type === 'expedition') && event.mapQuery && (
