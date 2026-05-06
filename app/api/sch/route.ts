@@ -19,6 +19,7 @@ const KEYS = {
   teamLogo:          'sch:team_logo',
   updateHistory:     'sch:update_history',
   standaloneVideos:  'sch:standalone_videos',
+  videoThumbnails:   'sch:video_thumbnails',
 } as const;
 
 const DEFAULT_MEMBERS: SchMember[] = [
@@ -62,6 +63,7 @@ interface SchData {
   teamLogo: string | null;
   updateHistory: SchUpdateHistory[];
   standaloneVideos: SchStandaloneVideo[];
+  videoThumbnails: Record<string, string>;
   // Legacy (kept for backward compat read)
   schedules: SchSchedule[];
   matches: LegacySchMatch[];
@@ -97,11 +99,11 @@ async function readSchData(): Promise<SchData> {
   if (hasRedis()) {
     const redis = await getRedis();
     const [eventsRaw, schedulesRaw, matchesRaw, announcements, membersRaw,
-           parkingRecordsRaw, parkingRotationRaw, nearbyParkingRaw, parkingCommentsRaw, teamLogoRaw, updateHistoryRaw, standaloneVideosRaw] =
+           parkingRecordsRaw, parkingRotationRaw, nearbyParkingRaw, parkingCommentsRaw, teamLogoRaw, updateHistoryRaw, standaloneVideosRaw, videoThumbnailsRaw] =
       await redis.mget<unknown[]>(
         KEYS.events, KEYS.schedules, KEYS.matches, KEYS.announcements,
         KEYS.members, KEYS.parkingRecords, KEYS.parkingRotation,
-        KEYS.nearbyParking, KEYS.parkingComments, KEYS.teamLogo, KEYS.updateHistory, KEYS.standaloneVideos
+        KEYS.nearbyParking, KEYS.parkingComments, KEYS.teamLogo, KEYS.updateHistory, KEYS.standaloneVideos, KEYS.videoThumbnails
       );
 
     let members = membersRaw as SchMember[] | null;
@@ -151,6 +153,7 @@ async function readSchData(): Promise<SchData> {
       teamLogo:          (teamLogoRaw as string | null) ?? null,
       updateHistory:     (updateHistoryRaw as SchUpdateHistory[]) ?? [],
       standaloneVideos:  (standaloneVideosRaw as SchStandaloneVideo[]) ?? [],
+      videoThumbnails:   (videoThumbnailsRaw as Record<string, string>) ?? {},
       schedules:         (schedulesRaw as SchSchedule[]) ?? [],
       matches:           (matchesRaw as LegacySchMatch[]) ?? [],
     };
@@ -171,7 +174,7 @@ async function readSchData(): Promise<SchData> {
       members: DEFAULT_MEMBERS,
       parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
       parkingComments: [],
-      teamLogo: null, updateHistory: [], standaloneVideos: [], schedules: [], matches: [],
+      teamLogo: null, updateHistory: [], standaloneVideos: [], videoThumbnails: {}, schedules: [], matches: [],
       ...data,
     };
   } catch {
@@ -180,7 +183,7 @@ async function readSchData(): Promise<SchData> {
       members: DEFAULT_MEMBERS,
       parkingRecords: [], parkingRotation: DEFAULT_ROTATION, nearbyParking: [],
       parkingComments: [],
-      teamLogo: null, updateHistory: [], standaloneVideos: [], schedules: [], matches: [],
+      teamLogo: null, updateHistory: [], standaloneVideos: [], videoThumbnails: {}, schedules: [], matches: [],
     };
   }
 }
@@ -199,6 +202,7 @@ async function writeSchPartial(body: Partial<Record<string, unknown>>): Promise<
     if ('teamLogo'        in body) updates[KEYS.teamLogo]        = body.teamLogo;
     if ('updateHistory'    in body) updates[KEYS.updateHistory]    = body.updateHistory;
     if ('standaloneVideos' in body) updates[KEYS.standaloneVideos] = body.standaloneVideos;
+    if ('videoThumbnails'  in body) updates[KEYS.videoThumbnails]  = body.videoThumbnails;
     // Legacy keys (still writable for backward compat)
     if ('schedules'        in body) updates[KEYS.schedules]        = body.schedules;
     if ('matches'          in body) updates[KEYS.matches]          = body.matches;

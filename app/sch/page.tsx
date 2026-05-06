@@ -1639,8 +1639,8 @@ function useThumbnail(url: string, overrideDataUrl?: string): string | null | 'l
 }
 
 // 1エントリ分のサムネイルセル（VideoTile内で使用）
-function VideoThumbCell({ entry, index, total, onDelete }: {
-  entry: VideoEntry; index: number; total: number; onDelete?: () => void;
+function VideoThumbCell({ entry, index, total, onDelete, onEditThumb }: {
+  entry: VideoEntry; index: number; total: number; onDelete?: () => void; onEditThumb?: () => void;
 }) {
   const thumb = useThumbnail(entry.url, entry.thumbnailDataUrl);
   return (
@@ -1665,6 +1665,12 @@ function VideoThumbCell({ entry, index, total, onDelete }: {
       {total > 1 && (
         <span className="absolute bottom-1 left-1 text-[9px] bg-black/60 text-slate-300 px-1 rounded">{index + 1}</span>
       )}
+      {onEditThumb && (
+        <button
+          onClick={e => { e.preventDefault(); e.stopPropagation(); onEditThumb(); }}
+          className="absolute bottom-0.5 right-0.5 text-[9px] bg-slate-900/80 text-slate-400 hover:text-blue-300 px-1 py-0.5 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+        >📷</button>
+      )}
       {onDelete && (
         <button
           onClick={e => { e.preventDefault(); if (window.confirm('この動画を削除しますか？')) onDelete(); }}
@@ -1675,7 +1681,7 @@ function VideoThumbCell({ entry, index, total, onDelete }: {
   );
 }
 
-function VideoTile({ v, onDelete }: { v: VideoItem; onDelete?: (standaloneId: string) => void }) {
+function VideoTile({ v, onDelete, onEditThumb }: { v: VideoItem; onDelete?: (standaloneId: string) => void; onEditThumb?: (url: string) => void }) {
   const won = v.score ? v.score.home > v.score.away : null;
   const drew = v.score ? v.score.home === v.score.away : null;
   return (
@@ -1689,6 +1695,7 @@ function VideoTile({ v, onDelete }: { v: VideoItem; onDelete?: (standaloneId: st
             index={i}
             total={v.entries.length}
             onDelete={entry.standaloneId && onDelete ? () => onDelete(entry.standaloneId!) : undefined}
+            onEditThumb={onEditThumb ? () => onEditThumb(entry.url) : undefined}
           />
         ))}
       </div>
@@ -1739,11 +1746,13 @@ type VideoItem = {
 };
 
 function VideoSection({
-  events, standaloneVideos, onSaveStandaloneVideos,
+  events, standaloneVideos, onSaveStandaloneVideos, videoThumbnails, onSaveVideoThumbnails,
 }: {
   events: SchEvent[];
   standaloneVideos: SchStandaloneVideo[];
   onSaveStandaloneVideos: (v: SchStandaloneVideo[]) => void;
+  videoThumbnails: Record<string, string>;
+  onSaveVideoThumbnails: (t: Record<string, string>) => void;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [formUrl, setFormUrl] = useState('');
@@ -1752,6 +1761,9 @@ function VideoSection({
   const [formMatchId, setFormMatchId] = useState('');
   const [formThumb, setFormThumb] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editThumbUrl, setEditThumbUrl] = useState<string | null>(null);
+  const [editThumbData, setEditThumbData] = useState<string | null>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   // 画像をbase64に圧縮（max 640x360, JPEG 0.75）
   const compressImage = useCallback((blob: Blob): Promise<string> => {
@@ -1776,7 +1788,7 @@ function VideoSection({
 
   // フォームが開いているときグローバルペーストをキャプチャ
   useEffect(() => {
-    if (!showForm) return;
+    if (!showForm && !editThumbUrl) return;
     const handler = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items) return;
@@ -1784,14 +1796,19 @@ function VideoSection({
         if (item.type.startsWith('image/')) {
           e.preventDefault();
           const file = item.getAsFile();
-          if (file) compressImage(file).then(d => { if (d) setFormThumb(d); });
+          if (file) compressImage(file).then(d => {
+            if (d) {
+              if (editThumbUrl) setEditThumbData(d);
+              else setFormThumb(d);
+            }
+          });
           break;
         }
       }
     };
     document.addEventListener('paste', handler);
     return () => document.removeEventListener('paste', handler);
-  }, [showForm, compressImage]);
+  }, [showForm, editThumbUrl, compressImage]);
 
   // 試合イベント一覧（フォームのセレクタ用）
   const matchEvents = useMemo(
@@ -1810,7 +1827,7 @@ function VideoSection({
         if (urls.length === 0) continue;
         items.push({
           id: `ev_${ev.id}_${m.id}`,
-          entries: urls.map(url => ({ url })),
+          entries: urls.map(url => ({ url, thumbnailDataUrl: videoThumbnails[url] })),
           date: ev.date,
           postedAt: ev.date,
           tournamentName: ev.label,
@@ -1823,7 +1840,7 @@ function VideoSection({
       }
     }
     return items;
-  }, [events]);
+  }, [events, videoThumbnails]);
 
   // スタンドアロン動画（イベント紐づけ情報を付与、1件→1タイル）
   const standaloneItems = useMemo<VideoItem[]>(() => {
@@ -1832,7 +1849,7 @@ function VideoSection({
       const m = ev && sv.matchId ? getMatches(ev).find(x => x.id === sv.matchId) : undefined;
       return {
         id: sv.id,
-        entries: [{ url: sv.url, thumbnailDataUrl: sv.thumbnailDataUrl, standaloneId: sv.id }],
+        entries: [{ url: sv.url, thumbnailDataUrl: videoThumbnails[sv.url] ?? sv.thumbnailDataUrl, standaloneId: sv.id }],
         date: ev?.date ?? sv.postedAt.slice(0, 10).replace(/-/g, '/'),
         postedAt: sv.postedAt,
         tournamentName: ev?.label ?? undefined,
@@ -1844,19 +1861,20 @@ function VideoSection({
         eventId: sv.eventId,
       };
     });
-  }, [standaloneVideos, events]);
+  }, [standaloneVideos, events, videoThumbnails]);
 
   // 全動画を新しい順にソートしてグループ化
   const allVideos = useMemo(() => {
     const all = [...eventVideos, ...standaloneItems].sort((a, b) => {
       return b.date.localeCompare(a.date) || b.postedAt.localeCompare(a.postedAt);
     });
-    // グループ化 key: 大会名 or '(大会名なし)'
-    const groups: { key: string; items: VideoItem[] }[] = [];
+    // グループ化 key: 大会名 or 日付（大会名なしはトレマ等で日付ごとに分ける）
+    const groups: { key: string; label: string; items: VideoItem[] }[] = [];
     const seen = new Map<string, VideoItem[]>();
     for (const v of all) {
-      const key = v.tournamentName || '（大会名なし）';
-      if (!seen.has(key)) { seen.set(key, []); groups.push({ key, items: seen.get(key)! }); }
+      const key = v.tournamentName ? v.tournamentName : `__date__${v.date}`;
+      const label = v.tournamentName || `${v.date}（${dayLabel(v.date)}）`;
+      if (!seen.has(key)) { seen.set(key, []); groups.push({ key, label, items: seen.get(key)! }); }
       seen.get(key)!.push(v);
     }
     return groups;
@@ -1876,12 +1894,27 @@ function VideoSection({
       thumbnailDataUrl: formThumb || undefined,
     };
     onSaveStandaloneVideos([sv, ...standaloneVideos]);
+    if (formThumb) onSaveVideoThumbnails({ ...videoThumbnails, [sv.url]: formThumb });
     setFormUrl(''); setFormTitle(''); setFormEventId(''); setFormMatchId(''); setFormThumb(null);
     setShowForm(false);
   };
 
   const handleDelete = (id: string) => {
     onSaveStandaloneVideos(standaloneVideos.filter(v => v.id !== id));
+  };
+
+  const openEditThumb = (url: string) => {
+    setEditThumbUrl(url);
+    setEditThumbData(videoThumbnails[url] ?? null);
+  };
+  const saveEditThumb = () => {
+    if (!editThumbUrl) return;
+    const next = { ...videoThumbnails };
+    if (editThumbData) next[editThumbUrl] = editThumbData;
+    else delete next[editThumbUrl];
+    onSaveVideoThumbnails(next);
+    setEditThumbUrl(null);
+    setEditThumbData(null);
   };
 
   return (
@@ -2002,7 +2035,7 @@ function VideoSection({
       {allVideos.map(group => (
         <div key={group.key}>
           <p className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1.5">
-            🏆 {group.key}
+            🏆 {group.label}
             <span className="text-slate-600 font-normal">({group.items.length}本)</span>
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -2011,11 +2044,51 @@ function VideoSection({
                 key={v.id}
                 v={v}
                 onDelete={v.source === 'standalone' ? handleDelete : undefined}
+                onEditThumb={openEditThumb}
               />
             ))}
           </div>
         </div>
       ))}
+
+      {/* ---- サムネイル編集モーダル ---- */}
+      {editThumbUrl && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={e => { if (e.target === e.currentTarget) { setEditThumbUrl(null); setEditThumbData(null); } }}>
+          <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md border border-white/10 shadow-2xl p-5 space-y-4"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-white">📷 サムネイルを変更</p>
+              <button onClick={() => { setEditThumbUrl(null); setEditThumbData(null); }} className="text-slate-400 hover:text-white text-lg">✕</button>
+            </div>
+            {editThumbData ? (
+              <div className="relative rounded-xl overflow-hidden aspect-video bg-slate-700">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={editThumbData} alt="" className="w-full h-full object-cover" />
+                <button type="button" onClick={() => setEditThumbData(null)}
+                  className="absolute top-1 right-1 bg-slate-900/80 text-white text-xs px-2 py-0.5 rounded-full hover:bg-red-600/80 transition-colors">削除</button>
+              </div>
+            ) : (
+              <div onClick={() => editFileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-5 cursor-pointer hover:border-slate-400 transition-colors text-center">
+                <span className="text-2xl">📷</span>
+                <p className="text-xs text-slate-400">クリックで画像を選択</p>
+                <p className="text-[10px] text-slate-500">または <kbd className="bg-slate-700 px-1 rounded">Ctrl+V</kbd> / <kbd className="bg-slate-700 px-1 rounded">⌘V</kbd> で貼り付け</p>
+              </div>
+            )}
+            <input ref={editFileInputRef} type="file" accept="image/*" className="hidden"
+              onChange={async e => {
+                const file = e.target.files?.[0];
+                if (file) { const d = await compressImage(file); if (d) setEditThumbData(d); }
+                e.target.value = '';
+              }} />
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveEditThumb} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">保存</button>
+              <button onClick={() => { setEditThumbUrl(null); setEditThumbData(null); }} className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold py-2.5 rounded-xl transition-colors">キャンセル</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3758,6 +3831,7 @@ export default function SchPage() {
   const [teamLogo, setTeamLogo] = useState<string | null>(null);
   const [updateHistory, setUpdateHistory] = useState<SchUpdateHistory[]>([]);
   const [standaloneVideos, setStandaloneVideos] = useState<SchStandaloneVideo[]>([]);
+  const [videoThumbnails, setVideoThumbnails] = useState<Record<string, string>>({});
   const [historyOpen, setHistoryOpen] = useState(false);
   const [scrollTarget, setScrollTarget] = useState<{ tab: Tab; itemId: string } | null>(null);
   const [openDetailId, setOpenDetailId] = useState<string | null>(null);
@@ -3872,6 +3946,7 @@ export default function SchPage() {
       setTeamLogo(d.teamLogo ?? null);
       setUpdateHistory(d.updateHistory ?? []);
       setStandaloneVideos(d.standaloneVideos ?? []);
+      setVideoThumbnails(d.videoThumbnails ?? {});
       setIsLoading(false);
     }).catch(() => setIsLoading(false));
   }, []);
@@ -3928,6 +4003,7 @@ export default function SchPage() {
   const saveParkingComments = useCallback((c: SchParkingComment[])  => { setParkingComments(c); post({ parkingComments: c }); }, [post]);
   const saveTeamLogo        = useCallback((logo: string | null)     => { setTeamLogo(logo);     post({ teamLogo: logo }); }, [post]);
   const saveStandaloneVideos = useCallback((v: SchStandaloneVideo[]) => { setStandaloneVideos(v); post({ standaloneVideos: v }); }, [post]);
+  const saveVideoThumbnails  = useCallback((t: Record<string, string>) => { setVideoThumbnails(t); post({ videoThumbnails: t }); }, [post]);
 
   const upsertParkingRecord = useCallback((eventId: string, updater: (slots: SchParkingSlot[]) => SchParkingSlot[]) => {
     setParkingRecords(prev => {
@@ -4248,7 +4324,7 @@ export default function SchPage() {
         <EventSection events={events} members={members} onSave={saveEvents} openDetailId={openDetailId} />
       )}
       {tab === 'video' && (
-        <VideoSection events={events} standaloneVideos={standaloneVideos} onSaveStandaloneVideos={saveStandaloneVideos} />
+        <VideoSection events={events} standaloneVideos={standaloneVideos} onSaveStandaloneVideos={saveStandaloneVideos} videoThumbnails={videoThumbnails} onSaveVideoThumbnails={saveVideoThumbnails} />
       )}
       {tab === 'stats' && (
         <StatsSection events={events} members={members} />
