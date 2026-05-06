@@ -1713,6 +1713,7 @@ function VideoSection({
   const [formUrl, setFormUrl] = useState('');
   const [formTitle, setFormTitle] = useState('');
   const [formEventId, setFormEventId] = useState('');
+  const [formMatchId, setFormMatchId] = useState('');
 
   // 試合イベント一覧（フォームのセレクタ用）
   const matchEvents = useMemo(
@@ -1794,9 +1795,10 @@ function VideoSection({
       title: formTitle.trim() || undefined,
       postedAt: new Date().toISOString(),
       eventId: formEventId || undefined,
+      matchId: formMatchId || undefined,
     };
     onSaveStandaloneVideos([sv, ...standaloneVideos]);
-    setFormUrl(''); setFormTitle(''); setFormEventId('');
+    setFormUrl(''); setFormTitle(''); setFormEventId(''); setFormMatchId('');
     setShowForm(false);
   };
 
@@ -1831,19 +1833,37 @@ function VideoSection({
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-400 mb-1">🔗 イベントに紐づける（任意）</label>
-            <select value={formEventId} onChange={e => setFormEventId(e.target.value)} className={inputCls}>
+            <select value={formEventId} onChange={e => { setFormEventId(e.target.value); setFormMatchId(''); }} className={inputCls}>
               <option value="">紐づけなし</option>
-              {matchEvents.map(ev => {
-                const ms = getMatches(ev);
-                const opp = ms[0]?.opponentName;
-                return (
-                  <option key={ev.id} value={ev.id}>
-                    {ev.date} {ev.label ? `🏆 ${ev.label}` : ''}{opp ? ` 🆚 ${opp}` : ''}
-                  </option>
-                );
-              })}
+              {matchEvents.map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.date}{ev.label ? ` 🏆 ${ev.label}` : ' 試合'}
+                </option>
+              ))}
             </select>
           </div>
+          {formEventId && (() => {
+            const ev = matchEvents.find(e => e.id === formEventId);
+            const ms = ev ? getMatches(ev) : [];
+            return (
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">⚽ 試合を指定（任意）</label>
+                <select value={formMatchId} onChange={e => setFormMatchId(e.target.value)} className={inputCls}>
+                  <option value="">イベント全体（試合を指定しない）</option>
+                  {ms.map((m, i) => (
+                    <option key={m.id} value={m.id}>
+                      {m.roundName || `試合${i + 1}`}
+                      {m.opponentName ? ` 🆚 ${m.opponentName}` : ''}
+                      {m.homeScore != null && m.awayScore != null ? ` (${m.homeScore}−${m.awayScore})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  {formMatchId ? '選択した試合の対戦相手・スコアが表示されます' : 'イベント全体に紐づけると大会名のみ表示されます'}
+                </p>
+              </div>
+            );
+          })()}
           <div className="flex gap-2 pt-1">
             <button onClick={handlePost} disabled={!formUrl.trim()} className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">
               投稿する
