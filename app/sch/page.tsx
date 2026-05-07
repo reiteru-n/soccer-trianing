@@ -1443,10 +1443,11 @@ function SchCalendar({ events, today, onSelectDate }: {
                 className="relative flex flex-col items-center pt-1 h-12 rounded-lg hover:bg-slate-700/30 transition-colors opacity-35">
                 <span className={`text-xs font-semibold leading-none ${fadedDow === 0 ? 'text-red-400' : fadedDow === 6 ? 'text-blue-400' : 'text-slate-400'}`}>{fadedDay}</span>
                 {fadedDots.length > 0 && (
-                  <div className="flex gap-0.5 mt-1">
+                  <div className="flex gap-0.5 mt-1 items-center justify-center">
                     {fadedDots.slice(0, 2).map((e, j) => (
-                      <span key={j} className={`w-1.5 h-1.5 rounded-full ${EVENT_DOT[e.type] ?? 'bg-slate-400'}`} />
+                      <span key={j} className="text-[9px] leading-none">{tc(e.type).icon}</span>
                     ))}
+                    {fadedDots.length > 2 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
                   </div>
                 )}
               </button>
@@ -1464,11 +1465,11 @@ function SchCalendar({ events, today, onSelectDate }: {
               className={`relative flex flex-col items-center pt-1 h-12 transition-colors ${isToday ? 'bg-blue-600/30 ring-1 ring-blue-400/50 rounded-lg' : 'hover:bg-slate-700/60 rounded-lg'}`}
             >
               <span className={`text-xs font-semibold leading-none z-10 ${isToday ? 'text-blue-300' : dow === 0 ? 'text-red-400/80' : dow === 6 ? 'text-blue-400/80' : 'text-slate-300'}`}>{day}</span>
-              {/* Single-day dots — directly below the number */}
+              {/* Single-day icons — directly below the number */}
               {dots.length > 0 && (
-                <div className="flex gap-0.5 items-center justify-center mt-1 z-10">
+                <div className="flex gap-0.5 items-center justify-center mt-0.5 z-10 flex-wrap max-w-full px-0.5">
                   {dots.slice(0, 3).map((e, j) => (
-                    <span key={j} className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${EVENT_DOT[e.type] ?? 'bg-slate-400'}`} />
+                    <span key={j} className="text-[9px] leading-none flex-shrink-0">{tc(e.type).icon}</span>
                   ))}
                   {dots.length > 3 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
                 </div>
@@ -1483,16 +1484,25 @@ function SchCalendar({ events, today, onSelectDate }: {
                 const roundR = isEnd || isRowEnd;
                 const color = EVENT_DOT[e.type] ?? 'bg-slate-400';
                 return (
-                  <div
-                    key={e.id}
-                    className={`absolute h-[4px] ${color}`}
-                    style={{
-                      bottom: `${3 + j * 6}px`,
-                      left: isStart && !isRowStart ? '50%' : 0,
-                      right: isEnd && !isRowEnd ? '50%' : 0,
-                      borderRadius: `${roundL ? '9999px' : '0'} ${roundR ? '9999px' : '0'} ${roundR ? '9999px' : '0'} ${roundL ? '9999px' : '0'}`,
-                    }}
-                  />
+                  <div key={e.id} className="contents">
+                    <div
+                      className={`absolute h-[5px] ${color}`}
+                      style={{
+                        bottom: `${3 + j * 7}px`,
+                        left: isStart && !isRowStart ? '50%' : 0,
+                        right: isEnd && !isRowEnd ? '50%' : 0,
+                        borderRadius: `${roundL ? '9999px' : '0'} ${roundR ? '9999px' : '0'} ${roundR ? '9999px' : '0'} ${roundL ? '9999px' : '0'}`,
+                      }}
+                    />
+                    {(isStart || isRowStart) && (
+                      <span
+                        className="absolute text-[8px] leading-none z-20 pointer-events-none"
+                        style={{ bottom: `${4 + j * 7}px`, left: isStart && !isRowStart ? 'calc(50% + 2px)' : '2px' }}
+                      >
+                        {tc(e.type).icon}
+                      </span>
+                    )}
+                  </div>
                 );
               })}
             </button>
