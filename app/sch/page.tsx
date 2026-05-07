@@ -48,11 +48,11 @@ type TypeCfg = { label: string; icon: string; badge: string; border: string; bg:
 const TYPE_CFG: Record<string, TypeCfg> = {
   practice:   { label: '練習',   icon: '⚽', badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
   schedule:   { label: '練習',   icon: '⚽', badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
-  match:      { label: '試合',   icon: '🏆', badge: 'bg-red-600/40 text-red-300',      border: 'border-red-500/30',    bg: 'bg-red-900/20'    },
+  match:      { label: '試合',   icon: '🏆', badge: 'bg-blue-600/40 text-blue-300',    border: 'border-blue-500/30',   bg: 'bg-blue-900/20'   },
   camp:       { label: '合宿/遠征', icon: '🏕️', badge: 'bg-amber-600/40 text-amber-300', border: 'border-amber-500/30', bg: 'bg-amber-900/20' },
   expedition: { label: '合宿/遠征', icon: '🏕️', badge: 'bg-amber-600/40 text-amber-300', border: 'border-amber-500/30', bg: 'bg-amber-900/20' },
   other:      { label: 'その他', icon: '📌', badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
-  off:        { label: 'OFF',   icon: '🏖️', badge: 'bg-sky-600/40 text-sky-300',      border: 'border-sky-500/30',    bg: 'bg-sky-900/20'    },
+  off:        { label: 'OFF',   icon: '🏖️', badge: 'bg-red-600/40 text-red-300',      border: 'border-red-500/30',    bg: 'bg-red-900/20'    },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
 // WMO天気コード (Open-Meteo) + 降水確率で判定
@@ -81,10 +81,10 @@ function weatherLabel(code: number, precip: number): string {
 // Calendar dot colors per event type
 const EVENT_DOT: Record<string, string> = {
   practice: 'bg-green-400', schedule: 'bg-green-400',
-  match: 'bg-red-400',
+  match: 'bg-blue-400',
   camp: 'bg-amber-400', expedition: 'bg-amber-400',
   other: 'bg-slate-400',
-  off:   'bg-sky-400',
+  off:   'bg-red-400',
 };
 
 const MATCH_TYPES: SchMatchType[] = ['公式戦', 'CUP戦', 'トレマ', 'その他'];
@@ -1341,11 +1341,22 @@ function MiniEventCard({ event, members, onClick }: { event: SchEvent; members: 
           </div>
           <div className="flex-1 min-w-0">
             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${cfg.badge}`}>{cfg.icon} {cfg.label}</span>
-            <p className="text-xs font-bold text-white mt-0.5 truncate">
-              {event.type === 'match'
-                ? (() => { const ms = getMatches(event); return ms.length > 1 ? `🆚 ${ms[0]?.opponentName ?? '?'} 他${ms.length - 1}試合` : (ms[0]?.opponentName ? `🆚 ${ms[0].opponentName}` : '相手未定'); })()
-                : (event.label || event.location || (event.type === 'off' ? event.note : undefined) || '詳細未定')}
-            </p>
+            {event.type === 'match' ? (() => {
+              const ms = getMatches(event);
+              const oppText = ms.length > 1 ? `🆚 ${ms[0]?.opponentName ?? '?'} 他${ms.length - 1}試合` : (ms[0]?.opponentName ? `🆚 ${ms[0].opponentName}` : '相手未定');
+              return event.label ? (
+                <>
+                  <p className="text-xs font-bold text-white mt-0.5 truncate">🏆 {event.label}</p>
+                  <p className="text-[10px] text-slate-300 truncate leading-tight">{oppText}</p>
+                </>
+              ) : (
+                <p className="text-xs font-bold text-white mt-0.5 truncate">{oppText}</p>
+              );
+            })() : (
+              <p className="text-xs font-bold text-white mt-0.5 truncate">
+                {event.label || event.location || (event.type === 'off' ? event.note : undefined) || '詳細未定'}
+              </p>
+            )}
             {event.startTime && <p className="text-[10px] text-slate-400 leading-tight">⏰ {event.startTime}</p>}
           </div>
         </div>
