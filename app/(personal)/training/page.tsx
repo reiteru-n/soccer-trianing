@@ -40,7 +40,7 @@ function speak(text: string) {
 
 export default function TrainingPage() {
   const router = useRouter();
-  const { trainingMenu, addTrainingMenuItem, updateTrainingMenuItem, deleteTrainingMenuItem, trainingLogs, toggleTrainingLogItem, practiceNotes, addPracticeNote, isLoading } = useApp();
+  const { trainingMenu, addTrainingMenuItem, updateTrainingMenuItem, deleteTrainingMenuItem, trainingLogs, toggleTrainingLogItem, practiceNotes, addPracticeNote, isLoading, reorderTrainingMenu } = useApp();
   const [tab, setTab] = useState<'check'|'edit'|'history'>('check');
   const [editingId, setEditingId] = useState<string|null>(null);
   const [form, setForm] = useState<MenuItemFormData>(emptyForm());
@@ -54,6 +54,16 @@ export default function TrainingPage() {
   const totalMinutes = sortedMenu.reduce((s,m) => s+m.estimatedMinutes, 0);
   const todayDoneCount = sortedMenu.filter(m => completedIds.has(m.id)).length;
   const allDone = sortedMenu.length > 0 && todayDoneCount === sortedMenu.length;
+
+  const moveItem = (id: string, dir: -1 | 1) => {
+    const idx = sortedMenu.findIndex(m => m.id === id);
+    if (idx < 0) return;
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= sortedMenu.length) return;
+    const reordered = [...sortedMenu];
+    [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
+    reorderTrainingMenu(reordered.map((m, i) => ({ ...m, order: i + 1 })));
+  };
 
   const handleSaveItem = () => {
     if (!form.name.trim()) return;
@@ -160,7 +170,20 @@ export default function TrainingPage() {
                 </div>
               </div>
             ) : (
-              <div key={item.id} className="bg-white border-2 border-gray-100 rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div key={item.id} className="bg-white border-2 border-gray-100 rounded-2xl px-3 py-3 flex items-center gap-2">
+                {/* 並び替えボタン */}
+                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                  <button
+                    onClick={() => moveItem(item.id, -1)}
+                    disabled={sortedMenu[0].id === item.id}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 text-xs"
+                  >▲</button>
+                  <button
+                    onClick={() => moveItem(item.id, 1)}
+                    disabled={sortedMenu[sortedMenu.length - 1].id === item.id}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 text-xs"
+                  >▼</button>
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm text-gray-800 truncate">{item.name}</p>
                   <p className="text-xs text-gray-400">{item.targetCount}{item.isMinimum?"回以上":"回"} · {item.estimatedMinutes}分</p>
