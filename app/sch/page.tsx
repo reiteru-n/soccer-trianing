@@ -4334,12 +4334,16 @@ export default function SchPage() {
       if (ev.type === 'match') { const opp = ev.matches?.[0]?.opponentName || ev.opponentName; return opp ? `vs ${opp}` : '試合'; }
       return ev.label || ev.location || tc(ev.type).label;
     };
+    const newIds = new Set(e.map(ev => ev.id));
     const autoEntries: SchUpdateHistory[] = [];
     const editEntries: SchUpdateHistory[] = [];
     for (const ev of e) {
       const old = oldMap.get(ev.id);
       if (!old) autoEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: ev.type, title: getEvTitle(ev), action: 'new', itemId: ev.id, tab: 'events' });
       else if (JSON.stringify(old) !== JSON.stringify(ev)) editEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: ev.type, title: getEvTitle(ev), action: 'edit', itemId: ev.id, tab: 'events' });
+    }
+    for (const old of events) {
+      if (!newIds.has(old.id)) autoEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: old.type, title: getEvTitle(old), action: 'delete', itemId: old.id, tab: 'events' });
     }
     if (editEntries.length > 0) {
       setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '', previousEvents: events });
@@ -4353,12 +4357,16 @@ export default function SchPage() {
     setAnnouncements(a);
     post({ announcements: a });
     const oldMap = new Map(announcements.map(ann => [ann.id, ann]));
+    const newIds = new Set(a.map(ann => ann.id));
     const autoEntries: SchUpdateHistory[] = [];
     const editEntries: SchUpdateHistory[] = [];
     for (const ann of a) {
       const old = oldMap.get(ann.id);
       if (!old) autoEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: ann.title, action: 'new', itemId: ann.id, tab: 'announce' });
       else if (JSON.stringify(old) !== JSON.stringify(ann)) editEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: ann.title, action: 'edit', itemId: ann.id, tab: 'announce' });
+    }
+    for (const old of announcements) {
+      if (!newIds.has(old.id)) autoEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: old.title, action: 'delete', itemId: old.id, tab: 'announce' });
     }
     if (editEntries.length > 0) {
       setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '', previousAnnouncements: announcements });
@@ -4587,7 +4595,7 @@ export default function SchPage() {
                 <p className="text-xs font-bold text-white leading-tight">
                   {mm}月{dd}日 {hh}:{min} に更新がありました
                 </p>
-                <p className="text-[10px] text-slate-400 mt-0.5">{latest.action === 'new' ? '新規投稿' : '編集'}：{latest.title}</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">{latest.action === 'new' ? '新規投稿' : latest.action === 'delete' ? '削除' : '編集'}：{latest.title}</p>
               </div>
               <span className="text-slate-400 text-xs font-bold transition-transform" style={{ display: 'inline-block', transform: historyOpen ? 'rotate(180deg)' : 'none' }}>▼</span>
             </button>
@@ -4598,13 +4606,13 @@ export default function SchPage() {
                   <button
                     key={h.id}
                     className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 active:bg-white/10 transition-colors border-t border-white/5 text-left"
-                    onClick={() => { setHistoryOpen(false); const targetTab: Tab = (h.type === 'event' && h.eventType === 'match') ? 'stats' : h.tab; setTab(targetTab); if (targetTab !== 'stats') setScrollTarget({ tab: targetTab, itemId: h.itemId }); }}
+                    onClick={() => { setHistoryOpen(false); const targetTab: Tab = (h.type === 'event' && h.eventType === 'match') ? 'stats' : h.tab; setTab(targetTab); if (targetTab !== 'stats' && h.action !== 'delete') setScrollTarget({ tab: targetTab, itemId: h.itemId }); }}
                   >
                     <span className="text-base w-5 flex-shrink-0 text-center">{typeIcon(h)}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-white font-semibold truncate">{h.title}</p>
                       <p className="text-[10px] text-slate-400 mt-0.5">
-                        <span className={`font-bold mr-1.5 ${h.action === 'new' ? 'text-emerald-400' : 'text-amber-400'}`}>{h.action === 'new' ? '新規' : '編集'}</span>
+                        <span className={`font-bold mr-1.5 ${h.action === 'new' ? 'text-emerald-400' : h.action === 'delete' ? 'text-rose-400' : 'text-amber-400'}`}>{h.action === 'new' ? '新規' : h.action === 'delete' ? '削除' : '編集'}</span>
                         {h.changeMemo && <span className="text-slate-300 mr-1.5">「{h.changeMemo}」</span>}
                         {itemTs(h)}
                       </p>
