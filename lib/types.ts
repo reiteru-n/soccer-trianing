@@ -262,7 +262,7 @@ export interface SchUpdateHistory {
   type: 'announcement' | 'event';
   eventType?: string; // for events: match/practice/camp/expedition/other
   title: string;
-  action: 'new' | 'edit';
+  action: 'new' | 'edit' | 'delete';
   changeMemo?: string; // 編集時の変更内容メモ
   itemId: string;
   tab: 'events' | 'announce';
