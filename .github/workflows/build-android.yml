@@ -36,23 +36,42 @@ jobs:
       - name: Show project structure
         run: find android -maxdepth 4 -type f | head -50
 
+      - name: Verify Android project
+        run: |
+          echo "=== pwd ==="
+          pwd
+          echo "=== android/ contents ==="
+          ls -la android/
+          echo "=== android/app/build.gradle ==="
+          cat android/app/build.gradle
+          echo "=== android/build.gradle ==="
+          cat android/build.gradle
+          echo "=== settings.gradle ==="
+          cat android/settings.gradle
+
       - name: Build debug APK
         id: gradle_build
         working-directory: android
         run: |
-          set +e
-          gradle assembleDebug --no-daemon --stacktrace --info 2>&1 | tee /tmp/gradle-build.log
-          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
-          tail -200 /tmp/gradle-build.log > /tmp/gradle-tail.log
-          exit ${PIPESTATUS[0]}
+          set -o pipefail
+          gradle --version
+          gradle tasks --no-daemon 2>&1 | head -80
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-build.log
+          echo "EXIT=$?"
 
-      - name: Show error tail on failure
-        if: failure()
+      - name: Dump gradle log tail to summary (always)
+        if: always()
         run: |
-          echo "==== LAST 200 LINES OF GRADLE OUTPUT ===="
-          cat /tmp/gradle-tail.log || echo "no tail"
-          echo "==== FAILURE GREP ===="
-          grep -nE "FAILURE|BUILD FAILED|What went wrong|Caused by|error:|cannot find|Could not" /tmp/gradle-build.log | head -50 || true
+          {
+            echo "## Gradle build log (last 200 lines)"
+            echo '```'
+            tail -200 /tmp/gradle-build.log 2>/dev/null || echo "no log"
+            echo '```'
+            echo "## Failures/Errors grep"
+            echo '```'
+            grep -nE "FAILURE|BUILD FAILED|What went wrong|Caused by|error:|cannot find|Could not|Task :" /tmp/gradle-build.log 2>/dev/null | head -80 || echo "nothing"
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
 
       - name: Upload build log
         if: always()
@@ -65,21 +84,31 @@ jobs:
         if: always()
         run: |
           mkdir -p public
-          echo "==== android/ tree (depth 4) ===="
-          find android -maxdepth 4 -type d 2>/dev/null
-          echo "==== ALL APK files anywhere ===="
-          find android -name "*.apk" 2>/dev/null | tee /tmp/apk-list.txt
-          echo "==== android/app/build (if exists) ===="
-          ls -la android/app/build 2>/dev/null || echo "no build dir"
-          echo "==== android/app/build/outputs (if exists) ===="
-          ls -laR android/app/build/outputs 2>/dev/null || echo "no outputs dir"
+          {
+            echo "## Find APK files"
+            echo "### android directory tree:"
+            echo '```'
+            find android -maxdepth 5 -type d 2>/dev/null
+            echo '```'
+            echo "### All APK files:"
+            echo '```'
+            find android -name "*.apk" 2>/dev/null || echo "none"
+            echo '```'
+            echo "### android/app/build directory:"
+            echo '```'
+            ls -la android/app/build 2>/dev/null || echo "no build dir"
+            echo '```'
+            echo "### android/app/build/outputs (recursive):"
+            echo '```'
+            ls -laR android/app/build/outputs 2>/dev/null || echo "no outputs dir"
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
           APK=$(find android -name "*.apk" 2>/dev/null | grep -i debug | head -1)
           [ -z "$APK" ] && APK=$(find android -name "*.apk" 2>/dev/null | head -1)
           if [ -z "$APK" ]; then
             echo "::error::No APK file produced anywhere under android/"
             exit 1
           fi
-          echo "Selected APK: $APK"
           cp "$APK" public/app.apk
           ls -la public/app.apk
 
