@@ -38,8 +38,13 @@ function withDeviceId(req: NextRequest, res: NextResponse): NextResponse {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Always allow login pages and auth API
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
+  // Always allow login, auth API, install page, APK download
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/api/auth') ||
+    pathname === '/install' ||
+    pathname === '/app.apk'
+  ) {
     return withDeviceId(req, NextResponse.next());
   }
 

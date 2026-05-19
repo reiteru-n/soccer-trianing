@@ -228,6 +228,26 @@ git push github master
 
 ---
 
+## Fire TV Stick用 APK ビルド
+
+- `android/` に Java/Gradle ベースの WebView ラッパーアプリ
+- 中身は `https://soccer-trianing.vercel.app/` を読み込むだけ
+- 配布物: `public/app.apk`（GitHub Actions が生成して master に commit）
+- 配布 URL: `https://soccer-trianing.vercel.app/app.apk`（proxy.ts で公開設定済み）
+- インストール手順ページ: `/install`（公開アクセス可）
+
+### ビルド方法
+1. `Actions` タブで **Build Android APK** ワークフローを手動実行（`workflow_dispatch`）
+2. 完了すると `public/app.apk` に自動コミット → Vercel が再デプロイ
+3. `android/**` の変更を push しても自動でビルドが走る
+
+### 重要事項
+- debug 署名は `android/app/debug.keystore` を repo にコミット済み（個人配布用途のため OK）。**絶対に削除しない** — 削除すると更新時に署名不一致で再インストールエラー
+- `versionCode` は GitHub Actions の run number で自動採番
+- WebView の Cookie は `onPause` で `CookieManager.flush()` 呼び出しにより永続化
+
+---
+
 ## 技術スタック
 
 - Next.js 16.1.6 (App Router, Turbopack)
@@ -235,3 +255,4 @@ git push github master
 - Upstash Redis（データ永続化）
 - TypeScript
 - デプロイ: Vercel（master ブランチ連動）
+- Android APK: Gradle 8.5 + AGP 8.2 + JDK 17（GitHub Actions ubuntu-latest）
