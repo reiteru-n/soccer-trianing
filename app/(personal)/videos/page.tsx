@@ -140,7 +140,7 @@ function VideoRow({
           </span>
           {stat?.viewCount ? (
             <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-extrabold px-2.5 py-0.5 rounded-full shadow-sm shadow-orange-300/60">
-              👁 {stat.viewCount}<span className="text-[9px] font-bold opacity-90">回</span>
+              {stat.viewCount}<span className="text-[9px] font-bold opacity-90">回</span>
             </span>
           ) : (
             <span className="text-[10px] text-blue-400 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">NEW</span>
