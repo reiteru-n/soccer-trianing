@@ -1,5 +1,4 @@
 name: Build Android APK
-# Re-trigger after YAML fix
 
 on:
   workflow_dispatch:
@@ -36,90 +35,17 @@ jobs:
       - name: Show project structure
         run: find android -maxdepth 4 -type f | head -50
 
-      - name: Verify Android project
-        run: |
-          echo "=== pwd ==="
-          pwd
-          echo "=== android/ contents ==="
-          ls -la android/
-          echo "=== android/app/build.gradle ==="
-          cat android/app/build.gradle
-          echo "=== android/build.gradle ==="
-          cat android/build.gradle
-          echo "=== settings.gradle ==="
-          cat android/settings.gradle
-
       - name: Build debug APK
-        id: gradle_build
         working-directory: android
-        run: |
-          set -o pipefail
-          gradle --version
-          gradle tasks --no-daemon 2>&1 | head -80
-          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-build.log
-          echo "EXIT=$?"
+        run: gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Dump gradle log tail to summary (always)
-        if: always()
-        run: |
-          {
-            echo "## Gradle build log (last 200 lines)"
-            echo '```'
-            tail -200 /tmp/gradle-build.log 2>/dev/null || echo "no log"
-            echo '```'
-            echo "## Failures/Errors grep"
-            echo '```'
-            grep -nE "FAILURE|BUILD FAILED|What went wrong|Caused by|error:|cannot find|Could not|Task :" /tmp/gradle-build.log 2>/dev/null | head -80 || echo "nothing"
-            echo '```'
-          } >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-build-log
-          path: /tmp/gradle-build.log
-
-      - name: Commit build log to repo (debug)
-        if: always()
-        run: |
-          mkdir -p .github/build-logs
-          cp /tmp/gradle-build.log ".github/build-logs/run-${{ github.run_number }}.log" 2>/dev/null || echo "no log"
-          git config user.email 'noreply@anthropic.com'
-          git config user.name 'Claude (APK Build)'
-          git add .github/build-logs/
-          if ! git diff --staged --quiet; then
-            git commit -m "debug: build log run #${{ github.run_number }} [skip ci]"
-            git push || echo "push failed (non-fatal)"
-          fi
-
-      - name: Find and stage APK to public/
-        if: always()
+      - name: Stage APK to public/
         run: |
           mkdir -p public
-          {
-            echo "## Find APK files"
-            echo "### android directory tree:"
-            echo '```'
-            find android -maxdepth 5 -type d 2>/dev/null
-            echo '```'
-            echo "### All APK files:"
-            echo '```'
-            find android -name "*.apk" 2>/dev/null || echo "none"
-            echo '```'
-            echo "### android/app/build directory:"
-            echo '```'
-            ls -la android/app/build 2>/dev/null || echo "no build dir"
-            echo '```'
-            echo "### android/app/build/outputs (recursive):"
-            echo '```'
-            ls -laR android/app/build/outputs 2>/dev/null || echo "no outputs dir"
-            echo '```'
-          } >> $GITHUB_STEP_SUMMARY
-          APK=$(find android -name "*.apk" 2>/dev/null | grep -i debug | head -1)
-          [ -z "$APK" ] && APK=$(find android -name "*.apk" 2>/dev/null | head -1)
+          APK=$(find android/app/build/outputs/apk -name "*-debug.apk" | head -1)
           if [ -z "$APK" ]; then
-            echo "::error::No APK file produced anywhere under android/"
+            echo "::error::No debug APK found"
+            ls -laR android/app/build/outputs 2>/dev/null || true
             exit 1
           fi
           cp "$APK" public/app.apk
