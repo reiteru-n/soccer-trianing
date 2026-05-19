@@ -37,8 +37,29 @@ jobs:
         run: find android -maxdepth 4 -type f | head -50
 
       - name: Build debug APK
+        id: gradle_build
         working-directory: android
-        run: gradle assembleDebug --no-daemon --stacktrace --info
+        run: |
+          set +e
+          gradle assembleDebug --no-daemon --stacktrace --info 2>&1 | tee /tmp/gradle-build.log
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+          tail -200 /tmp/gradle-build.log > /tmp/gradle-tail.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Show error tail on failure
+        if: failure()
+        run: |
+          echo "==== LAST 200 LINES OF GRADLE OUTPUT ===="
+          cat /tmp/gradle-tail.log || echo "no tail"
+          echo "==== FAILURE GREP ===="
+          grep -nE "FAILURE|BUILD FAILED|What went wrong|Caused by|error:|cannot find|Could not" /tmp/gradle-build.log | head -50 || true
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: /tmp/gradle-build.log
 
       - name: Stage APK to public/
         run: |
