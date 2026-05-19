@@ -43,6 +43,10 @@ android {
 }
 
 dependencies {
+    // Kotlin stdlib のバージョン整合性を BOM で固定
+    // (AndroidX 1.7 が 1.8.22 を pull する一方、jdk7/jdk8 1.6.21 が transitive に来て duplicate class エラーになるのを防ぐ)
+    implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
+
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.webkit:webkit:1.11.0'
 }
