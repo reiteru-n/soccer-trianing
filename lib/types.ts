@@ -100,6 +100,8 @@ export interface VideoItem {
   url: string;
   description: string;
   order: number;
+  createdAt?: string; // ISO datetime - 並び順の基準（未設定時は order で代用）
+  pinned?: boolean;
 }
 
 export interface VideoViewStat {

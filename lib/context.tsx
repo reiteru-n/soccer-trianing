@@ -45,10 +45,11 @@ interface AppContextType {
   deleteVideoCategory: (id: string) => void;
   reorderVideoCategories: (cats: VideoCategory[]) => void;
   videos: VideoItem[];
-  addVideo: (item: Omit<VideoItem, 'id' | 'order'>) => void;
+  addVideo: (item: Omit<VideoItem, 'id' | 'order' | 'createdAt'>) => void;
   updateVideo: (id: string, data: Partial<Omit<VideoItem, 'id'>>) => void;
   deleteVideo: (id: string) => void;
   reorderVideos: (items: VideoItem[]) => void;
+  toggleVideoPin: (id: string) => void;
   videoStats: VideoViewStat[];
   recordVideoView: (url: string) => void;
   isLoading: boolean;
@@ -284,10 +285,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     saveVideoCategories(cats);
   }, []);
 
-  const addVideo = useCallback((item: Omit<VideoItem, 'id' | 'order'>) => {
+  const addVideo = useCallback((item: Omit<VideoItem, 'id' | 'order' | 'createdAt'>) => {
     const sameCat = videos.filter((v) => v.categoryId === item.categoryId);
     const maxOrder = sameCat.length > 0 ? Math.max(...sameCat.map((v) => v.order)) : 0;
-    const updated = [...videos, { ...item, id: 'v_' + generateId(), order: maxOrder + 1 }];
+    const updated = [...videos, {
+      ...item,
+      id: 'v_' + generateId(),
+      order: maxOrder + 1,
+      createdAt: new Date().toISOString(),
+    }];
+    setVideos(updated);
+    saveVideos(updated);
+  }, [videos]);
+
+  const toggleVideoPin = useCallback((id: string) => {
+    const updated = videos.map((v) => v.id === id ? { ...v, pinned: !v.pinned } : v);
     setVideos(updated);
     saveVideos(updated);
   }, [videos]);
@@ -341,7 +353,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         performanceRecords, addPerformanceRecord, deletePerformanceRecord,
         customMetrics, addCustomMetric, updateCustomMetric, deleteCustomMetric,
         videoCategories, addVideoCategory, updateVideoCategory, deleteVideoCategory, reorderVideoCategories,
-        videos, addVideo, updateVideo, deleteVideo, reorderVideos,
+        videos, addVideo, updateVideo, deleteVideo, reorderVideos, toggleVideoPin,
         videoStats, recordVideoView,
         isLoading,
       }}

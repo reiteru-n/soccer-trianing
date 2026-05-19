@@ -84,24 +84,29 @@ function VideoThumb({ url }: { url: string }) {
 
 // --- 視聴UI 行 ---
 function VideoRow({
-  url, description, stat, onView, editMode, onEdit, onDelete, onMoveUp, onMoveDown, canMoveUp, canMoveDown,
+  url, description, stat, pinned, onView, editMode, onEdit, onDelete, onTogglePin,
   readOnly,
 }: {
   url: string;
   description: string;
   stat?: VideoViewStat;
+  pinned?: boolean;
   onView: () => void;
   editMode: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  canMoveUp?: boolean;
-  canMoveDown?: boolean;
+  onTogglePin?: () => void;
   readOnly?: boolean;
 }) {
   return (
-    <div className="bg-gradient-to-br from-white via-sky-50 to-blue-100 rounded-2xl shadow-md shadow-blue-900/20 border border-white/40 overflow-hidden flex">
+    <div className={"relative rounded-2xl shadow-md overflow-hidden flex " +
+      (pinned
+        ? "bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 border-2 border-amber-300 shadow-amber-200/60"
+        : "bg-gradient-to-br from-white via-sky-50 to-blue-100 border border-white/40 shadow-blue-900/20")
+    }>
+      {pinned && (
+        <span className="absolute top-1.5 right-1.5 z-10 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow shadow-amber-300/70 flex items-center gap-0.5">📌 PIN</span>
+      )}
       {/* 左：サムネ 1/4 */}
       <a
         href={url}
@@ -148,8 +153,17 @@ function VideoRow({
         </div>
         {editMode && !readOnly && (
           <div className="px-2 pb-2 flex items-center gap-1 border-t border-blue-100/60 pt-1.5">
-            <button onClick={onMoveUp} disabled={!canMoveUp} className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-white/60 disabled:opacity-20 text-xs">▲</button>
-            <button onClick={onMoveDown} disabled={!canMoveDown} className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-white/60 disabled:opacity-20 text-xs">▼</button>
+            <button
+              onClick={onTogglePin}
+              className={
+                "text-xs font-bold px-2 py-1 rounded-lg border " +
+                (pinned
+                  ? "bg-amber-500 text-white border-amber-400"
+                  : "bg-white/70 text-amber-600 border-amber-200 hover:bg-amber-50")
+              }
+            >
+              📌 {pinned ? 'ピン解除' : 'ピン留め'}
+            </button>
             <div className="flex-1" />
             <button onClick={onEdit} className="text-blue-500 hover:text-blue-700 text-sm px-2 py-1">✏️</button>
             <button onClick={onDelete} className="text-gray-300 hover:text-red-500 text-lg px-1.5">×</button>
@@ -165,7 +179,7 @@ function VideoRow({
 
 // --- カテゴリブロック ---
 function CategoryBlock({
-  category, items, stats, onView, editMode, onAdd, onEdit, onDelete, onReorder,
+  category, items, stats, onView, editMode, onAdd, onEdit, onDelete, onTogglePin,
   onRenameCategory, onDeleteCategory, onMoveCategoryUp, onMoveCategoryDown, canMoveCatUp, canMoveCatDown,
   matchVideos,
 }: {
@@ -177,7 +191,7 @@ function CategoryBlock({
   onAdd: (categoryId: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  onReorder: (items: VideoItem[]) => void;
+  onTogglePin: (id: string) => void;
   onRenameCategory: (id: string) => void;
   onDeleteCategory: (id: string) => void;
   onMoveCategoryUp: () => void;
@@ -187,22 +201,21 @@ function CategoryBlock({
   matchVideos: SchMatchVideo[];
 }) {
   const [open, setOpen] = useState(true);
-  const sortedItems = [...items].sort((a, b) => a.order - b.order);
+  // ピン留め優先 + 追加日時の新しい順（createdAtない場合はorderで代用）
+  const sortedItems = useMemo(() => {
+    const sortKey = (v: VideoItem) => v.createdAt ?? `0000-${String(v.order).padStart(10, '0')}`;
+    return [...items].sort((a, b) => {
+      const pa = a.pinned ? 1 : 0;
+      const pb = b.pinned ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      return sortKey(b).localeCompare(sortKey(a));
+    });
+  }, [items]);
   const statByUrl = useMemo(() => {
     const m = new Map<string, VideoViewStat>();
     for (const s of stats) m.set(s.url, s);
     return m;
   }, [stats]);
-
-  const moveItem = (id: string, dir: -1 | 1) => {
-    const idx = sortedItems.findIndex(m => m.id === id);
-    if (idx < 0) return;
-    const newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= sortedItems.length) return;
-    const reordered = [...sortedItems];
-    [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
-    onReorder(reordered.map((m, i) => ({ ...m, order: i + 1 })));
-  };
 
   const isMatch = category.isMatchCategory;
   const totalCount = sortedItems.length + (isMatch ? matchVideos.length : 0);
@@ -236,20 +249,18 @@ function CategoryBlock({
 
       {open && (
         <div className="space-y-2">
-          {sortedItems.map((item, idx) => (
+          {sortedItems.map((item) => (
             <VideoRow
               key={item.id}
               url={item.url}
               description={item.description}
               stat={statByUrl.get(item.url)}
+              pinned={item.pinned}
               onView={() => onView(item.url)}
               editMode={editMode}
               onEdit={() => onEdit(item.id)}
               onDelete={() => onDelete(item.id)}
-              onMoveUp={() => moveItem(item.id, -1)}
-              onMoveDown={() => moveItem(item.id, 1)}
-              canMoveUp={idx > 0}
-              canMoveDown={idx < sortedItems.length - 1}
+              onTogglePin={() => onTogglePin(item.id)}
             />
           ))}
           {isMatch && matchVideos.map((mv) => (
@@ -394,7 +405,7 @@ function CategoryFormModal({
 export default function VideosPage() {
   const {
     videoCategories, addVideoCategory, updateVideoCategory, deleteVideoCategory, reorderVideoCategories,
-    videos, addVideo, updateVideo, deleteVideo, reorderVideos,
+    videos, addVideo, updateVideo, deleteVideo, toggleVideoPin,
     videoStats, recordVideoView,
     isLoading,
   } = useApp();
@@ -485,7 +496,7 @@ export default function VideosPage() {
             onDelete={(id) => {
               if (window.confirm('この動画を削除しますか？')) deleteVideo(id);
             }}
-            onReorder={reorderVideos}
+            onTogglePin={toggleVideoPin}
             onRenameCategory={(id) => {
               const c = videoCategories.find(x => x.id === id);
               if (c) setCategoryFormState({ mode: 'edit', id, name: c.name });
