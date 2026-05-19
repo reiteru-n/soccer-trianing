@@ -35,11 +35,19 @@ function speak(text: string) {
   window.speechSynthesis.speak(utter);
 }
 
-// --- SCH match videos fetch ---
+// --- SCH match videos fetch (YouTubeのSCHチームプレイリストに限定) ---
 interface SchMatchVideo {
   url: string;
-  description: string; // 「vs XX (2026/04/01)」など
+  description: string;
   date: string;
+}
+
+interface YtPlaylistVideo {
+  videoId: string;
+  title: string;
+  publishedAt: string;
+  thumbnail: string;
+  url: string;
 }
 
 function useSchMatchVideos(enabled: boolean): SchMatchVideo[] {
@@ -47,48 +55,14 @@ function useSchMatchVideos(enabled: boolean): SchMatchVideo[] {
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
-    fetch('/api/sch').then(r => r.ok ? r.json() : null).then((d) => {
+    fetch('/api/sch/yt-playlist?limit=50').then(r => r.ok ? r.json() : null).then((d: YtPlaylistVideo[] | null) => {
       if (cancelled || !d) return;
-      const collected: SchMatchVideo[] = [];
-      // イベントの試合動画
-      for (const ev of (d.events ?? [])) {
-        if (ev.type !== 'match') continue;
-        const matches = ev.matches ?? [];
-        const matchList = matches.length > 0 ? matches : [{
-          id: ev.id, opponentName: ev.opponentName, homeScore: ev.homeScore, awayScore: ev.awayScore,
-          videoUrls: ev.videoUrls ?? (ev.videoUrl ? [ev.videoUrl] : []),
-        }];
-        for (const m of matchList) {
-          const urls = m.videoUrls ?? (m.videoUrl ? [m.videoUrl] : []);
-          for (const url of urls) {
-            if (!url) continue;
-            const parts: string[] = [];
-            if (m.opponentName) parts.push(`vs ${m.opponentName}`);
-            if (m.homeScore != null && m.awayScore != null) parts.push(`${m.homeScore}-${m.awayScore}`);
-            if (ev.label) parts.push(ev.label);
-            collected.push({
-              url,
-              description: parts.length > 0 ? parts.join(' / ') : '試合動画',
-              date: ev.date,
-            });
-          }
-        }
-      }
-      // 単独動画
-      for (const sv of (d.standaloneVideos ?? [])) {
-        if (!sv.url) continue;
-        const ev = sv.eventId ? (d.events ?? []).find((e: { id: string }) => e.id === sv.eventId) : null;
-        collected.push({
-          url: sv.url,
-          description: sv.title || (ev ? `${ev.label ?? '試合'}` : '試合動画'),
-          date: ev?.date ?? sv.postedAt?.slice(0, 10).replace(/-/g, '/') ?? '',
-        });
-      }
-      // URLで重複除去
-      const seen = new Set<string>();
-      const unique = collected.filter(v => seen.has(v.url) ? false : (seen.add(v.url), true));
-      unique.sort((a, b) => b.date.localeCompare(a.date));
-      setVideos(unique);
+      const collected: SchMatchVideo[] = d.map(v => ({
+        url: v.url,
+        description: v.title,
+        date: v.publishedAt,
+      }));
+      setVideos(collected);
     }).catch(() => { /* ignore */ });
     return () => { cancelled = true; };
   }, [enabled]);
@@ -110,13 +84,13 @@ function VideoThumb({ url }: { url: string }) {
 
 // --- 視聴UI 行 ---
 function VideoRow({
-  url, description, stat, onPlay, editMode, onEdit, onDelete, onMoveUp, onMoveDown, canMoveUp, canMoveDown,
+  url, description, stat, onView, editMode, onEdit, onDelete, onMoveUp, onMoveDown, canMoveUp, canMoveDown,
   readOnly,
 }: {
   url: string;
   description: string;
   stat?: VideoViewStat;
-  onPlay: () => void;
+  onView: () => void;
   editMode: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -127,10 +101,13 @@ function VideoRow({
   readOnly?: boolean;
 }) {
   return (
-    <div className="bg-white/95 rounded-2xl shadow-md shadow-blue-900/20 border border-white/20 overflow-hidden flex">
+    <div className="bg-gradient-to-br from-white via-sky-50 to-blue-100 rounded-2xl shadow-md shadow-blue-900/20 border border-white/40 overflow-hidden flex">
       {/* 左：サムネ 1/4 */}
-      <button
-        onClick={onPlay}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onView}
         className="w-1/4 aspect-video flex-shrink-0 bg-slate-700 relative group"
         aria-label="動画を再生"
       >
@@ -138,34 +115,48 @@ function VideoRow({
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-active:opacity-100 transition-opacity">
           <span className="text-white text-2xl">▶</span>
         </div>
-      </button>
+      </a>
       {/* 右：説明 + メタ */}
       <div className="flex-1 min-w-0 flex flex-col">
-        <button onClick={onPlay} className="flex-1 px-3 py-2 text-left">
-          <div className="flex items-start gap-2">
-            <p className="flex-1 text-sm font-semibold text-gray-800 line-clamp-2 break-words">{description}</p>
-            <button
-              onClick={(e) => { e.stopPropagation(); speak(description); }}
-              className="flex-shrink-0 text-lg p-1 rounded-lg hover:bg-blue-50 active:bg-blue-100"
-              aria-label="読み上げ"
-            >🔊</button>
-          </div>
-        </button>
-        <div className="px-3 pb-1.5 flex items-center justify-between text-[10px] text-gray-400">
-          <span>{stat?.lastViewedDate ? `最終視聴: ${stat.lastViewedDate}` : '未視聴'}</span>
-          <span>{stat?.viewCount ? `${stat.viewCount}回` : ''}</span>
+        <div className="flex items-start">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onView}
+            className="flex-1 min-w-0 px-3 py-2 text-left"
+          >
+            <p className="text-sm font-semibold text-gray-800 line-clamp-2 break-words">{description}</p>
+          </a>
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); speak(description); }}
+            className="flex-shrink-0 text-lg p-2 rounded-lg hover:bg-blue-100 active:bg-blue-200 mt-0.5 mr-1"
+            aria-label="読み上げ"
+          >🔊</button>
+        </div>
+        <div className="px-3 pb-1.5 flex items-center justify-between gap-2">
+          <span className="text-[10px] text-gray-500">
+            {stat?.lastViewedDate ? `最終視聴: ${stat.lastViewedDate}` : '未視聴'}
+          </span>
+          {stat?.viewCount ? (
+            <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-extrabold px-2.5 py-0.5 rounded-full shadow-sm shadow-orange-300/60">
+              👁 {stat.viewCount}<span className="text-[9px] font-bold opacity-90">回</span>
+            </span>
+          ) : (
+            <span className="text-[10px] text-blue-400 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">NEW</span>
+          )}
         </div>
         {editMode && !readOnly && (
-          <div className="px-2 pb-2 flex items-center gap-1 border-t border-gray-100 pt-1.5">
-            <button onClick={onMoveUp} disabled={!canMoveUp} className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 text-xs">▲</button>
-            <button onClick={onMoveDown} disabled={!canMoveDown} className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 text-xs">▼</button>
+          <div className="px-2 pb-2 flex items-center gap-1 border-t border-blue-100/60 pt-1.5">
+            <button onClick={onMoveUp} disabled={!canMoveUp} className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-white/60 disabled:opacity-20 text-xs">▲</button>
+            <button onClick={onMoveDown} disabled={!canMoveDown} className="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-white/60 disabled:opacity-20 text-xs">▼</button>
             <div className="flex-1" />
             <button onClick={onEdit} className="text-blue-500 hover:text-blue-700 text-sm px-2 py-1">✏️</button>
             <button onClick={onDelete} className="text-gray-300 hover:text-red-500 text-lg px-1.5">×</button>
           </div>
         )}
         {editMode && readOnly && (
-          <div className="px-3 pb-2 text-[10px] text-blue-400 border-t border-gray-100 pt-1.5">📺 SCHチームページの動画（編集はチームページから）</div>
+          <div className="px-3 pb-2 text-[10px] text-blue-500 border-t border-blue-100/60 pt-1.5">📺 SCHチームページの動画（編集はチームページから）</div>
         )}
       </div>
     </div>
@@ -174,14 +165,14 @@ function VideoRow({
 
 // --- カテゴリブロック ---
 function CategoryBlock({
-  category, items, stats, onPlay, editMode, onAdd, onEdit, onDelete, onReorder,
+  category, items, stats, onView, editMode, onAdd, onEdit, onDelete, onReorder,
   onRenameCategory, onDeleteCategory, onMoveCategoryUp, onMoveCategoryDown, canMoveCatUp, canMoveCatDown,
   matchVideos,
 }: {
   category: VideoCategory;
   items: VideoItem[];
   stats: VideoViewStat[];
-  onPlay: (url: string) => void;
+  onView: (url: string) => void;
   editMode: boolean;
   onAdd: (categoryId: string) => void;
   onEdit: (id: string) => void;
@@ -251,7 +242,7 @@ function CategoryBlock({
               url={item.url}
               description={item.description}
               stat={statByUrl.get(item.url)}
-              onPlay={() => onPlay(item.url)}
+              onView={() => onView(item.url)}
               editMode={editMode}
               onEdit={() => onEdit(item.id)}
               onDelete={() => onDelete(item.id)}
@@ -267,7 +258,7 @@ function CategoryBlock({
               url={mv.url}
               description={mv.description}
               stat={statByUrl.get(mv.url)}
-              onPlay={() => onPlay(mv.url)}
+              onView={() => onView(mv.url)}
               editMode={editMode}
               readOnly
             />
@@ -430,11 +421,8 @@ export default function VideosPage() {
     reorderVideoCategories(reordered.map((c, i) => ({ ...c, order: i + 1 })));
   };
 
-  const handlePlay = useCallback((url: string) => {
+  const handleView = useCallback((url: string) => {
     recordVideoView(url);
-    if (typeof window !== 'undefined') {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
   }, [recordVideoView]);
 
   const handleSaveVideo = (data: { categoryId: string; url: string; description: string }) => {
@@ -487,7 +475,7 @@ export default function VideosPage() {
             category={cat}
             items={videos.filter(v => v.categoryId === cat.id)}
             stats={videoStats}
-            onPlay={handlePlay}
+            onView={handleView}
             editMode={editMode}
             onAdd={(categoryId) => setVideoFormState({ mode: 'add', categoryId })}
             onEdit={(id) => {
