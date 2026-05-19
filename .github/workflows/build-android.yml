@@ -80,6 +80,19 @@ jobs:
           name: gradle-build-log
           path: /tmp/gradle-build.log
 
+      - name: Commit build log to repo (debug)
+        if: always()
+        run: |
+          mkdir -p .github/build-logs
+          cp /tmp/gradle-build.log ".github/build-logs/run-${{ github.run_number }}.log" 2>/dev/null || echo "no log"
+          git config user.email 'noreply@anthropic.com'
+          git config user.name 'Claude (APK Build)'
+          git add .github/build-logs/
+          if ! git diff --staged --quiet; then
+            git commit -m "debug: build log run #${{ github.run_number }} [skip ci]"
+            git push || echo "push failed (non-fatal)"
+          fi
+
       - name: Find and stage APK to public/
         if: always()
         run: |
