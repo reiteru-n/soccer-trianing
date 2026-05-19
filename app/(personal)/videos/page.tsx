@@ -248,7 +248,7 @@ function CategoryBlock({
       </div>
 
       {open && (
-        <div className="space-y-2">
+        <div className="space-y-2 landscape:md:grid landscape:md:grid-cols-2 landscape:md:gap-3 landscape:md:space-y-0">
           {sortedItems.map((item) => (
             <VideoRow
               key={item.id}
