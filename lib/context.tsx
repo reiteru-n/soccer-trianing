@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef } from './types';
-import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, saveCustomMetrics, generateId } from './storage';
+import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat } from './types';
+import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, saveCustomMetrics, saveVideoCategories, saveVideos, saveVideoStats, generateId } from './storage';
 import { MILESTONES } from './data';
 
 interface AppContextType {
@@ -39,6 +39,18 @@ interface AppContextType {
   addCustomMetric: (metric: Omit<CustomMetricDef, 'id'>) => void;
   updateCustomMetric: (id: string, updates: Partial<Omit<CustomMetricDef, 'id'>>) => void;
   deleteCustomMetric: (id: string) => void;
+  videoCategories: VideoCategory[];
+  addVideoCategory: (name: string) => void;
+  updateVideoCategory: (id: string, name: string) => void;
+  deleteVideoCategory: (id: string) => void;
+  reorderVideoCategories: (cats: VideoCategory[]) => void;
+  videos: VideoItem[];
+  addVideo: (item: Omit<VideoItem, 'id' | 'order'>) => void;
+  updateVideo: (id: string, data: Partial<Omit<VideoItem, 'id'>>) => void;
+  deleteVideo: (id: string) => void;
+  reorderVideos: (items: VideoItem[]) => void;
+  videoStats: VideoViewStat[];
+  recordVideoView: (url: string) => void;
   isLoading: boolean;
 }
 
@@ -64,6 +76,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [childBirthDate, setChildBirthDateState] = useState("");
   const [performanceRecords, setPerformanceRecords] = useState<PerformanceRecord[]>([]);
   const [customMetrics, setCustomMetrics] = useState<CustomMetricDef[]>([]);
+  const [videoCategories, setVideoCategories] = useState<VideoCategory[]>([]);
+  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [videoStats, setVideoStats] = useState<VideoViewStat[]>([]);
   const [newMilestoneAchieved, setNewMilestoneAchieved] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,6 +93,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setChildBirthDateState(data.childBirthDate ?? "");
       setPerformanceRecords(data.performanceRecords ?? []);
       setCustomMetrics(data.customMetrics ?? []);
+      setVideoCategories(data.videoCategories ?? []);
+      setVideos(data.videos ?? []);
+      setVideoStats(data.videoStats ?? []);
       setIsLoading(false);
     }
     load();
@@ -237,6 +255,79 @@ export function AppProvider({ children }: { children: ReactNode }) {
     saveCustomMetrics(updated);
   }, [customMetrics]);
 
+  const addVideoCategory = useCallback((name: string) => {
+    const maxOrder = videoCategories.length > 0 ? Math.max(...videoCategories.map((c) => c.order)) : 0;
+    const updated = [...videoCategories, { id: 'vcat_' + generateId(), name, order: maxOrder + 1 }];
+    setVideoCategories(updated);
+    saveVideoCategories(updated);
+  }, [videoCategories]);
+
+  const updateVideoCategory = useCallback((id: string, name: string) => {
+    const updated = videoCategories.map((c) => c.id === id ? { ...c, name } : c);
+    setVideoCategories(updated);
+    saveVideoCategories(updated);
+  }, [videoCategories]);
+
+  const deleteVideoCategory = useCallback((id: string) => {
+    const updated = videoCategories.filter((c) => c.id !== id);
+    setVideoCategories(updated);
+    saveVideoCategories(updated);
+    const updatedVids = videos.filter((v) => v.categoryId !== id);
+    if (updatedVids.length !== videos.length) {
+      setVideos(updatedVids);
+      saveVideos(updatedVids);
+    }
+  }, [videoCategories, videos]);
+
+  const reorderVideoCategories = useCallback((cats: VideoCategory[]) => {
+    setVideoCategories(cats);
+    saveVideoCategories(cats);
+  }, []);
+
+  const addVideo = useCallback((item: Omit<VideoItem, 'id' | 'order'>) => {
+    const sameCat = videos.filter((v) => v.categoryId === item.categoryId);
+    const maxOrder = sameCat.length > 0 ? Math.max(...sameCat.map((v) => v.order)) : 0;
+    const updated = [...videos, { ...item, id: 'v_' + generateId(), order: maxOrder + 1 }];
+    setVideos(updated);
+    saveVideos(updated);
+  }, [videos]);
+
+  const updateVideo = useCallback((id: string, data: Partial<Omit<VideoItem, 'id'>>) => {
+    const updated = videos.map((v) => v.id === id ? { ...v, ...data } : v);
+    setVideos(updated);
+    saveVideos(updated);
+  }, [videos]);
+
+  const deleteVideo = useCallback((id: string) => {
+    const updated = videos.filter((v) => v.id !== id);
+    setVideos(updated);
+    saveVideos(updated);
+  }, [videos]);
+
+  const reorderVideos = useCallback((items: VideoItem[]) => {
+    setVideos(items);
+    saveVideos(items);
+  }, []);
+
+  const recordVideoView = useCallback((url: string) => {
+    const today = (() => {
+      const d = new Date();
+      return d.getFullYear()+"/"+(String(d.getMonth()+1).padStart(2,"0"))+"/"+(String(d.getDate()).padStart(2,"0"));
+    })();
+    setVideoStats((prev) => {
+      const existing = prev.find((s) => s.url === url);
+      let updated: VideoViewStat[];
+      if (existing) {
+        if (existing.lastViewedDate === today) return prev;
+        updated = prev.map((s) => s.url === url ? { ...s, viewCount: s.viewCount + 1, lastViewedDate: today } : s);
+      } else {
+        updated = [...prev, { url, viewCount: 1, lastViewedDate: today }];
+      }
+      saveVideoStats(updated);
+      return updated;
+    });
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -249,6 +340,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         childBirthDate, setChildBirthDate,
         performanceRecords, addPerformanceRecord, deletePerformanceRecord,
         customMetrics, addCustomMetric, updateCustomMetric, deleteCustomMetric,
+        videoCategories, addVideoCategory, updateVideoCategory, deleteVideoCategory, reorderVideoCategories,
+        videos, addVideo, updateVideo, deleteVideo, reorderVideos,
+        videoStats, recordVideoView,
         isLoading,
       }}
     >

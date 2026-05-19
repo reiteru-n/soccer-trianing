@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS } from '@/lib/data';
+import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS, INITIAL_VIDEO_CATEGORIES, INITIAL_VIDEOS } from '@/lib/data';
 import { logAccess, getIp, getUa, getDeviceId } from '@/lib/logger';
 
 // キーを種別ごとに分割してサイズ上限を回避
@@ -12,6 +12,9 @@ const KEYS = {
   config:      'takuto:config',
   performance: 'takuto:performance',
   perfConfig:  'takuto:perf_config',
+  videoCats:   'takuto:video_cats',
+  videos:      'takuto:videos',
+  videoStats:  'takuto:video_stats',
 } as const;
 
 // 旧キー（初回のみマイグレーション用）
@@ -26,6 +29,9 @@ interface AppData {
   childBirthDate: string;
   performanceRecords: unknown[];
   customMetrics: unknown[];
+  videoCategories?: unknown[];
+  videos?: unknown[];
+  videoStats?: unknown[];
 }
 
 // ----- Redis helpers -----
@@ -47,8 +53,9 @@ async function readData(): Promise<AppData | null> {
     const redis = await getRedis();
 
     // 新キーから一括読み込み
-    const [notes, lifting, body, menu, logs, config, perf, perfCfg] = await redis.mget<unknown[]>(
-      KEYS.notes, KEYS.lifting, KEYS.body, KEYS.menu, KEYS.logs, KEYS.config, KEYS.performance, KEYS.perfConfig
+    const [notes, lifting, body, menu, logs, config, perf, perfCfg, vcats, vids, vstats] = await redis.mget<unknown[]>(
+      KEYS.notes, KEYS.lifting, KEYS.body, KEYS.menu, KEYS.logs, KEYS.config, KEYS.performance, KEYS.perfConfig,
+      KEYS.videoCats, KEYS.videos, KEYS.videoStats
     );
 
     // いずれかのキーがあれば新形式
@@ -62,6 +69,9 @@ async function readData(): Promise<AppData | null> {
         childBirthDate:    ((config as any)?.childBirthDate) ?? '',
         performanceRecords: (perf   as unknown[]) ?? [],
         customMetrics:     (perfCfg as unknown[]) ?? [],
+        videoCategories:   (vcats   as unknown[]) ?? undefined,
+        videos:            (vids    as unknown[]) ?? undefined,
+        videoStats:        (vstats  as unknown[]) ?? undefined,
       };
     }
 
@@ -112,6 +122,9 @@ async function writePartial(body: Partial<Record<string, unknown>>): Promise<voi
     if ('childBirthDate'     in body) updates[KEYS.config]      = { childBirthDate: body.childBirthDate };
     if ('performanceRecords' in body) updates[KEYS.performance] = body.performanceRecords;
     if ('customMetrics'      in body) updates[KEYS.perfConfig]  = body.customMetrics;
+    if ('videoCategories'    in body) updates[KEYS.videoCats]   = body.videoCategories;
+    if ('videos'             in body) updates[KEYS.videos]      = body.videos;
+    if ('videoStats'         in body) updates[KEYS.videoStats]  = body.videoStats;
     if (Object.keys(updates).length > 0) {
       await redis.mset(updates);
     }
@@ -138,6 +151,9 @@ export async function GET(req: Request) {
       trainingMenu:   INITIAL_TRAINING_MENU,
       trainingLogs:   [],
       childBirthDate: '',
+      videoCategories: INITIAL_VIDEO_CATEGORIES,
+      videos:          INITIAL_VIDEOS,
+      videoStats:      [],
     });
   }
   return NextResponse.json({
@@ -149,6 +165,9 @@ export async function GET(req: Request) {
     childBirthDate:    (data as any).childBirthDate ?? '',
     performanceRecords: (data as any).performanceRecords ?? [],
     customMetrics:      (data as any).customMetrics ?? [],
+    videoCategories:   data.videoCategories ?? INITIAL_VIDEO_CATEGORIES,
+    videos:            data.videos          ?? INITIAL_VIDEOS,
+    videoStats:        data.videoStats       ?? [],
   });
 }
 

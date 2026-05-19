@@ -104,10 +104,22 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
         <h1 className="text-2xl font-extrabold text-white drop-shadow">⚽ サッカー記録</h1>
         <p className="text-sm text-blue-200 mt-0.5">毎日の練習を積み上げよう！💪</p>
       </header>
-      <div className="mb-5 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 rounded-2xl px-4 py-3.5 text-white shadow-lg shadow-blue-900/40 border border-blue-400/30">
+      <div className="mb-3 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 rounded-2xl px-4 py-3.5 text-white shadow-lg shadow-blue-900/40 border border-blue-400/30">
         <p className="text-xs font-semibold opacity-70 mb-0.5">🎯 目標</p>
         <p className="text-base font-bold">世界一のサッカー選手になる</p>
       </div>
+      <Link
+        href="/videos"
+        className="mb-5 block bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-2xl px-4 py-3 text-white shadow-lg shadow-orange-900/30 border border-amber-300/40 active:scale-[0.98] transition-transform"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🎬</span>
+            <span className="text-sm font-bold">目標達成に近づく動画</span>
+          </div>
+          <span className="text-white/80 text-sm">→</span>
+        </div>
+      </Link>
       <section className="mb-5">
         <div className="grid grid-cols-3 gap-2">
           <button onClick={() => { const el = document.getElementById('section-lifting'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 16, behavior: 'smooth' }); }} className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-3 text-center shadow-lg shadow-blue-900/40 border border-blue-400/20 active:scale-95 transition-transform">
