@@ -7,8 +7,6 @@ on:
     paths:
       - 'android/**'
       - '.github/workflows/build-android.yml'
-    paths-ignore:
-      - 'public/app.apk'
 
 permissions:
   contents: write
@@ -34,15 +32,24 @@ jobs:
         with:
           gradle-version: '8.5'
 
+      - name: Show project structure
+        run: find android -maxdepth 4 -type f | head -50
+
       - name: Build debug APK
         working-directory: android
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: gradle assembleDebug --no-daemon --stacktrace --info
 
       - name: Stage APK to public/
         run: |
           mkdir -p public
           cp android/app/build/outputs/apk/debug/app-debug.apk public/app.apk
           ls -la public/app.apk
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Commit APK back to master
         run: |
