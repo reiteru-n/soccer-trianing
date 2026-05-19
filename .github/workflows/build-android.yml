@@ -62,16 +62,24 @@ jobs:
           path: /tmp/gradle-build.log
 
       - name: Find and stage APK to public/
+        if: always()
         run: |
           mkdir -p public
-          echo "==== APK files found ===="
-          find android/app/build/outputs/apk -name "*.apk" 2>/dev/null | tee /tmp/apk-list.txt
-          APK=$(find android/app/build/outputs/apk -name "*.apk" 2>/dev/null | head -1)
+          echo "==== android/ tree (depth 4) ===="
+          find android -maxdepth 4 -type d 2>/dev/null
+          echo "==== ALL APK files anywhere ===="
+          find android -name "*.apk" 2>/dev/null | tee /tmp/apk-list.txt
+          echo "==== android/app/build (if exists) ===="
+          ls -la android/app/build 2>/dev/null || echo "no build dir"
+          echo "==== android/app/build/outputs (if exists) ===="
+          ls -laR android/app/build/outputs 2>/dev/null || echo "no outputs dir"
+          APK=$(find android -name "*.apk" 2>/dev/null | grep -i debug | head -1)
+          [ -z "$APK" ] && APK=$(find android -name "*.apk" 2>/dev/null | head -1)
           if [ -z "$APK" ]; then
-            echo "No APK produced"
-            ls -laR android/app/build/outputs 2>/dev/null || echo "no outputs dir"
+            echo "::error::No APK file produced anywhere under android/"
             exit 1
           fi
+          echo "Selected APK: $APK"
           cp "$APK" public/app.apk
           ls -la public/app.apk
 
