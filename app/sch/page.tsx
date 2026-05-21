@@ -3156,7 +3156,7 @@ function HomeSection({
                       </>
                     );
                   })() : (
-                    <p className="text-base font-bold text-white mt-1.5 truncate">{nextEvent.label || nextEvent.location || '詳細未定'}</p>
+                    <p className="text-base font-bold text-white mt-1.5 truncate">{nextEvent.label || nextEvent.location || (nextEvent.type === 'off' ? nextEvent.note : undefined) || '詳細未定'}</p>
                   )}
                   {nextEvent.startTime && <p className="text-sm text-slate-300 mt-0.5">⏰ {nextEvent.startTime}{nextEvent.endTime ? ` 〜 ${nextEvent.endTime}` : ''}</p>}
                   {nextEvent.location && <p className="text-xs text-slate-400 mt-0.5">📍 {nextEvent.location}</p>}
@@ -3233,7 +3233,7 @@ function HomeSection({
                     </>
                   );
                 })() : (
-                  <p className="text-sm font-bold text-white mt-1 truncate">{nextNextEvent.label || nextNextEvent.location || '詳細未定'}</p>
+                  <p className="text-sm font-bold text-white mt-1 truncate">{nextNextEvent.label || nextNextEvent.location || (nextNextEvent.type === 'off' ? nextNextEvent.note : undefined) || '詳細未定'}</p>
                 )}
                 <div className="flex flex-wrap gap-x-3 mt-0.5">
                   {nextNextEvent.startTime && <p className="text-xs text-slate-300">⏰ {nextNextEvent.startTime}{nextNextEvent.endTime ? ` 〜 ${nextNextEvent.endTime}` : ''}</p>}
