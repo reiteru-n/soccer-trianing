@@ -4,6 +4,22 @@ import './globals.css';
 export const metadata: Metadata = {
   title: '⚽ サッカー記録',
   description: 'サッカー記録サイト',
+  manifest: '/manifest.webmanifest',
+  themeColor: '#1e3a8a',
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'サッカー記録',
+  },
 };
 
 export const viewport: Viewport = {

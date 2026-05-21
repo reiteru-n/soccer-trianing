@@ -38,8 +38,13 @@ function withDeviceId(req: NextRequest, res: NextResponse): NextResponse {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Always allow login pages and auth API
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
+  // Always allow login, auth API, install page, APK download
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/api/auth') ||
+    pathname === '/install' ||
+    pathname === '/app.apk'
+  ) {
     return withDeviceId(req, NextResponse.next());
   }
 
@@ -101,7 +106,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // Personal pages: requires family session
-  const personalPaths = ['/', '/lifting', '/notes', '/training', '/growth', '/performance'];
+  const personalPaths = ['/', '/lifting', '/notes', '/training', '/growth', '/performance', '/videos'];
   const isPersonal = personalPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
   if (isPersonal) {
     if (!(await hasValidCookie(req, 'family_session', 'family'))) {

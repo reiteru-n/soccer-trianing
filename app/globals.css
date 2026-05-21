@@ -34,3 +34,13 @@ html { scroll-behavior: smooth; }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #4b6480; border-radius: 4px; }
+
+/* Fire TV / TV D-Pad navigation — make focus visible on links/buttons */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid #fbbf24;
+  outline-offset: 2px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.25);
+}

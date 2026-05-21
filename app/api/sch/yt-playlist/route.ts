@@ -38,9 +38,11 @@ function dig(obj: any, ...keys: string[]): any {
   return obj;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '6') || 6, 50);
   const now = Date.now();
-  if (cache && cache.expires > now) return NextResponse.json(cache.data);
+  if (cache && cache.expires > now) return NextResponse.json(cache.data.slice(0, limit));
 
   try {
     const res = await fetch(
@@ -80,11 +82,11 @@ export async function GET() {
       const thumbnail = thumb?.url ?? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
       if (!videoId || !title) continue;
       videos.push({ videoId, title, publishedAt: timeText, thumbnail, url: `https://www.youtube.com/watch?v=${videoId}` });
-      if (videos.length >= 6) break;
+      if (videos.length >= 50) break;
     }
 
     cache = { data: videos, expires: now + CACHE_TTL };
-    return NextResponse.json(videos);
+    return NextResponse.json(videos.slice(0, limit));
   } catch (e) {
     console.error('[yt-playlist]', e);
     return NextResponse.json([]);

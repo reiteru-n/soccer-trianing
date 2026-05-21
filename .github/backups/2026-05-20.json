@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-21T02:51:36.191179+09:00",
+  "timestamp": "2026-05-20T02:35:33.378344+09:00",
   "total_keys": 22,
   "keys": {
     "sch:announcements": [
@@ -2982,28 +2982,6 @@
           "tm14",
           "mmri7wogsgrsizwzkbk"
         ]
-      },
-      {
-        "id": "mpdmg3i99fxoqargjie",
-        "date": "2026/05/20",
-        "completedItemIds": [
-          "tm1",
-          "tm2",
-          "tm3",
-          "tm4",
-          "tm5",
-          "mownfmm5emazy3k9qe",
-          "tm7",
-          "tm8",
-          "mownu3bcglax0is975f",
-          "tm9",
-          "tm10",
-          "tm11",
-          "tm12",
-          "tm13",
-          "tm14",
-          "mmri7wogsgrsizwzkbk"
-        ]
       }
     ],
     "takuto:menu": [
@@ -5248,19 +5226,10 @@
         "improvements": [
           {
             "text": "味方がボールを持ったら、ボールに近寄ってしまっている",
-            "done": true
+            "done": false
           }
         ],
         "id": "mpch732deajri00jo6h"
-      },
-      {
-        "date": "2026/05/20",
-        "teamName": "フトゥーロ",
-        "location": "フトゥーロ",
-        "category": "スクール",
-        "goodPoints": "先に触るを前よりはできた",
-        "improvements": [],
-        "id": "mpduc9z138f83aqupel"
       }
     ],
     "takuto:perf_config": [
@@ -5831,23 +5800,13 @@
       },
       {
         "url": "https://youtu.be/-iO_WtnDHz4?si=QRgSi8yYQUtudedi",
-        "viewCount": 2,
-        "lastViewedDate": "2026/05/20"
+        "viewCount": 1,
+        "lastViewedDate": "2026/05/19"
       },
       {
         "url": "https://youtu.be/m1C3BTtqbGI?si=L1Ljcxb8lJeFXT77",
-        "viewCount": 2,
-        "lastViewedDate": "2026/05/20"
-      },
-      {
-        "url": "https://youtu.be/cScZAY-fnq0?si=Q2Ep2Sg3mvfVK3D0",
         "viewCount": 1,
-        "lastViewedDate": "2026/05/20"
-      },
-      {
-        "url": "https://youtu.be/Lmcw2XZGUsk?si=ojwagzJ1AGzjPESf",
-        "viewCount": 1,
-        "lastViewedDate": "2026/05/20"
+        "lastViewedDate": "2026/05/19"
       }
     ],
     "takuto:videos": [

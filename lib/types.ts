@@ -86,6 +86,30 @@ export interface TrainingLog {
   completedItemIds: string[];
 }
 
+// --- Learning videos (個人ページ /videos) ---
+export interface VideoCategory {
+  id: string;
+  name: string;
+  order: number;
+  isMatchCategory?: boolean; // true なら SCH の試合動画を自動表示
+}
+
+export interface VideoItem {
+  id: string;
+  categoryId: string;
+  url: string;
+  description: string;
+  order: number;
+  createdAt?: string; // ISO datetime - 並び順の基準（未設定時は order で代用）
+  pinned?: boolean;
+}
+
+export interface VideoViewStat {
+  url: string;
+  viewCount: number;
+  lastViewedDate: string; // yyyy/mm/dd
+}
+
 export type MilestoneStatus = 'achieved' | 'challenging' | 'locked';
 
 export interface Milestone {

@@ -1,5 +1,5 @@
-import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef } from './types';
-import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS } from './data';
+import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat } from './types';
+import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS, INITIAL_VIDEO_CATEGORIES, INITIAL_VIDEOS } from './data';
 
 export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -31,6 +31,9 @@ export interface AllData {
   childBirthDate: string;
   performanceRecords: PerformanceRecord[];
   customMetrics: CustomMetricDef[];
+  videoCategories: VideoCategory[];
+  videos: VideoItem[];
+  videoStats: VideoViewStat[];
 }
 
 export async function fetchAllData(): Promise<AllData> {
@@ -44,6 +47,9 @@ export async function fetchAllData(): Promise<AllData> {
       childBirthDate: "",
       performanceRecords: [],
       customMetrics: [],
+      videoCategories: INITIAL_VIDEO_CATEGORIES,
+      videos: INITIAL_VIDEOS,
+      videoStats: [],
     };
   }
   try {
@@ -58,6 +64,9 @@ export async function fetchAllData(): Promise<AllData> {
       childBirthDate: data.childBirthDate ?? "",
       performanceRecords: data.performanceRecords ?? [],
       customMetrics: data.customMetrics ?? [],
+      videoCategories: data.videoCategories ?? INITIAL_VIDEO_CATEGORIES,
+      videos: data.videos ?? INITIAL_VIDEOS,
+      videoStats: data.videoStats ?? [],
     };
   } catch {
     return {
@@ -69,6 +78,9 @@ export async function fetchAllData(): Promise<AllData> {
       childBirthDate: "",
       performanceRecords: [],
       customMetrics: [],
+      videoCategories: INITIAL_VIDEO_CATEGORIES,
+      videos: INITIAL_VIDEOS,
+      videoStats: [],
     };
   }
 }
@@ -89,6 +101,9 @@ export function saveBirthDate(date: string): void { savePartial({ childBirthDate
 export function saveTrainingLogs(logs: TrainingLog[]): void { savePartial({ trainingLogs: logs }); }
 export function savePerformanceRecords(records: PerformanceRecord[]): void { savePartial({ performanceRecords: records }); }
 export function saveCustomMetrics(metrics: CustomMetricDef[]): void { savePartial({ customMetrics: metrics }); }
+export function saveVideoCategories(cats: VideoCategory[]): void { savePartial({ videoCategories: cats }); }
+export function saveVideos(videos: VideoItem[]): void { savePartial({ videos }); }
+export function saveVideoStats(stats: VideoViewStat[]): void { savePartial({ videoStats: stats }); }
 
 export async function exportData(): Promise<void> {
   const data = await fetchAllData();

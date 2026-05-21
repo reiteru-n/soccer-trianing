@@ -1,4 +1,4 @@
-import { LiftingRecord, PracticeNote, TrainingMenuItem, BodyRecord } from './types';
+import { LiftingRecord, PracticeNote, TrainingMenuItem, BodyRecord, VideoCategory, VideoItem } from './types';
 
 export const DATA_VERSION = '2';
 
@@ -178,3 +178,25 @@ export const INITIAL_TRAINING_MENU: TrainingMenuItem[] = [
 ];
 
 export const MILESTONES = [10, 50, 100, 200, 300, 500, 1000];
+
+// --- 学習動画 初期データ ---
+export const INITIAL_VIDEO_CATEGORIES: VideoCategory[] = [
+  { id: 'vcat_basic',    name: '基礎練習',         order: 1 },
+  { id: 'vcat_stretch',  name: 'ストレッチ',       order: 2 },
+  { id: 'vcat_kick',     name: 'キック',           order: 3 },
+  { id: 'vcat_position', name: 'ポジショニング',   order: 4 },
+  { id: 'vcat_tactic',   name: '戦術&テクニック',  order: 5 },
+  { id: 'vcat_match',    name: '試合',             order: 6, isMatchCategory: true },
+];
+
+// 初期動画の追加順タイムスタンプ（同カテゴリ内で配列の後ろほど新しい想定）
+const _INIT_BASE = '2026-05-19T00:00:00Z';
+export const INITIAL_VIDEOS: VideoItem[] = [
+  { id: 'v_basic_1',    categoryId: 'vcat_basic',    url: 'https://youtu.be/AijVmQn_YRc?si=eQ2E7P9atN7XrgnG', description: '毎日10分トレーニング',           order: 1, createdAt: _INIT_BASE },
+  { id: 'v_basic_2',    categoryId: 'vcat_basic',    url: 'https://youtu.be/2Et96Vy1P8k?si=K85doqXELqsroQHN', description: '毎日アジリティトレーニング',     order: 2, createdAt: _INIT_BASE },
+  { id: 'v_stretch_1',  categoryId: 'vcat_stretch',  url: 'https://youtu.be/ZNm6w9ytIBs?si=7NToC_gE_bMmOqT8', description: '6分ストレッチ',                  order: 1, createdAt: _INIT_BASE },
+  { id: 'v_stretch_2',  categoryId: 'vcat_stretch',  url: 'https://youtu.be/m1C3BTtqbGI?si=L1Ljcxb8lJeFXT77', description: '長友ストレッチ',                 order: 2, createdAt: _INIT_BASE },
+  { id: 'v_kick_1',     categoryId: 'vcat_kick',     url: 'https://youtu.be/-iO_WtnDHz4?si=QRgSi8yYQUtudedi', description: 'ロングキック',                   order: 1, createdAt: _INIT_BASE },
+  { id: 'v_position_1', categoryId: 'vcat_position', url: 'https://youtu.be/cScZAY-fnq0?si=Q2Ep2Sg3mvfVK3D0', description: 'パスをもらうために',             order: 1, createdAt: _INIT_BASE },
+  { id: 'v_tactic_1',   categoryId: 'vcat_tactic',   url: 'https://youtu.be/Lmcw2XZGUsk?si=ojwagzJ1AGzjPESf', description: '佐野海舟スキル',                 order: 1, createdAt: _INIT_BASE },
+];
