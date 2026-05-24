@@ -270,18 +270,25 @@ function matchScoreEntered(old: SchEvent, ev: SchEvent): boolean {
 }
 
 function scheduleChanged(a: SchEvent, b: SchEvent): boolean {
-  return a.type !== b.type || a.date !== b.date || a.startTime !== b.startTime || a.location !== b.location || a.label !== b.label;
+  return a.type !== b.type || a.date !== b.date || (a.endDate ?? '') !== (b.endDate ?? '') || a.startTime !== b.startTime || a.location !== b.location || a.label !== b.label;
+}
+
+function formatDateRange(ev: SchEvent): string {
+  const wd = dayOfWeek(ev.date);
+  if (ev.endDate && ev.endDate !== ev.date) {
+    return `${ev.date}（${wd}）〜${ev.endDate}（${dayOfWeek(ev.endDate)}）`;
+  }
+  return `${ev.date}（${wd}）`;
 }
 
 const TYPE_LABEL: Record<string, string> = { practice: '練習', match: '試合', camp: '合宿', expedition: '遠征', off: 'OFF', other: 'その他' };
 
 function lineEventMsg(ev: SchEvent, oldType?: string): string {
-  const wd = dayOfWeek(ev.date);
   const label = ev.label ?? (ev.matches?.[0]?.opponentName ? `vs ${ev.matches[0].opponentName}` : '');
   const typeChanged = oldType && oldType !== ev.type;
   const typeStr = typeChanged ? `${TYPE_LABEL[oldType] ?? oldType}→${TYPE_LABEL[ev.type] ?? ev.type}` : (TYPE_LABEL[ev.type] ?? ev.type);
   const lines = [`⚽ 【SCH】イベント情報更新`];
-  lines.push(`📅 ${ev.date}（${wd}）${typeChanged ? ' ' + typeStr : ''}${label ? ' ' + label : ''}`);
+  lines.push(`📅 ${formatDateRange(ev)}${typeChanged ? ' ' + typeStr : ''}${label ? ' ' + label : ''}`);
   if (ev.startTime) lines.push(`⏰ ${ev.startTime}`);
   if (ev.location) lines.push(`📍 ${ev.location}`);
   if (ev.note) lines.push(`📝 ${ev.note}`);
@@ -302,8 +309,7 @@ function lineResultMsg(ev: SchEvent): string {
 }
 
 function lineOffMsg(ev: SchEvent): string {
-  const wd = dayOfWeek(ev.date);
-  return `😴 【SCH】${ev.date}（${wd}）は休みになりました`;
+  return `😴 【SCH】${formatDateRange(ev)}は休みになりました`;
 }
 
 function lineAnnouncementMsg(ann: SchAnnouncement, isNew: boolean): string {
@@ -417,7 +423,7 @@ export async function POST(req: Request) {
         if (ev.type === 'match' && old && matchScoreEntered(old, ev)) {
           scoreEnteredEvents.push(ev);
         }
-        if (ev.type === 'off' && (!old || old.type !== 'off')) {
+        if (ev.type === 'off' && (!old || old.type !== 'off' || scheduleChanged(old, ev))) {
           offChangedEvents.push(ev);
         }
         if (ev.type !== 'match' && ev.type !== 'off') {
