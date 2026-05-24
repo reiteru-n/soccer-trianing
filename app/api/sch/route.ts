@@ -417,7 +417,7 @@ export async function POST(req: Request) {
         if (ev.type === 'match' && old && matchScoreEntered(old, ev)) {
           scoreEnteredEvents.push(ev);
         }
-        if (old && old.type !== 'off' && ev.type === 'off') {
+        if (ev.type === 'off' && (!old || old.type !== 'off')) {
           offChangedEvents.push(ev);
         }
         if (ev.type !== 'match' && ev.type !== 'off') {
