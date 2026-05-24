@@ -1545,7 +1545,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
     onSave(updated.sort((a, b) => a.date.localeCompare(b.date)), notifyLine);
   };
   const handleDelete = (id: string) => {
-    if (window.confirm('削除しますか？')) onSave(events.filter(e => e.id !== id));
+    if (window.confirm('削除しますか？')) onSave(events.filter(e => e.id !== id), false);
   };
   const openEdit = (ev: SchEvent) => { setEditing(ev); setShowForm(true); };
   const openDetail = (ev: SchEvent) => { setDetailId(ev.id); setTimeout(() => { document.getElementById(`event-card-${ev.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50); };
@@ -3620,7 +3620,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
     onSave(updated, notifyLine);
     resetForm();
   };
-  const handleDelete = (id: string) => { if (window.confirm('削除しますか？')) onSave(announcements.filter(a => a.id !== id)); };
+  const handleDelete = (id: string) => { if (window.confirm('削除しますか？')) onSave(announcements.filter(a => a.id !== id), false); };
   const sorted = [...announcements];
 
   return (
