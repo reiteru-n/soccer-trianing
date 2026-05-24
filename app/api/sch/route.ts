@@ -486,12 +486,18 @@ export async function POST(req: Request) {
 
     // LINE通知送信（fire & forget、notifyLine === true の場合のみ）
     if (notifyLine) {
-      // 優先度順に1件送信: お知らせ新規 > 試合結果 > 試合情報 > OFF > 非試合イベント > 駐車
+      // 優先度順に1件送信: お知らせ新規 > お知らせ編集 > 持ち物リスト > 試合結果 > 試合情報 > OFF > 非試合イベント > 駐車
       let lineMsg: string | null = null;
 
       if (!lineMsg && newAnnouncementTitles.length > 0) {
         const ann = (body.announcements as SchAnnouncement[])?.find(a => a.title === newAnnouncementTitles[0]);
         if (ann) lineMsg = lineAnnouncementMsg(ann, true);
+      }
+      if (!lineMsg && editedAnns.length > 0) {
+        lineMsg = lineAnnouncementMsg(editedAnns[0], false);
+      }
+      if (!lineMsg && checkItemsChangedAnns.length > 0) {
+        lineMsg = lineCheckItemsMsg(checkItemsChangedAnns[0]);
       }
       if (!lineMsg && scoreEnteredEvents.length > 0) {
         lineMsg = lineResultMsg(scoreEnteredEvents[0]);
