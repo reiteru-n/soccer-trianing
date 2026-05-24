@@ -272,12 +272,18 @@ function scheduleChanged(a: SchEvent, b: SchEvent): boolean {
   return a.date !== b.date || a.startTime !== b.startTime || a.location !== b.location || a.label !== b.label;
 }
 
-function lineEventMsg(ev: SchEvent): string {
+const TYPE_LABEL: Record<string, string> = { practice: '練習', match: '試合', camp: '合宿', expedition: '遠征', off: 'OFF', other: 'その他' };
+
+function lineEventMsg(ev: SchEvent, oldType?: string): string {
   const wd = dayOfWeek(ev.date);
   const label = ev.label ?? (ev.matches?.[0]?.opponentName ? `vs ${ev.matches[0].opponentName}` : '');
+  const typeChanged = oldType && oldType !== ev.type;
+  const typeStr = typeChanged ? `${TYPE_LABEL[oldType] ?? oldType}→${TYPE_LABEL[ev.type] ?? ev.type}` : (TYPE_LABEL[ev.type] ?? ev.type);
   const lines = [`⚽ 【SCH】イベント情報更新`];
-  lines.push(`${ev.date}（${wd}）${ev.startTime ? ' ' + ev.startTime : ''}${label ? ' ' + label : ''}`);
+  lines.push(`📅 ${ev.date}（${wd}）${typeChanged ? ' ' + typeStr : ''}${label ? ' ' + label : ''}`);
+  if (ev.startTime) lines.push(`⏰ ${ev.startTime}`);
   if (ev.location) lines.push(`📍 ${ev.location}`);
+  if (ev.note) lines.push(`📝 ${ev.note}`);
   lines.push(`${SCH_URL}?tab=events`);
   return lines.join('\n');
 }
@@ -494,14 +500,15 @@ export async function POST(req: Request) {
         const ev = changedMatchEvents[0];
         const old = oldEventMap.get(ev.id);
         if (!old || !matchScoreEntered(old, ev)) {
-          lineMsg = lineEventMsg(ev);
+          lineMsg = lineEventMsg(ev, old?.type);
         }
       }
       if (!lineMsg && offChangedEvents.length > 0) {
         lineMsg = lineOffMsg(offChangedEvents[0]);
       }
       if (!lineMsg && nonMatchChangedEvents.length > 0) {
-        lineMsg = lineEventMsg(nonMatchChangedEvents[0]);
+        const ev = nonMatchChangedEvents[0];
+        lineMsg = lineEventMsg(ev, oldEventMap.get(ev.id)?.type);
       }
       if (!lineMsg && 'parkingRecords' in body) {
         lineMsg = lineParkingMsg();

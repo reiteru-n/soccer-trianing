@@ -1,7 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '⚽ サッカー記録',
+  title: 'SCH Info',
+  openGraph: {
+    title: 'SCH Info',
+    description: 'SCH FC 保護者向け情報サイト',
+    images: [{ url: 'https://soccer-trianing.vercel.app/sch-logo.png', width: 175, height: 215 }],
+    url: 'https://soccer-trianing.vercel.app/sch',
+  },
 };
 
 export default function SchLayout({ children }: { children: React.ReactNode }) {
