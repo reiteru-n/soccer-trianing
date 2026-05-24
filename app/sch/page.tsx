@@ -1604,16 +1604,22 @@ function EventSection({ events, members, onSave, openDetailId }: {
 
   const pastLocations = useMemo(() => {
     const seen = new Set<string>();
-    return events.flatMap(e => e.location ? [e.location] : []).filter(a => { if (seen.has(a)) return false; seen.add(a); return true; });
+    return [...events].sort((a, b) => b.date.localeCompare(a.date))
+      .flatMap(e => e.location ? [e.location] : [])
+      .filter(a => { if (seen.has(a)) return false; seen.add(a); return true; })
+      .slice(0, 6);
   }, [events]);
 
   const pastOpponents = useMemo(() => {
     const seen = new Set<string>();
-    return events.flatMap(e => {
-      if (e.type !== 'match') return [];
-      const ms = (e.matches && e.matches.length > 0) ? e.matches : (e.opponentName ? [{ opponentName: e.opponentName }] : []);
-      return ms.flatMap(m => m.opponentName ? [m.opponentName] : []);
-    }).filter(a => { if (seen.has(a)) return false; seen.add(a); return true; });
+    return [...events].sort((a, b) => b.date.localeCompare(a.date))
+      .flatMap(e => {
+        if (e.type !== 'match') return [];
+        const ms = (e.matches && e.matches.length > 0) ? e.matches : (e.opponentName ? [{ opponentName: e.opponentName }] : []);
+        return ms.flatMap(m => m.opponentName ? [m.opponentName] : []);
+      })
+      .filter(a => { if (seen.has(a)) return false; seen.add(a); return true; })
+      .slice(0, 6);
   }, [events]);
 
   const filtered = events.filter(e =>
