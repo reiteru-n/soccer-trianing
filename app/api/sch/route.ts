@@ -303,7 +303,8 @@ function lineOffMsg(ev: SchEvent): string {
 
 function lineAnnouncementMsg(ann: SchAnnouncement, isNew: boolean): string {
   const prefix = isNew ? `📢 【SCH】${ann.title}` : `📝 【SCH】お知らせ更新：${ann.title}`;
-  return `${prefix}\n${SCH_URL}?tab=announce`;
+  const preview = ann.content ? '\n' + ann.content.slice(0, 120) + (ann.content.length > 120 ? '…' : '') : '';
+  return `${prefix}${preview}\n${SCH_URL}?tab=announce`;
 }
 
 function lineCheckItemsMsg(ann: SchAnnouncement): string {

@@ -4211,6 +4211,7 @@ export default function SchPage() {
   const [standaloneVideos, setStandaloneVideos] = useState<SchStandaloneVideo[]>([]);
   const [videoThumbnails, setVideoThumbnails] = useState<Record<string, string>>({});
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [swipedHistId, setSwipedHistId] = useState<string | null>(null);
   const [scrollTarget, setScrollTarget] = useState<{ tab: Tab; itemId: string } | null>(null);
   const [openDetailId, setOpenDetailId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -4619,24 +4620,53 @@ export default function SchPage() {
             {historyOpen && (
               <div className="border-t border-white/10">
                 <p className="text-[10px] text-slate-500 px-4 pt-2 pb-1 font-bold uppercase tracking-wider">過去 {histItems.length} 件の更新</p>
-                {histItems.map(h => (
-                  <button
-                    key={h.id}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 active:bg-white/10 transition-colors border-t border-white/5 text-left"
-                    onClick={() => { setHistoryOpen(false); const targetTab: Tab = (h.type === 'event' && h.eventType === 'match') ? 'stats' : h.tab; setTab(targetTab); if (targetTab !== 'stats' && h.action !== 'delete') setScrollTarget({ tab: targetTab, itemId: h.itemId }); }}
-                  >
-                    <span className="text-base w-5 flex-shrink-0 text-center">{typeIcon(h)}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-white font-semibold truncate">{h.title}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        <span className={`font-bold mr-1.5 ${h.action === 'new' ? 'text-emerald-400' : h.action === 'delete' ? 'text-rose-400' : 'text-amber-400'}`}>{h.action === 'new' ? '新規' : h.action === 'delete' ? '削除' : '編集'}</span>
-                        {h.changeMemo && <span className="text-slate-300 mr-1.5">「{h.changeMemo}」</span>}
-                        {itemTs(h)}
-                      </p>
+                {histItems.map(h => {
+                  const isSwiped = swipedHistId === h.id;
+                  let touchStartX = 0;
+                  return (
+                    <div key={h.id} className="relative border-t border-white/5 overflow-hidden">
+                      <div
+                        className="absolute inset-y-0 right-0 flex items-center justify-center w-16 bg-red-600"
+                        onClick={() => {
+                          const next = updateHistory.filter(x => x.id !== h.id);
+                          setUpdateHistory(next);
+                          post({ updateHistory: next });
+                          setSwipedHistId(null);
+                        }}
+                      >
+                        <span className="text-white text-xs font-bold">削除</span>
+                      </div>
+                      <button
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 active:bg-white/10 transition-transform text-left bg-slate-800"
+                        style={{ transform: isSwiped ? 'translateX(-64px)' : 'translateX(0)', transition: 'transform 0.2s' }}
+                        onTouchStart={e => { touchStartX = e.touches[0].clientX; }}
+                        onTouchEnd={e => {
+                          const dx = e.changedTouches[0].clientX - touchStartX;
+                          if (dx < -50) setSwipedHistId(h.id);
+                          else if (dx > 20) setSwipedHistId(null);
+                        }}
+                        onClick={() => {
+                          if (isSwiped) { setSwipedHistId(null); return; }
+                          setHistoryOpen(false);
+                          const targetTab: Tab = (h.type === 'event' && h.eventType === 'match') ? 'stats' : h.tab;
+                          setTab(targetTab);
+                          if (targetTab !== 'stats' && h.action !== 'delete') setScrollTarget({ tab: targetTab, itemId: h.itemId });
+                        }}
+                      >
+                        <span className="text-base w-5 flex-shrink-0 text-center">{typeIcon(h)}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-white font-semibold truncate">{h.title}</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            <span className={`font-bold mr-1.5 ${h.action === 'new' ? 'text-emerald-400' : h.action === 'delete' ? 'text-rose-400' : 'text-amber-400'}`}>{h.action === 'new' ? '新規' : h.action === 'delete' ? '削除' : '編集'}</span>
+                            {h.changeMemo && <span className="text-slate-300 mr-1.5">「{h.changeMemo}」</span>}
+                            {itemTs(h)}
+                          </p>
+                        </div>
+                        <span className="text-slate-500 text-xs">›</span>
+                      </button>
                     </div>
-                    <span className="text-slate-500 text-xs">›</span>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
