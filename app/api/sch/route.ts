@@ -308,8 +308,9 @@ function lineResultMsg(ev: SchEvent): string {
   return lines.join('\n');
 }
 
-function lineOffMsg(ev: SchEvent): string {
-  return `😴 【SCH】${formatDateRange(ev)}は休みになりました`;
+function lineOffMsg(ev: SchEvent, oldType?: string): string {
+  const changed = oldType && oldType !== 'off' ? `（${TYPE_LABEL[oldType] ?? oldType}→OFF）` : '';
+  return `😴 【SCH】${formatDateRange(ev)}は休みになりました${changed}`;
 }
 
 function lineAnnouncementMsg(ann: SchAnnouncement, isNew: boolean): string {
@@ -509,7 +510,8 @@ export async function POST(req: Request) {
         }
       }
       if (!lineMsg && offChangedEvents.length > 0) {
-        lineMsg = lineOffMsg(offChangedEvents[0]);
+        const ev = offChangedEvents[0];
+        lineMsg = lineOffMsg(ev, oldEventMap.get(ev.id)?.type);
       }
       if (!lineMsg && nonMatchChangedEvents.length > 0) {
         const ev = nonMatchChangedEvents[0];
