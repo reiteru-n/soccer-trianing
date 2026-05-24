@@ -27,8 +27,11 @@ export async function GET(req: Request) {
 
   if (searchParams.get('debug') === '1') {
     const redis = await getRedis();
-    const debugInfo = await redis.get('sch:line_debug');
-    return NextResponse.json({ debugInfo });
+    const [debugInfo, sendDebug] = await Promise.all([
+      redis.get('sch:line_debug'),
+      redis.get('sch:line_send_debug'),
+    ]);
+    return NextResponse.json({ debugInfo, sendDebug });
   }
 
   return NextResponse.json({

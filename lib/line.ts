@@ -30,7 +30,7 @@ export async function sendLineMessage(text: string): Promise<void> {
   const groupId = await getLineGroupId();
   if (!groupId) return;
   try {
-    await fetch(LINE_PUSH_API, {
+    const res = await fetch(LINE_PUSH_API, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -41,8 +41,13 @@ export async function sendLineMessage(text: string): Promise<void> {
         messages: [{ type: 'text', text }],
       }),
     });
-  } catch {
-    // fire-and-forget
+    // temp debug: log LINE API response
+    const resBody = await res.text();
+    const redis = await getRedis();
+    await redis.set('sch:line_send_debug', { ts: new Date().toISOString(), status: res.status, body: resBody, groupId, tokenPrefix: token.slice(0, 10) });
+  } catch (e) {
+    const redis = await getRedis().catch(() => null);
+    if (redis) await redis.set('sch:line_send_debug', { ts: new Date().toISOString(), error: String(e) }).catch(() => {});
   }
 }
 
