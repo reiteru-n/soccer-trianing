@@ -514,6 +514,8 @@ export async function POST(req: Request) {
       }
 
       if (lineMsg) sendLineMessage(lineMsg).catch(() => {});
+      // debug: expose detection result in response
+      (body as Record<string, unknown>).__lineDebug = { notifyLine, lineMsg, offChangedEvents: offChangedEvents.length, changedMatchEvents: changedMatchEvents.length, nonMatchChangedEvents: nonMatchChangedEvents.length, scoreEnteredEvents: scoreEnteredEvents.length };
     }
 
     const actions = Object.keys(body).filter(k => k in ACTION_LABELS);
@@ -527,7 +529,7 @@ export async function POST(req: Request) {
         device_id: getDeviceId(req),
       });
     }
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, __lineDebug: (body as Record<string, unknown>).__lineDebug });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
