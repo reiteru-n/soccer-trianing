@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getLineGroupId, isLineConfigured } from '@/lib/line';
 
+async function getRedis() {
+  const { Redis } = await import('@upstash/redis');
+  return new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! });
+}
+
 export async function GET(req: Request) {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   const secret = process.env.LINE_CHANNEL_SECRET;
@@ -18,6 +23,12 @@ export async function GET(req: Request) {
     });
     const body = await res.text();
     return NextResponse.json({ lineStatus: res.status, lineBody: body, groupId });
+  }
+
+  if (searchParams.get('debug') === '1') {
+    const redis = await getRedis();
+    const debugInfo = await redis.get('sch:line_debug');
+    return NextResponse.json({ debugInfo });
   }
 
   return NextResponse.json({

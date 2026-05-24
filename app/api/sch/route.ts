@@ -514,8 +514,12 @@ export async function POST(req: Request) {
       }
 
       if (lineMsg) sendLineMessage(lineMsg).catch(() => {});
-      // debug: expose detection result in response
-      (body as Record<string, unknown>).__lineDebug = { notifyLine, lineMsg, offChangedEvents: offChangedEvents.length, changedMatchEvents: changedMatchEvents.length, nonMatchChangedEvents: nonMatchChangedEvents.length, scoreEnteredEvents: scoreEnteredEvents.length };
+      // debug: store detection result to Redis
+      const debugInfo = { ts: new Date().toISOString(), notifyLine, lineMsg, offChanged: offChangedEvents.length, matchChanged: changedMatchEvents.length, nonMatchChanged: nonMatchChangedEvents.length, scoreEntered: scoreEnteredEvents.length, oldTypes: offChangedEvents.map(e => oldEventMap.get(e.id)?.type), newTypes: offChangedEvents.map(e => e.type) };
+      if (hasRedis()) getRedis().then(r => r.set('sch:line_debug', debugInfo)).catch(() => {});
+    } else {
+      // notifyLine was false - log that too
+      if (hasRedis()) getRedis().then(r => r.set('sch:line_debug', { ts: new Date().toISOString(), notifyLine: false, note: 'notifyLine was not true', bodyKeys: Object.keys(body) })).catch(() => {});
     }
 
     const actions = Object.keys(body).filter(k => k in ACTION_LABELS);
@@ -529,7 +533,7 @@ export async function POST(req: Request) {
         device_id: getDeviceId(req),
       });
     }
-    return NextResponse.json({ ok: true, __lineDebug: (body as Record<string, unknown>).__lineDebug });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
