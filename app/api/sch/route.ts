@@ -283,11 +283,12 @@ function formatDateRange(ev: SchEvent): string {
 
 const TYPE_LABEL: Record<string, string> = { practice: '練習', match: '試合', camp: '合宿', expedition: '遠征', off: 'OFF', other: 'その他' };
 
-function lineEventMsg(ev: SchEvent, oldType?: string): string {
+function lineEventMsg(ev: SchEvent, oldType?: string, isNew?: boolean): string {
   const label = ev.label ?? (ev.matches?.[0]?.opponentName ? `vs ${ev.matches[0].opponentName}` : '');
   const typeChanged = oldType && oldType !== ev.type;
   const typeStr = typeChanged ? `${TYPE_LABEL[oldType] ?? oldType}→${TYPE_LABEL[ev.type] ?? ev.type}` : (TYPE_LABEL[ev.type] ?? ev.type);
-  const lines = [`⚽ 【SCH】イベント情報更新`];
+  const header = isNew ? `⚽ 【SCH】イベント追加` : `⚽ 【SCH】イベント更新`;
+  const lines = [header];
   lines.push(`📅 ${formatDateRange(ev)}${typeChanged ? ' ' + typeStr : ''}${label ? ' ' + label : ''}`);
   if (ev.startTime) lines.push(`⏰ ${ev.startTime}${ev.endTime ? `〜${ev.endTime}` : ''}`);
   if (ev.location) lines.push(`📍 ${ev.location}`);
@@ -308,9 +309,16 @@ function lineResultMsg(ev: SchEvent): string {
   return lines.join('\n');
 }
 
-function lineOffMsg(ev: SchEvent, oldType?: string): string {
-  const changed = oldType && oldType !== 'off' ? `（${TYPE_LABEL[oldType] ?? oldType}→OFF）` : '';
-  return `😴 【SCH】${formatDateRange(ev)}は休みになりました${changed}`;
+function lineOffMsg(ev: SchEvent, oldType?: string, isNew?: boolean): string {
+  let suffix: string;
+  if (isNew) {
+    suffix = '（追加）';
+  } else if (oldType && oldType !== 'off') {
+    suffix = `（${TYPE_LABEL[oldType] ?? oldType}→OFF）`;
+  } else {
+    suffix = '（変更）';
+  }
+  return `😴 【SCH】${formatDateRange(ev)}は休みになりました${suffix}`;
 }
 
 function lineAnnouncementMsg(ann: SchAnnouncement, isNew: boolean): string {
@@ -511,16 +519,18 @@ export async function POST(req: Request) {
         const ev = changedMatchEvents[0];
         const old = oldEventMap.get(ev.id);
         if (!old || !matchScoreEntered(old, ev)) {
-          lineMsg = lineEventMsg(ev, old?.type);
+          lineMsg = lineEventMsg(ev, old?.type, !old);
         }
       }
       if (!lineMsg && offChangedEvents.length > 0) {
         const ev = offChangedEvents[0];
-        lineMsg = lineOffMsg(ev, oldEventMap.get(ev.id)?.type);
+        const old = oldEventMap.get(ev.id);
+        lineMsg = lineOffMsg(ev, old?.type, !old);
       }
       if (!lineMsg && nonMatchChangedEvents.length > 0) {
         const ev = nonMatchChangedEvents[0];
-        lineMsg = lineEventMsg(ev, oldEventMap.get(ev.id)?.type);
+        const old = oldEventMap.get(ev.id);
+        lineMsg = lineEventMsg(ev, old?.type, !old);
       }
       if (!lineMsg && 'parkingRecords' in body) {
         lineMsg = lineParkingMsg();
@@ -528,7 +538,8 @@ export async function POST(req: Request) {
       // フォールバック: 上記で検知できなかった変更（noteのみ変更など）
       if (!lineMsg && anyChangedEvents.length > 0) {
         const ev = anyChangedEvents[0];
-        lineMsg = lineEventMsg(ev, oldEventMap.get(ev.id)?.type);
+        const old = oldEventMap.get(ev.id);
+        lineMsg = lineEventMsg(ev, old?.type, !old);
       }
 
       if (lineMsg) await sendLineMessage(lineMsg).catch(() => {});
