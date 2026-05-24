@@ -14,14 +14,17 @@ async function getRedis() {
 }
 
 export async function getLineGroupId(): Promise<string | null> {
-  if (process.env.LINE_GROUP_ID) return process.env.LINE_GROUP_ID;
-  if (!process.env.UPSTASH_REDIS_REST_URL) return null;
-  try {
-    const redis = await getRedis();
-    return await redis.get<string>(GROUP_ID_KEY);
-  } catch {
-    return null;
+  // Redis takes priority: updated automatically when bot joins a group via Webhook
+  if (process.env.UPSTASH_REDIS_REST_URL) {
+    try {
+      const redis = await getRedis();
+      const redisId = await redis.get<string>(GROUP_ID_KEY);
+      if (redisId) return redisId;
+    } catch {
+      // fall through to env var
+    }
   }
+  return process.env.LINE_GROUP_ID ?? null;
 }
 
 export async function sendLineMessage(text: string): Promise<void> {
