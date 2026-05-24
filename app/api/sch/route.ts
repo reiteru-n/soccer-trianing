@@ -463,14 +463,14 @@ export async function POST(req: Request) {
     if (changedMatchEvents.length > 0) {
       const ev = changedMatchEvents[0];
       const label = ev.label ?? (ev.matches?.[0]?.opponentName ? `vs ${ev.matches[0].opponentName}` : '試合');
-      sendPushToAll({
+      await sendPushToAll({
         title: `⚽ 試合情報が更新されました`,
         body: `${ev.date} ${label}`,
         url: '/sch',
       }).catch(() => {});
     } else if (newAnnouncementTitles.length > 0) {
       const title = newAnnouncementTitles[0].replace(/^[^\s]+\s/, '').slice(0, 50);
-      sendPushToAll({
+      await sendPushToAll({
         title: `📢 ${newAnnouncementTitles[0]}`,
         body: title !== newAnnouncementTitles[0] ? title : 'SCH Info をご確認ください',
         url: '/sch',
@@ -513,7 +513,7 @@ export async function POST(req: Request) {
         lineMsg = lineParkingMsg();
       }
 
-      if (lineMsg) sendLineMessage(lineMsg).catch(() => {});
+      if (lineMsg) await sendLineMessage(lineMsg).catch(() => {});
       // debug: store detection result to Redis
       const debugInfo = { ts: new Date().toISOString(), notifyLine, lineMsg, offChanged: offChangedEvents.length, matchChanged: changedMatchEvents.length, nonMatchChanged: nonMatchChangedEvents.length, scoreEntered: scoreEnteredEvents.length, oldTypes: offChangedEvents.map(e => oldEventMap.get(e.id)?.type), newTypes: offChangedEvents.map(e => e.type) };
       if (hasRedis()) getRedis().then(r => r.set('sch:line_debug', debugInfo)).catch(() => {});
