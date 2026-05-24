@@ -53,6 +53,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // LINE Webhook: public (LINEサーバーはCookieなしでアクセス、HMAC署名で保護)
+  if (pathname.startsWith('/api/webhooks/line')) {
+    return NextResponse.next();
+  }
+
   // SCH API: requires team session OR family session (family is superset)
   if (pathname.startsWith('/api/sch')) {
     const ok = (await hasValidCookie(req, 'team_session', 'team'))

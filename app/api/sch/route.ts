@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { SchSchedule, SchAnnouncement, SchMember, SchParkingRecord, SchNearbyParking, SchEvent, SchUpdateHistory, SchParkingComment, SchStandaloneVideo } from '@/lib/types';
 import { sendPushToAll } from '@/lib/webpush';
+import { sendLineMessage } from '@/lib/line';
 
 // Legacy SchMatch shape (from sch:matches Redis key) — kept only for migration
 type LegacySchMatch = { id: string; date: string; startTime?: string; opponent?: string; location?: string; homeScore?: number; awayScore?: number; isHome?: boolean; note?: string; };
@@ -234,6 +235,12 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+const SCH_URL = 'https://soccer-trianing.vercel.app/sch';
+
+function dayOfWeek(dateStr: string): string {
+  const d = new Date(dateStr.replace(/\//g, '-') + 'T00:00:00');
+  return WEEKDAYS[d.getDay()];
+}
 
 function matchEventChanged(a: SchEvent, b: SchEvent): boolean {
   return (
@@ -248,6 +255,63 @@ function matchEventChanged(a: SchEvent, b: SchEvent): boolean {
     a.opponentName !== b.opponentName ||
     JSON.stringify(a.matches) !== JSON.stringify(b.matches)
   );
+}
+
+function matchScoreEntered(old: SchEvent, ev: SchEvent): boolean {
+  const oldMs = old.matches ?? [];
+  const newMs = ev.matches ?? [];
+  const subScore = newMs.some(nm => {
+    const om = oldMs.find(m => m.id === nm.id);
+    return om ? om.homeScore == null && nm.homeScore != null : false;
+  });
+  const legacyScore = !ev.matches && old.homeScore == null && ev.homeScore != null;
+  return subScore || legacyScore;
+}
+
+function scheduleChanged(a: SchEvent, b: SchEvent): boolean {
+  return a.date !== b.date || a.startTime !== b.startTime || a.location !== b.location || a.label !== b.label;
+}
+
+function lineEventMsg(ev: SchEvent): string {
+  const wd = dayOfWeek(ev.date);
+  const label = ev.label ?? (ev.matches?.[0]?.opponentName ? `vs ${ev.matches[0].opponentName}` : '');
+  const lines = [`⚽ 【SCH】イベント情報更新`];
+  lines.push(`${ev.date}（${wd}）${ev.startTime ? ' ' + ev.startTime : ''}${label ? ' ' + label : ''}`);
+  if (ev.location) lines.push(`📍 ${ev.location}`);
+  lines.push(`${SCH_URL}?tab=events`);
+  return lines.join('\n');
+}
+
+function lineResultMsg(ev: SchEvent): string {
+  const wd = dayOfWeek(ev.date);
+  const lines = [`🏆 【SCH】試合結果`];
+  lines.push(`${ev.date}（${wd}）`);
+  const scored = (ev.matches ?? []).filter(m => m.homeScore != null && m.awayScore != null);
+  if (scored.length > 0) {
+    scored.forEach(m => lines.push(`SCH ${m.homeScore} - ${m.awayScore} vs ${m.opponentName || '相手未定'}`));
+  } else if (ev.homeScore != null && ev.awayScore != null) {
+    lines.push(`SCH ${ev.homeScore} - ${ev.awayScore} vs ${ev.opponentName || '相手未定'}`);
+  }
+  lines.push(`${SCH_URL}?tab=events`);
+  return lines.join('\n');
+}
+
+function lineOffMsg(ev: SchEvent): string {
+  const wd = dayOfWeek(ev.date);
+  return `😴 【SCH】${ev.date}（${wd}）は休みになりました\n${SCH_URL}?tab=events`;
+}
+
+function lineAnnouncementMsg(ann: SchAnnouncement, isNew: boolean): string {
+  const prefix = isNew ? `📢 【SCH】${ann.title}` : `📝 【SCH】お知らせ更新：${ann.title}`;
+  return `${prefix}\n${SCH_URL}?tab=announce`;
+}
+
+function lineCheckItemsMsg(ann: SchAnnouncement): string {
+  return `📝 【SCH】持ち物リストが更新されました：${ann.title}\n${SCH_URL}?tab=announce`;
+}
+
+function lineParkingMsg(): string {
+  return `🚗 【SCH】駐車当番が更新されました\n${SCH_URL}?tab=events`;
 }
 
 function formatMatchAnnouncement(event: SchEvent): { title: string; content: string } | null {
@@ -295,15 +359,22 @@ function formatMatchAnnouncement(event: SchEvent): { title: string; content: str
 export async function POST(req: Request) {
   try {
     const body = await req.json() as Record<string, unknown>;
+    const notifyLine = body.notifyLine === true;
 
     // 試合イベント保存時、新規追加 or 日時/場所/相手が変わったら自動でお知らせを生成
     let existing: Awaited<ReturnType<typeof readSchData>> | null = null;
     const changedMatchEvents: SchEvent[] = [];
+    let oldEventMap = new Map<string, SchEvent>();
+
+    // LINE用: 追加で追跡する変化
+    const scoreEnteredEvents: SchEvent[] = [];
+    const offChangedEvents: SchEvent[] = [];
+    const nonMatchChangedEvents: SchEvent[] = [];
 
     if ('events' in body) {
       const newEvents = body.events as SchEvent[];
       existing = await readSchData();
-      const oldEventMap = new Map(existing.events.map(e => [e.id, e]));
+      oldEventMap = new Map(existing.events.map(e => [e.id, e]));
 
       const toAnnounce: SchAnnouncement[] = [];
       const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
@@ -333,22 +404,56 @@ export async function POST(req: Request) {
           ...existing.announcements.filter(a => !upsertIds.has(a.id)),
         ];
       }
+
+      // LINE用: スコア入力・OFF変更・非試合イベント変更の検知
+      for (const ev of newEvents) {
+        const old = oldEventMap.get(ev.id);
+        if (ev.type === 'match' && old && matchScoreEntered(old, ev)) {
+          scoreEnteredEvents.push(ev);
+        }
+        if (old && old.type !== 'off' && ev.type === 'off') {
+          offChangedEvents.push(ev);
+        }
+        if (ev.type !== 'match' && ev.type !== 'off') {
+          if (!old || scheduleChanged(old, ev)) {
+            nonMatchChangedEvents.push(ev);
+          }
+        }
+      }
     }
 
-    // お知らせの新規追加を検出（Push通知用）
+    // お知らせの新規追加・編集を検出（Push通知 + LINE通知用）
     let newAnnouncementTitles: string[] = [];
+    const editedAnns: SchAnnouncement[] = [];
+    const checkItemsChangedAnns: SchAnnouncement[] = [];
+
     if ('announcements' in body) {
       const newAnns = body.announcements as SchAnnouncement[];
       if (!existing) existing = await readSchData();
+      const oldAnnMap = new Map(existing.announcements.map(a => [a.id, a]));
       const oldIds = new Set(existing.announcements.map(a => a.id));
+
+      // Push通知用（自動生成除く）
       newAnnouncementTitles = newAnns
-        .filter(a => !oldIds.has(a.id))
+        .filter(a => !oldIds.has(a.id) && !a.id.startsWith('auto-match-'))
         .map(a => a.title);
+
+      // LINE用: 編集検知（自動生成除く）
+      for (const ann of newAnns) {
+        if (ann.id.startsWith('auto-match-')) continue;
+        const old = oldAnnMap.get(ann.id);
+        if (!old) continue;
+        if (old.content !== ann.content || old.title !== ann.title) {
+          editedAnns.push(ann);
+        } else if (JSON.stringify(old.checkItems) !== JSON.stringify(ann.checkItems)) {
+          checkItemsChangedAnns.push(ann);
+        }
+      }
     }
 
     await writeSchPartial(body);
 
-    // Push通知送信（fire & forget）
+    // Web Push通知送信（fire & forget）
     if (changedMatchEvents.length > 0) {
       const ev = changedMatchEvents[0];
       const label = ev.label ?? (ev.matches?.[0]?.opponentName ? `vs ${ev.matches[0].opponentName}` : '試合');
@@ -365,6 +470,45 @@ export async function POST(req: Request) {
         url: '/sch',
       }).catch(() => {});
     }
+
+    // LINE通知送信（fire & forget、notifyLine === true の場合のみ）
+    if (notifyLine) {
+      // 優先度順に1件送信: お知らせ新規 > お知らせ編集 > 持ち物リスト > 試合結果 > 試合情報 > OFF > 非試合イベント > 駐車
+      let lineMsg: string | null = null;
+
+      if (!lineMsg && newAnnouncementTitles.length > 0) {
+        const ann = (body.announcements as SchAnnouncement[])?.find(a => a.title === newAnnouncementTitles[0]);
+        if (ann) lineMsg = lineAnnouncementMsg(ann, true);
+      }
+      if (!lineMsg && editedAnns.length > 0) {
+        lineMsg = lineAnnouncementMsg(editedAnns[0], false);
+      }
+      if (!lineMsg && checkItemsChangedAnns.length > 0) {
+        lineMsg = lineCheckItemsMsg(checkItemsChangedAnns[0]);
+      }
+      if (!lineMsg && scoreEnteredEvents.length > 0) {
+        lineMsg = lineResultMsg(scoreEnteredEvents[0]);
+      }
+      if (!lineMsg && changedMatchEvents.length > 0) {
+        const ev = changedMatchEvents[0];
+        const old = oldEventMap.get(ev.id);
+        if (!old || !matchScoreEntered(old, ev)) {
+          lineMsg = lineEventMsg(ev);
+        }
+      }
+      if (!lineMsg && offChangedEvents.length > 0) {
+        lineMsg = lineOffMsg(offChangedEvents[0]);
+      }
+      if (!lineMsg && nonMatchChangedEvents.length > 0) {
+        lineMsg = lineEventMsg(nonMatchChangedEvents[0]);
+      }
+      if (!lineMsg && 'parkingRecords' in body) {
+        lineMsg = lineParkingMsg();
+      }
+
+      if (lineMsg) sendLineMessage(lineMsg).catch(() => {});
+    }
+
     const actions = Object.keys(body).filter(k => k in ACTION_LABELS);
     if (actions.length > 0) {
       logChange({

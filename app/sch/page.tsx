@@ -702,7 +702,7 @@ function EventForm({
   initialDate?: string;
   members: SchMember[];
   pastWeatherAreas: string[];
-  onSave: (event: SchEvent) => void;
+  onSave: (event: SchEvent, notifyLine: boolean) => void;
   onClose: () => void;
 }) {
   const [type, setType] = useState<SchEventType>(initialEvent?.type ?? 'practice');
@@ -740,6 +740,7 @@ function EventForm({
   // Attached images
   const [images, setImages] = useState<string[]>(initialEvent?.images ?? []);
   const imgFileRef = useRef<HTMLInputElement>(null);
+  const [notifyLine, setNotifyLine] = useState(true);
 
   const compressEventImage = useCallback((blob: Blob): Promise<string> => {
     return new Promise(resolve => {
@@ -804,7 +805,7 @@ function EventForm({
     if (type === 'camp' || type === 'expedition') {
       Object.assign(base, { mapQuery: mapQuery || undefined });
     }
-    onSave(base);
+    onSave(base, notifyLine);
     onClose();
   };
 
@@ -1050,6 +1051,10 @@ function EventForm({
                 }} />
             </div>
 
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={notifyLine} onChange={e => setNotifyLine(e.target.checked)} className="w-4 h-4 accent-green-500" />
+              <span className="text-sm text-slate-300">💬 LINE通知</span>
+            </label>
             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all">保存</button>
           </form>
         </div>
@@ -1520,7 +1525,7 @@ type EventFilter = 'all' | SchEventType;
 function EventSection({ events, members, onSave, openDetailId }: {
   events: SchEvent[];
   members: SchMember[];
-  onSave: (events: SchEvent[]) => void;
+  onSave: (events: SchEvent[], notifyLine: boolean) => void;
   openDetailId?: string | null;
 }) {
   const [filter, setFilter] = useState<EventFilter>('all');
@@ -1533,11 +1538,11 @@ function EventSection({ events, members, onSave, openDetailId }: {
 
   useEffect(() => { if (openDetailId) setDetailId(openDetailId); }, [openDetailId]);
 
-  const handleSave = (ev: SchEvent) => {
+  const handleSave = (ev: SchEvent, notifyLine: boolean) => {
     const updated = editing
       ? events.map(e => e.id === ev.id ? ev : e)
       : [...events, ev];
-    onSave(updated.sort((a, b) => a.date.localeCompare(b.date)));
+    onSave(updated.sort((a, b) => a.date.localeCompare(b.date)), notifyLine);
   };
   const handleDelete = (id: string) => {
     if (window.confirm('削除しますか？')) onSave(events.filter(e => e.id !== id));
@@ -3555,7 +3560,7 @@ function CheckList({ items, announcementId }: { items: { text: string; note?: st
 }
 
 // ---- AnnounceSection ----
-function AnnounceSection({ announcements, onSave, events }: { announcements: SchAnnouncement[]; onSave: (a: SchAnnouncement[]) => void; events: SchEvent[] }) {
+function AnnounceSection({ announcements, onSave, events }: { announcements: SchAnnouncement[]; onSave: (a: SchAnnouncement[], notifyLine: boolean) => void; events: SchEvent[] }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SchAnnouncement | null>(null);
   const [date, setDate] = useState(todayStr());
@@ -3567,11 +3572,12 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
   const [showAllEvents, setShowAllEvents] = useState(false);
   const [checkItems, setCheckItems] = useState<{ text: string; note: string }[]>([]);
   const [showCheckItems, setShowCheckItems] = useState(false);
+  const [notifyLine, setNotifyLine] = useState(true);
 
   const resetForm = () => {
     setDate(todayStr()); setTitle(''); setContent(''); setImportant(false); setUrl('');
     setEditing(null); setShowForm(false); setSelectedEvent(null); setShowAllEvents(false);
-    setCheckItems([]); setShowCheckItems(false);
+    setCheckItems([]); setShowCheckItems(false); setNotifyLine(true);
   };
   const openEdit = (a: SchAnnouncement) => {
     setEditing(a); setDate(a.date); setTitle(a.title); setContent(a.content);
@@ -3611,7 +3617,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
     };
     // 新規は先頭に追加、編集は位置を保持
     const updated = editing ? announcements.map(a => a.id === editing.id ? entry : a) : [entry, ...announcements];
-    onSave(updated);
+    onSave(updated, notifyLine);
     resetForm();
   };
   const handleDelete = (id: string) => { if (window.confirm('削除しますか？')) onSave(announcements.filter(a => a.id !== id)); };
@@ -3734,6 +3740,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
 
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">🔗 投稿URL <span className="font-normal text-slate-500">（Instagram リンク等）</span></label><input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.instagram.com/p/..." className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500" /></div>
                 <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={important} onChange={e => setImportant(e.target.checked)} className="w-4 h-4 accent-red-500" /><span className="text-sm text-slate-300">🔴 重要な連絡としてマーク</span></label>
+                <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={notifyLine} onChange={e => setNotifyLine(e.target.checked)} className="w-4 h-4 accent-green-500" /><span className="text-sm text-slate-300">💬 LINE通知</span></label>
                 <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl text-sm">投稿</button>
               </form>
             </div>
@@ -4219,6 +4226,14 @@ export default function SchPage() {
     fetch('/api/admin/logs?limit=1').then(r => { if (r.ok) setIsAdmin(true); }).catch(() => {});
   }, []);
 
+  // URLパラメータ ?tab=xxx でタブを初期化（LINE通知からの直リンク対応）
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('tab') as Tab | null;
+    const validTabs: Tab[] = ['home', 'events', 'video', 'stats', 'announce', 'member'];
+    if (t && validTabs.includes(t)) setTab(t);
+  }, []);
+
   // scrollTarget: タブ切替後にスクロール
   useEffect(() => {
     if (!scrollTarget) return;
@@ -4322,13 +4337,14 @@ export default function SchPage() {
     }).catch(() => setIsLoading(false));
   }, []);
 
-  const post = useCallback((body: object) => {
-    fetch('/api/sch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(console.error);
+  const post = useCallback((body: object, notifyLine?: boolean) => {
+    const payload = notifyLine !== undefined ? { ...body, notifyLine } : body;
+    fetch('/api/sch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(console.error);
   }, []);
 
-  const saveEvents = useCallback((e: SchEvent[]) => {
+  const saveEvents = useCallback((e: SchEvent[], notifyLine?: boolean) => {
     setEvents(e);
-    post({ events: e });
+    post({ events: e }, notifyLine);
     const oldMap = new Map(events.map(ev => [ev.id, ev]));
     const getEvTitle = (ev: SchEvent) => {
       if (ev.type === 'match') { const opp = ev.matches?.[0]?.opponentName || ev.opponentName; return opp ? `vs ${opp}` : '試合'; }
@@ -4353,9 +4369,9 @@ export default function SchPage() {
     }
   }, [post, events, updateHistory]);
 
-  const saveAnnounce = useCallback((a: SchAnnouncement[]) => {
+  const saveAnnounce = useCallback((a: SchAnnouncement[], notifyLine?: boolean) => {
     setAnnouncements(a);
-    post({ announcements: a });
+    post({ announcements: a }, notifyLine);
     const oldMap = new Map(announcements.map(ann => [ann.id, ann]));
     const newIds = new Set(a.map(ann => ann.id));
     const autoEntries: SchUpdateHistory[] = [];
@@ -4384,7 +4400,7 @@ export default function SchPage() {
   const saveStandaloneVideos = useCallback((v: SchStandaloneVideo[]) => { setStandaloneVideos(v); post({ standaloneVideos: v }); }, [post]);
   const saveVideoThumbnails  = useCallback((t: Record<string, string>) => { setVideoThumbnails(t); post({ videoThumbnails: t }); }, [post]);
 
-  const upsertParkingRecord = useCallback((eventId: string, updater: (slots: SchParkingSlot[]) => SchParkingSlot[]) => {
+  const upsertParkingRecord = useCallback((eventId: string, updater: (slots: SchParkingSlot[]) => SchParkingSlot[], notifyLine?: boolean) => {
     setParkingRecords(prev => {
       const existing = prev.find(r => r.eventId === eventId);
       let updated: SchParkingRecord[];
@@ -4401,7 +4417,7 @@ export default function SchPage() {
         };
         updated = [...prev, newRecord];
       }
-      post({ parkingRecords: updated });
+      post({ parkingRecords: updated }, notifyLine);
       return updated;
     });
   }, [events, post]);
@@ -4432,7 +4448,8 @@ export default function SchPage() {
   }, [upsertParkingRecord]);
 
   const handleSaveFullRecord = useCallback((eventId: string, slots: SchParkingSlot[]) => {
-    upsertParkingRecord(eventId, () => slots);
+    const notify = window.confirm('LINE通知を送りますか？');
+    upsertParkingRecord(eventId, () => slots, notify);
   }, [upsertParkingRecord]);
 
   const handleUpdateMaxSlots = useCallback((eventId: string, maxSlots: number) => {
