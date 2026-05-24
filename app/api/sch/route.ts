@@ -244,6 +244,7 @@ function dayOfWeek(dateStr: string): string {
 
 function matchEventChanged(a: SchEvent, b: SchEvent): boolean {
   return (
+    a.type !== b.type ||
     a.date !== b.date ||
     a.endDate !== b.endDate ||
     a.startTime !== b.startTime ||
@@ -269,7 +270,7 @@ function matchScoreEntered(old: SchEvent, ev: SchEvent): boolean {
 }
 
 function scheduleChanged(a: SchEvent, b: SchEvent): boolean {
-  return a.date !== b.date || a.startTime !== b.startTime || a.location !== b.location || a.label !== b.label;
+  return a.type !== b.type || a.date !== b.date || a.startTime !== b.startTime || a.location !== b.location || a.label !== b.label;
 }
 
 const TYPE_LABEL: Record<string, string> = { practice: '練習', match: '試合', camp: '合宿', expedition: '遠征', off: 'OFF', other: 'その他' };
