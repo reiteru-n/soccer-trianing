@@ -383,6 +383,7 @@ export async function POST(req: Request) {
     const scoreEnteredEvents: SchEvent[] = [];
     const offChangedEvents: SchEvent[] = [];
     const nonMatchChangedEvents: SchEvent[] = [];
+    const anyChangedEvents: SchEvent[] = [];
 
     if ('events' in body) {
       const newEvents = body.events as SchEvent[];
@@ -419,7 +420,6 @@ export async function POST(req: Request) {
       }
 
       // LINE用: スコア入力・OFF変更・非試合イベント変更の検知
-      const anyChangedEvents: SchEvent[] = [];
       for (const ev of newEvents) {
         const old = oldEventMap.get(ev.id);
         if (ev.type === 'match' && old && matchScoreEntered(old, ev)) {
