@@ -57,7 +57,10 @@ export async function verifyLineSignature(body: string, signature: string): Prom
     ['sign'],
   );
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body));
-  const expected = btoa(String.fromCharCode(...new Uint8Array(sig)));
+  const arr = new Uint8Array(sig);
+  let binary = '';
+  for (let i = 0; i < arr.length; i++) binary += String.fromCharCode(arr[i]);
+  const expected = btoa(binary);
   return expected === signature;
 }
 
