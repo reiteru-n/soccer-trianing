@@ -4771,9 +4771,9 @@ export default function SchPage() {
                 <button
                   className="flex-1 py-3 text-sm font-bold text-white bg-purple-600/30 hover:bg-purple-600/50 transition-colors"
                   onClick={() => {
-                    const { editEntries, autoEntries, baseHistory, memo, newEvents, newAnnouncements, notifyLine } = historyModal;
-                    if (newEvents) post({ events: newEvents }, notifyLine);
-                    if (newAnnouncements) post({ announcements: newAnnouncements }, notifyLine);
+                    const { editEntries, autoEntries, baseHistory, memo, newEvents, newAnnouncements } = historyModal;
+                    if (newEvents) post({ events: newEvents }, true);
+                    if (newAnnouncements) post({ announcements: newAnnouncements }, true);
                     const withMemo = editEntries.map(e => ({ ...e, ...(memo.trim() ? { changeMemo: memo.trim() } : {}) }));
                     const h = [...withMemo, ...autoEntries, ...baseHistory].slice(0, 20);
                     setUpdateHistory(h); post({ updateHistory: h });
