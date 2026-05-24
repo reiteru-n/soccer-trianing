@@ -4277,7 +4277,7 @@ export default function SchPage() {
   const [pushBusy, setPushBusy] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
   // 編集履歴モーダル
-  interface HistoryModal { editEntries: SchUpdateHistory[]; autoEntries: SchUpdateHistory[]; baseHistory: SchUpdateHistory[]; memo: string; previousEvents?: SchEvent[]; previousAnnouncements?: SchAnnouncement[]; }
+  interface HistoryModal { editEntries: SchUpdateHistory[]; autoEntries: SchUpdateHistory[]; baseHistory: SchUpdateHistory[]; memo: string; previousEvents?: SchEvent[]; previousAnnouncements?: SchAnnouncement[]; newEvents?: SchEvent[]; newAnnouncements?: SchAnnouncement[]; notifyLine?: boolean; }
   const [historyModal, setHistoryModal] = useState<HistoryModal | null>(null);
 
   useEffect(() => {
@@ -4402,7 +4402,6 @@ export default function SchPage() {
 
   const saveEvents = useCallback((e: SchEvent[], notifyLine?: boolean) => {
     setEvents(e);
-    post({ events: e }, notifyLine);
     const oldMap = new Map(events.map(ev => [ev.id, ev]));
     const getEvTitle = (ev: SchEvent) => {
       if (ev.type === 'match') { const opp = ev.matches?.[0]?.opponentName || ev.opponentName; return opp ? `vs ${opp}` : '試合'; }
@@ -4420,16 +4419,19 @@ export default function SchPage() {
       if (!newIds.has(old.id)) autoEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'event', eventType: old.type, title: getEvTitle(old), action: 'delete', itemId: old.id, tab: 'events' });
     }
     if (editEntries.length > 0) {
-      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '', previousEvents: events });
-    } else if (autoEntries.length > 0) {
-      const h = [...autoEntries, ...updateHistory].slice(0, 20);
-      setUpdateHistory(h); post({ updateHistory: h });
+      // 編集の場合は POST を遅延: モーダルのボタンで notifyLine を決定する
+      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '', previousEvents: events, newEvents: e, notifyLine: notifyLine ?? false });
+    } else {
+      post({ events: e }, notifyLine);
+      if (autoEntries.length > 0) {
+        const h = [...autoEntries, ...updateHistory].slice(0, 20);
+        setUpdateHistory(h); post({ updateHistory: h });
+      }
     }
   }, [post, events, updateHistory]);
 
   const saveAnnounce = useCallback((a: SchAnnouncement[], notifyLine?: boolean) => {
     setAnnouncements(a);
-    post({ announcements: a }, notifyLine);
     const oldMap = new Map(announcements.map(ann => [ann.id, ann]));
     const newIds = new Set(a.map(ann => ann.id));
     const autoEntries: SchUpdateHistory[] = [];
@@ -4443,10 +4445,14 @@ export default function SchPage() {
       if (!newIds.has(old.id)) autoEntries.push({ id: generateId(), timestamp: new Date().toISOString(), type: 'announcement', title: old.title, action: 'delete', itemId: old.id, tab: 'announce' });
     }
     if (editEntries.length > 0) {
-      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '', previousAnnouncements: announcements });
-    } else if (autoEntries.length > 0) {
-      const h = [...autoEntries, ...updateHistory].slice(0, 20);
-      setUpdateHistory(h); post({ updateHistory: h });
+      // 編集の場合は POST を遅延: モーダルのボタンで notifyLine を決定する
+      setHistoryModal({ editEntries, autoEntries, baseHistory: updateHistory, memo: '', previousAnnouncements: announcements, newAnnouncements: a, notifyLine: notifyLine ?? false });
+    } else {
+      post({ announcements: a }, notifyLine);
+      if (autoEntries.length > 0) {
+        const h = [...autoEntries, ...updateHistory].slice(0, 20);
+        setUpdateHistory(h); post({ updateHistory: h });
+      }
     }
   }, [post, announcements, updateHistory]);
   const saveMembers         = useCallback((m: SchMember[])          => { setMembers(m);         post({ members: m }); }, [post]);
@@ -4754,8 +4760,10 @@ export default function SchPage() {
                 <button
                   className="flex-1 py-3 text-sm font-semibold text-slate-200 hover:bg-white/5 transition-colors border-r border-white/10"
                   onClick={() => {
-                    // 編集のみ保存：autoEntries だけ履歴に追加
-                    const { autoEntries, baseHistory } = historyModal;
+                    // 編集のみ保存：LINE通知なし で POST、autoEntries だけ履歴に追加
+                    const { autoEntries, baseHistory, newEvents, newAnnouncements } = historyModal;
+                    if (newEvents) post({ events: newEvents }, false);
+                    if (newAnnouncements) post({ announcements: newAnnouncements }, false);
                     if (autoEntries.length > 0) { const h = [...autoEntries, ...baseHistory].slice(0, 20); setUpdateHistory(h); post({ updateHistory: h }); }
                     setHistoryModal(null);
                   }}
@@ -4763,7 +4771,9 @@ export default function SchPage() {
                 <button
                   className="flex-1 py-3 text-sm font-bold text-white bg-purple-600/30 hover:bg-purple-600/50 transition-colors"
                   onClick={() => {
-                    const { editEntries, autoEntries, baseHistory, memo } = historyModal;
+                    const { editEntries, autoEntries, baseHistory, memo, newEvents, newAnnouncements, notifyLine } = historyModal;
+                    if (newEvents) post({ events: newEvents }, notifyLine);
+                    if (newAnnouncements) post({ announcements: newAnnouncements }, notifyLine);
                     const withMemo = editEntries.map(e => ({ ...e, ...(memo.trim() ? { changeMemo: memo.trim() } : {}) }));
                     const h = [...withMemo, ...autoEntries, ...baseHistory].slice(0, 20);
                     setUpdateHistory(h); post({ updateHistory: h });
@@ -4775,10 +4785,10 @@ export default function SchPage() {
                 <button
                   className="text-xs text-slate-500 hover:text-slate-300 transition-colors px-4 py-1"
                   onClick={() => {
-                    // 戻る：編集をリバート
+                    // 戻る：POSTはまだしていないのでローカル state のみリバート
                     const { previousEvents, previousAnnouncements } = historyModal;
-                    if (previousEvents) { setEvents(previousEvents); post({ events: previousEvents }); }
-                    if (previousAnnouncements) { setAnnouncements(previousAnnouncements); post({ announcements: previousAnnouncements }); }
+                    if (previousEvents) setEvents(previousEvents);
+                    if (previousAnnouncements) setAnnouncements(previousAnnouncements);
                     setHistoryModal(null);
                   }}
                 >戻る（編集を取り消す）</button>
