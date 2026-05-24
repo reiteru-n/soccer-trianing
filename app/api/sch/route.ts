@@ -522,12 +522,33 @@ export async function POST(req: Request) {
       }
 
       if (lineMsg) await sendLineMessage(lineMsg).catch(() => {});
-      // debug: store detection result to Redis
-      const debugInfo = { ts: new Date().toISOString(), notifyLine, lineMsg, offChanged: offChangedEvents.length, matchChanged: changedMatchEvents.length, nonMatchChanged: nonMatchChangedEvents.length, scoreEntered: scoreEnteredEvents.length, oldTypes: offChangedEvents.map(e => oldEventMap.get(e.id)?.type), newTypes: offChangedEvents.map(e => e.type) };
+    }
+    // debug: always log
+    {
+      const debugInfo = {
+        ts: new Date().toISOString(),
+        notifyLine,
+        notifyLineRaw: body.notifyLine,
+        bodyKeys: Object.keys(body),
+        lineMsg: notifyLine ? (() => {
+          if (newAnnouncementTitles.length > 0) return 'announce-new';
+          if (editedAnns.length > 0) return 'announce-edit';
+          if (checkItemsChangedAnns.length > 0) return 'check-items';
+          if (scoreEnteredEvents.length > 0) return 'score';
+          if (changedMatchEvents.length > 0) return 'match';
+          if (offChangedEvents.length > 0) return 'off';
+          if (nonMatchChangedEvents.length > 0) return 'nonmatch';
+          if ('parkingRecords' in body) return 'parking';
+          return null;
+        })() : 'skipped',
+        offChanged: offChangedEvents.length,
+        matchChanged: changedMatchEvents.length,
+        nonMatchChanged: nonMatchChangedEvents.length,
+        scoreEntered: scoreEnteredEvents.length,
+        editedAnns: editedAnns.length,
+        newAnnouncements: newAnnouncementTitles.length,
+      };
       if (hasRedis()) getRedis().then(r => r.set('sch:line_debug', debugInfo)).catch(() => {});
-    } else {
-      // notifyLine was false - log that too
-      if (hasRedis()) getRedis().then(r => r.set('sch:line_debug', { ts: new Date().toISOString(), notifyLine: false, note: 'notifyLine was not true', bodyKeys: Object.keys(body) })).catch(() => {});
     }
 
     const actions = Object.keys(body).filter(k => k in ACTION_LABELS);
