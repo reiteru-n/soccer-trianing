@@ -285,7 +285,6 @@ function lineEventMsg(ev: SchEvent, oldType?: string): string {
   if (ev.startTime) lines.push(`⏰ ${ev.startTime}`);
   if (ev.location) lines.push(`📍 ${ev.location}`);
   if (ev.note) lines.push(`📝 ${ev.note}`);
-  lines.push(`${SCH_URL}?tab=events`);
   return lines.join('\n');
 }
 
@@ -299,27 +298,26 @@ function lineResultMsg(ev: SchEvent): string {
   } else if (ev.homeScore != null && ev.awayScore != null) {
     lines.push(`SCH ${ev.homeScore} - ${ev.awayScore} vs ${ev.opponentName || '相手未定'}`);
   }
-  lines.push(`${SCH_URL}?tab=events`);
   return lines.join('\n');
 }
 
 function lineOffMsg(ev: SchEvent): string {
   const wd = dayOfWeek(ev.date);
-  return `😴 【SCH】${ev.date}（${wd}）は休みになりました\n${SCH_URL}?tab=events`;
+  return `😴 【SCH】${ev.date}（${wd}）は休みになりました`;
 }
 
 function lineAnnouncementMsg(ann: SchAnnouncement, isNew: boolean): string {
   const prefix = isNew ? `📢 【SCH】${ann.title}` : `📝 【SCH】お知らせ更新：${ann.title}`;
   const preview = ann.content ? '\n' + ann.content.slice(0, 120) + (ann.content.length > 120 ? '…' : '') : '';
-  return `${prefix}${preview}\n${SCH_URL}?tab=announce`;
+  return `${prefix}${preview}`;
 }
 
 function lineCheckItemsMsg(ann: SchAnnouncement): string {
-  return `📝 【SCH】持ち物リストが更新されました：${ann.title}\n${SCH_URL}?tab=announce`;
+  return `📝 【SCH】持ち物リストが更新されました：${ann.title}`;
 }
 
 function lineParkingMsg(): string {
-  return `🚗 【SCH】駐車当番が更新されました\n${SCH_URL}?tab=events`;
+  return `🚗 【SCH】駐車当番が更新されました`;
 }
 
 function formatMatchAnnouncement(event: SchEvent): { title: string; content: string } | null {
