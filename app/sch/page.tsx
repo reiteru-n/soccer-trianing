@@ -201,7 +201,7 @@ function formStateToMatch(s: MatchFormState): SchMatch {
 
 // ---- MatchEntry (1試合分の入力フォーム) ----
 function MatchEntry({
-  value, onChange, onRemove, members, index, isMultiDay, dayCount,
+  value, onChange, onRemove, members, index, isMultiDay, dayCount, pastOpponents,
 }: {
   value: MatchFormState;
   onChange: (updated: MatchFormState) => void;
@@ -210,6 +210,7 @@ function MatchEntry({
   index: number;
   isMultiDay: boolean;
   dayCount: number;
+  pastOpponents?: string[];
 }) {
   const [scorerMid, setScorerMid] = useState('');
   const [scorerCnt, setScorerCnt] = useState(1);
@@ -245,7 +246,10 @@ function MatchEntry({
       </div>
 
       {/* 相手チーム */}
-      <div><label className={labelCls}>🆚 相手チーム</label><input type="text" value={value.opponentName} onChange={e => upd({ opponentName: e.target.value })} placeholder="例: ○○FC" className={inputCls} /></div>
+      <div>
+        <label className={labelCls}>🆚 相手チーム</label>
+        <SuggestInput value={value.opponentName} onChange={v => upd({ opponentName: v })} suggestions={pastOpponents ?? []} placeholder="例: ○○FC" className={inputCls} />
+      </div>
 
       {/* ラウンド名 */}
       <div><label className={labelCls}>試合名・ラウンド</label><input type="text" value={value.roundName} onChange={e => upd({ roundName: e.target.value })} placeholder="例: 予選A / 第2試合 / 準決勝" className={inputCls} /></div>
@@ -689,12 +693,40 @@ function WeatherAreaInput({ value, onChange, pastAreas }: {
   );
 }
 
+// ---- SuggestInput ----
+function SuggestInput({ value, onChange, suggestions, placeholder, className }: {
+  value: string;
+  onChange: (v: string) => void;
+  suggestions: string[];
+  placeholder?: string;
+  className: string;
+}) {
+  const chips = suggestions.filter(s => !value || s.toLowerCase().includes(value.toLowerCase()));
+  return (
+    <div>
+      {chips.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {chips.map(s => (
+            <button key={s} type="button" onClick={() => onChange(s)}
+              className={`text-[11px] px-2 py-0.5 rounded-full border active:opacity-70 ${value === s ? 'bg-blue-700/60 text-blue-200 border-blue-600/50' : 'bg-slate-700/60 text-slate-300 border-slate-600/50'}`}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+      <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={className} />
+    </div>
+  );
+}
+
 // ---- EventForm ----
 function EventForm({
   initialEvent,
   initialDate,
   members,
   pastWeatherAreas,
+  pastLocations,
+  pastOpponents,
   onSave,
   onClose,
 }: {
@@ -702,6 +734,8 @@ function EventForm({
   initialDate?: string;
   members: SchMember[];
   pastWeatherAreas: string[];
+  pastLocations: string[];
+  pastOpponents: string[];
   onSave: (event: SchEvent, notifyLine: boolean) => void;
   onClose: () => void;
 }) {
@@ -856,7 +890,7 @@ function EventForm({
             )}
 
             {/* Location & Label */}
-            {type !== 'off' && <div><label className={labelCls}>📍 場所</label><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="例: ○○グラウンド" className={inputCls} /></div>}
+            {type !== 'off' && <div><label className={labelCls}>📍 場所</label><SuggestInput value={location} onChange={setLocation} suggestions={pastLocations} placeholder="例: ○○グラウンド" className={inputCls} /></div>}
             {type !== 'off' && (
               <div>
                 <label className={labelCls}>🌤️ 天気の地域（任意）</label>
@@ -975,6 +1009,7 @@ function EventForm({
                       members={members}
                       isMultiDay={isMultiDay}
                       dayCount={dayCount}
+                      pastOpponents={pastOpponents}
                     />
                   );
                 })}
@@ -1567,6 +1602,20 @@ function EventSection({ events, members, onSave, openDetailId }: {
     return events.flatMap(e => e.weatherArea ? [e.weatherArea] : []).filter(a => { if (seen.has(a)) return false; seen.add(a); return true; });
   }, [events]);
 
+  const pastLocations = useMemo(() => {
+    const seen = new Set<string>();
+    return events.flatMap(e => e.location ? [e.location] : []).filter(a => { if (seen.has(a)) return false; seen.add(a); return true; });
+  }, [events]);
+
+  const pastOpponents = useMemo(() => {
+    const seen = new Set<string>();
+    return events.flatMap(e => {
+      if (e.type !== 'match') return [];
+      const ms = (e.matches && e.matches.length > 0) ? e.matches : (e.opponentName ? [{ opponentName: e.opponentName }] : []);
+      return ms.flatMap(m => m.opponentName ? [m.opponentName] : []);
+    }).filter(a => { if (seen.has(a)) return false; seen.add(a); return true; });
+  }, [events]);
+
   const filtered = events.filter(e =>
     filter === 'all' ||
     e.type === filter ||
@@ -1689,6 +1738,8 @@ function EventSection({ events, members, onSave, openDetailId }: {
           initialDate={editing ? undefined : (calendarDate ?? undefined)}
           members={members}
           pastWeatherAreas={pastWeatherAreas}
+          pastLocations={pastLocations}
+          pastOpponents={pastOpponents}
           onSave={handleSave}
           onClose={() => { setShowForm(false); setEditing(null); setCalendarDate(null); }}
         />
