@@ -289,7 +289,7 @@ function lineEventMsg(ev: SchEvent, oldType?: string): string {
   const typeStr = typeChanged ? `${TYPE_LABEL[oldType] ?? oldType}→${TYPE_LABEL[ev.type] ?? ev.type}` : (TYPE_LABEL[ev.type] ?? ev.type);
   const lines = [`⚽ 【SCH】イベント情報更新`];
   lines.push(`📅 ${formatDateRange(ev)}${typeChanged ? ' ' + typeStr : ''}${label ? ' ' + label : ''}`);
-  if (ev.startTime) lines.push(`⏰ ${ev.startTime}`);
+  if (ev.startTime) lines.push(`⏰ ${ev.startTime}${ev.endTime ? `〜${ev.endTime}` : ''}`);
   if (ev.location) lines.push(`📍 ${ev.location}`);
   if (ev.note) lines.push(`📝 ${ev.note}`);
   return lines.join('\n');
