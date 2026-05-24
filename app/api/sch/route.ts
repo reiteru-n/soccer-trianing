@@ -419,6 +419,7 @@ export async function POST(req: Request) {
       }
 
       // LINE用: スコア入力・OFF変更・非試合イベント変更の検知
+      const anyChangedEvents: SchEvent[] = [];
       for (const ev of newEvents) {
         const old = oldEventMap.get(ev.id);
         if (ev.type === 'match' && old && matchScoreEntered(old, ev)) {
@@ -431,6 +432,10 @@ export async function POST(req: Request) {
           if (!old || scheduleChanged(old, ev)) {
             nonMatchChangedEvents.push(ev);
           }
+        }
+        // フォールバック: フルJSON比較で何か変わっていれば記録
+        if (!old || JSON.stringify(old) !== JSON.stringify(ev)) {
+          anyChangedEvents.push(ev);
         }
       }
     }
@@ -456,10 +461,10 @@ export async function POST(req: Request) {
         if (ann.id.startsWith('auto-match-')) continue;
         const old = oldAnnMap.get(ann.id);
         if (!old) continue;
-        if (old.content !== ann.content || old.title !== ann.title) {
-          editedAnns.push(ann);
-        } else if (JSON.stringify(old.checkItems) !== JSON.stringify(ann.checkItems)) {
+        if (JSON.stringify(old.checkItems) !== JSON.stringify(ann.checkItems) && old.content === ann.content && old.title === ann.title) {
           checkItemsChangedAnns.push(ann);
+        } else if (JSON.stringify(old) !== JSON.stringify(ann)) {
+          editedAnns.push(ann);
         }
       }
     }
@@ -520,6 +525,11 @@ export async function POST(req: Request) {
       if (!lineMsg && 'parkingRecords' in body) {
         lineMsg = lineParkingMsg();
       }
+      // フォールバック: 上記で検知できなかった変更（noteのみ変更など）
+      if (!lineMsg && anyChangedEvents.length > 0) {
+        const ev = anyChangedEvents[0];
+        lineMsg = lineEventMsg(ev, oldEventMap.get(ev.id)?.type);
+      }
 
       if (lineMsg) await sendLineMessage(lineMsg).catch(() => {});
     }
@@ -544,6 +554,7 @@ export async function POST(req: Request) {
         offChanged: offChangedEvents.length,
         matchChanged: changedMatchEvents.length,
         nonMatchChanged: nonMatchChangedEvents.length,
+        anyChanged: anyChangedEvents.length,
         scoreEntered: scoreEnteredEvents.length,
         editedAnns: editedAnns.length,
         newAnnouncements: newAnnouncementTitles.length,
