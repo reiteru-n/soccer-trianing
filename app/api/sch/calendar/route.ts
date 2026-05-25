@@ -50,7 +50,8 @@ function eventSummary(e: SchEvent): string {
       } else if (e.opponentName) {
         opponents.push(e.opponentName);
       }
-      return opponents.length ? `${base} vs ${opponents.join('・')}` : base;
+      const uniqueOpponents = [...new Set(opponents)];
+      return uniqueOpponents.length ? `${base} vs ${uniqueOpponents.join('・')}` : base;
     }
     default: return e.label ? `SCH その他-${e.label}` : 'SCH 予定';
   }

@@ -370,7 +370,7 @@ function formatMatchAnnouncement(event: SchEvent): { title: string; content: str
   }
 
   const opponents = ms && ms.length > 0
-    ? ms.map(m => m.opponentName || '相手未定').join('・')
+    ? [...new Set(ms.map(m => m.opponentName || '相手未定'))].join('・')
     : (event.opponentName || '');
   const title = `⚽ 試合のお知らせ：${d}${opponents ? ' vs ' + opponents : ''}`;
 
