@@ -284,7 +284,11 @@ function formatDateRange(ev: SchEvent): string {
 const TYPE_LABEL: Record<string, string> = { practice: '練習', match: '試合', camp: '合宿', expedition: '遠征', off: 'OFF', other: 'その他' };
 
 function lineEventMsg(ev: SchEvent, oldType?: string, isNew?: boolean): string {
-  const label = ev.label ?? (ev.matches?.[0]?.opponentName ? `vs ${ev.matches[0].opponentName}` : '');
+  const opponents = (ev.matches && ev.matches.length > 0)
+    ? [...new Set(ev.matches.map(m => m.opponentName).filter((n): n is string => !!n))]
+    : (ev.opponentName ? [ev.opponentName] : []);
+  const oppStr = opponents.length > 0 ? `vs ${opponents.join('・')}` : '';
+  const label = [ev.label, oppStr].filter(Boolean).join(' ');
   const typeChanged = oldType && oldType !== ev.type;
   const typeStr = typeChanged ? `${TYPE_LABEL[oldType] ?? oldType}→${TYPE_LABEL[ev.type] ?? ev.type}` : (TYPE_LABEL[ev.type] ?? ev.type);
   const header = isNew ? `⚽ 【SCH】イベント追加` : `⚽ 【SCH】イベント更新`;
