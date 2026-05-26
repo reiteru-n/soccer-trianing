@@ -904,7 +904,7 @@ function EventForm({
             {/* Meeting info (match / camp / other) */}
             {(type === 'match' || type === 'camp' || type === 'other') && (
               <div className="space-y-3 border-t border-white/10 pt-3">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">🚩 集合情報（任意）</p>
+                <p className="text-xs font-bold text-sky-400/70 uppercase tracking-wider">🚩 集合情報（任意）</p>
                 <div className="flex gap-2">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
@@ -1052,7 +1052,7 @@ function EventForm({
               {images.length < 5 && (
                 <div className="flex gap-2">
                   <button type="button" onClick={() => imgFileRef.current?.click()}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-2.5 text-xs text-slate-400 hover:border-slate-400 transition-colors cursor-pointer">
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-2.5 text-xs text-sky-400/60 hover:border-sky-400/60 transition-colors cursor-pointer">
                     🗂️ ファイルを選択
                   </button>
                   <button type="button" onClick={async () => {
@@ -1072,7 +1072,7 @@ function EventForm({
                       alert('クリップボードに画像がありません');
                     } catch { alert('クリップボードへのアクセスが許可されていません'); }
                   }}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-2.5 text-xs text-slate-400 hover:border-slate-400 transition-colors cursor-pointer">
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-2.5 text-xs text-sky-400/60 hover:border-sky-400/60 transition-colors cursor-pointer">
                     📋 貼り付け
                   </button>
                 </div>
@@ -1090,7 +1090,7 @@ function EventForm({
               <input type="checkbox" checked={notifyLine} onChange={e => setNotifyLine(e.target.checked)} className="w-4 h-4 accent-green-500" />
               <span className="text-sm text-slate-300">💬 LINE通知</span>
             </label>
-            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all">保存</button>
+            <button type="submit" className="w-full bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-400 hover:to-cyan-500 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all">保存</button>
           </form>
         </div>
       </div>
@@ -1104,7 +1104,7 @@ function EventImageGallery({ images }: { images: string[] }) {
   return (
     <>
       <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">📷 添付画像</p>
+        <p className="text-[10px] font-bold text-sky-400/70 uppercase tracking-wider mb-1.5">📷 添付画像</p>
         <div className="flex gap-2 overflow-x-auto pb-1">
           {images.map((src, i) => (
             <button key={i} type="button" onClick={(e) => { e.stopPropagation(); setLightbox(i); }}
@@ -1260,7 +1260,7 @@ function EventCard({
           {event.type === 'match' && eventMatches.map((m, i) => (
             <div key={m.id} className={i > 0 ? 'border-t border-white/10 pt-3' : ''}>
               {(matchCount > 1 || m.roundName) && (
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                <p className="text-[10px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">
                   {matchCount > 1 ? `試合 ${i + 1}${m.dayNumber && m.dayNumber > 1 ? ` (${m.dayNumber}日目)` : ''}` : ''}
                   {m.roundName ? `${matchCount > 1 ? ' — ' : ''}${m.roundName}` : ''}
                 </p>
@@ -1644,7 +1644,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
     <div className="space-y-3">
       <button
         onClick={() => { setEditing(null); setShowForm(true); }}
-        className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+        className="w-full bg-gradient-to-r from-sky-500 to-cyan-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
       >
         <span className="text-lg">＋</span> 予定を追加
       </button>
@@ -1655,7 +1655,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`flex-1 py-1.5 rounded-lg border font-semibold transition-colors text-center ${filter === key ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white'}`}
+            className={`flex-1 py-1.5 rounded-lg border font-semibold transition-colors text-center ${filter === key ? 'bg-sky-600/60 border-sky-500/60 text-white' : 'border-slate-600 text-slate-400 hover:border-sky-500/40 hover:text-white'}`}
           >
             <div className="text-sm leading-none">{icon}</div>
             <div className="text-[9px] leading-tight mt-0.5">{label}</div>
@@ -1713,7 +1713,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
       )}
       {upcoming.length > 0 && (
         <details open>
-          <summary className="text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer select-none mb-2 list-none flex items-center gap-1">
+          <summary className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider cursor-pointer select-none mb-2 list-none flex items-center gap-1">
             <span>📅 全予定 ({upcoming.length}件)</span>
           </summary>
           <div className="space-y-2 mt-2">
@@ -2006,7 +2006,7 @@ function VideoTile({ v, onDelete, onEditThumb, groupIndex }: { v: VideoItem; onD
   const won = v.score ? v.score.home > v.score.away : null;
   const drew = v.score ? v.score.home === v.score.away : null;
   return (
-    <div className="bg-slate-800/80 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/30 transition-colors">
+    <div className="bg-slate-800/80 border border-white/10 rounded-xl overflow-hidden hover:border-sky-500/30 transition-colors">
       {/* サムネイルエリア（複数なら横分割） */}
       <div className="aspect-video flex">
         {v.entries.map((entry, i) => (
@@ -2280,10 +2280,10 @@ function VideoSection({
 
       {/* 投稿ボタン */}
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">🎬 動画ライブラリ</p>
+        <p className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider">🎬 動画ライブラリ</p>
         <button
           onClick={() => setShowForm(p => !p)}
-          className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+          className="flex items-center gap-1 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
         >
           ＋ 動画を投稿
         </button>
@@ -2352,12 +2352,12 @@ function VideoSection({
             ) : (
               <div className="flex gap-2">
                 <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-4 cursor-pointer hover:border-slate-400 transition-colors text-center">
+                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-4 cursor-pointer hover:border-sky-400/60 transition-colors text-center">
                   <span className="text-xl">🗂️</span>
                   <p className="text-xs text-slate-400">ファイルを選択</p>
                 </button>
                 <button type="button" onClick={() => pasteFromClipboard(d => setFormThumb(d))}
-                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-4 cursor-pointer hover:border-slate-400 transition-colors text-center">
+                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-4 cursor-pointer hover:border-sky-400/60 transition-colors text-center">
                   <span className="text-xl">📋</span>
                   <p className="text-xs text-slate-400">貼り付け</p>
                 </button>
@@ -2376,7 +2376,7 @@ function VideoSection({
             />
           </div>
           <div className="flex gap-2 pt-1">
-            <button onClick={handlePost} disabled={!formUrl.trim()} className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">
+            <button onClick={handlePost} disabled={!formUrl.trim()} className="flex-1 bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">
               投稿する
             </button>
             <button onClick={() => { setShowForm(false); setFormThumb(null); }} className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold py-2.5 rounded-xl transition-colors">
@@ -2435,12 +2435,12 @@ function VideoSection({
             ) : (
               <div className="flex gap-2">
                 <button type="button" onClick={() => editFileInputRef.current?.click()}
-                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-4 cursor-pointer hover:border-slate-400 transition-colors text-center">
+                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-4 cursor-pointer hover:border-sky-400/60 transition-colors text-center">
                   <span className="text-xl">🗂️</span>
                   <p className="text-xs text-slate-400">ファイルを選択</p>
                 </button>
                 <button type="button" onClick={() => pasteFromClipboard(d => setEditThumbData(d))}
-                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 py-4 cursor-pointer hover:border-slate-400 transition-colors text-center">
+                  className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-4 cursor-pointer hover:border-sky-400/60 transition-colors text-center">
                   <span className="text-xl">📋</span>
                   <p className="text-xs text-slate-400">貼り付け</p>
                 </button>
@@ -2453,7 +2453,7 @@ function VideoSection({
                 e.target.value = '';
               }} />
             <div className="flex gap-2 pt-1">
-              <button onClick={saveEditThumb} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">保存</button>
+              <button onClick={saveEditThumb} className="flex-1 bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">保存</button>
               <button onClick={() => { setEditThumbUrl(null); setEditThumbData(null); }} className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold py-2.5 rounded-xl transition-colors">キャンセル</button>
             </div>
           </div>
@@ -2560,12 +2560,12 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
   return (
     <div className="space-y-4">
       {/* Sub-tabs */}
-      <div className="flex bg-slate-800/60 rounded-xl p-1 border border-white/10">
+      <div className="flex bg-white/5 backdrop-blur rounded-xl p-1 border border-white/10">
         {statTabs.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setStatTab(key)}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${statTab === key ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-300'}`}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${statTab === key ? 'bg-gradient-to-b from-sky-500/50 to-cyan-600/50 text-sky-50 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
           >
             {label}
           </button>
@@ -2708,7 +2708,7 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
 
       {/* ── 試合結果サマリー一覧 ── */}
       <div>
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">📋 試合結果一覧</p>
+        <p className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-3">📋 試合結果一覧</p>
         <div className="space-y-2">
           {events
             .filter(e => e.type === 'match')
@@ -2799,7 +2799,7 @@ function ParkingHistorySection({
 
   return (
     <details className="group" open>
-      <summary className="text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer list-none flex items-center gap-1.5 select-none">
+      <summary className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider cursor-pointer list-none flex items-center gap-1.5 select-none">
         <span className="transition-transform group-open:rotate-90 inline-block">▶</span>
         🕐 駐車場利用履歴
       </summary>
@@ -2820,7 +2820,7 @@ function ParkingHistorySection({
                 <span className="text-xs text-white font-medium truncate flex-1">{evLabel(ev)}</span>
                 {isAdmin && isEditing ? (
                   <div className="flex gap-1 flex-shrink-0">
-                    <button onClick={() => saveEdit(ev.id)} className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded font-bold">保存</button>
+                    <button onClick={() => saveEdit(ev.id)} className="text-[10px] bg-sky-600 text-white px-2 py-0.5 rounded font-bold">保存</button>
                     <button onClick={() => setEditingId(null)} className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded border border-slate-600">取消</button>
                   </div>
                 ) : isAdmin ? (
@@ -2958,7 +2958,7 @@ function ParkingCommentForm({
               className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500 resize-none" />
           </div>
           <button type="button" disabled={!memberId} onClick={handleSubmit}
-            className="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-700 text-white disabled:opacity-40 active:scale-95 transition-transform">
+            className="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-sky-500 to-cyan-600 text-white disabled:opacity-40 active:scale-95 transition-transform">
             送信
           </button>
         </div>
@@ -2988,14 +2988,14 @@ function ParkingCommentSection({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+        <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider flex items-center gap-1.5">
           💬 駐車場連絡
           {unresolved.length > 0 && (
             <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">{unresolved.length}</span>
           )}
         </h2>
         <button onClick={() => setShowForm(true)}
-          className="text-xs text-blue-400 hover:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:border-blue-400/50">
+          className="text-xs text-sky-400 hover:text-sky-200 px-3 py-1.5 rounded-lg border border-sky-500/30 hover:border-sky-400/50">
           ＋ 連絡を追加
         </button>
       </div>
@@ -3171,7 +3171,7 @@ function HomeSection({
     <div className="space-y-5">
       {/* Next event */}
       <div>
-        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">次の予定</h2>
+        <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">次の予定</h2>
         {nextEvent ? (
           <div className={`rounded-2xl border ${tc(nextEvent.type).border} ${tc(nextEvent.type).bg} overflow-hidden`}>
             <div className="flex">
@@ -3263,7 +3263,7 @@ function HomeSection({
       {/* Next next event */}
       {nextNextEvent && (
         <div>
-          <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">次の次の予定</h2>
+          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">次の次の予定</h2>
           <div
             className={`rounded-2xl border ${tc(nextNextEvent.type).border} ${tc(nextNextEvent.type).bg} overflow-hidden cursor-pointer active:opacity-80`}
             onClick={() => onGoToEvent(nextNextEvent.id)}
@@ -3339,9 +3339,9 @@ function HomeSection({
         return (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">📢 最近のお知らせ</h2>
+              <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider">📢 最近のお知らせ</h2>
               {hasMore && (
-                <button onClick={onGoToAnnounce} className="text-[10px] text-purple-400 hover:text-purple-300">
+                <button onClick={onGoToAnnounce} className="text-[10px] text-sky-400 hover:text-sky-300">
                   すべて見る →
                 </button>
               )}
@@ -3371,9 +3371,9 @@ function HomeSection({
                         {a.content && <p className={`text-xs text-slate-300 mt-0.5 whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}>{a.content}</p>}
                         {isExpanded && a.checkItems && a.checkItems.length > 0 && <CheckList items={a.checkItems} announcementId={a.id} />}
                         {isExpanded && a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
-                        {isExpanded && a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
+                        {isExpanded && a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-400 hover:underline mt-1 block truncate">{a.url}</a>}
                         {!isExpanded && a.checkItems && a.checkItems.length > 0 && <p className="text-xs text-amber-300 mt-0.5">🎒 持ち物リストあり（{a.checkItems.length}件）</p>}
-                        {!isExpanded && a.url && isInstagramUrl(a.url) && <p className="text-xs text-indigo-400 mt-0.5">📸 Instagram投稿あり</p>}
+                        {!isExpanded && a.url && isInstagramUrl(a.url) && <p className="text-xs text-sky-400 mt-0.5">📸 Instagram投稿あり</p>}
                       </div>
                       {hasDetail && !isExpandedInstagram && (
                         <button
@@ -3389,7 +3389,7 @@ function HomeSection({
               })}
               {hasMore && (
                 <button onClick={onGoToAnnounce}
-                  className="w-full text-xs py-2.5 rounded-xl border border-dashed border-slate-600 text-slate-400 hover:text-purple-300 hover:border-purple-500/50 transition-colors">
+                  className="w-full text-xs py-2.5 rounded-xl border border-dashed border-sky-500/30 text-sky-400/60 hover:text-sky-200 hover:border-sky-400/60 transition-colors">
                   他 {announcements.length - shown.length} 件のお知らせを見る
                 </button>
               )}
@@ -3408,7 +3408,7 @@ function HomeSection({
 
       {/* Parking forecast */}
       <div>
-        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">🅿️ 駐車場予定</h2>
+        <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">🅿️ 駐車場予定</h2>
         {sortedMembers.length === 0 ? (
           <p className="text-center text-slate-400 text-sm py-4">メンバーを登録してください</p>
         ) : parkingPlan.length === 0 ? (
@@ -3444,7 +3444,7 @@ function HomeSection({
       {/* Nearby parking */}
       {nearbyParking.length > 0 && (
         <div>
-          <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">🗺️ 近隣駐車場</h2>
+          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">🗺️ 近隣駐車場</h2>
           <div className="space-y-2">
             {nearbyParking.map(p => (
               <div key={p.id} className="bg-slate-800/60 border border-white/10 rounded-xl px-4 py-3">
@@ -3475,7 +3475,7 @@ function HomeSection({
 
       {/* 戦歴バナー */}
       <Link href="/sch/history"
-        className="flex items-center gap-3 bg-gradient-to-r from-blue-700 to-blue-500 rounded-2xl px-4 py-3 shadow hover:from-blue-800 hover:to-blue-600 transition-all active:scale-95"
+        className="flex items-center gap-3 bg-gradient-to-r from-sky-600 to-cyan-500 rounded-2xl px-4 py-3 shadow hover:from-sky-700 hover:to-cyan-600 transition-all active:scale-95"
       >
         <span className="text-2xl">🏆</span>
         <div className="flex-1">
@@ -3682,7 +3682,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
 
   return (
     <div className="space-y-3">
-      <button onClick={() => setShowForm(true)} className="w-full bg-gradient-to-r from-purple-600 to-violet-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
+      <button onClick={() => setShowForm(true)} className="w-full bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
         <span className="text-lg">＋</span> 連絡を投稿
       </button>
       {showForm && (
@@ -3721,7 +3721,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
                               key={ev.id}
                               type="button"
                               onClick={() => handleSelectEvent(ev)}
-                              className="w-full text-left text-xs px-3 py-2 rounded-lg bg-slate-700/60 hover:bg-purple-700/40 border border-transparent hover:border-purple-500/50 text-slate-300 hover:text-white transition-colors flex items-center gap-2"
+                              className="w-full text-left text-xs px-3 py-2 rounded-lg bg-slate-700/60 hover:bg-sky-700/40 border border-transparent hover:border-sky-500/50 text-slate-300 hover:text-white transition-colors flex items-center gap-2"
                             >
                               <span>{tc(ev.type).icon}</span>
                               <span className="truncate">{label}</span>
@@ -3732,7 +3732,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
                           <button
                             type="button"
                             onClick={() => setShowAllEvents(true)}
-                            className="w-full text-xs py-1.5 text-slate-500 hover:text-purple-400 transition-colors"
+                            className="w-full text-xs py-1.5 text-slate-500 hover:text-sky-400 transition-colors"
                           >
                             もっと見る（あと {upcoming.length - 2} 件）
                           </button>
@@ -3798,7 +3798,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">🔗 投稿URL <span className="font-normal text-slate-500">（Instagram リンク等）</span></label><input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.instagram.com/p/..." className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500" /></div>
                 <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={important} onChange={e => setImportant(e.target.checked)} className="w-4 h-4 accent-red-500" /><span className="text-sm text-slate-300">🔴 重要な連絡としてマーク</span></label>
                 <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={notifyLine} onChange={e => setNotifyLine(e.target.checked)} className="w-4 h-4 accent-green-500" /><span className="text-sm text-slate-300">💬 LINE通知</span></label>
-                <button type="submit" className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl text-sm">投稿</button>
+                <button type="submit" className="w-full bg-gradient-to-r from-sky-500 to-cyan-600 text-white font-bold py-3 rounded-xl text-sm">投稿</button>
               </form>
             </div>
           </div>
@@ -3820,7 +3820,7 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
                     <CheckList items={a.checkItems} announcementId={a.id} />
                   )}
                   {a.url && isInstagramUrl(a.url) && <InstagramEmbed url={a.url} />}
-                  {a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline mt-1 block truncate">{a.url}</a>}
+                  {a.url && !isInstagramUrl(a.url) && <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-400 hover:underline mt-1 block truncate">{a.url}</a>}
                 </div>
                 <div className="flex flex-col gap-1"><button onClick={() => openEdit(a)} className="text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-700">編集</button><button onClick={() => handleDelete(a.id)} className="text-xs text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700">削除</button></div>
               </div>
@@ -3944,8 +3944,8 @@ function MemberSection({
       {/* Member list */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">メンバー</h2>
-          <button onClick={() => setShowMemberForm(true)} className="text-xs text-blue-400 hover:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:border-blue-400/50">＋ 追加</button>
+          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider">メンバー</h2>
+          <button onClick={() => setShowMemberForm(true)} className="text-xs text-sky-400 hover:text-sky-200 px-3 py-1.5 rounded-lg border border-sky-500/30 hover:border-sky-400/50">＋ 追加</button>
         </div>
         <p className="text-xs text-slate-500 mb-2">背番号順 ＝ 🅿️ 駐車場順</p>
         {sorted.length === 0 ? (
@@ -3979,7 +3979,7 @@ function MemberSection({
       {/* Parking rotation — admin only */}
       {isAdmin && (
         <div>
-          <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">🅿️ ローテーション管理</h2>
+          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">🅿️ ローテーション管理</h2>
           <div className="bg-slate-800/60 border border-white/10 rounded-xl p-4 space-y-3">
             <div>
               <p className="text-xs text-slate-400">次の割当開始</p>
@@ -4000,7 +4000,7 @@ function MemberSection({
                       const nr = n > 0 ? ((i - (pastConsumed % n)) % n + n) % n : 0;
                       setRotationConfirm({ index: i, memberName: `#${m.number} ${m.nameKana || m.name}`, newRotation: nr });
                     }}
-                    className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${nextParkingEntry?.rotationStartIndex === i ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-white'}`}
+                    className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${nextParkingEntry?.rotationStartIndex === i ? 'bg-sky-600/60 border-sky-500/60 text-white' : 'border-slate-600 text-slate-400 hover:border-sky-500/40 hover:text-white'}`}
                   >
                     #{m.number}
                   </button>
@@ -4033,7 +4033,7 @@ function MemberSection({
                   onAddAnnouncement?.(ann);
                   setRotationConfirm(null);
                 }}
-                className="w-full py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-700 text-white"
+                className="w-full py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-sky-500 to-cyan-600 text-white"
               >
                 変更して連絡に追加
               </button>
@@ -4054,8 +4054,8 @@ function MemberSection({
       {/* Nearby parking */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">🗺️ 近隣駐車場</h2>
-          <button onClick={() => setShowParkingForm(true)} className="text-xs text-blue-400 hover:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-500/30 hover:border-blue-400/50">＋ 追加</button>
+          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider">🗺️ 近隣駐車場</h2>
+          <button onClick={() => setShowParkingForm(true)} className="text-xs text-sky-400 hover:text-sky-200 px-3 py-1.5 rounded-lg border border-sky-500/30 hover:border-sky-400/50">＋ 追加</button>
         </div>
         {nearbyParking.length === 0 ? (
           <p className="text-center text-slate-400 text-sm py-4">近隣駐車場が登録されていません</p>
@@ -4087,7 +4087,7 @@ function MemberSection({
 
       {/* Team logo */}
       <div>
-        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">🏅 チームロゴ</h2>
+        <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">🏅 チームロゴ</h2>
         <div className="bg-slate-800/60 border border-white/10 rounded-xl p-4 space-y-3">
           {teamLogo ? (
             <div className="flex items-center gap-4">
@@ -4213,7 +4213,7 @@ function MemberSection({
                     {mParents.length === 0 && <p className="text-xs text-slate-500">保護者情報なし</p>}
                   </div>
                 </div>
-                <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-sm">保存</button>
+                <button type="submit" className="w-full bg-gradient-to-r from-sky-500 to-cyan-600 text-white font-bold py-3 rounded-xl text-sm">保存</button>
               </form>
             </div>
           </div>
@@ -4231,7 +4231,7 @@ function MemberSection({
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">📍 住所</label><input type="text" value={pAddress} onChange={e => setPAddress(e.target.value)} placeholder="例: 横浜市○○区..." className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">🗺️ Google マップ URL</label><input type="url" value={pMapsUrl} onChange={e => setPMapsUrl(e.target.value)} placeholder="https://maps.google.com/..." className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">📝 メモ</label><input type="text" value={pNote} onChange={e => setPNote(e.target.value)} placeholder="料金・台数など" className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-blue-400 focus:outline-none placeholder-slate-500" /></div>
-                <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-sm">保存</button>
+                <button type="submit" className="w-full bg-gradient-to-r from-sky-500 to-cyan-600 text-white font-bold py-3 rounded-xl text-sm">保存</button>
               </form>
             </div>
           </div>
@@ -4555,7 +4555,7 @@ export default function SchPage() {
             ) : (
               <Image src="/sch-logo.png" alt="SCH FC" width={175} height={215} className="object-contain h-14 w-auto" />
             )}
-            <h1 className="text-2xl font-extrabold text-white drop-shadow">SCH Info</h1>
+            <h1 className="text-2xl font-extrabold bg-gradient-to-r from-sky-300 to-cyan-200 bg-clip-text text-transparent drop-shadow">SCH Info</h1>
           </div>
           <div className="flex flex-col items-end gap-1">
             <span className="text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
@@ -4580,7 +4580,7 @@ export default function SchPage() {
                       ? 'text-white bg-green-700 border-green-600 active:bg-red-800 active:border-red-600'
                       : pushState === 'denied'
                       ? 'text-slate-500 border-slate-700 cursor-not-allowed opacity-50'
-                      : 'text-slate-400 border-slate-700 hover:text-slate-200 hover:border-slate-500'
+                      : 'text-sky-400/70 border-sky-600/30 hover:text-sky-100 hover:border-sky-500/50'
                   }`}
                   title={pushState === 'subscribed' ? '通知ON（タップでOFF）' : pushState === 'denied' ? 'ブラウザの設定から通知を許可してください' : '通知OFF（タップでON）'}
                   disabled={pushState === 'denied' || pushBusy}
@@ -4606,7 +4606,7 @@ export default function SchPage() {
                     window.open(`https://calendar.google.com/calendar/r?cid=${encodeURIComponent('webcal://soccer-trianing.vercel.app/api/sch/calendar')}`, '_blank');
                   }
                 }}
-                className="text-[10px] whitespace-nowrap text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
+                className="text-[10px] whitespace-nowrap text-sky-400/70 hover:text-sky-100 border border-sky-600/30 hover:border-sky-500/50 px-2.5 py-1 rounded-lg transition-colors"
                 title="予定をカレンダーに追加"
               >
                 📅 カレンダー追加
@@ -4614,7 +4614,7 @@ export default function SchPage() {
               {isAdmin && (
                 <a
                   href="/sch/admin"
-                  className="text-[10px] whitespace-nowrap text-slate-400 hover:text-slate-200 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg transition-colors"
+                  className="text-[10px] whitespace-nowrap text-sky-400/70 hover:text-sky-100 border border-sky-600/30 hover:border-sky-500/50 px-2.5 py-1 rounded-lg transition-colors"
                 >
                   🔍 管理
                 </a>
@@ -4623,24 +4623,24 @@ export default function SchPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 mt-3 flex-wrap">
-          <Link href="/sch/history" className="flex items-center gap-1.5 text-[10px] text-slate-300 hover:text-white border border-slate-600 hover:border-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+          <Link href="/sch/history" className="flex items-center gap-1.5 text-[10px] text-sky-300/80 hover:text-white border border-sky-500/30 hover:border-sky-400/60 bg-sky-900/20 hover:bg-sky-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
             🏆 戦歴
           </Link>
-          <Link href="/sch/ob" className="flex items-center gap-1.5 text-[10px] text-slate-300 hover:text-white border border-slate-600 hover:border-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+          <Link href="/sch/ob" className="flex items-center gap-1.5 text-[10px] text-sky-300/80 hover:text-white border border-sky-500/30 hover:border-sky-400/60 bg-sky-900/20 hover:bg-sky-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
             ⚽ OB進路
           </Link>
-          <Link href="/sch/kanagawa" className="flex items-center gap-1.5 text-[10px] text-slate-300 hover:text-white border border-slate-600 hover:border-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+          <Link href="/sch/kanagawa" className="flex items-center gap-1.5 text-[10px] text-sky-300/80 hover:text-white border border-sky-500/30 hover:border-sky-400/60 bg-sky-900/20 hover:bg-sky-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
             📊 神奈川県推移
           </Link>
         </div>
       </header>
 
-      <div className="flex bg-slate-800/60 rounded-xl p-1 mb-5 border border-white/10">
+      <div className="flex bg-white/5 backdrop-blur rounded-xl p-1 mb-5 border border-white/10">
         {tabs.map(({ key, label, icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all ${tab === key ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-300'}`}
+            className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all ${tab === key ? 'bg-gradient-to-b from-sky-500/50 to-cyan-600/50 text-sky-50 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
           >
             <span className="text-base leading-tight">{icon}</span>
             <span className="text-[9px] font-semibold leading-tight mt-0.5">{label}</span>
@@ -4666,7 +4666,7 @@ export default function SchPage() {
           return `${t.getMonth() + 1}/${t.getDate()} ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
         };
         return (
-          <div className="mb-4 rounded-2xl bg-slate-800/70 border border-white/10 overflow-hidden">
+          <div className="mb-4 rounded-2xl bg-sky-950/50 border border-sky-500/20 overflow-hidden">
             <button
               className="w-full flex items-center gap-3 px-4 py-3 text-left"
               onClick={() => setHistoryOpen(o => !o)}
@@ -4769,7 +4769,7 @@ export default function SchPage() {
                   }}
                 >編集のみ保存</button>
                 <button
-                  className="flex-1 py-3 text-sm font-bold text-white bg-purple-600/30 hover:bg-purple-600/50 transition-colors"
+                  className="flex-1 py-3 text-sm font-bold text-white bg-sky-600/30 hover:bg-sky-600/50 transition-colors"
                   onClick={() => {
                     const { editEntries, autoEntries, baseHistory, memo, newEvents, newAnnouncements } = historyModal;
                     if (newEvents) post({ events: newEvents }, true);
