@@ -120,8 +120,10 @@ function VideoThumb({ url }: { url: string }) {
 }
 
 // --- 視聴UI 行 ---
+// href が指定されている場合はYouTube外部リンク（試合以外カテゴリ）
+// href がない場合はアプリ内プレイヤーを開くボタン（試合カテゴリ）
 function VideoRow({
-  url, description, stat, pinned, onView, editMode, onEdit, onDelete, onTogglePin,
+  url, description, stat, pinned, onView, href, editMode, onEdit, onDelete, onTogglePin,
   readOnly,
 }: {
   url: string;
@@ -129,6 +131,7 @@ function VideoRow({
   stat?: VideoViewStat;
   pinned?: boolean;
   onView: () => void;
+  href?: string;
   editMode: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -145,25 +148,50 @@ function VideoRow({
         <span className="absolute top-1.5 right-1.5 z-10 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow shadow-amber-300/70 flex items-center gap-0.5">📌 PIN</span>
       )}
       {/* 左：サムネ 1/4 */}
-      <button
-        onClick={onView}
-        className="w-1/4 aspect-video flex-shrink-0 bg-slate-700 relative group text-left"
-        aria-label="動画を再生"
-      >
-        <VideoThumb url={url} />
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-active:opacity-100 transition-opacity">
-          <span className="text-white text-2xl">▶</span>
-        </div>
-      </button>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onView}
+          className="w-1/4 aspect-video flex-shrink-0 bg-slate-700 relative group"
+          aria-label="動画を再生"
+        >
+          <VideoThumb url={url} />
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-active:opacity-100 transition-opacity">
+            <span className="text-white text-2xl">▶</span>
+          </div>
+        </a>
+      ) : (
+        <button
+          onClick={onView}
+          className="w-1/4 aspect-video flex-shrink-0 bg-slate-700 relative group text-left"
+          aria-label="動画を再生"
+        >
+          <VideoThumb url={url} />
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-active:opacity-100 transition-opacity">
+            <span className="text-white text-2xl">▶</span>
+          </div>
+        </button>
+      )}
       {/* 右：説明 + メタ */}
       <div className="flex-1 min-w-0 flex flex-col">
         <div className="flex items-start">
-          <button
-            onClick={onView}
-            className="flex-1 min-w-0 px-3 py-2 text-left"
-          >
-            <p className="text-sm font-semibold text-gray-800 line-clamp-2 break-words">{description}</p>
-          </button>
+          {href ? (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onView}
+              className="flex-1 min-w-0 px-3 py-2 text-left"
+            >
+              <p className="text-sm font-semibold text-gray-800 line-clamp-2 break-words">{description}</p>
+            </a>
+          ) : (
+            <button onClick={onView} className="flex-1 min-w-0 px-3 py-2 text-left">
+              <p className="text-sm font-semibold text-gray-800 line-clamp-2 break-words">{description}</p>
+            </button>
+          )}
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); speak(description); }}
             className="flex-shrink-0 text-lg p-2 rounded-lg hover:bg-blue-100 active:bg-blue-200 mt-0.5 mr-1"
@@ -217,7 +245,8 @@ function CategoryBlock({
   category: VideoCategory;
   items: VideoItem[];
   stats: VideoViewStat[];
-  onView: (url: string, description: string) => void;
+  // isMatchCategory=true の場合は isMatch=true で呼び出す（アプリ内プレイヤーを開く）
+  onView: (url: string, description: string, isMatch: boolean) => void;
   editMode: boolean;
   onAdd: (categoryId: string) => void;
   onEdit: (id: string) => void;
@@ -232,7 +261,6 @@ function CategoryBlock({
   matchVideos: SchMatchVideo[];
 }) {
   const [open, setOpen] = useState(true);
-  // ピン留め優先 + 追加日時の新しい順（createdAtない場合はorderで代用）
   const sortedItems = useMemo(() => {
     const sortKey = (v: VideoItem) => v.createdAt ?? `0000-${String(v.order).padStart(10, '0')}`;
     return [...items].sort((a, b) => {
@@ -248,7 +276,7 @@ function CategoryBlock({
     return m;
   }, [stats]);
 
-  const isMatch = category.isMatchCategory;
+  const isMatch = !!category.isMatchCategory;
   const totalCount = sortedItems.length + (isMatch ? matchVideos.length : 0);
 
   return (
@@ -287,7 +315,10 @@ function CategoryBlock({
               description={item.description}
               stat={statByUrl.get(item.url)}
               pinned={item.pinned}
-              onView={() => onView(item.url, item.description)}
+              // 試合カテゴリ: href なし（ボタン→アプリ内プレイヤー）
+              // それ以外: href あり（リンク→YouTube外部）
+              href={isMatch ? undefined : item.url}
+              onView={() => onView(item.url, item.description, isMatch)}
               editMode={editMode}
               onEdit={() => onEdit(item.id)}
               onDelete={() => onDelete(item.id)}
@@ -300,7 +331,8 @@ function CategoryBlock({
               url={mv.url}
               description={mv.description}
               stat={statByUrl.get(mv.url)}
-              onView={() => onView(mv.url, mv.description)}
+              href={undefined}
+              onView={() => onView(mv.url, mv.description, true)}
               editMode={editMode}
               readOnly
             />
@@ -320,7 +352,48 @@ function CategoryBlock({
   );
 }
 
-// --- 動画プレイヤー モーダル ---
+// --- タイムスタンプ1行 ---
+function TimestampItem({
+  ts, onPlay, onDelete,
+}: {
+  ts: VideoTimestamp;
+  onPlay: (ts: VideoTimestamp) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
+      <button
+        onClick={() => onPlay(ts)}
+        className="flex-1 flex items-center gap-2 text-left"
+      >
+        <span className="text-blue-300 text-sm font-bold font-mono w-12 flex-shrink-0">{formatSeconds(ts.seconds)}</span>
+        <span className="text-white/80 text-xs flex-1 line-clamp-1">{ts.label || 'シーン'}</span>
+      </button>
+      <span className="text-yellow-400 text-xs font-bold flex-shrink-0">
+        👁 {ts.viewCount}
+      </span>
+      <button
+        onClick={() => onDelete(ts.id)}
+        className="text-white/20 active:text-red-400 text-xl leading-none flex-shrink-0 w-7 h-7 flex items-center justify-center"
+        aria-label="削除"
+      >×</button>
+    </div>
+  );
+}
+
+// --- スキップボタン設定（後退3 + 前進3）---
+const SKIP_BACK = [
+  { d: -20, icon: '⏮', label: '20' },
+  { d: -10, icon: '◀◀', label: '10' },
+  { d: -5,  icon: '◀',  label: '5'  },
+];
+const SKIP_FWD = [
+  { d: 5,   icon: '▶',  label: '5'  },
+  { d: 10,  icon: '▶▶', label: '10' },
+  { d: 20,  icon: '⏭',  label: '20' },
+];
+
+// --- 試合動画プレイヤー モーダル（試合カテゴリ専用）---
 function VideoPlayerModal({
   url,
   description,
@@ -342,6 +415,7 @@ function VideoPlayerModal({
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [pendingSeconds, setPendingSeconds] = useState<number | null>(null);
   const [pendingLabel, setPendingLabel] = useState('');
+  const [listOpen, setListOpen] = useState(true);
 
   const videoId = extractVideoId(url);
 
@@ -351,7 +425,12 @@ function VideoPlayerModal({
     const initPlayer = () => {
       playerRef.current = new window.YT.Player('yt-player-iframe', {
         videoId,
-        playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
+        playerVars: {
+          autoplay: 1,
+          playsinline: 1,
+          rel: 0,
+          controls: 0,  // YouTube UIを非表示にしてオーバーレイを抑制
+        },
         events: {
           onReady: () => setIsPlayerReady(true),
         },
@@ -385,8 +464,7 @@ function VideoPlayerModal({
 
   const handleRecord = () => {
     if (!playerRef.current) return;
-    const cur = playerRef.current.getCurrentTime();
-    setPendingSeconds(cur);
+    setPendingSeconds(playerRef.current.getCurrentTime());
     setPendingLabel('');
   };
 
@@ -397,121 +475,164 @@ function VideoPlayerModal({
     setPendingLabel('');
   };
 
-  const handleSeekToTimestamp = (ts: VideoTimestamp) => {
+  const handleSeek = (ts: VideoTimestamp) => {
     if (!playerRef.current) return;
     playerRef.current.seekTo(ts.seconds, true);
     playerRef.current.playVideo();
     onTimestampView(ts.id);
   };
 
-  return (
-    <div className="fixed inset-0 z-[200] bg-black flex flex-col">
-      {/* ヘッダー */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-black/80 flex-shrink-0">
-        <button onClick={onClose} className="text-white text-2xl leading-none w-9 h-9 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20">✕</button>
-        <p className="flex-1 text-white text-sm font-semibold line-clamp-1">{description}</p>
-      </div>
-
-      {/* YouTube プレイヤー領域 */}
-      <div className="w-full bg-black flex-shrink-0" style={{ aspectRatio: '16/9' }}>
-        {videoId ? (
-          <div id="yt-player-iframe" className="w-full h-full" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">
-            YouTube URLではありません
-          </div>
-        )}
-      </div>
-
-      {/* コントロール行 */}
-      <div className="flex items-center justify-center gap-3 px-4 py-3 bg-gray-900 flex-shrink-0">
-        <button
-          onClick={() => skip(-10)}
-          disabled={!isPlayerReady}
-          className="flex items-center gap-1 bg-gray-700 active:bg-gray-600 disabled:opacity-40 text-white text-sm font-bold px-4 py-2 rounded-xl"
-        >
-          ◀ 10秒
-        </button>
-        <button
-          onClick={handleRecord}
-          disabled={!isPlayerReady}
-          className="flex items-center gap-1 bg-red-600 active:bg-red-500 disabled:opacity-40 text-white text-sm font-bold px-4 py-2 rounded-xl"
-        >
-          ⏱ 記録する
-        </button>
-        <button
-          onClick={() => skip(10)}
-          disabled={!isPlayerReady}
-          className="flex items-center gap-1 bg-gray-700 active:bg-gray-600 disabled:opacity-40 text-white text-sm font-bold px-4 py-2 rounded-xl"
-        >
-          10秒 ▶
-        </button>
-      </div>
-
-      {/* 記録確定エリア */}
-      {pendingSeconds !== null && (
-        <div className="flex-shrink-0 bg-red-900/60 border-t border-red-500/40 px-4 py-3">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-red-200 text-sm font-bold">{formatSeconds(pendingSeconds)}</span>
-            <span className="text-red-300/70 text-xs">を記録中</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={pendingLabel}
-              onChange={e => setPendingLabel(e.target.value)}
-              placeholder="ラベル（任意）"
-              className="flex-1 bg-black/40 text-white placeholder-white/30 text-sm px-3 py-2 rounded-lg border border-white/20 focus:outline-none focus:border-red-400"
+  // タイムスタンプリスト（portrait/landscape共通）
+  const listContent = (compact: boolean) => (
+    <>
+      {timestamps.length === 0 ? (
+        <p className="text-white/30 text-xs text-center py-4">
+          「記録」ボタンでシーンを登録
+        </p>
+      ) : (
+        <div className={`space-y-1.5 ${compact ? '' : 'px-1'}`}>
+          {timestamps.map((ts) => (
+            <TimestampItem
+              key={ts.id}
+              ts={ts}
+              onPlay={handleSeek}
+              onDelete={onDeleteTimestamp}
             />
-            <button
-              onClick={handleAddToList}
-              className="bg-red-500 active:bg-red-400 text-white text-sm font-bold px-3 py-2 rounded-lg whitespace-nowrap"
-            >
-              リストに追加
-            </button>
-            <button
-              onClick={() => setPendingSeconds(null)}
-              className="text-white/50 active:text-white text-xl leading-none px-1"
-            >
-              ✕
-            </button>
-          </div>
+          ))}
         </div>
       )}
+    </>
+  );
 
-      {/* タイムスタンプ一覧 */}
-      <div className="flex-1 overflow-y-auto bg-gray-900">
-        {timestamps.length === 0 ? (
-          <p className="text-white/30 text-xs text-center py-6">
-            「記録する」ボタンでシーンを登録できます
-          </p>
-        ) : (
-          <div className="px-3 py-2 space-y-1.5">
-            <p className="text-white/50 text-[10px] font-semibold mb-2">タイムスタンプ一覧</p>
-            {timestamps.map((ts) => (
-              <div key={ts.id} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
-                <button
-                  onClick={() => handleSeekToTimestamp(ts)}
-                  className="flex-1 flex items-center gap-2 text-left"
-                >
-                  <span className="text-blue-300 text-sm font-bold font-mono w-12 flex-shrink-0">{formatSeconds(ts.seconds)}</span>
-                  <span className="text-white/80 text-xs flex-1 line-clamp-1">{ts.label || 'シーン'}</span>
-                </button>
-                <span className="text-yellow-400 text-xs font-bold flex-shrink-0 flex items-center gap-0.5">
-                  👁 {ts.viewCount}
-                </span>
-                <button
-                  onClick={() => onDeleteTimestamp(ts.id)}
-                  className="text-white/20 active:text-red-400 text-lg leading-none flex-shrink-0 px-1"
-                  aria-label="削除"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+  // 記録確定エリア（portrait/landscape共通）
+  const pendingArea = pendingSeconds !== null && (
+    <div className="flex-shrink-0 bg-red-900/60 border-t border-red-500/40 px-3 py-2">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-red-200 text-sm font-bold font-mono">{formatSeconds(pendingSeconds)}</span>
+        <span className="text-red-300/70 text-xs">を記録中</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={pendingLabel}
+          onChange={e => setPendingLabel(e.target.value)}
+          placeholder="ラベル（任意）"
+          className="flex-1 bg-black/40 text-white placeholder-white/30 text-sm px-3 py-1.5 rounded-lg border border-white/20 focus:outline-none focus:border-red-400 min-w-0"
+        />
+        <button
+          onClick={handleAddToList}
+          className="bg-red-500 active:bg-red-400 text-white text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap"
+        >
+          追加
+        </button>
+        <button
+          onClick={() => setPendingSeconds(null)}
+          className="text-white/40 active:text-white text-xl leading-none"
+        >✕</button>
+      </div>
+    </div>
+  );
+
+  // コントロール行（後退3 + 記録 + 前進3 = 7ボタン）
+  const skipBtnClass = (isBack: boolean) =>
+    "flex flex-col items-center justify-center gap-0 w-10 h-10 rounded-xl text-white disabled:opacity-30 active:scale-95 transition-transform " +
+    (isBack ? "bg-slate-700 active:bg-slate-600" : "bg-slate-700 active:bg-slate-600");
+
+  const controls = (
+    <div className="flex items-center justify-center gap-1 px-2 py-2 bg-gray-950 flex-shrink-0">
+      {SKIP_BACK.map(({ d, icon, label }) => (
+        <button key={d} onClick={() => skip(d)} disabled={!isPlayerReady} className={skipBtnClass(true)}>
+          <span className="text-[11px] leading-none">{icon}</span>
+          <span className="text-[9px] leading-none opacity-60">{label}s</span>
+        </button>
+      ))}
+      {/* 記録ボタン（中央） */}
+      <button
+        onClick={handleRecord}
+        disabled={!isPlayerReady}
+        className="flex flex-col items-center justify-center w-12 h-10 rounded-xl bg-red-700 active:bg-red-600 text-white disabled:opacity-30 active:scale-95 transition-transform mx-1"
+      >
+        <span className="text-base leading-none">⏱</span>
+        <span className="text-[9px] leading-none opacity-80">記録</span>
+      </button>
+      {SKIP_FWD.map(({ d, icon, label }) => (
+        <button key={d} onClick={() => skip(d)} disabled={!isPlayerReady} className={skipBtnClass(false)}>
+          <span className="text-[11px] leading-none">{icon}</span>
+          <span className="text-[9px] leading-none opacity-60">{label}s</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[200] bg-black flex flex-col landscape:flex-row">
+
+      {/* ===== 左カラム（portrait=全幅, landscape=3/4） ===== */}
+      <div className="flex flex-col landscape:flex-1 min-h-0">
+
+        {/* ヘッダー */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-950 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="text-white text-xl leading-none w-8 h-8 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 flex-shrink-0"
+          >✕</button>
+          <p className="flex-1 text-white/90 text-sm font-semibold line-clamp-1 min-w-0">{description}</p>
+        </div>
+
+        {/* YouTube プレイヤー */}
+        <div className="w-full bg-black flex-shrink-0 aspect-video landscape:flex-1 landscape:aspect-auto landscape:min-h-0">
+          {videoId ? (
+            <div id="yt-player-iframe" className="w-full h-full" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white/40 text-sm">
+              YouTube URLではありません
+            </div>
+          )}
+        </div>
+
+        {/* 7ボタンコントロール */}
+        {controls}
+
+        {/* 記録確定エリア（portrait/landscape共通、左カラムに表示） */}
+        {pendingArea}
+
+        {/* タイムスタンプリスト（portrait専用 → landscapeでは非表示） */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-gray-900 landscape:hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 flex-shrink-0">
+            <span className="text-white/60 text-xs font-bold">タイムスタンプ（{timestamps.length}件）</span>
+            <button
+              onClick={() => setListOpen(!listOpen)}
+              className="text-white/40 active:text-white text-xs px-2 py-1"
+            >
+              {listOpen ? '▲ 折りたたむ' : '▼ 開く'}
+            </button>
+          </div>
+          {listOpen && (
+            <div className="flex-1 overflow-y-auto px-3 py-2">
+              {listContent(false)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ===== 右カラム（landscapeのみ表示、1/4幅） ===== */}
+      <div className="hidden landscape:flex landscape:flex-col landscape:w-1/4 bg-gray-900 border-l border-white/10">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 flex-shrink-0">
+          <span className="text-white/60 text-xs font-bold">タイムスタンプ（{timestamps.length}件）</span>
+          <button
+            onClick={() => setListOpen(!listOpen)}
+            className="text-white/40 active:text-white text-xs px-2 py-1"
+          >
+            {listOpen ? '▲' : '▼'}
+          </button>
+        </div>
+        {listOpen && (
+          <div className="flex-1 overflow-y-auto px-2 py-2">
+            {listContent(true)}
           </div>
         )}
       </div>
+
     </div>
   );
 }
@@ -668,9 +789,13 @@ export default function VideosPage() {
     reorderVideoCategories(reordered.map((c, i) => ({ ...c, order: i + 1 })));
   };
 
-  const handleView = useCallback((url: string, description: string) => {
+  const handleView = useCallback((url: string, description: string, isMatch: boolean) => {
     recordVideoView(url);
-    setPlayerModal({ url, description });
+    // 試合カテゴリのみアプリ内プレイヤーを開く
+    if (isMatch) {
+      setPlayerModal({ url, description });
+    }
+    // それ以外は VideoRow の href で YouTube が外部で開く
   }, [recordVideoView]);
 
   const handleSaveVideo = (data: { categoryId: string; url: string; description: string }) => {
