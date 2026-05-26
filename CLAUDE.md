@@ -1,5 +1,29 @@
 # CLAUDE.md — プロジェクト記録
 
+## デザイン方針（個人ページ・チームページ共通）
+
+### カラースキーム
+- **ベース**: 青（sky-400/#38bdf8）・水色（cyan-400/#22d3ee）・白のグラデーション
+- **アクセント**: エメラルドグリーン（emerald-400/#34d399）
+- **背景**: ダークネイビー（slate-900〜gray-950）
+- **グラスモーフィズム**: `bg-white/5 backdrop-blur border border-white/10 rounded-xl`
+
+### アイコン方針
+- **使用サイト**: [icooon-mono.com](https://icooon-mono.com) からダウンロードしたSVGアイコン
+- **実装ファイル**: `components/AppIcons.tsx`（`HouseIcon`, `BallIcon`, `NoteIcon`, `RunnerIcon`, `ChartIcon`, `VideoIcon`, `CalendarIcon`, `BellIcon`, `PeopleIcon`, `PlayIcon`, `PlusIcon`, `CheckIcon`, `StarIcon`, `TimerIcon`, `TrophyIcon`, `BodyIcon`）
+- Props: `{ size?: number; className?: string }`、`fill="currentColor"`、`viewBox="0 0 24 24"`
+- **絵文字アイコンの使用禁止**: BottomNavなどUIのアイコンはSVGを使うこと（文章中の絵文字は許容）
+
+### CSS ユーティリティ（globals.css 定義済み）
+```css
+.glass-card   /* グラスモーフィズムカード */
+.glow-blue    /* 青いグロー shadow */
+.glow-green   /* 緑のグロー shadow */
+```
+CSS変数: `--color-primary`, `--color-secondary`, `--color-accent`, `--color-surface`, `--color-border`
+
+---
+
 ## このプロジェクトについて
 
 拓渡くんのサッカー練習記録アプリ（Next.js 16 / Vercel）。
