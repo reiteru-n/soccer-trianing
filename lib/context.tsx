@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat } from './types';
-import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, saveCustomMetrics, saveVideoCategories, saveVideos, saveVideoStats, generateId } from './storage';
+import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from './types';
+import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, saveCustomMetrics, saveVideoCategories, saveVideos, saveVideoStats, saveVideoTimestamps, generateId } from './storage';
 import { MILESTONES } from './data';
 
 interface AppContextType {
@@ -52,6 +52,10 @@ interface AppContextType {
   toggleVideoPin: (id: string) => void;
   videoStats: VideoViewStat[];
   recordVideoView: (url: string) => void;
+  videoTimestamps: VideoTimestamp[];
+  addVideoTimestamp: (videoUrl: string, seconds: number, label?: string) => void;
+  deleteVideoTimestamp: (id: string) => void;
+  recordTimestampView: (id: string) => void;
   isLoading: boolean;
 }
 
@@ -80,6 +84,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [videoCategories, setVideoCategories] = useState<VideoCategory[]>([]);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [videoStats, setVideoStats] = useState<VideoViewStat[]>([]);
+  const [videoTimestamps, setVideoTimestamps] = useState<VideoTimestamp[]>([]);
   const [newMilestoneAchieved, setNewMilestoneAchieved] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -97,6 +102,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setVideoCategories(data.videoCategories ?? []);
       setVideos(data.videos ?? []);
       setVideoStats(data.videoStats ?? []);
+      setVideoTimestamps(data.videoTimestamps ?? []);
       setIsLoading(false);
     }
     load();
@@ -340,6 +346,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const addVideoTimestamp = useCallback((videoUrl: string, seconds: number, label?: string) => {
+    const newTs: VideoTimestamp = {
+      id: 'vts_' + generateId(),
+      videoUrl,
+      seconds: Math.floor(seconds),
+      label,
+      viewCount: 0,
+      createdAt: new Date().toISOString(),
+    };
+    setVideoTimestamps((prev) => {
+      const updated = [...prev, newTs];
+      saveVideoTimestamps(updated);
+      return updated;
+    });
+  }, []);
+
+  const deleteVideoTimestamp = useCallback((id: string) => {
+    setVideoTimestamps((prev) => {
+      const updated = prev.filter((t) => t.id !== id);
+      saveVideoTimestamps(updated);
+      return updated;
+    });
+  }, []);
+
+  const recordTimestampView = useCallback((id: string) => {
+    const today = (() => {
+      const d = new Date();
+      return d.getFullYear()+"/"+(String(d.getMonth()+1).padStart(2,"0"))+"/"+(String(d.getDate()).padStart(2,"0"));
+    })();
+    setVideoTimestamps((prev) => {
+      const updated = prev.map((t) =>
+        t.id === id ? { ...t, viewCount: t.viewCount + 1, lastViewedAt: today } : t
+      );
+      saveVideoTimestamps(updated);
+      return updated;
+    });
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -355,6 +399,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         videoCategories, addVideoCategory, updateVideoCategory, deleteVideoCategory, reorderVideoCategories,
         videos, addVideo, updateVideo, deleteVideo, reorderVideos, toggleVideoPin,
         videoStats, recordVideoView,
+        videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView,
         isLoading,
       }}
     >

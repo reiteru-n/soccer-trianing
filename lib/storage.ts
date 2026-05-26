@@ -1,4 +1,4 @@
-import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat } from './types';
+import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from './types';
 import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS, INITIAL_VIDEO_CATEGORIES, INITIAL_VIDEOS } from './data';
 
 export function generateId(): string {
@@ -34,6 +34,7 @@ export interface AllData {
   videoCategories: VideoCategory[];
   videos: VideoItem[];
   videoStats: VideoViewStat[];
+  videoTimestamps: VideoTimestamp[];
 }
 
 export async function fetchAllData(): Promise<AllData> {
@@ -50,6 +51,7 @@ export async function fetchAllData(): Promise<AllData> {
       videoCategories: INITIAL_VIDEO_CATEGORIES,
       videos: INITIAL_VIDEOS,
       videoStats: [],
+      videoTimestamps: [],
     };
   }
   try {
@@ -67,6 +69,7 @@ export async function fetchAllData(): Promise<AllData> {
       videoCategories: data.videoCategories ?? INITIAL_VIDEO_CATEGORIES,
       videos: data.videos ?? INITIAL_VIDEOS,
       videoStats: data.videoStats ?? [],
+      videoTimestamps: data.videoTimestamps ?? [],
     };
   } catch {
     return {
@@ -81,6 +84,7 @@ export async function fetchAllData(): Promise<AllData> {
       videoCategories: INITIAL_VIDEO_CATEGORIES,
       videos: INITIAL_VIDEOS,
       videoStats: [],
+      videoTimestamps: [],
     };
   }
 }
@@ -104,6 +108,7 @@ export function saveCustomMetrics(metrics: CustomMetricDef[]): void { savePartia
 export function saveVideoCategories(cats: VideoCategory[]): void { savePartial({ videoCategories: cats }); }
 export function saveVideos(videos: VideoItem[]): void { savePartial({ videos }); }
 export function saveVideoStats(stats: VideoViewStat[]): void { savePartial({ videoStats: stats }); }
+export function saveVideoTimestamps(timestamps: VideoTimestamp[]): void { savePartial({ videoTimestamps: timestamps }); }
 
 export async function exportData(): Promise<void> {
   const data = await fetchAllData();

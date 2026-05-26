@@ -292,6 +292,17 @@ export interface SchUpdateHistory {
   tab: 'events' | 'announce';
 }
 
+// --- Video timestamps（タイムスタンプ記録・振り返り）---
+export interface VideoTimestamp {
+  id: string;
+  videoUrl: string;      // VideoItem.url と一致するキー
+  seconds: number;       // 再生位置（Math.floor で整数化）
+  label?: string;        // 任意のメモラベル
+  viewCount: number;     // このタイムスタンプを何回再生したか
+  lastViewedAt?: string; // 最終視聴日 yyyy/mm/dd
+  createdAt: string;     // ISO datetime
+}
+
 // Admin logs
 export interface AccessLogEntry {
   ts: string;   // ISO timestamp

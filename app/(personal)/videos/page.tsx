@@ -1,14 +1,51 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+// YouTube IFrame Player API 型宣言
+declare global {
+  interface Window {
+    YT: {
+      Player: new (
+        elementId: string,
+        options: {
+          videoId: string;
+          playerVars?: Record<string, string | number>;
+          events?: {
+            onReady?: (event: { target: YTPlayer }) => void;
+          };
+        }
+      ) => YTPlayer;
+    };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+interface YTPlayer {
+  getCurrentTime: () => number;
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  playVideo: () => void;
+  destroy: () => void;
+}
+
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
-import { VideoCategory, VideoItem, VideoViewStat } from '@/lib/types';
+import { VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from '@/lib/types';
 
 // --- helpers ---
 function getYoutubeThumbnail(url: string): string | null {
   const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null;
+}
+
+function extractVideoId(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function formatSeconds(s: number): string {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
 function useThumbnail(url: string): string | null | 'loading' {
@@ -108,31 +145,25 @@ function VideoRow({
         <span className="absolute top-1.5 right-1.5 z-10 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow shadow-amber-300/70 flex items-center gap-0.5">📌 PIN</span>
       )}
       {/* 左：サムネ 1/4 */}
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
+      <button
         onClick={onView}
-        className="w-1/4 aspect-video flex-shrink-0 bg-slate-700 relative group"
+        className="w-1/4 aspect-video flex-shrink-0 bg-slate-700 relative group text-left"
         aria-label="動画を再生"
       >
         <VideoThumb url={url} />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-active:opacity-100 transition-opacity">
           <span className="text-white text-2xl">▶</span>
         </div>
-      </a>
+      </button>
       {/* 右：説明 + メタ */}
       <div className="flex-1 min-w-0 flex flex-col">
         <div className="flex items-start">
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
             onClick={onView}
             className="flex-1 min-w-0 px-3 py-2 text-left"
           >
             <p className="text-sm font-semibold text-gray-800 line-clamp-2 break-words">{description}</p>
-          </a>
+          </button>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); speak(description); }}
             className="flex-shrink-0 text-lg p-2 rounded-lg hover:bg-blue-100 active:bg-blue-200 mt-0.5 mr-1"
@@ -186,7 +217,7 @@ function CategoryBlock({
   category: VideoCategory;
   items: VideoItem[];
   stats: VideoViewStat[];
-  onView: (url: string) => void;
+  onView: (url: string, description: string) => void;
   editMode: boolean;
   onAdd: (categoryId: string) => void;
   onEdit: (id: string) => void;
@@ -256,7 +287,7 @@ function CategoryBlock({
               description={item.description}
               stat={statByUrl.get(item.url)}
               pinned={item.pinned}
-              onView={() => onView(item.url)}
+              onView={() => onView(item.url, item.description)}
               editMode={editMode}
               onEdit={() => onEdit(item.id)}
               onDelete={() => onDelete(item.id)}
@@ -269,7 +300,7 @@ function CategoryBlock({
               url={mv.url}
               description={mv.description}
               stat={statByUrl.get(mv.url)}
-              onView={() => onView(mv.url)}
+              onView={() => onView(mv.url, mv.description)}
               editMode={editMode}
               readOnly
             />
@@ -286,6 +317,202 @@ function CategoryBlock({
         </div>
       )}
     </section>
+  );
+}
+
+// --- 動画プレイヤー モーダル ---
+function VideoPlayerModal({
+  url,
+  description,
+  timestamps,
+  onAddTimestamp,
+  onDeleteTimestamp,
+  onTimestampView,
+  onClose,
+}: {
+  url: string;
+  description: string;
+  timestamps: VideoTimestamp[];
+  onAddTimestamp: (seconds: number, label?: string) => void;
+  onDeleteTimestamp: (id: string) => void;
+  onTimestampView: (id: string) => void;
+  onClose: () => void;
+}) {
+  const playerRef = useRef<YTPlayer | null>(null);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [pendingSeconds, setPendingSeconds] = useState<number | null>(null);
+  const [pendingLabel, setPendingLabel] = useState('');
+
+  const videoId = extractVideoId(url);
+
+  useEffect(() => {
+    if (!videoId) return;
+
+    const initPlayer = () => {
+      playerRef.current = new window.YT.Player('yt-player-iframe', {
+        videoId,
+        playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
+        events: {
+          onReady: () => setIsPlayerReady(true),
+        },
+      });
+    };
+
+    if (window.YT && window.YT.Player) {
+      initPlayer();
+    } else {
+      window.onYouTubeIframeAPIReady = initPlayer;
+      if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+      }
+    }
+
+    return () => {
+      playerRef.current?.destroy();
+      playerRef.current = null;
+      setIsPlayerReady(false);
+    };
+  }, [videoId]);
+
+  const skip = (delta: number) => {
+    if (!playerRef.current) return;
+    const cur = playerRef.current.getCurrentTime();
+    playerRef.current.seekTo(Math.max(0, cur + delta), true);
+    playerRef.current.playVideo();
+  };
+
+  const handleRecord = () => {
+    if (!playerRef.current) return;
+    const cur = playerRef.current.getCurrentTime();
+    setPendingSeconds(cur);
+    setPendingLabel('');
+  };
+
+  const handleAddToList = () => {
+    if (pendingSeconds === null) return;
+    onAddTimestamp(pendingSeconds, pendingLabel.trim() || undefined);
+    setPendingSeconds(null);
+    setPendingLabel('');
+  };
+
+  const handleSeekToTimestamp = (ts: VideoTimestamp) => {
+    if (!playerRef.current) return;
+    playerRef.current.seekTo(ts.seconds, true);
+    playerRef.current.playVideo();
+    onTimestampView(ts.id);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] bg-black flex flex-col">
+      {/* ヘッダー */}
+      <div className="flex items-center gap-2 px-3 py-2 bg-black/80 flex-shrink-0">
+        <button onClick={onClose} className="text-white text-2xl leading-none w-9 h-9 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20">✕</button>
+        <p className="flex-1 text-white text-sm font-semibold line-clamp-1">{description}</p>
+      </div>
+
+      {/* YouTube プレイヤー領域 */}
+      <div className="w-full bg-black flex-shrink-0" style={{ aspectRatio: '16/9' }}>
+        {videoId ? (
+          <div id="yt-player-iframe" className="w-full h-full" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">
+            YouTube URLではありません
+          </div>
+        )}
+      </div>
+
+      {/* コントロール行 */}
+      <div className="flex items-center justify-center gap-3 px-4 py-3 bg-gray-900 flex-shrink-0">
+        <button
+          onClick={() => skip(-10)}
+          disabled={!isPlayerReady}
+          className="flex items-center gap-1 bg-gray-700 active:bg-gray-600 disabled:opacity-40 text-white text-sm font-bold px-4 py-2 rounded-xl"
+        >
+          ◀ 10秒
+        </button>
+        <button
+          onClick={handleRecord}
+          disabled={!isPlayerReady}
+          className="flex items-center gap-1 bg-red-600 active:bg-red-500 disabled:opacity-40 text-white text-sm font-bold px-4 py-2 rounded-xl"
+        >
+          ⏱ 記録する
+        </button>
+        <button
+          onClick={() => skip(10)}
+          disabled={!isPlayerReady}
+          className="flex items-center gap-1 bg-gray-700 active:bg-gray-600 disabled:opacity-40 text-white text-sm font-bold px-4 py-2 rounded-xl"
+        >
+          10秒 ▶
+        </button>
+      </div>
+
+      {/* 記録確定エリア */}
+      {pendingSeconds !== null && (
+        <div className="flex-shrink-0 bg-red-900/60 border-t border-red-500/40 px-4 py-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-red-200 text-sm font-bold">{formatSeconds(pendingSeconds)}</span>
+            <span className="text-red-300/70 text-xs">を記録中</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={pendingLabel}
+              onChange={e => setPendingLabel(e.target.value)}
+              placeholder="ラベル（任意）"
+              className="flex-1 bg-black/40 text-white placeholder-white/30 text-sm px-3 py-2 rounded-lg border border-white/20 focus:outline-none focus:border-red-400"
+            />
+            <button
+              onClick={handleAddToList}
+              className="bg-red-500 active:bg-red-400 text-white text-sm font-bold px-3 py-2 rounded-lg whitespace-nowrap"
+            >
+              リストに追加
+            </button>
+            <button
+              onClick={() => setPendingSeconds(null)}
+              className="text-white/50 active:text-white text-xl leading-none px-1"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* タイムスタンプ一覧 */}
+      <div className="flex-1 overflow-y-auto bg-gray-900">
+        {timestamps.length === 0 ? (
+          <p className="text-white/30 text-xs text-center py-6">
+            「記録する」ボタンでシーンを登録できます
+          </p>
+        ) : (
+          <div className="px-3 py-2 space-y-1.5">
+            <p className="text-white/50 text-[10px] font-semibold mb-2">タイムスタンプ一覧</p>
+            {timestamps.map((ts) => (
+              <div key={ts.id} className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
+                <button
+                  onClick={() => handleSeekToTimestamp(ts)}
+                  className="flex-1 flex items-center gap-2 text-left"
+                >
+                  <span className="text-blue-300 text-sm font-bold font-mono w-12 flex-shrink-0">{formatSeconds(ts.seconds)}</span>
+                  <span className="text-white/80 text-xs flex-1 line-clamp-1">{ts.label || 'シーン'}</span>
+                </button>
+                <span className="text-yellow-400 text-xs font-bold flex-shrink-0 flex items-center gap-0.5">
+                  👁 {ts.viewCount}
+                </span>
+                <button
+                  onClick={() => onDeleteTimestamp(ts.id)}
+                  className="text-white/20 active:text-red-400 text-lg leading-none flex-shrink-0 px-1"
+                  aria-label="削除"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -407,12 +634,14 @@ export default function VideosPage() {
     videoCategories, addVideoCategory, updateVideoCategory, deleteVideoCategory, reorderVideoCategories,
     videos, addVideo, updateVideo, deleteVideo, toggleVideoPin,
     videoStats, recordVideoView,
+    videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView,
     isLoading,
   } = useApp();
 
   const [editMode, setEditMode] = useState(false);
   const [videoFormState, setVideoFormState] = useState<{ mode: 'add' | 'edit'; categoryId?: string; item?: VideoItem | null } | null>(null);
   const [categoryFormState, setCategoryFormState] = useState<{ mode: 'add' | 'edit'; id?: string; name?: string } | null>(null);
+  const [playerModal, setPlayerModal] = useState<{ url: string; description: string } | null>(null);
 
   const sortedCategories = useMemo(
     () => [...videoCategories].sort((a, b) => a.order - b.order),
@@ -421,6 +650,13 @@ export default function VideosPage() {
 
   const hasMatchCategory = sortedCategories.some(c => c.isMatchCategory);
   const schMatchVideos = useSchMatchVideos(hasMatchCategory);
+
+  const activeTimestamps = useMemo(() => {
+    if (!playerModal) return [];
+    return videoTimestamps
+      .filter((t) => t.videoUrl === playerModal.url)
+      .sort((a, b) => a.seconds - b.seconds);
+  }, [videoTimestamps, playerModal]);
 
   const moveCategory = (id: string, dir: -1 | 1) => {
     const idx = sortedCategories.findIndex(c => c.id === id);
@@ -432,8 +668,9 @@ export default function VideosPage() {
     reorderVideoCategories(reordered.map((c, i) => ({ ...c, order: i + 1 })));
   };
 
-  const handleView = useCallback((url: string) => {
+  const handleView = useCallback((url: string, description: string) => {
     recordVideoView(url);
+    setPlayerModal({ url, description });
   }, [recordVideoView]);
 
   const handleSaveVideo = (data: { categoryId: string; url: string; description: string }) => {
@@ -518,6 +755,18 @@ export default function VideosPage() {
           onClick={() => setCategoryFormState({ mode: 'add' })}
           className="w-full mt-4 border-2 border-dashed border-blue-300/50 rounded-2xl py-3 text-blue-200 text-sm font-semibold hover:border-blue-200 hover:text-white"
         >＋ カテゴリを追加</button>
+      )}
+
+      {playerModal && (
+        <VideoPlayerModal
+          url={playerModal.url}
+          description={playerModal.description}
+          timestamps={activeTimestamps}
+          onAddTimestamp={(seconds, label) => addVideoTimestamp(playerModal.url, seconds, label)}
+          onDeleteTimestamp={deleteVideoTimestamp}
+          onTimestampView={recordTimestampView}
+          onClose={() => setPlayerModal(null)}
+        />
       )}
 
       {videoFormState && (

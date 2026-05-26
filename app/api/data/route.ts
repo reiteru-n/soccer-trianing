@@ -4,17 +4,18 @@ import { logAccess, getIp, getUa, getDeviceId } from '@/lib/logger';
 
 // キーを種別ごとに分割してサイズ上限を回避
 const KEYS = {
-  notes:       'takuto:notes',
-  lifting:     'takuto:lifting',
-  body:        'takuto:body',
-  menu:        'takuto:menu',
-  logs:        'takuto:logs',
-  config:      'takuto:config',
-  performance: 'takuto:performance',
-  perfConfig:  'takuto:perf_config',
-  videoCats:   'takuto:video_cats',
-  videos:      'takuto:videos',
-  videoStats:  'takuto:video_stats',
+  notes:            'takuto:notes',
+  lifting:          'takuto:lifting',
+  body:             'takuto:body',
+  menu:             'takuto:menu',
+  logs:             'takuto:logs',
+  config:           'takuto:config',
+  performance:      'takuto:performance',
+  perfConfig:       'takuto:perf_config',
+  videoCats:        'takuto:video_cats',
+  videos:           'takuto:videos',
+  videoStats:       'takuto:video_stats',
+  videoTimestamps:  'takuto:video_timestamps',
 } as const;
 
 // 旧キー（初回のみマイグレーション用）
@@ -32,6 +33,7 @@ interface AppData {
   videoCategories?: unknown[];
   videos?: unknown[];
   videoStats?: unknown[];
+  videoTimestamps?: unknown[];
 }
 
 // ----- Redis helpers -----
@@ -53,9 +55,9 @@ async function readData(): Promise<AppData | null> {
     const redis = await getRedis();
 
     // 新キーから一括読み込み
-    const [notes, lifting, body, menu, logs, config, perf, perfCfg, vcats, vids, vstats] = await redis.mget<unknown[]>(
+    const [notes, lifting, body, menu, logs, config, perf, perfCfg, vcats, vids, vstats, vtimestamps] = await redis.mget<unknown[]>(
       KEYS.notes, KEYS.lifting, KEYS.body, KEYS.menu, KEYS.logs, KEYS.config, KEYS.performance, KEYS.perfConfig,
-      KEYS.videoCats, KEYS.videos, KEYS.videoStats
+      KEYS.videoCats, KEYS.videos, KEYS.videoStats, KEYS.videoTimestamps
     );
 
     // いずれかのキーがあれば新形式
@@ -69,9 +71,10 @@ async function readData(): Promise<AppData | null> {
         childBirthDate:    ((config as any)?.childBirthDate) ?? '',
         performanceRecords: (perf   as unknown[]) ?? [],
         customMetrics:     (perfCfg as unknown[]) ?? [],
-        videoCategories:   (vcats   as unknown[]) ?? undefined,
-        videos:            (vids    as unknown[]) ?? undefined,
-        videoStats:        (vstats  as unknown[]) ?? undefined,
+        videoCategories:   (vcats        as unknown[]) ?? undefined,
+        videos:            (vids         as unknown[]) ?? undefined,
+        videoStats:        (vstats       as unknown[]) ?? undefined,
+        videoTimestamps:   (vtimestamps  as unknown[]) ?? undefined,
       };
     }
 
@@ -124,7 +127,8 @@ async function writePartial(body: Partial<Record<string, unknown>>): Promise<voi
     if ('customMetrics'      in body) updates[KEYS.perfConfig]  = body.customMetrics;
     if ('videoCategories'    in body) updates[KEYS.videoCats]   = body.videoCategories;
     if ('videos'             in body) updates[KEYS.videos]      = body.videos;
-    if ('videoStats'         in body) updates[KEYS.videoStats]  = body.videoStats;
+    if ('videoStats'         in body) updates[KEYS.videoStats]       = body.videoStats;
+    if ('videoTimestamps'    in body) updates[KEYS.videoTimestamps]  = body.videoTimestamps;
     if (Object.keys(updates).length > 0) {
       await redis.mset(updates);
     }
@@ -151,9 +155,10 @@ export async function GET(req: Request) {
       trainingMenu:   INITIAL_TRAINING_MENU,
       trainingLogs:   [],
       childBirthDate: '',
-      videoCategories: INITIAL_VIDEO_CATEGORIES,
-      videos:          INITIAL_VIDEOS,
-      videoStats:      [],
+      videoCategories:  INITIAL_VIDEO_CATEGORIES,
+      videos:           INITIAL_VIDEOS,
+      videoStats:       [],
+      videoTimestamps:  [],
     });
   }
   return NextResponse.json({
@@ -165,9 +170,10 @@ export async function GET(req: Request) {
     childBirthDate:    (data as any).childBirthDate ?? '',
     performanceRecords: (data as any).performanceRecords ?? [],
     customMetrics:      (data as any).customMetrics ?? [],
-    videoCategories:   data.videoCategories ?? INITIAL_VIDEO_CATEGORIES,
-    videos:            data.videos          ?? INITIAL_VIDEOS,
+    videoCategories:   data.videoCategories  ?? INITIAL_VIDEO_CATEGORIES,
+    videos:            data.videos           ?? INITIAL_VIDEOS,
     videoStats:        data.videoStats       ?? [],
+    videoTimestamps:   data.videoTimestamps  ?? [],
   });
 }
 
