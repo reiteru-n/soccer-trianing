@@ -1854,18 +1854,44 @@ function relativeTime(iso: string): string {
   return `${mo}ヶ月前`;
 }
 
-function relativeDateLabel(iso: string): { label: string; isNew: boolean; color: string } {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const posted = new Date(iso); posted.setHours(0, 0, 0, 0);
-  const days = Math.round((today.getTime() - posted.getTime()) / 86400000);
-  if (days === 0)  return { label: '今日',      isNew: true,  color: 'bg-emerald-500/90 text-white' };
-  if (days === 1)  return { label: '昨日',      isNew: false, color: 'bg-sky-600/80 text-white' };
-  if (days === 2)  return { label: '一昨日',    isNew: false, color: 'bg-sky-700/80 text-white' };
+function relativeDateLabel(text: string): { label: string; isNew: boolean; color: string } | null {
+  if (!text) return null;
+  let days: number | null = null;
+  // Try ISO date first
+  const d = new Date(text);
+  if (!isNaN(d.getTime())) {
+    const today = new Date(); today.setHours(0, 0, 0, 0); d.setHours(0, 0, 0, 0);
+    days = Math.round((today.getTime() - d.getTime()) / 86400000);
+  } else {
+    // Parse YouTube Japanese/English relative text
+    const m1 = text.match(/^(\d+)日前$/);
+    const m2 = text.match(/^(\d+)週間前$/);
+    const m3 = text.match(/^(\d+)ヶ月前$/);
+    const m4 = text.match(/^(\d+)年前$/);
+    const m5 = text.match(/^(\d+)\s+days?\s+ago$/i);
+    const m6 = text.match(/^(\d+)\s+weeks?\s+ago$/i);
+    const m7 = text.match(/^(\d+)\s+months?\s+ago$/i);
+    const m8 = text.match(/^(\d+)\s+years?\s+ago$/i);
+    if (text === '今日' || /^just\s+now$/i.test(text)) days = 0;
+    else if (text === '昨日' || /^yesterday$/i.test(text)) days = 1;
+    else if (m1) days = parseInt(m1[1]);
+    else if (m2) days = parseInt(m2[1]) * 7;
+    else if (m3) days = parseInt(m3[1]) * 30;
+    else if (m4) days = parseInt(m4[1]) * 365;
+    else if (m5) days = parseInt(m5[1]);
+    else if (m6) days = parseInt(m6[1]) * 7;
+    else if (m7) days = parseInt(m7[1]) * 30;
+    else if (m8) days = parseInt(m8[1]) * 365;
+  }
+  if (days === null) return null;
+  if (days === 0)  return { label: '今日',        isNew: true,  color: 'bg-emerald-500/90 text-white' };
+  if (days === 1)  return { label: '昨日',        isNew: false, color: 'bg-sky-600/80 text-white' };
+  if (days === 2)  return { label: '一昨日',      isNew: false, color: 'bg-sky-700/80 text-white' };
   if (days <= 6)   return { label: `${days}日前`, isNew: false, color: 'bg-slate-600/80 text-slate-200' };
-  if (days <= 13)  return { label: '1週間前',   isNew: false, color: 'bg-slate-700/80 text-slate-300' };
-  if (days <= 20)  return { label: '2週間前',   isNew: false, color: 'bg-slate-700/80 text-slate-400' };
-  if (days <= 27)  return { label: '3週間前',   isNew: false, color: 'bg-slate-700/80 text-slate-400' };
-  return           { label: '1ヶ月以上前',      isNew: false, color: 'bg-slate-800/80 text-slate-500' };
+  if (days <= 13)  return { label: '1週間前',     isNew: false, color: 'bg-slate-700/80 text-slate-300' };
+  if (days <= 20)  return { label: '2週間前',     isNew: false, color: 'bg-slate-700/80 text-slate-400' };
+  if (days <= 27)  return { label: '3週間前',     isNew: false, color: 'bg-slate-700/80 text-slate-400' };
+  return           { label: '1ヶ月以上前',        isNew: false, color: 'bg-slate-800/80 text-slate-500' };
 }
 
 function YtChannelSection() {
@@ -1921,8 +1947,9 @@ function YtChannelSection() {
                     <p className="text-[9px] font-semibold text-white leading-snug line-clamp-2">{v.title}</p>
                   </div>
                   {/* 投稿日（右下）相対ラベル */}
-                  {v.publishedAt && (() => {
+                  {(() => {
                     const rel = relativeDateLabel(v.publishedAt);
+                    if (!rel) return null;
                     return (
                       <div className="absolute bottom-1 right-1 flex items-center gap-0.5">
                         {rel.isNew && (
