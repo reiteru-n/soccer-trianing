@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -8,6 +8,7 @@ import {
   SchAnnouncement, SchMember, SchMemberParent, SchParkingRecord, SchParkingSlot, SchNearbyParking,
   SchUpdateHistory, SchParkingComment, SchParkingCommentType, SchStandaloneVideo,
 } from '@/lib/types';
+import { HouseIcon, CalendarIcon, VideoIcon, TrophyIcon, BellIcon, PeopleIcon } from '@/components/AppIcons';
 
 // ---- Utilities ----
 function generateId() {
@@ -4525,13 +4526,13 @@ export default function SchPage() {
   }, [post]);
 
 
-  const tabs = [
-    { key: 'home'    as Tab, label: 'ホーム',   icon: '🏠' },
-    { key: 'events'  as Tab, label: '予定',     icon: '📅' },
-    { key: 'video'   as Tab, label: '動画',     icon: '🎬' },
-    { key: 'stats'   as Tab, label: '戦績',     icon: '🏆' },
-    { key: 'announce'as Tab, label: '連絡',     icon: '📢' },
-    { key: 'member'  as Tab, label: 'メンバー', icon: '🪪' },
+  const tabs: { key: Tab; label: string; Icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+    { key: 'home',     label: 'ホーム',   Icon: HouseIcon    },
+    { key: 'events',   label: '予定',     Icon: CalendarIcon },
+    { key: 'video',    label: '動画',     Icon: VideoIcon    },
+    { key: 'stats',    label: '戦績',     Icon: TrophyIcon   },
+    { key: 'announce', label: '連絡',     Icon: BellIcon     },
+    { key: 'member',   label: 'メンバー', Icon: PeopleIcon   },
   ];
 
   const logoSrc = teamLogo ?? '/sch-logo.png';
@@ -4636,13 +4637,13 @@ export default function SchPage() {
       </header>
 
       <div className="flex bg-white/5 backdrop-blur rounded-xl p-1 mb-5 border border-white/10">
-        {tabs.map(({ key, label, icon }) => (
+        {tabs.map(({ key, label, Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
             className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg transition-all ${tab === key ? 'bg-gradient-to-b from-sky-500/50 to-cyan-600/50 text-sky-50 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
           >
-            <span className="text-base leading-tight">{icon}</span>
+            <Icon size={18} />
             <span className="text-[9px] font-semibold leading-tight mt-0.5">{label}</span>
           </button>
         ))}

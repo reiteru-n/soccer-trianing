@@ -8,11 +8,16 @@
 - **背景**: ダークネイビー（slate-900〜gray-950）
 - **グラスモーフィズム**: `bg-white/5 backdrop-blur border border-white/10 rounded-xl`
 
-### アイコン方針
+### アイコン方針（必ず守ること）
 - **使用サイト**: [icooon-mono.com](https://icooon-mono.com) からダウンロードしたSVGアイコン
 - **実装ファイル**: `components/AppIcons.tsx`（`HouseIcon`, `BallIcon`, `NoteIcon`, `RunnerIcon`, `ChartIcon`, `VideoIcon`, `CalendarIcon`, `BellIcon`, `PeopleIcon`, `PlayIcon`, `PlusIcon`, `CheckIcon`, `StarIcon`, `TimerIcon`, `TrophyIcon`, `BodyIcon`）
 - Props: `{ size?: number; className?: string }`、`fill="currentColor"`、`viewBox="0 0 24 24"`
-- **絵文字アイコンの使用禁止**: BottomNavなどUIのアイコンはSVGを使うこと（文章中の絵文字は許容）
+- **絵文字アイコンの使用禁止（厳守）**:
+  - ナビゲーション（BottomNav・タブバー）のアイコンは必ず `AppIcons.tsx` の SVGを使うこと
+  - ページ内のボタン・UI コンポーネントのアイコンも SVG を使うこと
+  - 文章・説明文・ラベル内の絵文字は許容（例: 「🏆 戦歴」のテキスト）
+  - 新しいアイコンが必要な場合は `components/AppIcons.tsx` に追加すること
+- **デザイン変更時の必須確認**: タブバー・ボタン・ナビゲーションに絵文字が使われていないか必ず確認してから完了とすること
 
 ### CSS ユーティリティ（globals.css 定義済み）
 ```css
