@@ -1863,17 +1863,16 @@ function relativeDateLabel(text: string): { label: string; isNew: boolean; color
     const today = new Date(); today.setHours(0, 0, 0, 0); d.setHours(0, 0, 0, 0);
     days = Math.round((today.getTime() - d.getTime()) / 86400000);
   } else {
-    // Parse YouTube Japanese/English relative text
     const m1 = text.match(/^(\d+)日前$/);
     const m2 = text.match(/^(\d+)週間前$/);
     const m3 = text.match(/^(\d+)ヶ月前$/);
     const m4 = text.match(/^(\d+)年前$/);
-    const m5 = text.match(/^(\d+)\s+days?\s+ago$/i);
-    const m6 = text.match(/^(\d+)\s+weeks?\s+ago$/i);
-    const m7 = text.match(/^(\d+)\s+months?\s+ago$/i);
-    const m8 = text.match(/^(\d+)\s+years?\s+ago$/i);
-    if (text === '今日' || /^just\s+now$/i.test(text)) days = 0;
-    else if (text === '昨日' || /^yesterday$/i.test(text)) days = 1;
+    const m5 = text.match(/(\d+)\s+days?\s+ago/i);
+    const m6 = text.match(/(\d+)\s+weeks?\s+ago/i);
+    const m7 = text.match(/(\d+)\s+months?\s+ago/i);
+    const m8 = text.match(/(\d+)\s+years?\s+ago/i);
+    if (/^(今日|just\s+now)$/i.test(text)) days = 0;
+    else if (/^(昨日|yesterday)$/i.test(text)) days = 1;
     else if (m1) days = parseInt(m1[1]);
     else if (m2) days = parseInt(m2[1]) * 7;
     else if (m3) days = parseInt(m3[1]) * 30;
@@ -1884,14 +1883,10 @@ function relativeDateLabel(text: string): { label: string; isNew: boolean; color
     else if (m8) days = parseInt(m8[1]) * 365;
   }
   if (days === null) return null;
-  if (days === 0)  return { label: '今日',        isNew: true,  color: 'bg-emerald-500/90 text-white' };
-  if (days === 1)  return { label: '昨日',        isNew: false, color: 'bg-sky-600/80 text-white' };
-  if (days === 2)  return { label: '一昨日',      isNew: false, color: 'bg-sky-700/80 text-white' };
-  if (days <= 6)   return { label: `${days}日前`, isNew: false, color: 'bg-slate-600/80 text-slate-200' };
-  if (days <= 13)  return { label: '1週間前',     isNew: false, color: 'bg-slate-700/80 text-slate-300' };
-  if (days <= 20)  return { label: '2週間前',     isNew: false, color: 'bg-slate-700/80 text-slate-400' };
-  if (days <= 27)  return { label: '3週間前',     isNew: false, color: 'bg-slate-700/80 text-slate-400' };
-  return           { label: '1ヶ月以上前',        isNew: false, color: 'bg-slate-800/80 text-slate-500' };
+  if (days === 0)    return { label: '今日',                          isNew: true,  color: 'bg-emerald-500/90 text-white' };
+  if (days <= 30)    return { label: `${days}日前`,                   isNew: false, color: days <= 3 ? 'bg-sky-600/80 text-white' : days <= 7 ? 'bg-sky-700/80 text-white' : 'bg-slate-600/80 text-slate-200' };
+  const months = Math.floor(days / 30);
+  return               { label: `${months}ヶ月前`,                   isNew: false, color: 'bg-slate-700/80 text-slate-400' };
 }
 
 function HomeYtStrip({ onGoToVideo }: { onGoToVideo: () => void }) {
@@ -1933,8 +1928,8 @@ function HomeYtStrip({ onGoToVideo }: { onGoToVideo: () => void }) {
                   </div>
                   {rel && (
                     <div className="absolute bottom-0.5 right-0.5 flex items-center gap-0.5">
-                      {rel.isNew && <span className="text-[6px] font-extrabold bg-emerald-400 text-black px-0.5 rounded leading-none">NEW</span>}
-                      <span className={`text-[6px] font-semibold px-1 py-0.5 rounded leading-none ${rel.color}`}>{rel.label}</span>
+                      {rel.isNew && <span className="text-[9px] font-extrabold bg-emerald-400 text-black px-1 rounded leading-none">NEW</span>}
+                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded leading-none ${rel.color}`}>{rel.label}</span>
                     </div>
                   )}
                 </a>
@@ -2005,9 +2000,9 @@ function YtChannelSection() {
                     return (
                       <div className="absolute bottom-1 right-1 flex items-center gap-0.5">
                         {rel.isNew && (
-                          <span className="text-[7px] font-extrabold bg-emerald-400 text-black px-1 py-0.5 rounded leading-none">NEW</span>
+                          <span className="text-[11px] font-extrabold bg-emerald-400 text-black px-1 py-0.5 rounded leading-none">NEW</span>
                         )}
-                        <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded leading-none ${rel.color}`}>{rel.label}</span>
+                        <span className={`text-[12px] font-semibold px-1.5 py-0.5 rounded leading-none ${rel.color}`}>{rel.label}</span>
                       </div>
                     );
                   })()}
@@ -3270,6 +3265,9 @@ function HomeSection({
 
   return (
     <div className="space-y-5">
+      {/* チャンネル最新動画（コンパクトストリップ） */}
+      <HomeYtStrip onGoToVideo={onGoToVideo} />
+
       {/* Next event */}
       <div>
         <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">次の予定</h2>
@@ -3498,9 +3496,6 @@ function HomeSection({
           </div>
         );
       })()}
-
-      {/* チャンネル最新動画（コンパクトストリップ） */}
-      <HomeYtStrip onGoToVideo={onGoToVideo} />
 
       {/* Parking comment section */}
       <ParkingCommentSection
