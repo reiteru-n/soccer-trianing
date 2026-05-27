@@ -1894,6 +1894,52 @@ function relativeDateLabel(text: string): { label: string; isNew: boolean; color
   return           { label: '1ヶ月以上前',        isNew: false, color: 'bg-slate-800/80 text-slate-500' };
 }
 
+function HomeYtStrip({ onGoToVideo }: { onGoToVideo: () => void }) {
+  const [videos, setVideos] = useState<YtVideo[]>([]);
+  useEffect(() => {
+    fetch('/api/sch/yt-playlist?limit=6')
+      .then(r => r.json())
+      .then((d: YtVideo[]) => setVideos(d))
+      .catch(() => {});
+  }, []);
+  if (videos.length === 0) return null;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider">📹 最新動画</h2>
+        <button onClick={onGoToVideo} className="text-[10px] text-sky-400 hover:text-sky-300">すべて見る →</button>
+      </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
+        {videos.map(v => {
+          const rel = relativeDateLabel(v.publishedAt);
+          return (
+            <a
+              key={v.videoId}
+              href={v.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-none relative rounded-lg overflow-hidden bg-slate-800 snap-start group"
+              style={{ height: '44px', aspectRatio: '16/9' }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/70 to-transparent px-1 pt-0.5 pb-2">
+                <p className="text-[7px] font-semibold text-white leading-snug line-clamp-1">{v.title}</p>
+              </div>
+              {rel && (
+                <div className="absolute bottom-0.5 right-0.5 flex items-center gap-0.5">
+                  {rel.isNew && <span className="text-[6px] font-extrabold bg-emerald-400 text-black px-0.5 rounded leading-none">NEW</span>}
+                  <span className={`text-[6px] font-semibold px-1 py-0.5 rounded leading-none ${rel.color}`}>{rel.label}</span>
+                </div>
+              )}
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function YtChannelSection() {
   const [videos, setVideos] = useState<YtVideo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -3110,7 +3156,7 @@ function ParkingCommentSection({
 function HomeSection({
   events, members, parkingRecords, parkingRotation, nearbyParking, announcements,
   isAdmin, parkingComments, onSaveParkingComments,
-  onGoToAnnounce, onGoToEvent,
+  onGoToAnnounce, onGoToEvent, onGoToVideo,
   onSkip, onUnskip, onMarkUsed, onMarkPending, onSaveHistory, onUpdateMaxSlots,
 }: {
   events: SchEvent[];
@@ -3124,6 +3170,7 @@ function HomeSection({
   onSaveParkingComments: (c: SchParkingComment[]) => void;
   onGoToAnnounce: () => void;
   onGoToEvent: (id: string) => void;
+  onGoToVideo: () => void;
   onSkip: (eventId: string, memberId: string, comment: string) => void;
   onUnskip: (eventId: string, memberId: string) => void;
   onMarkUsed: (eventId: string, memberId: string) => void;
@@ -3445,6 +3492,9 @@ function HomeSection({
           </div>
         );
       })()}
+
+      {/* チャンネル最新動画（コンパクトストリップ） */}
+      <HomeYtStrip onGoToVideo={onGoToVideo} />
 
       {/* Parking comment section */}
       <ParkingCommentSection
@@ -4851,7 +4901,7 @@ export default function SchPage() {
           events={events} members={members}
           parkingRecords={parkingRecords} parkingRotation={parkingRotation}
           nearbyParking={nearbyParking}
-          announcements={announcements} onGoToAnnounce={() => setTab('announce')}
+          announcements={announcements} onGoToAnnounce={() => setTab('announce')} onGoToVideo={() => setTab('video')}
           isAdmin={isAdmin}
           parkingComments={parkingComments}
           onSaveParkingComments={saveParkingComments}
