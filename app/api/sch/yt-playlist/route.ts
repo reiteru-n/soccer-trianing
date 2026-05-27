@@ -76,14 +76,20 @@ export async function GET(req: Request) {
       if (!r) continue;
       const videoId: string = r.videoId;
       const title: string = r.title?.runs?.[0]?.text ?? r.title?.simpleText ?? '';
-      // publishedTimeText が存在しない場合は videoInfo.runs の末尾から時刻テキストを探す
+      // publishedTimeText が存在しない場合は videoInfo.runs → accessibility label の順で探す
+      const TIME_RE = /(\d+(日|週間|ヶ月|年)前|昨日|今日|\d+\s+days?\s+ago|\d+\s+weeks?\s+ago|\d+\s+months?\s+ago|\d+\s+years?\s+ago|yesterday)/i;
       const timeText: string = (() => {
         if (r.publishedTimeText?.simpleText) return r.publishedTimeText.simpleText as string;
+        // videoInfo.runs から時刻テキストを探す
         const runs: { text: string }[] = r.videoInfo?.runs ?? [];
         for (let i = runs.length - 1; i >= 0; i--) {
           const t = runs[i].text?.trim() ?? '';
-          if (/(\d+(日|週間|ヶ月|年)前|昨日|今日|days?\s+ago|weeks?\s+ago|months?\s+ago|years?\s+ago|yesterday)/i.test(t)) return t;
+          if (TIME_RE.test(t)) return t;
         }
+        // accessibility label (例: "動画タイトル - 3 minutes - 2 weeks ago - 動画を再生") から抽出
+        const label: string = r.accessibility?.accessibilityData?.label ?? '';
+        const m = label.match(TIME_RE);
+        if (m) return m[0];
         return '';
       })();
       // サムネイルは最高解像度を選ぶ
