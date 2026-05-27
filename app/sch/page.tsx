@@ -1854,6 +1854,20 @@ function relativeTime(iso: string): string {
   return `${mo}ヶ月前`;
 }
 
+function relativeDateLabel(iso: string): { label: string; isNew: boolean; color: string } {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const posted = new Date(iso); posted.setHours(0, 0, 0, 0);
+  const days = Math.round((today.getTime() - posted.getTime()) / 86400000);
+  if (days === 0)  return { label: '今日',      isNew: true,  color: 'bg-emerald-500/90 text-white' };
+  if (days === 1)  return { label: '昨日',      isNew: false, color: 'bg-sky-600/80 text-white' };
+  if (days === 2)  return { label: '一昨日',    isNew: false, color: 'bg-sky-700/80 text-white' };
+  if (days <= 6)   return { label: `${days}日前`, isNew: false, color: 'bg-slate-600/80 text-slate-200' };
+  if (days <= 13)  return { label: '1週間前',   isNew: false, color: 'bg-slate-700/80 text-slate-300' };
+  if (days <= 20)  return { label: '2週間前',   isNew: false, color: 'bg-slate-700/80 text-slate-400' };
+  if (days <= 27)  return { label: '3週間前',   isNew: false, color: 'bg-slate-700/80 text-slate-400' };
+  return           { label: '1ヶ月以上前',      isNew: false, color: 'bg-slate-800/80 text-slate-500' };
+}
+
 function YtChannelSection() {
   const [videos, setVideos] = useState<YtVideo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1906,12 +1920,18 @@ function YtChannelSection() {
                   <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/75 to-transparent p-1.5 pb-4">
                     <p className="text-[9px] font-semibold text-white leading-snug line-clamp-2">{v.title}</p>
                   </div>
-                  {/* 投稿時刻（右下） */}
-                  {v.publishedAt && (
-                    <div className="absolute bottom-1 right-1">
-                      <span className="text-[8px] bg-black/70 text-slate-300 px-1 py-0.5 rounded">{v.publishedAt}</span>
-                    </div>
-                  )}
+                  {/* 投稿日（右下）相対ラベル */}
+                  {v.publishedAt && (() => {
+                    const rel = relativeDateLabel(v.publishedAt);
+                    return (
+                      <div className="absolute bottom-1 right-1 flex items-center gap-0.5">
+                        {rel.isNew && (
+                          <span className="text-[7px] font-extrabold bg-emerald-400 text-black px-1 py-0.5 rounded leading-none">NEW</span>
+                        )}
+                        <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded leading-none ${rel.color}`}>{rel.label}</span>
+                      </div>
+                    );
+                  })()}
                   {/* 再生ボタン */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
                     <span className="text-white text-xl">▶</span>
