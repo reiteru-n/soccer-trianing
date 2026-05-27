@@ -41,8 +41,9 @@ function dig(obj: any, ...keys: string[]): any {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '6') || 6, 50);
+  const rawDebug = url.searchParams.get('raw') === '1';
   const now = Date.now();
-  if (cache && cache.expires > now) return NextResponse.json(cache.data.slice(0, limit));
+  if (!rawDebug && cache && cache.expires > now) return NextResponse.json(cache.data.slice(0, limit));
 
   try {
     const res = await fetch(
@@ -75,7 +76,16 @@ export async function GET(req: Request) {
       if (!r) continue;
       const videoId: string = r.videoId;
       const title: string = r.title?.runs?.[0]?.text ?? r.title?.simpleText ?? '';
-      const timeText: string = r.publishedTimeText?.simpleText ?? '';
+      // publishedTimeText が存在しない場合は videoInfo.runs の末尾から時刻テキストを探す
+      const timeText: string = (() => {
+        if (r.publishedTimeText?.simpleText) return r.publishedTimeText.simpleText as string;
+        const runs: { text: string }[] = r.videoInfo?.runs ?? [];
+        for (let i = runs.length - 1; i >= 0; i--) {
+          const t = runs[i].text?.trim() ?? '';
+          if (/(\d+(日|週間|ヶ月|年)前|昨日|今日|days?\s+ago|weeks?\s+ago|months?\s+ago|years?\s+ago|yesterday)/i.test(t)) return t;
+        }
+        return '';
+      })();
       // サムネイルは最高解像度を選ぶ
       const thumbs: { url: string; width: number }[] = r.thumbnail?.thumbnails ?? [];
       const thumb = thumbs.reduce((best, t) => (!best || t.width > best.width) ? t : best, thumbs[0]);
@@ -83,6 +93,17 @@ export async function GET(req: Request) {
       if (!videoId || !title) continue;
       videos.push({ videoId, title, publishedAt: timeText, thumbnail, url: `https://www.youtube.com/watch?v=${videoId}` });
       if (videos.length >= 50) break;
+    }
+
+    // debug: raw=1 でキャッシュ無視し最初の5アイテムの生 renderer データを返す
+    if (rawDebug) {
+      const rawItems = contents.slice(0, 5).map((item) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const r = (item as any)?.playlistVideoRenderer;
+        if (!r) return null;
+        return { videoId: r.videoId, publishedTimeText: r.publishedTimeText, videoInfo: r.videoInfo, shortViewCountText: r.shortViewCountText };
+      }).filter(Boolean);
+      return NextResponse.json(rawItems);
     }
 
     cache = { data: videos, expires: now + CACHE_TTL };
