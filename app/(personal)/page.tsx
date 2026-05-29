@@ -14,6 +14,7 @@ import { BodyRecord } from '@/lib/types';
 import { exportData, importData } from '@/lib/storage';
 import BodyChart from '@/components/BodyChart';
 import BodyCharts from '@/components/BodyCharts';
+import { EditIcon } from '@/components/AppIcons';
 
 function todayStr() {
   const d = new Date();
@@ -31,6 +32,8 @@ export default function DashboardPage() {
   const [bodySleep, setBodySleep] = useState("");
   const [bodyDate, setBodyDate] = useState(todayStr());
   const [bodySaved, setBodySaved] = useState(false);
+  const [editingBodyId, setEditingBodyId] = useState<string | null>(null);
+  const [showAllBody, setShowAllBody] = useState(false);
   type MergeConflict = {
     existing: BodyRecord;
     incoming: Omit<BodyRecord, 'id'>;
@@ -53,8 +56,18 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
   };
   const finishBodySave = () => {
     setBodyWeight(""); setBodyHeight(""); setBodySleep(""); setMergeConflict(null);
+    setEditingBodyId(null);
     setBodySaved(true);
     setTimeout(() => { setBodySaved(false); setShowBodyForm(false); }, 1200);
+  };
+  const handleEditBody = (record: BodyRecord) => {
+    setEditingBodyId(record.id);
+    setBodyDate(record.date);
+    setBodyHeight(record.height != null ? String(record.height) : "");
+    setBodyWeight(record.weight != null ? String(record.weight) : "");
+    setBodySleep(record.sleepTime ?? "");
+    setMergeConflict(null);
+    setShowBodyForm(true);
   };
   const handleBodySave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +78,21 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
     if (!isNaN(w) && w > 0) incoming.weight = w;
     if (!isNaN(h) && h > 0) incoming.height = h;
     if (bodySleep) incoming.sleepTime = bodySleep;
+    if (editingBodyId) {
+      const dateConflict = bodyRecords.find(r => r.date === bodyDate && r.id !== editingBodyId);
+      if (dateConflict) {
+        alert(`${bodyDate} のデータがすでに存在します。日付を変更するか、先にそのデータを削除してください。`);
+        return;
+      }
+      updateBodyRecord(editingBodyId, {
+        date: bodyDate,
+        weight: (!isNaN(w) && w > 0) ? w : undefined,
+        height: (!isNaN(h) && h > 0) ? h : undefined,
+        sleepTime: bodySleep || undefined,
+      });
+      finishBodySave();
+      return;
+    }
     const existing = bodyRecords.find(r => r.date === bodyDate);
     if (existing) {
       const wConflict = incoming.weight != null && existing.weight != null && incoming.weight !== existing.weight;
@@ -154,8 +182,13 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
       <section id="section-body" className="mb-6">
         <div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📏 体重・身長</h2><button onClick={() => setShowBodyForm(true)} className="text-xs bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-bold px-3 py-1.5 rounded-lg transition-colors">+ 追加</button></div>
         {sortedBody.length > 0 ? (<div className="bg-white/95 rounded-2xl shadow-xl shadow-blue-900/30 border border-white/20 overflow-hidden">
-          <div className="flex bg-slate-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-14 text-center">体重</span><span className="w-14 text-center">身長</span><span className="w-12 text-center">就寝</span><span className="w-6"></span></div>
-          {sortedBody.slice(0,5).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-14 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-14 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><span className="w-12 text-center text-gray-500 text-xs">{r.sleepTime ?? "-"}</span><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="w-6 text-gray-300 hover:text-red-400 text-lg">×</button></div>))}
+          <div className="flex bg-slate-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-14 text-center">体重</span><span className="w-14 text-center">身長</span><span className="w-12 text-center">就寝</span><span className="w-12"></span></div>
+          {(showAllBody ? sortedBody : sortedBody.slice(0, 5)).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-14 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-14 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><span className="w-12 text-center text-gray-500 text-xs">{r.sleepTime ?? "-"}</span><div className="w-12 flex items-center justify-end gap-1"><button onClick={()=>handleEditBody(r)} className="text-gray-300 hover:text-blue-400 p-0.5"><EditIcon size={14} /></button><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="text-gray-300 hover:text-red-400 text-lg leading-none">×</button></div></div>))}
+          {sortedBody.length > 5 && (
+            <button onClick={() => setShowAllBody(!showAllBody)} className="w-full py-2 text-xs text-blue-500 hover:text-blue-600 font-medium bg-slate-50 border-t border-gray-100">
+              {showAllBody ? '折りたたむ ▲' : `すべて表示（${sortedBody.length}件）▼`}
+            </button>
+          )}
         </div>) : (<p className="text-sm text-blue-200/60 text-center py-4">まだ記録がありません</p>)}
         {sortedBody.length >= 1 && (
           <div className="mt-3 bg-white/95 rounded-2xl p-4 shadow-xl shadow-blue-900/30 border border-white/20">
@@ -183,7 +216,7 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
       {showLiftingForm && <LiftingForm onSave={addLiftingRecord} onClose={() => setShowLiftingForm(false)} pastLocations={pastLocations} />}
       {showNoteForm && <NoteForm onSave={addPracticeNote} onClose={() => setShowNoteForm(false)} pastLocations={pastLocations} pastCategories={pastCategories} pastTeamNames={pastTeamNames} />}
       {showBodyForm && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => !bodySaved && setShowBodyForm(false)}>
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => { if (!bodySaved) { setShowBodyForm(false); setEditingBodyId(null); } }}>
           <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md shadow-2xl mb-16 sm:mb-0" onClick={e => e.stopPropagation()}>
             <div className="px-6 pt-6 pb-8 space-y-4">
               {bodySaved ? (
@@ -243,8 +276,8 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
               ) : (
                 <>
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-gray-800">📏 身長・体重を記録</h2>
-                    <button type="button" onClick={() => setShowBodyForm(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+                    <h2 className="text-lg font-bold text-gray-800">{editingBodyId ? '✏️ 記録を編集' : '📏 身長・体重を記録'}</h2>
+                    <button type="button" onClick={() => { setShowBodyForm(false); setEditingBodyId(null); }} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
                   </div>
                   <form onSubmit={handleBodySave} className="space-y-4">
                     <div>
