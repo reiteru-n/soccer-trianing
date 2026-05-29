@@ -553,7 +553,7 @@ function ParkingEventCard({
                 onClick={() => setEditMode(v => !v)}
                 className={`p-0.5 rounded transition-colors ${editMode ? 'text-amber-400 bg-amber-500/20' : 'text-slate-600 hover:text-slate-400'}`}
               >
-                <EditIcon size={10} />
+                <EditIcon size={14} />
               </button>
             )}
           </div>
