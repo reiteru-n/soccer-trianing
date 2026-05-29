@@ -8,7 +8,7 @@ import {
   SchAnnouncement, SchMember, SchMemberParent, SchParkingRecord, SchParkingSlot, SchNearbyParking,
   SchUpdateHistory, SchParkingComment, SchParkingCommentType, SchStandaloneVideo,
 } from '@/lib/types';
-import { HouseIcon, CalendarIcon, VideoIcon, TrophyIcon, BellIcon, PeopleIcon } from '@/components/AppIcons';
+import { HouseIcon, CalendarIcon, VideoIcon, TrophyIcon, BellIcon, PeopleIcon, EditIcon } from '@/components/AppIcons';
 
 // ---- Utilities ----
 function generateId() {
@@ -503,6 +503,7 @@ function ParkingEventCard({
   const [skipTarget, setSkipTarget] = useState<string | null>(null);
   const [skipComment, setSkipComment] = useState('');
   const [editingSlots, setEditingSlots] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [slotsInput, setSlotsInput] = useState(String(plan.maxSlots));
   const getMember = (id: string) => members.find(m => m.id === id);
   const isPast = isEventPast(plan);
@@ -538,12 +539,24 @@ function ParkingEventCard({
           <span className="text-[10px] text-red-400/70 whitespace-nowrap">🚫 駐車場なし</span>
         ) : plan.maxSlots === -1 ? (
           <span className="text-[10px] text-emerald-400/80 whitespace-nowrap">🅿️ 制限なし</span>
-        ) : isAdmin ? (
-          <button onClick={() => { setEditingSlots(true); setSlotsInput(String(plan.maxSlots)); }} className="text-[10px] text-slate-500 hover:text-slate-300 whitespace-nowrap">
-            🅿️ {plan.maxSlots}台
-          </button>
         ) : (
-          <span className="text-[10px] text-slate-500 whitespace-nowrap">🅿️ {plan.maxSlots}台</span>
+          <div className="flex items-center gap-1">
+            {isAdmin ? (
+              <button onClick={() => { setEditingSlots(true); setSlotsInput(String(plan.maxSlots)); }} className="text-[10px] text-slate-500 hover:text-slate-300 whitespace-nowrap">
+                🅿️ {plan.maxSlots}台
+              </button>
+            ) : (
+              <span className="text-[10px] text-slate-500 whitespace-nowrap">🅿️ {plan.maxSlots}台</span>
+            )}
+            {!isPast && (
+              <button
+                onClick={() => setEditMode(v => !v)}
+                className={`p-0.5 rounded transition-colors ${editMode ? 'text-amber-400 bg-amber-500/20' : 'text-slate-600 hover:text-slate-400'}`}
+              >
+                <EditIcon size={10} />
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -566,7 +579,7 @@ function ParkingEventCard({
                   {isAdmin && slot.status === 'pending' && (
                     <button onClick={() => onMarkUsed(plan.id, slot.memberId)} className="text-[9px] text-slate-500 hover:text-green-400 px-1.5 py-0.5 rounded border border-slate-700 hover:border-green-500/50 transition-colors">使用</button>
                   )}
-                  {isAdmin && (
+                  {editMode && (
                     <button onClick={() => setSkipTarget(slot.memberId)} className="text-[9px] text-slate-500 hover:text-amber-400 px-1.5 py-0.5 rounded border border-slate-700 hover:border-amber-500/50 transition-colors">スキップ</button>
                   )}
                 </div>
@@ -590,7 +603,7 @@ function ParkingEventCard({
               <div key={slot.memberId} className="flex items-center gap-2 text-[10px]">
                 <span className="text-slate-500 line-through">#{member?.number} {member?.nameKana || member?.name}</span>
                 {slot.skipComment && <span className="text-slate-500 italic">「{slot.skipComment}」</span>}
-                {isAdmin && !isPast && (
+                {editMode && !isPast && (
                   <button onClick={() => onUnskip(plan.id, slot.memberId)} className="ml-auto text-slate-400 hover:text-white text-[9px] px-1.5 py-0.5 rounded border border-slate-600 hover:border-slate-400 transition-colors">取消</button>
                 )}
               </div>
