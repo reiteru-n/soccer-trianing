@@ -3729,7 +3729,7 @@ function CheckList({ items, announcementId }: { items: { text: string; note?: st
 }
 
 // ---- AnnounceSection ----
-function AnnounceSection({ announcements, onSave, events }: { announcements: SchAnnouncement[]; onSave: (a: SchAnnouncement[], notifyLine: boolean) => void; events: SchEvent[] }) {
+function AnnounceSection({ announcements, onSave, events, isAdmin }: { announcements: SchAnnouncement[]; onSave: (a: SchAnnouncement[], notifyLine: boolean) => void; events: SchEvent[]; isAdmin?: boolean }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SchAnnouncement | null>(null);
   const [date, setDate] = useState(todayStr());
@@ -3739,6 +3739,10 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
   const [url, setUrl] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<SchEvent | null>(null);
   const [showAllEvents, setShowAllEvents] = useState(false);
+  const [showLineModal, setShowLineModal] = useState(false);
+  const [lineMessage, setLineMessage] = useState('');
+  const [lineSending, setLineSending] = useState(false);
+  const [lineResult, setLineResult] = useState<'ok' | 'error' | null>(null);
   const [checkItems, setCheckItems] = useState<{ text: string; note: string }[]>([]);
   const [showCheckItems, setShowCheckItems] = useState(false);
   const [notifyLine, setNotifyLine] = useState(true);
@@ -3790,6 +3794,24 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
     resetForm();
   };
   const handleDelete = (id: string) => { if (window.confirm('削除しますか？')) onSave(announcements.filter(a => a.id !== id), false); };
+  const handleLineSend = async () => {
+    if (!lineMessage.trim()) return;
+    setLineSending(true);
+    setLineResult(null);
+    try {
+      const res = await fetch('/api/admin/line-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: lineMessage.trim() }),
+      });
+      setLineResult(res.ok ? 'ok' : 'error');
+      if (res.ok) { setLineMessage(''); setTimeout(() => { setShowLineModal(false); setLineResult(null); }, 1200); }
+    } catch {
+      setLineResult('error');
+    } finally {
+      setLineSending(false);
+    }
+  };
   const sorted = [...announcements];
 
   return (
@@ -3797,6 +3819,43 @@ function AnnounceSection({ announcements, onSave, events }: { announcements: Sch
       <button onClick={() => setShowForm(true)} className="w-full bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
         <span className="text-lg">＋</span> 連絡を投稿
       </button>
+      {isAdmin && (
+        <button onClick={() => { setShowLineModal(true); setLineResult(null); }} className="w-full bg-gradient-to-r from-emerald-600 to-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
+          <span className="text-base">📣</span> 管理者用LINE通知
+        </button>
+      )}
+      {showLineModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowLineModal(false)}>
+          <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md border border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="px-5 pt-5 pb-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-white">📣 管理者用LINE通知</h3>
+                <button onClick={() => setShowLineModal(false)} className="text-slate-400 text-2xl">&times;</button>
+              </div>
+              <p className="text-xs text-slate-400">チームLINEグループに直接メッセージを送信します。</p>
+              <textarea
+                value={lineMessage}
+                onChange={e => setLineMessage(e.target.value)}
+                placeholder="送信するメッセージを入力..."
+                rows={5}
+                className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-emerald-400 focus:outline-none placeholder-slate-500 resize-none"
+              />
+              {lineResult === 'ok' && <p className="text-emerald-400 text-sm text-center font-bold">✓ 送信しました</p>}
+              {lineResult === 'error' && <p className="text-red-400 text-sm text-center">送信に失敗しました</p>}
+              <div className="flex gap-3">
+                <button onClick={() => setShowLineModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-600 text-slate-300 text-sm font-semibold">キャンセル</button>
+                <button
+                  onClick={handleLineSend}
+                  disabled={lineSending || !lineMessage.trim()}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white text-sm font-bold disabled:opacity-50 active:scale-95 transition-transform"
+                >
+                  {lineSending ? '送信中...' : '送信する'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={resetForm}>
           <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -4935,7 +4994,7 @@ export default function SchPage() {
         <StatsSection events={events} members={members} />
       )}
       {tab === 'announce' && (
-        <AnnounceSection announcements={announcements} onSave={saveAnnounce} events={events} />
+        <AnnounceSection announcements={announcements} onSave={saveAnnounce} events={events} isAdmin={isAdmin} />
       )}
       {tab === 'member' && (
         <MemberSection
