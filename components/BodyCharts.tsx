@@ -372,9 +372,9 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                       callbacks: {
                         title: (items: import('chart.js').TooltipItem<'line'>[]) => `${(items[0]?.parsed.x ?? 0).toFixed(1)}歳`,
                         label: (ctx: import('chart.js').TooltipItem<'line'>) => {
-                          if (ctx.datasetIndex === 0) return `身長: ${ctx.parsed.y.toFixed(1)}cm`;
+                          if (ctx.datasetIndex === 0) return `身長: ${(ctx.parsed.y ?? 0).toFixed(1)}cm`;
                           if (ctx.datasetIndex === 1) return `就寝: ${decimalToTime(ctx.parsed.y ?? 0)}`;
-                          if (ctx.datasetIndex === 2) return `身長14日MA: ${ctx.parsed.y.toFixed(1)}cm`;
+                          if (ctx.datasetIndex === 2) return `身長14日MA: ${(ctx.parsed.y ?? 0).toFixed(1)}cm`;
                           return `就寝14日MA: ${decimalToTime(ctx.parsed.y ?? 0)}`;
                         },
                       },
