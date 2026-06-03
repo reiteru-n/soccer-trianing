@@ -146,13 +146,13 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
     const heightRaw = sorted
       .filter(r => r.height != null)
       .map(r => ({ date: r.date, value: r.height! }));
-    const hMA = movingAverage(heightRaw, 14)
+    const hMA = movingAverage(heightRaw, 30)
       .map(p => ({ x: ageYears(birthDate, p.date), y: p.value }));
 
     const sleepRaw = sleepSeries
       .filter(r => dateToTs(r.date) >= periodStartTs - 1)
       .map(r => ({ date: r.date, value: sleepToDecimal(r.sleepTime!) }));
-    const sMA = movingAverage(sleepRaw, 14)
+    const sMA = movingAverage(sleepRaw, 30)
       .map(p => ({ x: ageYears(birthDate, p.date), y: p.value }));
 
     return { hLine, sBars, hMA, sMA, xMin, xMax, yHMin, yHMax, ySMin, ySMax };
@@ -337,7 +337,7 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                     },
                     {
                       type: 'line' as const,
-                      label: '身長14日MA',
+                      label: '身長30日MA',
                       data: sleepCombinedData.hMA,
                       borderColor: COLOR_H,
                       backgroundColor: 'rgba(234,88,12,0.12)',
@@ -349,7 +349,7 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                     },
                     {
                       type: 'line' as const,
-                      label: '就寝14日MA',
+                      label: '就寝30日MA',
                       data: sleepCombinedData.sMA,
                       borderColor: 'rgba(129,140,248,1)',
                       backgroundColor: 'rgba(129,140,248,0.15)',
@@ -374,8 +374,8 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                         label: (ctx: import('chart.js').TooltipItem<'line'>) => {
                           if (ctx.datasetIndex === 0) return `身長: ${(ctx.parsed.y ?? 0).toFixed(1)}cm`;
                           if (ctx.datasetIndex === 1) return `就寝: ${decimalToTime(ctx.parsed.y ?? 0)}`;
-                          if (ctx.datasetIndex === 2) return `身長14日MA: ${(ctx.parsed.y ?? 0).toFixed(1)}cm`;
-                          return `就寝14日MA: ${decimalToTime(ctx.parsed.y ?? 0)}`;
+                          if (ctx.datasetIndex === 2) return `身長30日MA: ${(ctx.parsed.y ?? 0).toFixed(1)}cm`;
+                          return `就寝30日MA: ${decimalToTime(ctx.parsed.y ?? 0)}`;
                         },
                       },
                     },
