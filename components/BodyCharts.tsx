@@ -50,6 +50,22 @@ function decimalToTime(d: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+function movingAverage(
+  points: { date: string; value: number }[],
+  days: number
+): { date: string; value: number }[] {
+  return points.map((p) => {
+    const ts = dateToTs(p.date);
+    const cutoff = ts - days * 86400000;
+    const inWin = points.filter(q => {
+      const qt = dateToTs(q.date);
+      return qt >= cutoff && qt <= ts;
+    });
+    const avg = inWin.reduce((s, q) => s + q.value, 0) / inWin.length;
+    return { date: p.date, value: avg };
+  });
+}
+
 const CHART_BG = 'bg-slate-800/80 border border-white/10';
 const LABEL_CLS = 'text-[11px] font-bold text-blue-200 mb-1.5';
 const COLOR_H = 'rgb(234,88,12)';    // オレンジ（身長）
@@ -126,7 +142,20 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
     const ySMin = sVals.length > 0 ? Math.min(...sVals) - 0.5 : undefined;
     const ySMax = sVals.length > 0 ? Math.max(...sVals) + 0.5 : undefined;
 
-    return { hLine, sBars, xMin, xMax, yHMin, yHMax, ySMin, ySMax };
+    // 14日移動平均
+    const heightRaw = sorted
+      .filter(r => r.height != null)
+      .map(r => ({ date: r.date, value: r.height! }));
+    const hMA = movingAverage(heightRaw, 14)
+      .map(p => ({ x: ageYears(birthDate, p.date), y: p.value }));
+
+    const sleepRaw = sleepSeries
+      .filter(r => dateToTs(r.date) >= periodStartTs - 1)
+      .map(r => ({ date: r.date, value: sleepToDecimal(r.sleepTime!) }));
+    const sMA = movingAverage(sleepRaw, 14)
+      .map(p => ({ x: ageYears(birthDate, p.date), y: p.value }));
+
+    return { hLine, sBars, hMA, sMA, xMin, xMax, yHMin, yHMax, ySMin, ySMax };
   }, [sorted, sleepSeries, birthDate, hasAge]);
 
   const showTimeSeries = hasAge && (heightAgePoints.length > 1 || weightAgePoints.length > 1);
@@ -270,8 +299,9 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
           <p className={LABEL_CLS}>😴 就寝時刻と身長の推移</p>
           <div className={`${CHART_BG} rounded-2xl p-3`}>
             <p className="text-[9px] text-slate-500 mb-1">
-              <span style={{ color: COLOR_H }}>━</span> 身長 (左軸) &nbsp;
-              <span style={{ color: 'rgba(129,140,248,1)' }}>●━</span> 就寝時刻 (右軸・早い=上)
+              <span style={{ color: COLOR_H }}>━</span> 身長MA &nbsp;
+              <span style={{ color: 'rgba(129,140,248,1)' }}>━</span> 就寝MA &nbsp;
+              <span style={{ color: 'rgba(234,88,12,0.4)', fontSize: 8 }}>（薄=実値）</span>
             </p>
             <div style={{ height: 175 }}>
               <ReactChart
@@ -282,27 +312,53 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                       type: 'line' as const,
                       label: '身長 (cm)',
                       data: sleepCombinedData.hLine,
-                      borderColor: COLOR_H,
-                      backgroundColor: 'rgba(234,88,12,0.1)',
+                      borderColor: 'rgba(234,88,12,0.4)',
+                      backgroundColor: 'rgba(234,88,12,0.05)',
                       yAxisID: 'yH',
                       tension: 0.35,
-                      pointRadius: 3,
-                      pointBackgroundColor: COLOR_H,
-                      order: 1,
+                      pointRadius: 2,
+                      pointBackgroundColor: 'rgba(234,88,12,0.4)',
+                      borderWidth: 1,
+                      order: 2,
                     },
                     {
                       type: 'line' as const,
                       label: '就寝時刻',
                       data: sleepCombinedData.sBars,
-                      borderColor: 'rgba(129,140,248,0.8)',
-                      backgroundColor: 'rgba(129,140,248,0.9)',
+                      borderColor: 'rgba(129,140,248,0.4)',
+                      backgroundColor: 'rgba(129,140,248,0.4)',
                       yAxisID: 'yS',
                       showLine: true,
                       tension: 0.3,
-                      pointRadius: 4,
-                      pointHoverRadius: 6,
-                      borderWidth: 2,
+                      pointRadius: 2,
+                      pointHoverRadius: 4,
+                      borderWidth: 1,
                       order: 2,
+                    },
+                    {
+                      type: 'line' as const,
+                      label: '身長14日MA',
+                      data: sleepCombinedData.hMA,
+                      borderColor: COLOR_H,
+                      backgroundColor: 'rgba(234,88,12,0.12)',
+                      yAxisID: 'yH',
+                      tension: 0.4,
+                      pointRadius: 0,
+                      borderWidth: 2.5,
+                      order: 1,
+                    },
+                    {
+                      type: 'line' as const,
+                      label: '就寝14日MA',
+                      data: sleepCombinedData.sMA,
+                      borderColor: 'rgba(129,140,248,1)',
+                      backgroundColor: 'rgba(129,140,248,0.15)',
+                      yAxisID: 'yS',
+                      showLine: true,
+                      tension: 0.4,
+                      pointRadius: 0,
+                      borderWidth: 2.5,
+                      order: 1,
                     },
                   ],
                 }}
@@ -315,9 +371,12 @@ export default function BodyCharts({ records, birthDate }: { records: BodyRecord
                     tooltip: {
                       callbacks: {
                         title: (items: import('chart.js').TooltipItem<'line'>[]) => `${(items[0]?.parsed.x ?? 0).toFixed(1)}歳`,
-                        label: (ctx: import('chart.js').TooltipItem<'line'>) => ctx.datasetIndex === 0
-                          ? `身長: ${ctx.parsed.y}cm`
-                          : `就寝: ${decimalToTime(ctx.parsed.y ?? 0)}`,
+                        label: (ctx: import('chart.js').TooltipItem<'line'>) => {
+                          if (ctx.datasetIndex === 0) return `身長: ${ctx.parsed.y.toFixed(1)}cm`;
+                          if (ctx.datasetIndex === 1) return `就寝: ${decimalToTime(ctx.parsed.y ?? 0)}`;
+                          if (ctx.datasetIndex === 2) return `身長14日MA: ${ctx.parsed.y.toFixed(1)}cm`;
+                          return `就寝14日MA: ${decimalToTime(ctx.parsed.y ?? 0)}`;
+                        },
                       },
                     },
                   },
