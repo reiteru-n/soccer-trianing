@@ -139,3 +139,105 @@ export function EditIcon({ size = 24, className = '' }: IconProps) {
     </svg>
   );
 }
+
+export function TrashIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9zm7.5-5l-1-1h-5l-1 1H5v2h14V4h-3.5z"/>
+    </svg>
+  );
+}
+
+export function SaveIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+    </svg>
+  );
+}
+
+export function FlameIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
+    </svg>
+  );
+}
+
+export function HourglassIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M6 2v6l2 2-2 2v6h12v-6l-2-2 2-2V2H6zm10 14.5V18H8v-1.5l2-2V12h4v2.5l2 2zM16 6l-4 3-4-3V4h8v2z"/>
+    </svg>
+  );
+}
+
+export function LockIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+    </svg>
+  );
+}
+
+export function ImproveIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/>
+    </svg>
+  );
+}
+
+export function SquareIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path fillRule="evenodd" d="M3 3v18h18V3H3zm2 16V5h14v14H5z"/>
+    </svg>
+  );
+}
+
+export function CampIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 3L2 21h20L12 3zm-1 13h2v3h-2v-3z"/>
+    </svg>
+  );
+}
+
+// 公式戦アイコン（5角形メダル）
+export function OfficialMatchIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 2 L14.9 8 L21.5 8.9 L16.8 13.5 L17.9 20.1 L12 17 L6.1 20.1 L7.2 13.5 L2.5 8.9 L9.1 8 Z"/>
+    </svg>
+  );
+}
+
+// CUP戦アイコン（カップトロフィー）
+export function CupMatchIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M8 21h8v-2H8v2zm4-4c2.76 0 5-2.24 5-5V4H7v8c0 2.76 2.24 5 5 5zM5 5H3v4c0 1.66 1.34 3 3 3V5zm16 0h-2v7c1.66 0 3-1.34 3-3V5z"/>
+    </svg>
+  );
+}
+
+// トレマアイコン（サッカーフィールド俯瞰）
+export function FieldMatchIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path fillRule="evenodd" d="M2 4v16h20V4H2zm2 2h16v12H4V6z"/>
+      <rect x="11" y="6" width="2" height="12"/>
+      <path fillRule="evenodd" d="M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm0 1.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+    </svg>
+  );
+}
+
+// その他試合アイコン（ゴールポスト正面）
+export function GoalMatchIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M3 4h18v2H5v14H3V4zm16 2h2v14h-2V6z"/>
+    </svg>
+  );
+}

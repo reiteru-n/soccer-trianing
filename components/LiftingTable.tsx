@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { LiftingRecord, LiftingPart, LiftingSide } from '@/lib/types';
+import { EditIcon, TrashIcon } from '@/components/AppIcons';
 
 interface Props {
   records: LiftingRecord[];
@@ -67,19 +68,19 @@ export default function LiftingTable({ records, filterPart, filterSide, onDelete
                       {onEdit && (
                         <button
                           onClick={() => onEdit(r)}
-                          className="text-blue-400 hover:text-blue-600 text-xs"
+                          className="text-blue-400 hover:text-blue-600"
                           title="編集"
                         >
-                          ✏️
+                          <EditIcon size={14} />
                         </button>
                       )}
                       {onDelete && (
                         <button
                           onClick={() => handleDelete(r)}
-                          className="text-red-400 hover:text-red-600 text-xs"
+                          className="text-red-400 hover:text-red-600"
                           title="削除"
                         >
-                          🗑️
+                          <TrashIcon size={14} />
                         </button>
                       )}
                     </div>

@@ -2,6 +2,7 @@
 
 import { Milestone } from '@/lib/types';
 import { MILESTONES } from '@/lib/data';
+import { CheckIcon, HourglassIcon, LockIcon } from '@/components/AppIcons';
 
 interface Props {
   milestones: Milestone[];
@@ -10,7 +11,7 @@ interface Props {
 
 const statusConfig = {
   achieved: {
-    icon: '✅',
+    icon: <CheckIcon size={20} className="text-green-500" />,
     label: '達成！',
     barColor: 'bg-green-500',
     textColor: 'text-green-700',
@@ -18,7 +19,7 @@ const statusConfig = {
     animate: 'animate-pulse-once',
   },
   challenging: {
-    icon: '⏳',
+    icon: <HourglassIcon size={20} className="text-orange-400" />,
     label: 'チャレンジ中！',
     barColor: 'bg-orange-400',
     textColor: 'text-orange-600',
@@ -26,7 +27,7 @@ const statusConfig = {
     animate: '',
   },
   locked: {
-    icon: '🔒',
+    icon: <LockIcon size={20} className="text-gray-400" />,
     label: 'まだまだこれから！',
     barColor: 'bg-gray-300',
     textColor: 'text-gray-400',
@@ -49,7 +50,7 @@ export default function MilestoneSection({ milestones, maxCount }: Props) {
       {milestones.some((m) => m.status === 'challenging') && (
         <div className="rounded-2xl bg-orange-50 border-2 border-orange-200 p-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-bold text-orange-700">⏳ 次の目標: {nextTarget}回</span>
+            <span className="text-sm font-bold text-orange-700 flex items-center gap-1"><HourglassIcon size={14} /> 次の目標: {nextTarget}回</span>
             <span className="text-sm font-bold text-orange-600">{maxCount} / {nextTarget}</span>
           </div>
           <div className="h-4 bg-orange-100 rounded-full overflow-hidden">
@@ -72,7 +73,7 @@ export default function MilestoneSection({ milestones, maxCount }: Props) {
               className={`flex items-center justify-between rounded-xl border-2 px-4 py-3 ${cfg.bg} ${cfg.animate}`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-xl">{cfg.icon}</span>
+                {cfg.icon}
                 <span className={`font-bold text-lg ${status === 'locked' ? 'text-gray-400' : 'text-gray-700'}`}>
                   {target}回
                 </span>

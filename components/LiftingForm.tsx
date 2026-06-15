@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { LiftingPart, LiftingSide, LiftingRecord } from '@/lib/types';
+import { EditIcon, BallIcon, SaveIcon } from '@/components/AppIcons';
 
 interface Props {
   onSave: (record: Omit<LiftingRecord, 'id'>) => void;
@@ -52,8 +53,9 @@ export default function LiftingForm({ onSave, onClose, pastLocations, initialVal
       >
         <div className="px-6 pt-6 pb-8 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-800">
-              {isEditing ? '✏️ リフティング記録を編集' : '⚽ リフティング記録を追加'}
+            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              {isEditing ? <EditIcon size={18} /> : <BallIcon size={18} />}
+              {isEditing ? 'リフティング記録を編集' : 'リフティング記録を追加'}
             </h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
           </div>
@@ -145,7 +147,7 @@ export default function LiftingForm({ onSave, onClose, pastLocations, initialVal
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-md"
             >
-              {isEditing ? '💾 更新する' : '💾 記録する'}
+              <span className="inline-flex items-center gap-2"><SaveIcon size={18} />{isEditing ? '更新する' : '記録する'}</span>
             </button>
           </form>
         </div>

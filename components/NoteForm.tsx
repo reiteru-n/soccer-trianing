@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { PracticeNote, ImprovementItem } from '@/lib/types';
+import { EditIcon, NoteIcon, SaveIcon } from '@/components/AppIcons';
 
 interface Props {
   onSave: (note: Omit<PracticeNote, 'id'>) => void;
@@ -63,8 +64,9 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
       >
         <div className="px-6 pt-6 pb-8 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-800">
-              {isEditing ? '✏️ 練習ノートを編集' : '📝 練習ノートを追加'}
+            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              {isEditing ? <EditIcon size={18} /> : <NoteIcon size={18} />}
+              {isEditing ? '練習ノートを編集' : '練習ノートを追加'}
             </h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
           </div>
@@ -166,7 +168,7 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
               type="submit"
               className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-md"
             >
-              {isEditing ? '💾 更新する' : '💾 記録する'}
+              <span className="inline-flex items-center gap-2"><SaveIcon size={18} />{isEditing ? '更新する' : '記録する'}</span>
             </button>
           </form>
         </div>

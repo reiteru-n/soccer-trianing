@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { PracticeNote } from '@/lib/types';
+import { EditIcon, TrashIcon, StarIcon, ImproveIcon, CheckIcon, SquareIcon } from '@/components/AppIcons';
 
 interface Props {
   note: PracticeNote;
@@ -74,7 +75,7 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
               onClick={() => setConfirmDelete(true)}
               className="w-full bg-red-500 text-white font-bold text-xs flex flex-col items-center justify-center gap-1"
             >
-              <span className="text-xl">🗑️</span>
+              <TrashIcon size={20} />
               <span>削除</span>
             </button>
           )}
@@ -108,17 +109,17 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
             {onEdit && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(note); }}
-                className="text-blue-300 hover:text-blue-500 text-sm p-1"
+                className="text-blue-300 hover:text-blue-500 p-1"
               >
-                ✏️
+                <EditIcon size={16} />
               </button>
             )}
             {onDelete && (
               <button
                 onClick={(e) => { e.stopPropagation(); setOffsetX(-DELETE_REVEAL); }}
-                className="text-gray-300 hover:text-red-400 text-sm p-1"
+                className="text-gray-300 hover:text-red-400 p-1"
               >
-                🗑️
+                <TrashIcon size={16} />
               </button>
             )}
           </div>
@@ -128,7 +129,7 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
         {note.goodPoints && (
           <div className="px-4 pt-3 pb-2">
             <div className="flex items-start gap-2">
-              <span className="text-green-500 text-lg mt-0.5">⭐</span>
+              <StarIcon size={18} className="text-green-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-bold text-green-700 mb-0.5">良かったところ</p>
                 <p className="text-sm text-gray-700 leading-relaxed">{note.goodPoints}</p>
@@ -141,7 +142,7 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
         {totalCount > 0 && (
           <div className="px-4 pb-3 pt-1">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-orange-400 text-lg">💪</span>
+              <ImproveIcon size={18} className="text-orange-400 flex-shrink-0" />
               <p className="text-xs font-bold text-orange-600">
                 改善したいところ
                 <span className="ml-1.5 text-gray-400 font-normal">({doneCount}/{totalCount})</span>
@@ -155,8 +156,8 @@ export default function NoteCard({ note, onDelete, onEdit, onToggleImprovement }
                   onClick={(e) => { e.stopPropagation(); onToggleImprovement?.(note.id, index); }}
                   className={`w-full flex items-start gap-2 text-left rounded-lg px-2 py-1.5 transition-colors ${onToggleImprovement ? 'hover:bg-orange-50 active:bg-orange-100' : ''}`}
                 >
-                  <span className={`mt-0.5 text-base flex-shrink-0 ${item.done ? 'text-green-500' : 'text-gray-300'}`}>
-                    {item.done ? '✅' : '⬜'}
+                  <span className={`mt-0.5 flex-shrink-0 ${item.done ? 'text-green-500' : 'text-gray-300'}`}>
+                    {item.done ? <CheckIcon size={16} /> : <SquareIcon size={16} />}
                   </span>
                   <span className={`text-sm leading-relaxed ${item.done ? 'line-through text-gray-400' : 'text-gray-700'}`}>
                     {item.text}

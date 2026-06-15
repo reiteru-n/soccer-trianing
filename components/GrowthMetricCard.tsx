@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { EditIcon, TrashIcon, SaveIcon } from '@/components/AppIcons';
 import {
   Chart as ChartJS, CategoryScale, LinearScale,
   PointElement, LineElement, Tooltip, ChartOptions,
@@ -149,7 +150,7 @@ export default function GrowthMetricCard({
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6">
           <div className="bg-slate-800 border border-red-500/40 rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center">
-            <p className="text-3xl mb-3">🗑️</p>
+            <TrashIcon size={36} className="mx-auto mb-3 text-red-400" />
             <p className="font-bold text-white text-lg mb-1">「{label}」を削除</p>
             <p className="text-sm text-slate-400 mb-5">この指標と全ての記録が削除されます。元に戻せません。</p>
             <div className="flex gap-3">
@@ -197,7 +198,9 @@ export default function GrowthMetricCard({
           {/* Edit button */}
           {onUpdateMetric && (
             <button onClick={(e) => { e.stopPropagation(); openEdit(); }}
-              className="shrink-0 w-8 h-8 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl flex items-center justify-center text-sm transition-colors">✏️</button>
+              className="shrink-0 w-8 h-8 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl flex items-center justify-center transition-colors">
+              <EditIcon size={15} />
+            </button>
           )}
 
           {/* Frequency */}
@@ -240,7 +243,9 @@ export default function GrowthMetricCard({
                 className="w-full rounded-lg bg-slate-800 border border-white/10 px-2 py-1.5 text-sm text-white focus:outline-none focus:border-blue-400" />
               <div className="flex gap-2">
                 <button onClick={handleAdd} disabled={!formValue}
-                  className="flex-1 bg-blue-600 disabled:opacity-40 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-sm">💾 保存</button>
+                  className="flex-1 bg-blue-600 disabled:opacity-40 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-sm flex items-center justify-center gap-1.5">
+                  <SaveIcon size={14} />保存
+                </button>
                 <button onClick={() => setShowForm(false)} className="flex-1 bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-sm">キャンセル</button>
               </div>
             </div>
@@ -251,7 +256,7 @@ export default function GrowthMetricCard({
         {showEdit && onUpdateMetric && (
           <div className="px-4 pb-3 border-t border-white/5">
             <div className="bg-slate-700/30 rounded-xl p-3 mt-2 space-y-2">
-              <p className="text-xs font-bold text-blue-200 mb-1">✏️ メニューを編集</p>
+              <p className="text-xs font-bold text-blue-200 mb-1 flex items-center gap-1"><EditIcon size={12} /> メニューを編集</p>
               <div className="flex gap-2">
                 <div className="w-14">
                   <label className="block text-[10px] text-slate-400 mb-1">アイコン</label>
@@ -322,7 +327,9 @@ export default function GrowthMetricCard({
                 <button onClick={() => setShowEdit(false)} className="flex-1 bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-sm">キャンセル</button>
                 {onDeleteMetric && (
                   <button onClick={() => { setShowEdit(false); setShowDeleteConfirm(true); }}
-                    className="px-3 bg-red-900/50 hover:bg-red-800/60 text-red-400 font-bold py-2 rounded-xl text-sm">🗑️</button>
+                    className="px-3 bg-red-900/50 hover:bg-red-800/60 text-red-400 font-bold py-2 rounded-xl text-sm flex items-center justify-center">
+                    <TrashIcon size={15} />
+                  </button>
                 )}
               </div>
             </div>

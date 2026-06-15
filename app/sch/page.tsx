@@ -8,7 +8,11 @@ import {
   SchAnnouncement, SchMember, SchMemberParent, SchParkingRecord, SchParkingSlot, SchNearbyParking,
   SchUpdateHistory, SchParkingComment, SchParkingCommentType, SchStandaloneVideo,
 } from '@/lib/types';
-import { HouseIcon, CalendarIcon, VideoIcon, TrophyIcon, BellIcon, PeopleIcon, EditIcon } from '@/components/AppIcons';
+import {
+  HouseIcon, CalendarIcon, VideoIcon, TrophyIcon, BellIcon, PeopleIcon, EditIcon,
+  BallIcon, CampIcon, StarIcon, TrashIcon, ChartIcon,
+  OfficialMatchIcon, CupMatchIcon, FieldMatchIcon, GoalMatchIcon,
+} from '@/components/AppIcons';
 
 // ---- Utilities ----
 function generateId() {
@@ -45,17 +49,25 @@ function isInstagramUrl(url: string): boolean {
 }
 
 // ---- Event type config ----
-type TypeCfg = { label: string; icon: string; badge: string; border: string; bg: string };
+type TypeCfg = { label: string; icon: React.ReactNode; badge: string; border: string; bg: string };
 const TYPE_CFG: Record<string, TypeCfg> = {
-  practice:   { label: '練習',   icon: '⚽', badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
-  schedule:   { label: '練習',   icon: '⚽', badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
-  match:      { label: '試合',   icon: '🏆', badge: 'bg-blue-600/40 text-blue-300',    border: 'border-blue-500/30',   bg: 'bg-blue-900/20'   },
-  camp:       { label: '合宿/遠征', icon: '🏕️', badge: 'bg-amber-600/40 text-amber-300', border: 'border-amber-500/30', bg: 'bg-amber-900/20' },
-  expedition: { label: '合宿/遠征', icon: '🏕️', badge: 'bg-amber-600/40 text-amber-300', border: 'border-amber-500/30', bg: 'bg-amber-900/20' },
-  other:      { label: 'その他', icon: '📌', badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
-  off:        { label: 'OFF',   icon: '🏖️', badge: 'bg-red-600/40 text-red-300',      border: 'border-red-500/30',    bg: 'bg-red-900/20'    },
+  practice:   { label: '練習',     icon: <BallIcon size={10} />,    badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
+  schedule:   { label: '練習',     icon: <BallIcon size={10} />,    badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
+  match:      { label: '試合',     icon: <TrophyIcon size={10} />,  badge: 'bg-blue-600/40 text-blue-300',    border: 'border-blue-500/30',   bg: 'bg-blue-900/20'   },
+  camp:       { label: '合宿/遠征', icon: <CampIcon size={10} />,   badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
+  expedition: { label: '合宿/遠征', icon: <CampIcon size={10} />,   badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
+  other:      { label: 'その他',   icon: <CalendarIcon size={10} />, badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
+  off:        { label: 'OFF',      icon: <StarIcon size={10} />,    badge: 'bg-red-600/40 text-red-300',      border: 'border-red-500/30',    bg: 'bg-red-900/20'    },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
+
+// ---- Match type icons ----
+const MATCH_TYPE_ICONS: Record<string, React.ReactNode> = {
+  '公式戦': <OfficialMatchIcon size={11} />,
+  'CUP戦':  <CupMatchIcon size={11} />,
+  'トレマ':  <FieldMatchIcon size={11} />,
+  'その他':  <GoalMatchIcon size={11} />,
+};
 // WMO天気コード (Open-Meteo) + 降水確率で判定
 function weatherEmoji(code: number, precip: number): string {
   if (code >= 95) return '⛈️';                        // 雷雨
@@ -1198,7 +1210,10 @@ function EventCard({
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${cfg.badge}`}>{cfg.icon} {cfg.label}</span>
               {event.type === 'match' && event.matchType && (
-                <span className="text-[10px] bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded-full">{event.matchType}</span>
+                <span className="text-[10px] bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5">
+                  {MATCH_TYPE_ICONS[event.matchType]}
+                  {event.matchType}
+                </span>
               )}
               {event.type === 'match' && event.matchFormat && event.matchFormat !== 'friendly' && (
                 <span className="text-[10px] bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded-full">
@@ -1645,13 +1660,13 @@ function EventSection({ events, members, onSave, openDetailId }: {
   const upcoming = filtered.filter(e => !isEventPast(e)).sort((a, b) => a.date.localeCompare(b.date));
   const past = filtered.filter(e => isEventPast(e)).sort((a, b) => b.date.localeCompare(a.date));
 
-  const filterBtns: { key: EventFilter; icon: string; label: string }[] = [
-    { key: 'all',      icon: '📅', label: '全て' },
-    { key: 'practice', icon: '⚽', label: '練習' },
-    { key: 'match',    icon: '🏆', label: '試合' },
-    { key: 'camp',     icon: '🏕️', label: '合宿/遠征' },
-    { key: 'other',    icon: '📌', label: 'その他' },
-    { key: 'off',      icon: '🏖️', label: 'OFF' },
+  const filterBtns: { key: EventFilter; icon: React.ReactNode; label: string }[] = [
+    { key: 'all',      icon: <CalendarIcon size={16} />, label: '全て' },
+    { key: 'practice', icon: <BallIcon size={16} />,     label: '練習' },
+    { key: 'match',    icon: <TrophyIcon size={16} />,   label: '試合' },
+    { key: 'camp',     icon: <CampIcon size={16} />,     label: '合宿/遠征' },
+    { key: 'other',    icon: <CalendarIcon size={16} />, label: 'その他' },
+    { key: 'off',      icon: <StarIcon size={16} />,     label: 'OFF' },
   ];
 
   return (
@@ -2659,7 +2674,7 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
   if (scoredMatches.length === 0) {
     return (
       <div className="text-center py-12 text-slate-400">
-        <p className="text-3xl mb-3">🏆</p>
+        <TrophyIcon size={48} className="mx-auto mb-3 opacity-50" />
         <p className="text-sm">試合結果を登録すると戦績が表示されます</p>
       </div>
     );
@@ -2830,7 +2845,10 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs text-slate-400">{ev.date}</span>
                     {ev.matchType && (
-                      <span className="text-[10px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{ev.matchType}</span>
+                      <span className="text-[10px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full inline-flex items-center gap-0.5">
+                        {MATCH_TYPE_ICONS[ev.matchType]}
+                        {ev.matchType}
+                      </span>
                     )}
                   </div>
                   <div className="space-y-1.5">
@@ -3451,7 +3469,7 @@ function HomeSection({
         return (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider">📢 最近のお知らせ</h2>
+              <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider flex items-center gap-1"><BellIcon size={11} /> 最近のお知らせ</h2>
               {hasMore && (
                 <button onClick={onGoToAnnounce} className="text-[10px] text-sky-400 hover:text-sky-300">
                   すべて見る →
@@ -3589,7 +3607,7 @@ function HomeSection({
       <Link href="/sch/history"
         className="flex items-center gap-3 bg-gradient-to-r from-sky-600 to-cyan-500 rounded-2xl px-4 py-3 shadow hover:from-sky-700 hover:to-cyan-600 transition-all active:scale-95"
       >
-        <span className="text-2xl">🏆</span>
+        <TrophyIcon size={24} className="text-white flex-shrink-0" />
         <div className="flex-1">
           <p className="text-white text-sm font-bold leading-tight">先輩たちの戦歴を見る</p>
           <p className="text-blue-200 text-[10px] mt-0.5">2020年〜現在 U-10〜U-12 主要大会成績</p>
@@ -4258,7 +4276,7 @@ function MemberSection({
 
       {/* Team logo */}
       <div>
-        <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">🏅 チームロゴ</h2>
+        <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2 flex items-center gap-1"><TrophyIcon size={11} /> チームロゴ</h2>
         <div className="bg-slate-800/60 border border-white/10 rounded-xl p-4 space-y-3">
           {teamLogo ? (
             <div className="flex items-center gap-4">
@@ -4710,7 +4728,7 @@ export default function SchPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24 text-slate-400">
-        <div className="text-center"><p className="text-4xl mb-3">⚽</p><p className="text-sm">読み込み中...</p></div>
+        <div className="text-center"><BallIcon size={48} className="mx-auto mb-3 opacity-50" /><p className="text-sm">読み込み中...</p></div>
       </div>
     );
   }
@@ -4759,8 +4777,8 @@ export default function SchPage() {
                   {pushBusy
                     ? <span className="text-[10px]">…</span>
                     : pushState === 'subscribed'
-                    ? <><span>🔔</span><span className="text-[9px]">通知</span></>
-                    : <><span>🔕</span><span className="text-[9px]">通知</span></>
+                    ? <><BellIcon size={12} /><span className="text-[9px]">通知</span></>
+                    : <><BellIcon size={12} className="opacity-40" /><span className="text-[9px]">通知</span></>
                   }
                 </button>
               )}
@@ -4780,7 +4798,7 @@ export default function SchPage() {
                 className="text-[10px] whitespace-nowrap text-sky-400/70 hover:text-sky-100 border border-sky-600/30 hover:border-sky-500/50 px-2.5 py-1 rounded-lg transition-colors"
                 title="予定をカレンダーに追加"
               >
-                📅 カレンダー追加
+                <span className="inline-flex items-center gap-1"><CalendarIcon size={10} /> カレンダー追加</span>
               </button>
               {isAdmin && (
                 <a
@@ -4795,13 +4813,13 @@ export default function SchPage() {
         </div>
         <div className="flex items-center gap-2 mt-3 flex-wrap">
           <Link href="/sch/history" className="flex items-center gap-1.5 text-[10px] text-sky-300/80 hover:text-white border border-sky-500/30 hover:border-sky-400/60 bg-sky-900/20 hover:bg-sky-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
-            🏆 戦歴
+            <TrophyIcon size={10} /> 戦歴
           </Link>
           <Link href="/sch/ob" className="flex items-center gap-1.5 text-[10px] text-sky-300/80 hover:text-white border border-sky-500/30 hover:border-sky-400/60 bg-sky-900/20 hover:bg-sky-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
-            ⚽ OB進路
+            <BallIcon size={10} /> OB進路
           </Link>
           <Link href="/sch/kanagawa" className="flex items-center gap-1.5 text-[10px] text-sky-300/80 hover:text-white border border-sky-500/30 hover:border-sky-400/60 bg-sky-900/20 hover:bg-sky-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
-            📊 神奈川県推移
+            <ChartIcon size={10} /> 神奈川県推移
           </Link>
         </div>
       </header>
@@ -4827,10 +4845,16 @@ export default function SchPage() {
         const hh = latestTs.getHours().toString().padStart(2, '0');
         const min = latestTs.getMinutes().toString().padStart(2, '0');
         const histItems = updateHistory.slice(0, 5);
-        const typeIcon = (h: SchUpdateHistory) => {
-          if (h.type === 'announcement') return '📢';
-          const icons: Record<string, string> = { match: '🏆', practice: '⚽', camp: '🏕️', expedition: '🚌', other: '📅' };
-          return icons[h.eventType ?? ''] ?? '📅';
+        const typeIcon = (h: SchUpdateHistory): React.ReactNode => {
+          if (h.type === 'announcement') return <BellIcon size={16} />;
+          const icons: Record<string, React.ReactNode> = {
+            match: <TrophyIcon size={16} />,
+            practice: <BallIcon size={16} />,
+            camp: <CampIcon size={16} />,
+            expedition: <CampIcon size={16} />,
+            other: <CalendarIcon size={16} />,
+          };
+          return icons[h.eventType ?? ''] ?? <CalendarIcon size={16} />;
         };
         const itemTs = (h: SchUpdateHistory) => {
           const t = new Date(h.timestamp);
@@ -4842,7 +4866,7 @@ export default function SchPage() {
               className="w-full flex items-center gap-3 px-4 py-3 text-left"
               onClick={() => setHistoryOpen(o => !o)}
             >
-              <span className="text-lg">🔔</span>
+              <BellIcon size={20} className="text-sky-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white leading-tight">
                   {mm}月{dd}日 {hh}:{min} に更新がありました
