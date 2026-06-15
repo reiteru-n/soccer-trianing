@@ -14,7 +14,7 @@ import { BodyRecord } from '@/lib/types';
 import { exportData, importData } from '@/lib/storage';
 import BodyChart from '@/components/BodyChart';
 import BodyCharts from '@/components/BodyCharts';
-import { EditIcon } from '@/components/AppIcons';
+import { EditIcon, BallIcon, TrophyIcon, NoteIcon, RulerIcon, VideoIcon, ChartIcon, SaveIcon, UploadIcon, DownloadIcon, CheckIcon, WarningIcon } from '@/components/AppIcons';
 
 function todayStr() {
   const d = new Date();
@@ -123,13 +123,13 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
     });
     finishBodySave();
   };
-if (isLoading) return (<div className="flex items-center justify-center py-24 text-gray-400"><div className="text-center"><p className="text-4xl mb-3">⚽</p><p className="text-sm">読み込み中...</p></div></div>);
+if (isLoading) return (<div className="flex items-center justify-center py-24 text-gray-400"><div className="text-center"><BallIcon size={48} className="mx-auto mb-3 opacity-60" /><p className="text-sm">読み込み中...</p></div></div>);
   return (
     <>
       <ConfettiEffect trigger={!!newMilestoneAchieved} onDone={clearNewMilestone} />
       {newMilestoneAchieved && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-yellow-400 text-yellow-900 font-bold px-6 py-3 rounded-2xl shadow-xl animate-bounce text-center whitespace-nowrap">🎉 {newMilestoneAchieved}回達成おめでとう！</div>}
       <header className="mb-5 pt-1">
-        <h1 className="text-2xl font-extrabold text-white drop-shadow">⚽ サッカー記録</h1>
+        <h1 className="text-2xl font-extrabold text-white drop-shadow flex items-center gap-2"><BallIcon size={24} />サッカー記録</h1>
         <p className="text-sm text-blue-200 mt-0.5">毎日の練習を積み上げよう！💪</p>
       </header>
       <div className="mb-3 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 rounded-2xl px-4 py-3.5 text-white shadow-lg shadow-blue-900/40 border border-blue-400/30">
@@ -142,7 +142,7 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🎬</span>
+            <VideoIcon size={22} />
             <span className="text-sm font-bold">目標達成に近づく動画</span>
           </div>
           <span className="text-white/80 text-sm">→</span>
@@ -151,17 +151,17 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
       <section className="mb-5">
         <div className="grid grid-cols-3 gap-2">
           <button onClick={() => { const el = document.getElementById('section-lifting'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 16, behavior: 'smooth' }); }} className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-3 text-center shadow-lg shadow-blue-900/40 border border-blue-400/20 active:scale-95 transition-transform">
-            <p className="text-xl mb-0.5">🏆</p>
+            <TrophyIcon size={24} className="mx-auto mb-0.5" />
             <p className="text-[10px] text-blue-100 leading-tight">リフティング<br/>最高</p>
             <p className="text-xl font-extrabold text-white mt-0.5">{maxCount}<span className="text-xs font-normal">回</span></p>
           </button>
           <button onClick={() => { const el = document.getElementById('section-notes'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 16, behavior: 'smooth' }); }} className="bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl p-3 text-center shadow-lg shadow-teal-900/40 border border-cyan-400/20 active:scale-95 transition-transform">
-            <p className="text-xl mb-0.5">📝</p>
+            <NoteIcon size={24} className="mx-auto mb-0.5" />
             <p className="text-[10px] text-cyan-100 leading-tight">練習ノート<br/>記録数</p>
             <p className="text-xl font-extrabold text-white mt-0.5">{practiceNotes.length}<span className="text-xs font-normal">回</span></p>
           </button>
           <button onClick={() => { const el = document.getElementById('section-body'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 16, behavior: 'smooth' }); }} className="bg-gradient-to-br from-violet-500 to-indigo-700 rounded-2xl p-3 text-center shadow-lg shadow-indigo-900/40 border border-violet-400/20 active:scale-95 transition-transform">
-            <p className="text-xl mb-0.5">📏</p>
+            <RulerIcon size={24} className="mx-auto mb-0.5" />
             <p className="text-[10px] text-violet-100 leading-tight mb-0.5">身長 / 体重</p>
             <p className="text-sm font-extrabold text-white leading-tight">{latestH?.height ?? '-'}<span className="text-[10px] font-normal">cm</span></p>
             <p className="text-sm font-bold text-violet-200 leading-tight">{latestW?.weight ?? '-'}<span className="text-[10px] font-normal">kg</span></p>
@@ -169,18 +169,18 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
         </div>
       </section>
       <section className="mb-6">
-        <h2 className="text-sm font-bold text-blue-200 mb-3 tracking-wide uppercase">✏️ 今日の記録を追加</h2>
+        <h2 className="text-sm font-bold text-blue-200 mb-3 tracking-wide uppercase flex items-center gap-1.5"><EditIcon size={14} />今日の記録を追加</h2>
         <div className="flex gap-2">
-          <button onClick={() => setShowLiftingForm(true)} className="flex-1 bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-blue-900/50 border border-blue-400/30 transition-all active:scale-95"><span className="text-2xl">⚽</span><span className="text-xs">リフティング</span></button>
-          <button onClick={() => setShowNoteForm(true)} className="flex-1 bg-gradient-to-b from-teal-500 to-cyan-700 hover:from-teal-400 hover:to-cyan-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-cyan-900/50 border border-teal-400/30 transition-all active:scale-95"><span className="text-2xl">📝</span><span className="text-xs">練習ノート</span></button>
-          <button onClick={() => setShowBodyForm(true)} className="flex-1 bg-gradient-to-b from-violet-500 to-indigo-700 hover:from-violet-400 hover:to-indigo-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-indigo-900/50 border border-violet-400/30 transition-all active:scale-95"><span className="text-2xl">📏</span><span className="text-xs">身長・体重</span></button>
+          <button onClick={() => setShowLiftingForm(true)} className="flex-1 bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-blue-900/50 border border-blue-400/30 transition-all active:scale-95"><BallIcon size={28} /><span className="text-xs">リフティング</span></button>
+          <button onClick={() => setShowNoteForm(true)} className="flex-1 bg-gradient-to-b from-teal-500 to-cyan-700 hover:from-teal-400 hover:to-cyan-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-cyan-900/50 border border-teal-400/30 transition-all active:scale-95"><NoteIcon size={28} /><span className="text-xs">練習ノート</span></button>
+          <button onClick={() => setShowBodyForm(true)} className="flex-1 bg-gradient-to-b from-violet-500 to-indigo-700 hover:from-violet-400 hover:to-indigo-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-indigo-900/50 border border-violet-400/30 transition-all active:scale-95"><RulerIcon size={28} /><span className="text-xs">身長・体重</span></button>
         </div>
       </section>
       <section id="section-lifting" className="mb-6"><SummaryCards records={liftingRecords} /></section>
-      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">🏅 マイルストーン</h2><Link href="/lifting" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div><MilestoneSection milestones={milestones} maxCount={maxCount} /></section>
-      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📈 成長グラフ（インステップ左足）</h2><Link href="/lifting" className="text-xs text-blue-300 font-medium">詳細 →</Link></div><div className="bg-slate-800/80 rounded-2xl p-4 shadow-xl shadow-blue-900/40 border border-white/10"><LiftingChart records={liftingRecords} filterPart="インステップ" filterSide="左足" /></div></section>
+      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase flex items-center gap-1.5"><TrophyIcon size={14} />マイルストーン</h2><Link href="/lifting" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div><MilestoneSection milestones={milestones} maxCount={maxCount} /></section>
+      <section className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase flex items-center gap-1.5"><ChartIcon size={14} />成長グラフ（インステップ左足）</h2><Link href="/lifting" className="text-xs text-blue-300 font-medium">詳細 →</Link></div><div className="bg-slate-800/80 rounded-2xl p-4 shadow-xl shadow-blue-900/40 border border-white/10"><LiftingChart records={liftingRecords} filterPart="インステップ" filterSide="左足" /></div></section>
       <section id="section-body" className="mb-6">
-        <div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📏 体重・身長</h2><button onClick={() => setShowBodyForm(true)} className="text-xs bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-bold px-3 py-1.5 rounded-lg transition-colors">+ 追加</button></div>
+        <div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase flex items-center gap-1.5"><RulerIcon size={14} />体重・身長</h2><button onClick={() => setShowBodyForm(true)} className="text-xs bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-bold px-3 py-1.5 rounded-lg transition-colors">+ 追加</button></div>
         {sortedBody.length > 0 ? (<div className="bg-white/95 rounded-2xl shadow-xl shadow-blue-900/30 border border-white/20 overflow-hidden">
           <div className="flex bg-slate-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-14 text-center">体重</span><span className="w-14 text-center">身長</span><span className="w-12 text-center">就寝</span><span className="w-12"></span></div>
           {(showAllBody ? sortedBody : sortedBody.slice(0, 5)).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-14 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-14 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><span className="w-12 text-center text-gray-500 text-xs">{r.sleepTime ?? "-"}</span><div className="w-12 flex items-center justify-end gap-1"><button onClick={()=>handleEditBody(r)} className="text-gray-300 hover:text-blue-400 p-0.5"><EditIcon size={14} /></button><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="text-gray-300 hover:text-red-400 text-lg leading-none">×</button></div></div>))}
@@ -211,8 +211,8 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
         )}
         <BodyCharts records={bodyRecords} birthDate={childBirthDate} />
       </section>
-      <section id="section-notes" className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase">📝 最新の練習ノート</h2><Link href="/notes" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div>{latestNotes.length === 0 ? (<p className="text-sm text-blue-200/60 text-center py-4">まだノートがありません</p>) : (<div className="space-y-3">{latestNotes.map((n) => <NoteCard key={n.id} note={n} />)}</div>)}</section>
-      <section className="mb-2"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase mb-3">💾 データ管理</h2><div className="flex gap-3"><button onClick={exportData} className="flex-1 bg-blue-600/80 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm border border-blue-400/30">📤 エクスポート</button><label className="flex-1 bg-slate-600/80 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-sm cursor-pointer text-center border border-slate-400/30">📥 インポート<input type="file" accept=".json" onChange={handleImport} className="hidden" /></label></div></section>
+      <section id="section-notes" className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase flex items-center gap-1.5"><NoteIcon size={14} />最新の練習ノート</h2><Link href="/notes" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div>{latestNotes.length === 0 ? (<p className="text-sm text-blue-200/60 text-center py-4">まだノートがありません</p>) : (<div className="space-y-3">{latestNotes.map((n) => <NoteCard key={n.id} note={n} />)}</div>)}</section>
+      <section className="mb-2"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase mb-3 flex items-center gap-1.5"><SaveIcon size={14} />データ管理</h2><div className="flex gap-3"><button onClick={exportData} className="flex-1 bg-blue-600/80 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm border border-blue-400/30 flex items-center justify-center gap-1"><UploadIcon size={16} className="inline mr-1" />エクスポート</button><label className="flex-1 bg-slate-600/80 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-sm cursor-pointer text-center border border-slate-400/30 flex items-center justify-center gap-1"><DownloadIcon size={16} className="inline mr-1" />インポート<input type="file" accept=".json" onChange={handleImport} className="hidden" /></label></div></section>
       {showLiftingForm && <LiftingForm onSave={addLiftingRecord} onClose={() => setShowLiftingForm(false)} pastLocations={pastLocations} />}
       {showNoteForm && <NoteForm onSave={addPracticeNote} onClose={() => setShowNoteForm(false)} pastLocations={pastLocations} pastCategories={pastCategories} pastTeamNames={pastTeamNames} />}
       {showBodyForm && (
@@ -221,14 +221,14 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
             <div className="px-6 pt-6 pb-8 space-y-4">
               {bodySaved ? (
                 <div className="flex flex-col items-center justify-center py-8 gap-3">
-                  <span className="text-5xl">✅</span>
+                  <CheckIcon size={56} className="mx-auto" />
                   <p className="text-lg font-bold text-gray-800">記録しました！</p>
                 </div>
               ) : mergeConflict ? (
                 /* ── マージ確認UI ── */
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-base font-bold text-gray-800">⚠️ 同じ日のデータがあります</h2>
+                    <h2 className="text-base font-bold text-gray-800 flex items-center gap-1.5"><WarningIcon size={18} />同じ日のデータがあります</h2>
                     <button type="button" onClick={() => setMergeConflict(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
                   </div>
                   <p className="text-xs text-gray-500">{bodyDate} — どちらの値を使うか選んでください。</p>
@@ -269,14 +269,14 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
                     );
                   })}
                   <div className="flex gap-2 pt-1">
-                    <button onClick={handleMergeApply} className="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl text-sm">✅ マージして保存</button>
+                    <button onClick={handleMergeApply} className="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl text-sm"><span className="inline-flex items-center gap-1.5"><CheckIcon size={16} />マージして保存</span></button>
                     <button onClick={() => setMergeConflict(null)} className="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl text-sm">キャンセル</button>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-gray-800">{editingBodyId ? '✏️ 記録を編集' : '📏 身長・体重を記録'}</h2>
+                    <h2 className="text-lg font-bold text-gray-800 flex items-center gap-1.5">{editingBodyId ? <><EditIcon size={18} />記録を編集</> : <><RulerIcon size={18} />身長・体重を記録</>}</h2>
                     <button type="button" onClick={() => { setShowBodyForm(false); setEditingBodyId(null); }} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
                   </div>
                   <form onSubmit={handleBodySave} className="space-y-4">
@@ -298,7 +298,7 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
                       <label className="block text-sm font-semibold text-gray-600 mb-1">😴 就寝時刻 <span className="text-gray-400 font-normal text-xs">（任意）</span></label>
                       <input type="time" value={bodySleep} onChange={e => setBodySleep(e.target.value)} className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
                     </div>
-                    <button type="submit" className="w-full bg-purple-600 active:bg-purple-700 text-white font-bold py-3 rounded-xl text-base">💾 記録する</button>
+                    <button type="submit" className="w-full bg-purple-600 active:bg-purple-700 text-white font-bold py-3 rounded-xl text-base flex items-center justify-center gap-2"><SaveIcon size={18} />記録する</button>
                   </form>
                 </>
               )}

@@ -9,6 +9,7 @@ import MilestoneSection from '@/components/MilestoneSection';
 import PartSummaryCards from '@/components/PartSummaryCards';
 import ConfettiEffect from '@/components/ConfettiEffect';
 import { LiftingPart, LiftingSide, LiftingRecord } from '@/lib/types';
+import { BallIcon, ChartIcon, TrophyIcon, ClipboardIcon } from '@/components/AppIcons';
 
 const PARTS: (LiftingPart | 'all')[] = ['all', 'インステップ', 'インサイド', 'アウトサイド', 'もも', '頭', '胸→足'];
 const SIDES: (LiftingSide | 'all')[] = ['all', '左足', '右足', '両足'];
@@ -36,7 +37,7 @@ export default function LiftingPage() {
     return (
       <div className="flex items-center justify-center py-24 text-gray-400">
         <div className="text-center">
-          <p className="text-4xl mb-3">⚽</p>
+          <BallIcon size={48} className="mx-auto mb-3 opacity-60" />
           <p className="text-sm">読み込み中...</p>
         </div>
       </div>
@@ -54,13 +55,13 @@ export default function LiftingPage() {
       )}
 
       <header className="mb-5">
-        <h1 className="text-2xl font-extrabold text-gray-800">⚽ リフティング記録</h1>
+        <h1 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2"><BallIcon size={24} />リフティング記録</h1>
         <p className="text-sm text-gray-500 mt-0.5">全{liftingRecords.length}件の記録</p>
       </header>
 
       {/* 部位別サマリー */}
       <section className="mb-6">
-        <h2 className="text-base font-bold text-gray-700 mb-3">📊 部位別まとめ</h2>
+        <h2 className="text-base font-bold text-gray-700 mb-3 flex items-center gap-1.5"><ChartIcon size={16} />部位別まとめ</h2>
         <PartSummaryCards records={liftingRecords} />
       </section>
 
@@ -107,8 +108,8 @@ export default function LiftingPage() {
       {/* Chart */}
       <section className="mb-6">
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <p className="text-xs font-semibold text-gray-500 mb-3">
-            📈 {filterPart === 'all' ? '全部位' : filterPart} / {filterSide === 'all' ? '全部' : filterSide}
+          <p className="text-xs font-semibold text-gray-500 mb-3 flex items-center gap-1">
+            <ChartIcon size={14} />{filterPart === 'all' ? '全部位' : filterPart} / {filterSide === 'all' ? '全部' : filterSide}
           </p>
           <LiftingChart records={liftingRecords} filterPart={filterPart} filterSide={filterSide} />
         </div>
@@ -116,7 +117,7 @@ export default function LiftingPage() {
 
       {/* Table */}
       <section className="mb-6">
-        <h2 className="text-base font-bold text-gray-700 mb-3">📋 記録一覧</h2>
+        <h2 className="text-base font-bold text-gray-700 mb-3 flex items-center gap-1.5"><ClipboardIcon size={16} />記録一覧</h2>
         <LiftingTable
           records={liftingRecords}
           filterPart={filterPart}
@@ -128,7 +129,7 @@ export default function LiftingPage() {
 
       {/* Milestones */}
       <section className="mb-6">
-        <h2 className="text-base font-bold text-gray-700 mb-3">🏅 マイルストーン</h2>
+        <h2 className="text-base font-bold text-gray-700 mb-3 flex items-center gap-1.5"><TrophyIcon size={16} />マイルストーン</h2>
         <MilestoneSection milestones={milestones} maxCount={maxCount} />
       </section>
 

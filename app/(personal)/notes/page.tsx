@@ -29,6 +29,7 @@ import PracticeStats, { parseGroupKey } from '@/components/PracticeStats';
 import PracticeBarChart from '@/components/PracticeBarChart';
 import Practice14WeekChart from '@/components/Practice14WeekChart';
 import { PracticeNote } from '@/lib/types';
+import { NoteIcon, RunnerIcon, ChartIcon, SearchIcon, ImproveIcon, StarIcon } from '@/components/AppIcons';
 
 export default function NotesPage() {
   const { practiceNotes, addPracticeNote, updatePracticeNote, deletePracticeNote, toggleImprovementItem, liftingRecords, isLoading } = useApp();
@@ -143,7 +144,7 @@ export default function NotesPage() {
     return (
       <div className="flex items-center justify-center py-24 text-gray-400">
         <div className="text-center">
-          <p className="text-4xl mb-3">📝</p>
+          <NoteIcon size={48} className="mx-auto mb-3 opacity-60" />
           <p className="text-sm">読み込み中...</p>
         </div>
       </div>
@@ -168,11 +169,11 @@ export default function NotesPage() {
     <>
       <Suspense fallback={null}><ScrollToNote /></Suspense>
       <header className="mb-5">
-        <h1 className="text-2xl font-extrabold text-gray-800">📝 練習ノート</h1>
+        <h1 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2"><NoteIcon size={24} />練習ノート</h1>
         <div className="flex items-center gap-3 mt-1">
           <span className="text-sm text-gray-500">全{practiceNotes.length}回の練習記録</span>
-          <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
-            🏃 {practiceNotes.length}回練習
+          <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+            <RunnerIcon size={14} />{practiceNotes.length}回練習
           </span>
         </div>
       </header>
@@ -182,7 +183,7 @@ export default function NotesPage() {
           onClick={() => setShowStats((v) => !v)}
           className="flex items-center justify-between w-full mb-3"
         >
-          <h2 className="text-sm font-bold text-gray-700">📊 練習参加まとめ <span className="text-gray-400 font-normal text-xs">（タップで絞り込み）</span></h2>
+          <h2 className="text-sm font-bold text-gray-700 flex items-center gap-1.5"><ChartIcon size={14} />練習参加まとめ <span className="text-gray-400 font-normal text-xs">（タップで絞り込み）</span></h2>
           <span className="text-xs text-gray-400">{showStats ? '▲ 閉じる' : '▼ 開く'}</span>
         </button>
         {showStats && (
@@ -218,8 +219,8 @@ export default function NotesPage() {
         {/* アクティブフィルター表示 */}
         {hasFilter && (
           <div className="mb-3 flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2 border border-blue-200">
-            <span className="text-xs text-blue-700 flex-1">
-              🔍 {filterLabel}{activeLocation ? ' > ' + activeLocation : ''} で絞り込み中 ({filtered.length}件)
+            <span className="text-xs text-blue-700 flex-1 flex items-center gap-1">
+              <SearchIcon size={12} />{filterLabel}{activeLocation ? ' > ' + activeLocation : ''} で絞り込み中 ({filtered.length}件)
             </span>
             <button onClick={clearFilter} className="text-xs text-blue-400 hover:text-blue-600 font-bold">✕ 解除</button>
           </div>
@@ -251,9 +252,9 @@ export default function NotesPage() {
           </button>
           <button
             onClick={() => setShowUndoneOnly(true)}
-            className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors " + (showUndoneOnly ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-gray-200 text-gray-600")}
+            className={"flex-1 py-2 rounded-xl text-sm font-semibold border-2 transition-colors inline-flex items-center justify-center gap-1 " + (showUndoneOnly ? "bg-orange-500 border-orange-500 text-white" : "bg-white border-gray-200 text-gray-600")}
           >
-            💪 未改善
+            <ImproveIcon size={14} />未改善
             {undoneCount > 0 && (
               <span className={"ml-1 text-xs px-1.5 py-0.5 rounded-full " + (showUndoneOnly ? "bg-white text-orange-500" : "bg-orange-100 text-orange-600")}>
                 {undoneCount}
@@ -271,7 +272,7 @@ export default function NotesPage() {
         {/* 一覧 */}
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
-            <p className="text-4xl mb-3">{hasFilter || searchQuery ? '🔍' : showUndoneOnly ? '🎉' : '📓'}</p>
+            <div className="mb-3 flex justify-center">{hasFilter || searchQuery ? <SearchIcon size={48} /> : showUndoneOnly ? <StarIcon size={48} /> : <NoteIcon size={48} />}</div>
             <p className="text-sm">
               {hasFilter || searchQuery ? '該当するノートがありません' : showUndoneOnly ? 'すべての改善項目がクリア済みです！' : 'まだ練習ノートがありません'}
             </p>

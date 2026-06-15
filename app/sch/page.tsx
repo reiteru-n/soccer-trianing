@@ -13,6 +13,7 @@ import {
   BallIcon, CampIcon, StarIcon, TrashIcon, ChartIcon,
   OfficialMatchIcon, CupMatchIcon, FieldMatchIcon, GoalMatchIcon,
   ParkingIcon, BanIcon, MapPinIcon, ClipboardIcon, SkipIcon, HandUpIcon, WarningIcon, ChatIcon, FolderIcon,
+  SearchIcon,
 } from '@/components/AppIcons';
 
 // ---- Utilities ----
@@ -50,24 +51,24 @@ function isInstagramUrl(url: string): boolean {
 }
 
 // ---- Event type config ----
-type TypeCfg = { label: string; icon: React.ReactNode; badge: string; border: string; bg: string };
+type TypeCfg = { label: string; icon: (size: number) => React.ReactNode; badge: string; border: string; bg: string };
 const TYPE_CFG: Record<string, TypeCfg> = {
-  practice:   { label: '練習',     icon: <BallIcon size={14} />,    badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
-  schedule:   { label: '練習',     icon: <BallIcon size={14} />,    badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
-  match:      { label: '試合',     icon: <TrophyIcon size={14} />,  badge: 'bg-blue-600/40 text-blue-300',    border: 'border-blue-500/30',   bg: 'bg-blue-900/20'   },
-  camp:       { label: '合宿/遠征', icon: <CampIcon size={14} />,   badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
-  expedition: { label: '合宿/遠征', icon: <CampIcon size={14} />,   badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
-  other:      { label: 'その他',   icon: <CalendarIcon size={14} />, badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
-  off:        { label: 'OFF',      icon: <StarIcon size={14} />,    badge: 'bg-red-600/40 text-red-300',      border: 'border-red-500/30',    bg: 'bg-red-900/20'    },
+  practice:   { label: '練習',     icon: (s) => <BallIcon size={s} />,     badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
+  schedule:   { label: '練習',     icon: (s) => <BallIcon size={s} />,     badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
+  match:      { label: '試合',     icon: (s) => <TrophyIcon size={s} />,   badge: 'bg-blue-600/40 text-blue-300',    border: 'border-blue-500/30',   bg: 'bg-blue-900/20'   },
+  camp:       { label: '合宿/遠征', icon: (s) => <CampIcon size={s} />,    badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
+  expedition: { label: '合宿/遠征', icon: (s) => <CampIcon size={s} />,    badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
+  other:      { label: 'その他',   icon: (s) => <CalendarIcon size={s} />, badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
+  off:        { label: 'OFF',      icon: (s) => <StarIcon size={s} />,     badge: 'bg-red-600/40 text-red-300',      border: 'border-red-500/30',    bg: 'bg-red-900/20'    },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
 
 // ---- Match type icons ----
-const MATCH_TYPE_ICONS: Record<string, React.ReactNode> = {
-  '公式戦': <OfficialMatchIcon size={14} />,
-  'CUP戦':  <CupMatchIcon size={14} />,
-  'トレマ':  <FieldMatchIcon size={14} />,
-  'その他':  <GoalMatchIcon size={14} />,
+const MATCH_TYPE_ICONS: Record<string, (size: number) => React.ReactNode> = {
+  '公式戦': (s) => <OfficialMatchIcon size={s} />,
+  'CUP戦':  (s) => <CupMatchIcon size={s} />,
+  'トレマ':  (s) => <FieldMatchIcon size={s} />,
+  'その他':  (s) => <GoalMatchIcon size={s} />,
 };
 // WMO天気コード (Open-Meteo) + 降水確率で判定
 function weatherEmoji(code: number, precip: number): string {
@@ -528,8 +529,8 @@ function ParkingEventCard({
     <div className={`rounded-xl overflow-hidden border ${isPast ? 'opacity-60 border-white/5' : cfg.border}`}>
       {/* Header */}
       <div className={`flex items-center gap-2 px-4 py-2 ${cfg.bg}`}>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>
-          {cfg.icon} {cfg.label}
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5 ${cfg.badge}`}>
+          {cfg.icon(10)} {cfg.label}
         </span>
         <span className="text-sm font-semibold text-white">{plan.date.slice(5).replace('/', '/')}</span>
         <span className="text-xs text-slate-400">({dayLabel(plan.date)})</span>
@@ -889,8 +890,8 @@ function EventForm({
               <div className="flex flex-wrap gap-1.5">
                 {(['practice','match','camp','other','off'] as SchEventType[]).map(t => (
                   <button key={t} type="button" onClick={() => setType(t)}
-                    className={`text-xs px-3 py-1.5 rounded-lg font-semibold border transition-colors ${type === t ? `${tc(t).badge} border-transparent` : 'text-slate-400 border-slate-600 hover:border-slate-500'}`}>
-                    {tc(t).icon} {tc(t).label}
+                    className={`text-xs px-3 py-1.5 rounded-lg font-semibold border transition-colors inline-flex items-center gap-1 ${type === t ? `${tc(t).badge} border-transparent` : 'text-slate-400 border-slate-600 hover:border-slate-500'}`}>
+                    {tc(t).icon(12)} {tc(t).label}
                   </button>
                 ))}
               </div>
@@ -1209,10 +1210,10 @@ function EventCard({
           {/* Main info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${cfg.badge}`}>{cfg.icon} {cfg.label}</span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 ${cfg.badge}`}>{cfg.icon(10)} {cfg.label}</span>
               {event.type === 'match' && event.matchType && (
                 <span className="text-[10px] bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5">
-                  {MATCH_TYPE_ICONS[event.matchType]}
+                  {MATCH_TYPE_ICONS[event.matchType]?.(10)}
                   {event.matchType}
                 </span>
               )}
@@ -1410,7 +1411,7 @@ function MiniEventCard({ event, members, onClick }: { event: SchEvent; members: 
             <p className="text-xs font-bold leading-tight">{dayLabel(event.date)}</p>
           </div>
           <div className="flex-1 min-w-0">
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${cfg.badge}`}>{cfg.icon} {cfg.label}</span>
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 ${cfg.badge}`}>{cfg.icon(9)} {cfg.label}</span>
             {event.type === 'match' ? (() => {
               const ms = getMatches(event);
               const oppText = ms.length > 1 ? `🆚 ${ms[0]?.opponentName ?? '?'} 他${ms.length - 1}試合` : (ms[0]?.opponentName ? `🆚 ${ms[0].opponentName}` : '相手未定');
@@ -1515,7 +1516,7 @@ function SchCalendar({ events, today, onSelectDate }: {
                 {fadedDots.length > 0 && (
                   <div className="flex gap-0.5 mt-1 items-center justify-center">
                     {fadedDots.slice(0, 2).map((e, j) => (
-                      <span key={j} className="text-[9px] leading-none">{tc(e.type).icon}</span>
+                      <span key={j} className="leading-none flex items-center">{tc(e.type).icon(12)}</span>
                     ))}
                     {fadedDots.length > 2 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
                   </div>
@@ -1539,7 +1540,7 @@ function SchCalendar({ events, today, onSelectDate }: {
               {dots.length > 0 && (
                 <div className="flex gap-0.5 items-center justify-center mt-0.5 z-10 flex-wrap max-w-full px-0.5">
                   {dots.slice(0, 3).map((e, j) => (
-                    <span key={j} className="text-[9px] leading-none flex-shrink-0">{tc(e.type).icon}</span>
+                    <span key={j} className="leading-none flex-shrink-0 flex items-center">{tc(e.type).icon(12)}</span>
                   ))}
                   {dots.length > 3 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
                 </div>
@@ -1569,7 +1570,7 @@ function SchCalendar({ events, today, onSelectDate }: {
                         className="absolute text-[8px] leading-none z-20 pointer-events-none"
                         style={{ bottom: `${4 + j * 7}px`, left: isStart && !isRowStart ? 'calc(50% + 2px)' : '2px' }}
                       >
-                        {tc(e.type).icon}
+                        {tc(e.type).icon(8)}
                       </span>
                     )}
                   </div>
@@ -1687,7 +1688,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
             onClick={() => setFilter(key)}
             className={`flex-1 py-1.5 rounded-lg border font-semibold transition-colors text-center ${filter === key ? 'bg-sky-600/60 border-sky-500/60 text-white' : 'border-slate-600 text-slate-400 hover:border-sky-500/40 hover:text-white'}`}
           >
-            <div className="text-sm leading-none">{icon}</div>
+            <div className="flex items-center justify-center h-5">{icon}</div>
             <div className="text-[9px] leading-tight mt-0.5">{label}</div>
           </button>
         ))}
@@ -1814,7 +1815,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
                     onClick={() => scrollToEvent(ev)}
                     className="w-full text-left flex items-center gap-3 p-3 rounded-xl bg-slate-700/60 hover:bg-slate-600/60 active:bg-slate-600 transition-colors"
                   >
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>{cfg.icon} {cfg.label}</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 inline-flex items-center gap-0.5 ${cfg.badge}`}>{cfg.icon(12)} {cfg.label}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white font-semibold truncate">{title}</p>
                       {(time || ev.location) && (
@@ -1854,7 +1855,7 @@ function VideoLink({ url, index = 0, total = 1 }: { url: string; index?: number;
     return () => { cancelled = true; };
   }, [url]);
   const label = total > 1 ? `🎬 動画${index + 1}` : '🎬 動画';
-  if (state === 'loading') return <span className="text-[10px] text-slate-500 animate-pulse">🎬…</span>;
+  if (state === 'loading') return <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-500 animate-pulse"><VideoIcon size={10} />…</span>;
   if (state === 'broken') return <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">リンク切れ</span>;
   return (
     <a href={url} target="_blank" rel="noopener noreferrer"
@@ -2097,12 +2098,12 @@ function VideoThumbCell({ entry, index, total, onDelete, onEditThumb }: {
       style={total > 1 && index > 0 ? { borderLeft: '1px solid rgba(255,255,255,0.08)' } : undefined}
     >
       {thumb === 'loading' ? (
-        <div className="w-full h-full flex items-center justify-center text-slate-600 animate-pulse text-xl">🎬</div>
+        <div className="w-full h-full flex items-center justify-center text-slate-600 animate-pulse"><VideoIcon size={28} /></div>
       ) : thumb ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={thumb} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-xl text-slate-500">🎬</div>
+        <div className="w-full h-full flex items-center justify-center text-slate-500"><VideoIcon size={28} /></div>
       )}
       <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
         <span className="text-white text-lg">▶</span>
@@ -2113,8 +2114,8 @@ function VideoThumbCell({ entry, index, total, onDelete, onEditThumb }: {
       {onEditThumb && (
         <button
           onClick={e => { e.preventDefault(); e.stopPropagation(); onEditThumb(); }}
-          className="absolute bottom-0.5 right-0.5 text-[9px] bg-slate-900/80 text-slate-400 hover:text-blue-300 px-1 py-0.5 rounded-full transition-colors sm:opacity-0 sm:group-hover:opacity-100"
-        >📷</button>
+          className="absolute bottom-0.5 right-0.5 text-[9px] bg-slate-900/80 text-slate-400 hover:text-blue-300 px-1 py-0.5 rounded-full transition-colors sm:opacity-0 sm:group-hover:opacity-100 flex items-center justify-center"
+        ><EditIcon size={10} /></button>
       )}
       {onDelete && (
         <button
@@ -2512,7 +2513,7 @@ function VideoSection({
 
       {allVideos.length === 0 && (
         <div className="text-center py-12 text-slate-400">
-          <p className="text-3xl mb-3">🎬</p>
+          <div className="flex justify-center mb-3"><VideoIcon size={40} className="opacity-40" /></div>
           <p className="text-sm">動画がありません</p>
           <p className="text-xs mt-1">試合のURLまたは上の「動画を投稿」から追加できます</p>
         </div>
@@ -2847,7 +2848,7 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
                     <span className="text-xs text-slate-400">{ev.date}</span>
                     {ev.matchType && (
                       <span className="text-[10px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full inline-flex items-center gap-0.5">
-                        {MATCH_TYPE_ICONS[ev.matchType]}
+                        {MATCH_TYPE_ICONS[ev.matchType]?.(10)}
                         {ev.matchType}
                       </span>
                     )}
@@ -2943,7 +2944,7 @@ function ParkingHistorySection({
               {/* Header */}
               <div className="px-3 py-2 bg-slate-700/40 flex items-center gap-2">
                 <span className="text-[10px] text-slate-400">{ev.date.slice(5).replace('/', '/')}({dayLabel(ev.date)})</span>
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tc(ev.type).badge}`}>{tc(ev.type).icon}</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center ${tc(ev.type).badge}`}>{tc(ev.type).icon(10)}</span>
                 <span className="text-xs text-white font-medium truncate flex-1">{evLabel(ev)}</span>
                 {isAdmin && isEditing ? (
                   <div className="flex gap-1 flex-shrink-0">
@@ -3116,7 +3117,7 @@ function ParkingCommentSection({
     <div>
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider flex items-center gap-1.5">
-          💬 駐車場連絡
+          <ChatIcon size={11} className="inline" /> 駐車場連絡
           {unresolved.length > 0 && (
             <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold">{unresolved.length}</span>
           )}
@@ -3333,8 +3334,8 @@ function HomeSection({
                   );
                 })()}
                 <div className="flex-1 min-w-0">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tc(nextEvent.type).badge}`}>
-                    {tc(nextEvent.type).icon} {tc(nextEvent.type).label}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5 ${tc(nextEvent.type).badge}`}>
+                    {tc(nextEvent.type).icon(10)} {tc(nextEvent.type).label}
                   </span>
                   {nextEvent.type === 'match' ? (() => {
                     const ms = getMatches(nextEvent);
@@ -3410,8 +3411,8 @@ function HomeSection({
               </div>
               {/* 内容 */}
               <div className="flex-1 min-w-0">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tc(nextNextEvent.type).badge}`}>
-                  {tc(nextNextEvent.type).icon} {tc(nextNextEvent.type).label}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5 ${tc(nextNextEvent.type).badge}`}>
+                  {tc(nextNextEvent.type).icon(10)} {tc(nextNextEvent.type).label}
                 </span>
                 {nextNextEvent.type === 'match' ? (() => {
                   const ms = getMatches(nextNextEvent);
@@ -3661,7 +3662,7 @@ function EventSummaryCard({ event }: { event: SchEvent }) {
   return (
     <div className={`rounded-lg p-3 border ${cfg.border} ${cfg.bg} space-y-1`}>
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-sm">{cfg.icon}</span>
+        {cfg.icon(16)}
         <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${cfg.badge}`}>{cfg.label}</span>
         <span className="text-xs text-slate-300 font-medium">{dateDisplay}</span>
         {event.endDate && event.endDate !== event.date && <span className="text-xs text-slate-400">〜 {event.endDate.slice(5).replace('/', '/')}</span>}
@@ -3840,7 +3841,7 @@ function AnnounceSection({ announcements, onSave, events, isAdmin }: { announcem
       </button>
       {isAdmin && (
         <button onClick={() => { setShowLineModal(true); setLineResult(null); }} className="w-full bg-gradient-to-r from-emerald-600 to-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
-          <span className="text-base">📣</span> 管理者用LINE通知
+          <BellIcon size={18} /> 管理者用LINE通知
         </button>
       )}
       {showLineModal && (
@@ -3848,7 +3849,7 @@ function AnnounceSection({ announcements, onSave, events, isAdmin }: { announcem
           <div className="bg-slate-800 rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md border border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="px-5 pt-5 pb-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white">📣 管理者用LINE通知</h3>
+                <h3 className="text-base font-bold text-white flex items-center gap-1.5"><BellIcon size={16} /> 管理者用LINE通知</h3>
                 <button onClick={() => setShowLineModal(false)} className="text-slate-400 text-2xl">&times;</button>
               </div>
               <p className="text-xs text-slate-400">チームLINEグループに直接メッセージを送信します。</p>
@@ -3913,7 +3914,7 @@ function AnnounceSection({ announcements, onSave, events, isAdmin }: { announcem
                               onClick={() => handleSelectEvent(ev)}
                               className="w-full text-left text-xs px-3 py-2 rounded-lg bg-slate-700/60 hover:bg-sky-700/40 border border-transparent hover:border-sky-500/50 text-slate-300 hover:text-white transition-colors flex items-center gap-2"
                             >
-                              <span>{tc(ev.type).icon}</span>
+                              {tc(ev.type).icon(12)}
                               <span className="truncate">{label}</span>
                             </button>
                           );
@@ -3944,7 +3945,7 @@ function AnnounceSection({ announcements, onSave, events, isAdmin }: { announcem
                     onClick={() => { setShowCheckItems(v => !v); if (!showCheckItems && checkItems.length === 0) addCheckItem(); }}
                     className={`flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors w-full ${showCheckItems ? 'bg-amber-900/30 border-amber-500/40 text-amber-300' : 'bg-slate-700/40 border-white/10 text-slate-400 hover:text-amber-300'}`}
                   >
-                    <span>🎒</span>
+                    <ClipboardIcon size={14} />
                     <span>{showCheckItems ? '持ち物リストを閉じる' : '持ち物リストを追加'}</span>
                     {checkItems.filter(i => i.text.trim()).length > 0 && (
                       <span className="ml-auto text-[10px] bg-amber-600/40 text-amber-300 px-1.5 py-0.5 rounded-full">
@@ -4351,7 +4352,7 @@ function MemberSection({
                     <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-t border-white/10 pt-3">保護者</p>
                     {m.parents.map((p, i) => (
                       <div key={i} className="flex items-start gap-3 bg-slate-700/40 rounded-xl px-4 py-2.5">
-                        <span className="text-lg mt-0.5">{p.role === '父' ? '👨' : p.role === '母' ? '👩' : '👤'}</span>
+                        <PeopleIcon size={20} className="mt-0.5 text-slate-400 flex-shrink-0" />
                         <div>
                           <p className="text-[10px] text-slate-500">{p.role}</p>
                           <p className="text-sm text-white">{p.name}</p>
@@ -4806,7 +4807,7 @@ export default function SchPage() {
                   href="/sch/admin"
                   className="text-[10px] whitespace-nowrap text-sky-400/70 hover:text-sky-100 border border-sky-600/30 hover:border-sky-500/50 px-2.5 py-1 rounded-lg transition-colors"
                 >
-                  🔍 管理
+                  <SearchIcon size={10} className="inline" /> 管理
                 </a>
               )}
             </div>

@@ -14,7 +14,7 @@ export function HouseIcon({ size = 24, className = '' }: IconProps) {
 export function BallIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.93V15h2v1.93c-.33.04-.66.07-1 .07s-.67-.03-1-.07zm-4.1-1.66L8.5 13.5l1.73 1-1 1.73c-.52-.31-1-.68-1.43-1.09l.1-.87zm9.77-.87c-.43.41-.91.78-1.43 1.09l-1-1.73 1.73-1 1.6 1.77-.9.87zM4.07 13H6v2H4.35c-.19-.63-.3-1.3-.3-2 .01-.34.01-.67.02-1zm15.93 0c.01.33.01.66 0 1-.01.7-.11 1.37-.3 2H18v-2h1.93l.07-1zm-9-8.93V6H9V4.07C9.33 4.03 9.66 4 10 4s.67.03 1 .07v2h-1V4.07zm4.1 1.66L13.5 7.5l-1.73-1 1-1.73c.52.31 1 .68 1.43 1.09l-.1.87zm-9.77.87c.43-.41.91-.78 1.43-1.09l1 1.73-1.73 1L5.43 7.5l.9-.87zM6 11H4.07c.04-.34.1-.67.17-1l-.07-.01H6v1zm12 0v-1h1.83l-.07.01c.07.33.13.66.17 1H18zm-7 1c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1z" />
+      <path fillRule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM14.6 10.5L12 9l-2.6 1.5v3L12 15l2.6-1.5v-3zM12 3l2.4 1.8-.9 2.2h-3l-.9-2.2L12 3zM16 5.5l3 1.5-.5 3-2.5.5-1.5-2.5 1.5-2.5zM16 13.5l2.5 1.5-1 3-3 .5-1-2.5 2.5-2.5zM10 15l-.5 3-3-.5-1-3 2.5-1.5 2 2zM9.5 8L8 10.5l-2.5-.5L5 7l3-1.5 1.5 2.5z"/>
     </svg>
   );
 }
@@ -310,6 +310,46 @@ export function FolderIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
       <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+    </svg>
+  );
+}
+
+export function UploadIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+    </svg>
+  );
+}
+
+export function DownloadIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+    </svg>
+  );
+}
+
+export function SearchIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+    </svg>
+  );
+}
+
+export function SpeakerIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+    </svg>
+  );
+}
+
+export function RulerIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M21 6.5l-4-4-14 14 4 4 14-14zm-14 11.5L4.5 15.5l1.5-1.5 1.25 1.25 1-1L7 14l1.5-1.5 1.25 1.25 1-1L9.5 11.5 11 10l1.25 1.25 1-1L12 9 13.5 7.5l1.25 1.25 1-1L14.5 6.5 16 5l3 3L7 18z"/>
     </svg>
   );
 }

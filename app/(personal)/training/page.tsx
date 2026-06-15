@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { TrainingMenuItem } from '@/lib/types';
+import { RunnerIcon, FlameIcon, CheckIcon, SquareIcon, SpeakerIcon, EditIcon, ClipboardIcon, NoteIcon } from '@/components/AppIcons';
 
 function todayStr() {
   const d = new Date();
@@ -87,13 +88,13 @@ export default function TrainingPage() {
   };
 
   const TABS: Array<[typeof tab, string]> = [['check','今日のチェック'],['edit','メニュー編集'],['history','履歴']];
-  if (isLoading) return (<div className="flex items-center justify-center py-24 text-gray-400"><div className="text-center"><p className="text-4xl mb-3">🏃</p><p className="text-sm">読み込み中...</p></div></div>);
+  if (isLoading) return (<div className="flex items-center justify-center py-24 text-gray-400"><div className="text-center"><RunnerIcon size={48} className="mx-auto mb-3 opacity-60" /><p className="text-sm">読み込み中...</p></div></div>);
   return (
     <>
       <header className="mb-4">
-        <h1 className="text-2xl font-extrabold text-gray-800">🏃 自主練メニュー</h1>
+        <h1 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2"><RunnerIcon size={24} />自主練メニュー</h1>
         <div className="flex items-center gap-3 mt-1">
-          {streak > 0 && <span className="bg-orange-100 text-orange-600 text-sm font-bold px-3 py-1 rounded-full">🔥 {streak}日連続達成中！</span>}
+          {streak > 0 && <span className="bg-orange-100 text-orange-600 text-sm font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><FlameIcon size={16} />{streak}日連続達成中！</span>}
           <span className="text-xs text-gray-400">想定時間: {totalMinutes}分</span>
         </div>
       </header>
@@ -132,7 +133,7 @@ export default function TrainingPage() {
                   }}
                     className={"flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-colors " + (done ? "bg-green-50 border-green-300" : "bg-white border-gray-200")}
                   >
-                    <span className="text-2xl">{done ? "✅" : "⬜"}</span>
+                    <span className="text-2xl">{done ? <CheckIcon size={24} /> : <SquareIcon size={24} />}</span>
                     <div className="flex-1 min-w-0">
                       <p className={"font-semibold text-sm " + (done ? "line-through text-gray-400" : "text-gray-800")}>{item.name}</p>
                       <p className="text-xs text-gray-400">{item.targetCount}{item.isMinimum ? "回以上" : "回"}</p>
@@ -140,9 +141,9 @@ export default function TrainingPage() {
                   </button>
                   <button
                     onClick={() => speak(`${item.name}、${item.targetCount}${item.isMinimum ? "回以上" : "回"}`)}
-                    className="text-2xl p-3 rounded-2xl bg-white border-2 border-gray-200 active:bg-blue-50"
+                    className="p-3 rounded-2xl bg-white border-2 border-gray-200 active:bg-blue-50 flex items-center justify-center"
                     aria-label="読み上げ"
-                  >🔊</button>
+                  ><SpeakerIcon size={18} /></button>
                 </div>
               );
             })}
@@ -188,7 +189,7 @@ export default function TrainingPage() {
                   <p className="font-semibold text-sm text-gray-800 truncate">{item.name}</p>
                   <p className="text-xs text-gray-400">{item.targetCount}{item.isMinimum?"回以上":"回"} · {item.estimatedMinutes}分</p>
                 </div>
-                <button onClick={()=>{setEditingId(item.id);setForm({name:item.name,targetCount:String(item.targetCount),isMinimum:item.isMinimum,estimatedMinutes:String(item.estimatedMinutes)});}} className="text-blue-400 hover:text-blue-600 text-sm px-2">✏️</button>
+                <button onClick={()=>{setEditingId(item.id);setForm({name:item.name,targetCount:String(item.targetCount),isMinimum:item.isMinimum,estimatedMinutes:String(item.estimatedMinutes)});}} className="text-blue-400 hover:text-blue-600 px-2"><EditIcon size={14} /></button>
                 <button onClick={()=>{if(window.confirm('このメニューを削除しますか？'))deleteTrainingMenuItem(item.id);}} className="text-gray-300 hover:text-red-400 text-lg px-1">×</button>
               </div>
             ))}
@@ -223,7 +224,7 @@ export default function TrainingPage() {
               const allOk = total > 0 && done >= total;
               return (
                 <div key={log.id} className={"flex items-center gap-3 bg-white rounded-2xl px-4 py-3 border-2 " + (allOk ? "border-green-200" : "border-gray-100")}>
-                  <span className="text-xl">{allOk ? "✅" : "📋"}</span>
+                  <span className="text-xl">{allOk ? <CheckIcon size={20} /> : <ClipboardIcon size={20} />}</span>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-700">{log.date}</p>
                     <p className="text-xs text-gray-400">{done}/{total} 完了</p>
@@ -238,7 +239,7 @@ export default function TrainingPage() {
       {showNoteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center">
-            <p className="text-4xl mb-3">📝</p>
+            <NoteIcon size={48} className="mx-auto mb-3 opacity-60" />
             <p className="font-bold text-gray-800 text-lg mb-1">練習ノートに記録する？</p>
             <p className="text-sm text-gray-500 mb-6">自主練メニューを全部できた！として記録します</p>
             <div className="flex gap-3">
