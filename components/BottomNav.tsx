@@ -3,11 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { HouseIcon, BallIcon, NoteIcon, RunnerIcon, ChartIcon } from './AppIcons';
+import { HouseIcon, NoteIcon, RunnerIcon, ChartIcon } from './AppIcons';
 
 const navItems = [
   { href: '/',         label: 'ホーム',          Icon: HouseIcon },
-  { href: '/lifting',  label: 'リフティング',     Icon: BallIcon },
   { href: '/notes',    label: 'ノート',           Icon: NoteIcon },
   { href: '/training', label: '自主練\nメニュー', Icon: RunnerIcon },
   { href: '/growth',   label: '成長記録',         Icon: ChartIcon },
@@ -21,34 +20,56 @@ export default function BottomNav() {
       <div className="flex justify-around items-center h-16 max-w-lg landscape:md:max-w-4xl mx-auto relative">
         <span className="absolute top-0.5 left-2 text-[9px] text-white/20 select-none">{process.env.NEXT_PUBLIC_BUILD_TIME}</span>
 
-        {navItems.map(({ href, label, Icon }) => {
+        {/* ホーム */}
+        {navItems.slice(0, 1).map(({ href, label, Icon }) => {
           const active = pathname === href;
           return (
-            <Link
-              key={href}
-              href={href}
-              className={
-                'flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all ' +
-                (active ? 'text-sky-400' : 'text-slate-500')
-              }
-            >
-              <Icon
-                size={22}
-                className={'transition-transform ' + (active ? 'scale-110' : '')}
-              />
+            <Link key={href} href={href} className={'flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all ' + (active ? 'text-sky-400' : 'text-slate-500')}>
+              <Icon size={22} className={'transition-transform ' + (active ? 'scale-110' : '')} />
+              <span className={'text-[9px] font-medium ' + (active ? 'text-sky-400' : 'text-slate-500')}>{label}</span>
+              {active && <span className="absolute bottom-1 w-8 h-0.5 rounded-full bg-gradient-to-r from-sky-400 to-cyan-400" />}
+            </Link>
+          );
+        })}
+
+        {/* リフティング (ball photo) */}
+        <Link
+          href="/lifting"
+          className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all"
+        >
+          <Image
+            src="/ball.png"
+            alt="リフティング"
+            width={1170}
+            height={1168}
+            className={
+              'object-contain transition-transform ' +
+              (pathname === '/lifting' ? 'scale-110 h-[22px] w-auto' : 'opacity-60 h-[22px] w-auto')
+            }
+          />
+          <span className={'text-[9px] font-medium ' + (pathname === '/lifting' ? 'text-sky-400' : 'text-slate-500')}>
+            リフティング
+          </span>
+          {pathname === '/lifting' && (
+            <span className="absolute bottom-1 w-8 h-0.5 rounded-full bg-gradient-to-r from-sky-400 to-cyan-400" />
+          )}
+        </Link>
+
+        {/* ノート・自主練・成長記録 */}
+        {navItems.slice(1).map(({ href, label, Icon }) => {
+          const active = pathname === href;
+          return (
+            <Link key={href} href={href} className={'flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all ' + (active ? 'text-sky-400' : 'text-slate-500')}>
+              <Icon size={22} className={'transition-transform ' + (active ? 'scale-110' : '')} />
               {label.includes('\n') ? (
                 <span className={'font-medium text-center leading-tight ' + (active ? 'text-sky-400' : 'text-slate-500')}>
                   <span className="block text-[9px]">{label.split('\n')[0]}</span>
                   <span className="block text-xs whitespace-nowrap">{label.split('\n')[1]}</span>
                 </span>
               ) : (
-                <span className={'text-[9px] font-medium ' + (active ? 'text-sky-400' : 'text-slate-500')}>
-                  {label}
-                </span>
+                <span className={'text-[9px] font-medium ' + (active ? 'text-sky-400' : 'text-slate-500')}>{label}</span>
               )}
-              {active && (
-                <span className="absolute bottom-1 w-8 h-0.5 rounded-full bg-gradient-to-r from-sky-400 to-cyan-400" />
-              )}
+              {active && <span className="absolute bottom-1 w-8 h-0.5 rounded-full bg-gradient-to-r from-sky-400 to-cyan-400" />}
             </Link>
           );
         })}

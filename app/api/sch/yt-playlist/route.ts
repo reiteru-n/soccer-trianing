@@ -56,6 +56,39 @@ function findPlaylistContents(obj: unknown, depth = 0): unknown[] | null {
   return null;
 }
 
+// renderer オブジェクトを再帰スキャンして TIME_RE にマッチする最初の文字列を返す
+// YouTube は構造を頻繁に変えるため特定フィールドに依存しない
+const TIME_RE_GLOBAL = /(\d+(日|週間|ヶ月|ヵ月|か月|年)前|昨日|今日|\d+\s+days?\s+ago|\d+\s+weeks?\s+ago|\d+\s+months?\s+ago|\d+\s+years?\s+ago|yesterday)/i;
+function findTimeTextDeep(obj: unknown, depth = 0): string {
+  if (depth > 15 || obj == null) return '';
+  if (typeof obj === 'string') {
+    const m = obj.match(TIME_RE_GLOBAL);
+    return m ? m[0] : '';
+  }
+  if (typeof obj !== 'object') return '';
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const found = findTimeTextDeep(item, depth + 1);
+      if (found) return found;
+    }
+    return '';
+  }
+  const o = obj as Record<string, unknown>;
+  // 優先的に確認するキー
+  for (const key of ['simpleText', 'text', 'publishedTimeText', 'videoInfo']) {
+    if (key in o) {
+      const found = findTimeTextDeep(o[key], depth + 1);
+      if (found) return found;
+    }
+  }
+  for (const [key, v] of Object.entries(o)) {
+    if (['thumbnail', 'navigationEndpoint', 'trackingParams'].includes(key)) continue;
+    const found = findTimeTextDeep(v, depth + 1);
+    if (found) return found;
+  }
+  return '';
+}
+
 // ytInitialData が取れなかった場合の fallback: HTML から直接 videoId を正規表現で収集
 function extractVideoIdsFromHtml(html: string): string[] {
   const ids = new Set<string>();
@@ -107,7 +140,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ contentsLength: contents.length, items: rawItems, hasYtInitialData: !!data });
     }
 
-    const TIME_RE = /(\d+(日|週間|ヶ月|年)前|昨日|今日|\d+\s+days?\s+ago|\d+\s+weeks?\s+ago|\d+\s+months?\s+ago|\d+\s+years?\s+ago|yesterday)/i;
     const videos: YtVideo[] = [];
 
     for (const item of contents) {
@@ -116,18 +148,8 @@ export async function GET(req: Request) {
       if (!r) continue;
       const videoId: string = r.videoId;
       const title: string = r.title?.runs?.[0]?.text ?? r.title?.simpleText ?? '';
-      const timeText: string = (() => {
-        if (r.publishedTimeText?.simpleText) return r.publishedTimeText.simpleText as string;
-        const runs: { text: string }[] = r.videoInfo?.runs ?? [];
-        for (let i = runs.length - 1; i >= 0; i--) {
-          const t = runs[i].text?.trim() ?? '';
-          if (TIME_RE.test(t)) return t;
-        }
-        const label: string = r.accessibility?.accessibilityData?.label ?? '';
-        const m = label.match(TIME_RE);
-        if (m) return m[0];
-        return '';
-      })();
+      // 再帰スキャンで時刻テキストを取得（YouTube の構造変更に強い）
+      const timeText: string = findTimeTextDeep(r);
       const thumbs: { url: string; width: number }[] = r.thumbnail?.thumbnails ?? [];
       const thumb = thumbs.reduce((best, t) => (!best || t.width > best.width) ? t : best, thumbs[0]);
       const thumbnail = thumb?.url ?? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
