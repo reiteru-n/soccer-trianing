@@ -1913,16 +1913,16 @@ function relativeDateLabel(text: string): { label: string; isNew: boolean; color
     const today = new Date(); today.setHours(0, 0, 0, 0); d.setHours(0, 0, 0, 0);
     days = Math.round((today.getTime() - d.getTime()) / 86400000);
   } else {
-    const m1 = text.match(/^(\d+)日前$/);
-    const m2 = text.match(/^(\d+)週間前$/);
-    const m3 = text.match(/^(\d+)ヶ月前$/);
-    const m4 = text.match(/^(\d+)年前$/);
+    const m1 = text.match(/(\d+)日前/);
+    const m2 = text.match(/(\d+)週間?前/);
+    const m3 = text.match(/(\d+)[ヶヵか]月前/);
+    const m4 = text.match(/(\d+)年前/);
     const m5 = text.match(/(\d+)\s+days?\s+ago/i);
     const m6 = text.match(/(\d+)\s+weeks?\s+ago/i);
     const m7 = text.match(/(\d+)\s+months?\s+ago/i);
     const m8 = text.match(/(\d+)\s+years?\s+ago/i);
-    if (/^(今日|just\s+now)$/i.test(text)) days = 0;
-    else if (/^(昨日|yesterday)$/i.test(text)) days = 1;
+    if (/(今日|just\s+now)/i.test(text)) days = 0;
+    else if (/(昨日|yesterday)/i.test(text)) days = 1;
     else if (m1) days = parseInt(m1[1]);
     else if (m2) days = parseInt(m2[1]) * 7;
     else if (m3) days = parseInt(m3[1]) * 30;
