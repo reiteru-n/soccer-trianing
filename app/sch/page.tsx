@@ -12,6 +12,7 @@ import {
   HouseIcon, CalendarIcon, VideoIcon, TrophyIcon, BellIcon, PeopleIcon, EditIcon,
   BallIcon, CampIcon, StarIcon, TrashIcon, ChartIcon,
   OfficialMatchIcon, CupMatchIcon, FieldMatchIcon, GoalMatchIcon,
+  ParkingIcon, BanIcon, MapPinIcon, ClipboardIcon, SkipIcon, HandUpIcon, WarningIcon, ChatIcon, FolderIcon,
 } from '@/components/AppIcons';
 
 // ---- Utilities ----
@@ -51,22 +52,22 @@ function isInstagramUrl(url: string): boolean {
 // ---- Event type config ----
 type TypeCfg = { label: string; icon: React.ReactNode; badge: string; border: string; bg: string };
 const TYPE_CFG: Record<string, TypeCfg> = {
-  practice:   { label: '練習',     icon: <BallIcon size={10} />,    badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
-  schedule:   { label: '練習',     icon: <BallIcon size={10} />,    badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
-  match:      { label: '試合',     icon: <TrophyIcon size={10} />,  badge: 'bg-blue-600/40 text-blue-300',    border: 'border-blue-500/30',   bg: 'bg-blue-900/20'   },
-  camp:       { label: '合宿/遠征', icon: <CampIcon size={10} />,   badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
-  expedition: { label: '合宿/遠征', icon: <CampIcon size={10} />,   badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
-  other:      { label: 'その他',   icon: <CalendarIcon size={10} />, badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
-  off:        { label: 'OFF',      icon: <StarIcon size={10} />,    badge: 'bg-red-600/40 text-red-300',      border: 'border-red-500/30',    bg: 'bg-red-900/20'    },
+  practice:   { label: '練習',     icon: <BallIcon size={14} />,    badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
+  schedule:   { label: '練習',     icon: <BallIcon size={14} />,    badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
+  match:      { label: '試合',     icon: <TrophyIcon size={14} />,  badge: 'bg-blue-600/40 text-blue-300',    border: 'border-blue-500/30',   bg: 'bg-blue-900/20'   },
+  camp:       { label: '合宿/遠征', icon: <CampIcon size={14} />,   badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
+  expedition: { label: '合宿/遠征', icon: <CampIcon size={14} />,   badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
+  other:      { label: 'その他',   icon: <CalendarIcon size={14} />, badge: 'bg-slate-600/40 text-slate-300',  border: 'border-slate-500/30',  bg: 'bg-slate-800/40'  },
+  off:        { label: 'OFF',      icon: <StarIcon size={14} />,    badge: 'bg-red-600/40 text-red-300',      border: 'border-red-500/30',    bg: 'bg-red-900/20'    },
 };
 function tc(type: string): TypeCfg { return TYPE_CFG[type] ?? TYPE_CFG.other; }
 
 // ---- Match type icons ----
 const MATCH_TYPE_ICONS: Record<string, React.ReactNode> = {
-  '公式戦': <OfficialMatchIcon size={11} />,
-  'CUP戦':  <CupMatchIcon size={11} />,
-  'トレマ':  <FieldMatchIcon size={11} />,
-  'その他':  <GoalMatchIcon size={11} />,
+  '公式戦': <OfficialMatchIcon size={14} />,
+  'CUP戦':  <CupMatchIcon size={14} />,
+  'トレマ':  <FieldMatchIcon size={14} />,
+  'その他':  <GoalMatchIcon size={14} />,
 };
 // WMO天気コード (Open-Meteo) + 降水確率で判定
 function weatherEmoji(code: number, precip: number): string {
@@ -108,11 +109,11 @@ const MATCH_FORMATS: { value: SchMatchFormat; label: string }[] = [
 ];
 const DEFAULT_MAX_SLOTS = 4;
 
-const COMMENT_TYPE_CFG: Record<SchParkingCommentType, { label: string; icon: string; color: string }> = {
-  skip_request: { label: 'スキップしたい',   icon: '⏭️', color: 'bg-amber-900/30 text-amber-300 border-amber-500/40' },
-  want_slot:    { label: '使わせて欲しい',   icon: '🙋', color: 'bg-blue-900/30 text-blue-300 border-blue-500/40' },
-  order_issue:  { label: '順番の不具合かも', icon: '⚠️', color: 'bg-red-900/30 text-red-300 border-red-500/40' },
-  other:        { label: 'その他',           icon: '💬', color: 'bg-slate-700/50 text-slate-300 border-slate-600/50' },
+const COMMENT_TYPE_CFG: Record<SchParkingCommentType, { label: string; icon: React.ReactNode; color: string }> = {
+  skip_request: { label: 'スキップしたい',   icon: <SkipIcon size={12} />,    color: 'bg-amber-900/30 text-amber-300 border-amber-500/40' },
+  want_slot:    { label: '使わせて欲しい',   icon: <HandUpIcon size={12} />,  color: 'bg-blue-900/30 text-blue-300 border-blue-500/40' },
+  order_issue:  { label: '順番の不具合かも', icon: <WarningIcon size={12} />, color: 'bg-red-900/30 text-red-300 border-red-500/40' },
+  other:        { label: 'その他',           icon: <ChatIcon size={12} />,    color: 'bg-slate-700/50 text-slate-300 border-slate-600/50' },
 };
 
 // ---- Match helpers ----
@@ -548,17 +549,17 @@ function ParkingEventCard({
             <button onClick={() => { setEditingSlots(false); setSlotsInput(String(plan.maxSlots)); }} className="text-[10px] text-slate-400">✕</button>
           </div>
         ) : plan.maxSlots === 0 ? (
-          <span className="text-[10px] text-red-400/70 whitespace-nowrap">🚫 駐車場なし</span>
+          <span className="text-[10px] text-red-400/70 whitespace-nowrap inline-flex items-center gap-0.5"><BanIcon size={10} /> 駐車場なし</span>
         ) : plan.maxSlots === -1 ? (
-          <span className="text-[10px] text-emerald-400/80 whitespace-nowrap">🅿️ 制限なし</span>
+          <span className="text-[10px] text-emerald-400/80 whitespace-nowrap inline-flex items-center gap-0.5"><ParkingIcon size={10} /> 制限なし</span>
         ) : (
           <div className="flex items-center gap-1">
             {isAdmin ? (
-              <button onClick={() => { setEditingSlots(true); setSlotsInput(String(plan.maxSlots)); }} className="text-[10px] text-slate-500 hover:text-slate-300 whitespace-nowrap">
-                🅿️ {plan.maxSlots}台
+              <button onClick={() => { setEditingSlots(true); setSlotsInput(String(plan.maxSlots)); }} className="text-[10px] text-slate-500 hover:text-slate-300 whitespace-nowrap inline-flex items-center gap-0.5">
+                <ParkingIcon size={10} /> {plan.maxSlots}台
               </button>
             ) : (
-              <span className="text-[10px] text-slate-500 whitespace-nowrap">🅿️ {plan.maxSlots}台</span>
+              <span className="text-[10px] text-slate-500 whitespace-nowrap inline-flex items-center gap-0.5"><ParkingIcon size={10} /> {plan.maxSlots}台</span>
             )}
             {!isPast && (
               <button
@@ -1079,7 +1080,7 @@ function EventForm({
                 <div className="flex gap-2">
                   <button type="button" onClick={() => imgFileRef.current?.click()}
                     className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-2.5 text-xs text-sky-400/60 hover:border-sky-400/60 transition-colors cursor-pointer">
-                    🗂️ ファイルを選択
+                    <FolderIcon size={14} /> ファイルを選択
                   </button>
                   <button type="button" onClick={async () => {
                     if (!navigator.clipboard?.read) { alert('ファイルを選択してください'); return; }
@@ -1099,7 +1100,7 @@ function EventForm({
                     } catch { alert('クリップボードへのアクセスが許可されていません'); }
                   }}
                     className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-2.5 text-xs text-sky-400/60 hover:border-sky-400/60 transition-colors cursor-pointer">
-                    📋 貼り付け
+                    <ClipboardIcon size={14} /> 貼り付け
                   </button>
                 </div>
               )}
@@ -1267,10 +1268,10 @@ function EventCard({
             )}
             {event.type !== 'off' && event.maxParkingSlots !== undefined && (
               event.maxParkingSlots === 0
-                ? <p className="text-xs text-red-400/80 mt-0.5">🚫 駐車場なし</p>
+                ? <p className="text-xs text-red-400/80 mt-0.5 flex items-center gap-0.5"><BanIcon size={12} /> 駐車場なし</p>
                 : event.maxParkingSlots === -1
-                  ? <p className="text-xs text-emerald-400/80 mt-0.5">🅿️ 駐車場制限なし</p>
-                  : <p className="text-xs text-blue-400/80 mt-0.5">🅿️ 駐車場 {event.maxParkingSlots}台</p>
+                  ? <p className="text-xs text-emerald-400/80 mt-0.5 flex items-center gap-0.5"><ParkingIcon size={12} /> 駐車場制限なし</p>
+                  : <p className="text-xs text-blue-400/80 mt-0.5 flex items-center gap-0.5"><ParkingIcon size={12} /> 駐車場 {event.maxParkingSlots}台</p>
             )}
           </div>
           {/* Actions */}
@@ -1372,7 +1373,7 @@ function EventCard({
           {/* Google Maps */}
           {(event.type === 'camp' || event.type === 'expedition') && event.mapQuery && (
             <div>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">🗺️ 場所</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1"><MapPinIcon size={10} /> 場所</p>
               <iframe
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(event.mapQuery)}&output=embed&hl=ja&z=8`}
                 width="100%"
@@ -1386,7 +1387,7 @@ function EventCard({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 mt-1.5 text-xs text-blue-400 hover:text-blue-300"
               >
-                🗺️ Google マップで開く
+                <MapPinIcon size={12} /> Google マップで開く
               </a>
             </div>
           )}
@@ -1661,12 +1662,12 @@ function EventSection({ events, members, onSave, openDetailId }: {
   const past = filtered.filter(e => isEventPast(e)).sort((a, b) => b.date.localeCompare(a.date));
 
   const filterBtns: { key: EventFilter; icon: React.ReactNode; label: string }[] = [
-    { key: 'all',      icon: <CalendarIcon size={16} />, label: '全て' },
-    { key: 'practice', icon: <BallIcon size={16} />,     label: '練習' },
-    { key: 'match',    icon: <TrophyIcon size={16} />,   label: '試合' },
-    { key: 'camp',     icon: <CampIcon size={16} />,     label: '合宿/遠征' },
-    { key: 'other',    icon: <CalendarIcon size={16} />, label: 'その他' },
-    { key: 'off',      icon: <StarIcon size={16} />,     label: 'OFF' },
+    { key: 'all',      icon: <CalendarIcon size={20} />, label: '全て' },
+    { key: 'practice', icon: <BallIcon size={20} />,     label: '練習' },
+    { key: 'match',    icon: <TrophyIcon size={20} />,   label: '試合' },
+    { key: 'camp',     icon: <CampIcon size={20} />,     label: '合宿/遠征' },
+    { key: 'other',    icon: <CalendarIcon size={20} />, label: 'その他' },
+    { key: 'off',      icon: <StarIcon size={20} />,     label: 'OFF' },
   ];
 
   return (
@@ -2476,12 +2477,12 @@ function VideoSection({
               <div className="flex gap-2">
                 <button type="button" onClick={() => fileInputRef.current?.click()}
                   className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-4 cursor-pointer hover:border-sky-400/60 transition-colors text-center">
-                  <span className="text-xl">🗂️</span>
+                  <FolderIcon size={32} className="text-sky-400/60" />
                   <p className="text-xs text-slate-400">ファイルを選択</p>
                 </button>
                 <button type="button" onClick={() => pasteFromClipboard(d => setFormThumb(d))}
                   className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-4 cursor-pointer hover:border-sky-400/60 transition-colors text-center">
-                  <span className="text-xl">📋</span>
+                  <ClipboardIcon size={32} className="text-sky-400/60" />
                   <p className="text-xs text-slate-400">貼り付け</p>
                 </button>
               </div>
@@ -2559,12 +2560,12 @@ function VideoSection({
               <div className="flex gap-2">
                 <button type="button" onClick={() => editFileInputRef.current?.click()}
                   className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-4 cursor-pointer hover:border-sky-400/60 transition-colors text-center">
-                  <span className="text-xl">🗂️</span>
+                  <FolderIcon size={32} className="text-sky-400/60" />
                   <p className="text-xs text-slate-400">ファイルを選択</p>
                 </button>
                 <button type="button" onClick={() => pasteFromClipboard(d => setEditThumbData(d))}
                   className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-sky-500/30 bg-sky-950/30 py-4 cursor-pointer hover:border-sky-400/60 transition-colors text-center">
-                  <span className="text-xl">📋</span>
+                  <ClipboardIcon size={32} className="text-sky-400/60" />
                   <p className="text-xs text-slate-400">貼り付け</p>
                 </button>
               </div>
@@ -2831,7 +2832,7 @@ function StatsSection({ events, members }: { events: SchEvent[]; members: SchMem
 
       {/* ── 試合結果サマリー一覧 ── */}
       <div>
-        <p className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-3">📋 試合結果一覧</p>
+        <p className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-3 flex items-center gap-1"><ClipboardIcon size={11} /> 試合結果一覧</p>
         <div className="space-y-2">
           {events
             .filter(e => e.type === 'match')
@@ -3048,7 +3049,7 @@ function ParkingCommentForm({
     <div className="fixed inset-0 z-50 bg-black/60 flex items-end" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="w-full max-w-lg mx-auto bg-slate-800 rounded-t-2xl shadow-2xl" onPointerDown={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-700">
-          <h3 className="text-sm font-bold text-white">🅿️ 駐車場について連絡する</h3>
+          <h3 className="text-sm font-bold text-white flex items-center gap-1.5"><ParkingIcon size={16} /> 駐車場について連絡する</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-white w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-700 text-lg leading-none">×</button>
         </div>
         <div className="px-4 py-4 space-y-4 max-h-[80vh] overflow-y-auto">
@@ -3538,7 +3539,7 @@ function HomeSection({
 
       {/* Parking forecast */}
       <div>
-        <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">🅿️ 駐車場予定</h2>
+        <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2 flex items-center gap-1"><ParkingIcon size={11} /> 駐車場予定</h2>
         {sortedMembers.length === 0 ? (
           <p className="text-center text-slate-400 text-sm py-4">メンバーを登録してください</p>
         ) : parkingPlan.length === 0 ? (
@@ -3574,7 +3575,7 @@ function HomeSection({
       {/* Nearby parking */}
       {nearbyParking.length > 0 && (
         <div>
-          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">🗺️ 近隣駐車場</h2>
+          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2 flex items-center gap-1"><MapPinIcon size={11} /> 近隣駐車場</h2>
           <div className="space-y-2">
             {nearbyParking.map(p => (
               <div key={p.id} className="bg-slate-800/60 border border-white/10 rounded-xl px-4 py-3">
@@ -3583,7 +3584,7 @@ function HomeSection({
                 {p.note && <p className="text-xs text-slate-400 mt-0.5">📝 {p.note}</p>}
                 {p.googleMapsUrl && (
                   <a href={p.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-1.5 text-xs text-blue-400 hover:text-blue-300">
-                    🗺️ Google マップで開く
+                    <MapPinIcon size={12} /> Google マップで開く
                   </a>
                 )}
               </div>
@@ -4136,7 +4137,7 @@ function MemberSection({
           <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider">メンバー</h2>
           <button onClick={() => setShowMemberForm(true)} className="text-xs text-sky-400 hover:text-sky-200 px-3 py-1.5 rounded-lg border border-sky-500/30 hover:border-sky-400/50">＋ 追加</button>
         </div>
-        <p className="text-xs text-slate-500 mb-2">背番号順 ＝ 🅿️ 駐車場順</p>
+        <p className="text-xs text-slate-500 mb-2 flex items-center gap-1">背番号順 ＝ <ParkingIcon size={12} /> 駐車場順</p>
         {sorted.length === 0 ? (
           <p className="text-center text-slate-400 text-sm py-4">メンバーが登録されていません</p>
         ) : (
@@ -4168,7 +4169,7 @@ function MemberSection({
       {/* Parking rotation — admin only */}
       {isAdmin && (
         <div>
-          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">🅿️ ローテーション管理</h2>
+          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2 flex items-center gap-1"><ParkingIcon size={11} /> ローテーション管理</h2>
           <div className="bg-slate-800/60 border border-white/10 rounded-xl p-4 space-y-3">
             <div>
               <p className="text-xs text-slate-400">次の割当開始</p>
@@ -4243,7 +4244,7 @@ function MemberSection({
       {/* Nearby parking */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider">🗺️ 近隣駐車場</h2>
+          <h2 className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider flex items-center gap-1"><MapPinIcon size={11} /> 近隣駐車場</h2>
           <button onClick={() => setShowParkingForm(true)} className="text-xs text-sky-400 hover:text-sky-200 px-3 py-1.5 rounded-lg border border-sky-500/30 hover:border-sky-400/50">＋ 追加</button>
         </div>
         {nearbyParking.length === 0 ? (
@@ -4259,7 +4260,7 @@ function MemberSection({
                     {p.note && <p className="text-xs text-slate-400 mt-0.5">📝 {p.note}</p>}
                     {p.googleMapsUrl && (
                       <a href={p.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-1.5 text-xs text-blue-400 hover:text-blue-300">
-                        🗺️ Google マップで開く
+                        <MapPinIcon size={12} /> Google マップで開く
                       </a>
                     )}
                   </div>

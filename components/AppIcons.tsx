@@ -241,3 +241,75 @@ export function GoalMatchIcon({ size = 24, className = '' }: IconProps) {
     </svg>
   );
 }
+
+export function ParkingIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M13 3H6v18h3v-6h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm.2 7H9V7h4.2c1.1 0 2 .9 2 2s-.9 2-2 2z"/>
+    </svg>
+  );
+}
+
+export function BanIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.68L5.68 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.68l11.22-11.22C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
+    </svg>
+  );
+}
+
+export function MapPinIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </svg>
+  );
+}
+
+export function ClipboardIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+    </svg>
+  );
+}
+
+export function SkipIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+    </svg>
+  );
+}
+
+export function HandUpIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+    </svg>
+  );
+}
+
+export function WarningIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+    </svg>
+  );
+}
+
+export function ChatIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+    </svg>
+  );
+}
+
+export function FolderIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+    </svg>
+  );
+}
