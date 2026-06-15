@@ -101,6 +101,14 @@ const EVENT_DOT: Record<string, string> = {
   other: 'bg-slate-400',
   off:   'bg-red-400',
 };
+// Calendar icon text colors per event type (bright, for visibility)
+const EVENT_ICON_COLOR: Record<string, string> = {
+  practice: 'text-green-400', schedule: 'text-green-400',
+  match: 'text-blue-300',
+  camp: 'text-amber-400', expedition: 'text-amber-400',
+  other: 'text-slate-300',
+  off:  'text-red-400',
+};
 
 const MATCH_TYPES: SchMatchType[] = ['公式戦', 'CUP戦', 'トレマ', 'その他'];
 const MATCH_FORMATS: { value: SchMatchFormat; label: string }[] = [
@@ -1515,9 +1523,15 @@ function SchCalendar({ events, today, onSelectDate }: {
                 <span className={`text-xs font-semibold leading-none ${fadedDow === 0 ? 'text-red-400' : fadedDow === 6 ? 'text-blue-400' : 'text-slate-400'}`}>{fadedDay}</span>
                 {fadedDots.length > 0 && (
                   <div className="flex gap-0.5 mt-1 items-center justify-center">
-                    {fadedDots.slice(0, 2).map((e, j) => (
-                      <span key={j} className="leading-none flex items-center">{tc(e.type).icon(12)}</span>
-                    ))}
+                    {fadedDots.slice(0, 2).map((e, j) => {
+                      const matchCat = e.type === 'match' && e.matchType ? MATCH_TYPE_ICONS[e.matchType]?.(8) : null;
+                      return (
+                        <span key={j} className={`leading-none flex items-center gap-[1px] ${EVENT_ICON_COLOR[e.type] ?? 'text-slate-300'}`}>
+                          {tc(e.type).icon(matchCat ? 9 : 11)}
+                          {matchCat}
+                        </span>
+                      );
+                    })}
                     {fadedDots.length > 2 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
                   </div>
                 )}
@@ -1539,9 +1553,15 @@ function SchCalendar({ events, today, onSelectDate }: {
               {/* Single-day icons — directly below the number */}
               {dots.length > 0 && (
                 <div className="flex gap-0.5 items-center justify-center mt-0.5 z-10 flex-wrap max-w-full px-0.5">
-                  {dots.slice(0, 3).map((e, j) => (
-                    <span key={j} className="leading-none flex-shrink-0 flex items-center">{tc(e.type).icon(12)}</span>
-                  ))}
+                  {dots.slice(0, 3).map((e, j) => {
+                    const matchCat = e.type === 'match' && e.matchType ? MATCH_TYPE_ICONS[e.matchType]?.(9) : null;
+                    return (
+                      <span key={j} className={`leading-none flex-shrink-0 flex items-center gap-[1px] ${EVENT_ICON_COLOR[e.type] ?? 'text-white'}`}>
+                        {tc(e.type).icon(matchCat ? 11 : 14)}
+                        {matchCat}
+                      </span>
+                    );
+                  })}
                   {dots.length > 3 && <span className="text-[7px] text-slate-400 leading-none">+</span>}
                 </div>
               )}
@@ -1567,10 +1587,10 @@ function SchCalendar({ events, today, onSelectDate }: {
                     />
                     {(isStart || isRowStart) && (
                       <span
-                        className="absolute text-[8px] leading-none z-20 pointer-events-none"
+                        className={`absolute leading-none z-20 pointer-events-none flex items-center gap-[1px] ${EVENT_ICON_COLOR[e.type] ?? 'text-white'}`}
                         style={{ bottom: `${4 + j * 7}px`, left: isStart && !isRowStart ? 'calc(50% + 2px)' : '2px' }}
                       >
-                        {tc(e.type).icon(8)}
+                        {tc(e.type).icon(9)}
                       </span>
                     )}
                   </div>
