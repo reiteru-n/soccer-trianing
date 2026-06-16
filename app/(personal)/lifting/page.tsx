@@ -37,7 +37,7 @@ export default function LiftingPage() {
     return (
       <div className="flex items-center justify-center py-24 text-gray-400">
         <div className="text-center">
-          <BallIcon size={48} className="mx-auto mb-3 opacity-60" />
+          <BallIcon size={48} className="mx-auto mb-3 opacity-60 animate-spin" />
           <p className="text-sm">読み込み中...</p>
         </div>
       </div>
