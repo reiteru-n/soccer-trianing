@@ -37,7 +37,7 @@ export default function LiftingPage() {
     return (
       <div className="flex items-center justify-center py-24 text-gray-400">
         <div className="text-center">
-          <BallIcon size={48} className="mx-auto mb-3 opacity-60 animate-spin" />
+          <BallIcon size={48} className="mx-auto mb-3 opacity-60 animate-ball-spin" />
           <p className="text-sm">読み込み中...</p>
         </div>
       </div>
@@ -55,7 +55,7 @@ export default function LiftingPage() {
       )}
 
       <header className="mb-5">
-        <h1 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2"><BallIcon size={24} />リフティング記録</h1>
+        <h1 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2"><BallIcon size={24} className="animate-ball-spin-once" />リフティング記録</h1>
         <p className="text-sm text-gray-500 mt-0.5">全{liftingRecords.length}件の記録</p>
       </header>
 

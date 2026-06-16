@@ -13,6 +13,19 @@ html, body {
   color: #1e293b;
 }
 
+@keyframes ball-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+/* ロード中: 1.5秒で無限回転 */
+.animate-ball-spin {
+  animation: ball-spin 1.5s linear infinite;
+}
+/* マウント時: 1.5秒で1周だけ回転 */
+.animate-ball-spin-once {
+  animation: ball-spin 1.5s ease-out 1;
+}
+
 @keyframes pulse-once {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(39,174,96,0.2); }

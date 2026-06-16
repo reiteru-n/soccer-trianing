@@ -53,8 +53,8 @@ function isInstagramUrl(url: string): boolean {
 // ---- Event type config ----
 type TypeCfg = { label: string; icon: (size: number) => React.ReactNode; badge: string; border: string; bg: string };
 const TYPE_CFG: Record<string, TypeCfg> = {
-  practice:   { label: '練習',     icon: (s) => <BallIcon size={s} />,     badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
-  schedule:   { label: '練習',     icon: (s) => <BallIcon size={s} />,     badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
+  practice:   { label: '練習',     icon: (s) => <BallIcon size={s} className="animate-ball-spin-once" />,     badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
+  schedule:   { label: '練習',     icon: (s) => <BallIcon size={s} className="animate-ball-spin-once" />,     badge: 'bg-green-600/40 text-green-300',  border: 'border-green-500/30',  bg: 'bg-green-900/20'  },
   match:      { label: '試合',     icon: (s) => <TrophyIcon size={s} />,   badge: 'bg-blue-600/40 text-blue-300',    border: 'border-blue-500/30',   bg: 'bg-blue-900/20'   },
   camp:       { label: '合宿/遠征', icon: (s) => <CampIcon size={s} />,    badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
   expedition: { label: '合宿/遠征', icon: (s) => <CampIcon size={s} />,    badge: 'bg-amber-600/40 text-amber-300',  border: 'border-amber-500/30',  bg: 'bg-amber-900/20'  },
@@ -1684,7 +1684,7 @@ function EventSection({ events, members, onSave, openDetailId }: {
 
   const filterBtns: { key: EventFilter; icon: React.ReactNode; label: string }[] = [
     { key: 'all',      icon: <CalendarIcon size={20} />, label: '全て' },
-    { key: 'practice', icon: <BallIcon size={20} />,     label: '練習' },
+    { key: 'practice', icon: <BallIcon size={20} className="animate-ball-spin-once" />,     label: '練習' },
     { key: 'match',    icon: <TrophyIcon size={20} />,   label: '試合' },
     { key: 'camp',     icon: <CampIcon size={20} />,     label: '合宿/遠征' },
     { key: 'other',    icon: <CalendarIcon size={20} />, label: 'その他' },
@@ -4750,7 +4750,7 @@ export default function SchPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24 text-slate-400">
-        <div className="text-center"><BallIcon size={48} className="mx-auto mb-3 opacity-50 animate-spin" /><p className="text-sm">読み込み中...</p></div>
+        <div className="text-center"><BallIcon size={48} className="mx-auto mb-3 opacity-50 animate-ball-spin" /><p className="text-sm">読み込み中...</p></div>
       </div>
     );
   }
@@ -4838,7 +4838,7 @@ export default function SchPage() {
             <TrophyIcon size={10} /> 戦歴
           </Link>
           <Link href="/sch/ob" className="flex items-center gap-1.5 text-[10px] text-sky-300/80 hover:text-white border border-sky-500/30 hover:border-sky-400/60 bg-sky-900/20 hover:bg-sky-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
-            <BallIcon size={10} /> OB進路
+            <BallIcon size={10} className="animate-ball-spin-once" /> OB進路
           </Link>
           <Link href="/sch/kanagawa" className="flex items-center gap-1.5 text-[10px] text-sky-300/80 hover:text-white border border-sky-500/30 hover:border-sky-400/60 bg-sky-900/20 hover:bg-sky-900/40 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
             <ChartIcon size={10} /> 神奈川県推移
@@ -4871,7 +4871,7 @@ export default function SchPage() {
           if (h.type === 'announcement') return <BellIcon size={16} />;
           const icons: Record<string, React.ReactNode> = {
             match: <TrophyIcon size={16} />,
-            practice: <BallIcon size={16} />,
+            practice: <BallIcon size={16} className="animate-ball-spin-once" />,
             camp: <CampIcon size={16} />,
             expedition: <CampIcon size={16} />,
             other: <CalendarIcon size={16} />,

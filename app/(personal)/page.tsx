@@ -123,13 +123,13 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
     });
     finishBodySave();
   };
-if (isLoading) return (<div className="flex items-center justify-center py-24 text-gray-400"><div className="text-center"><BallIcon size={48} className="mx-auto mb-3 opacity-60 animate-spin" /><p className="text-sm">読み込み中...</p></div></div>);
+if (isLoading) return (<div className="flex items-center justify-center py-24 text-gray-400"><div className="text-center"><BallIcon size={48} className="mx-auto mb-3 opacity-60 animate-ball-spin" /><p className="text-sm">読み込み中...</p></div></div>);
   return (
     <>
       <ConfettiEffect trigger={!!newMilestoneAchieved} onDone={clearNewMilestone} />
       {newMilestoneAchieved && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-yellow-400 text-yellow-900 font-bold px-6 py-3 rounded-2xl shadow-xl animate-bounce text-center whitespace-nowrap">🎉 {newMilestoneAchieved}回達成おめでとう！</div>}
       <header className="mb-5 pt-1">
-        <h1 className="text-2xl font-extrabold text-white drop-shadow flex items-center gap-2"><BallIcon size={24} />サッカー記録</h1>
+        <h1 className="text-2xl font-extrabold text-white drop-shadow flex items-center gap-2"><BallIcon size={24} className="animate-ball-spin-once" />サッカー記録</h1>
         <p className="text-sm text-blue-200 mt-0.5">毎日の練習を積み上げよう！💪</p>
       </header>
       <div className="mb-3 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 rounded-2xl px-4 py-3.5 text-white shadow-lg shadow-blue-900/40 border border-blue-400/30">
@@ -171,7 +171,7 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
       <section className="mb-6">
         <h2 className="text-sm font-bold text-blue-200 mb-3 tracking-wide uppercase flex items-center gap-1.5"><EditIcon size={14} />今日の記録を追加</h2>
         <div className="flex gap-2">
-          <button onClick={() => setShowLiftingForm(true)} className="flex-1 bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-blue-900/50 border border-blue-400/30 transition-all active:scale-95"><BallIcon size={28} /><span className="text-xs">リフティング</span></button>
+          <button onClick={() => setShowLiftingForm(true)} className="flex-1 bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-blue-900/50 border border-blue-400/30 transition-all active:scale-95"><BallIcon size={28} className="animate-ball-spin-once" /><span className="text-xs">リフティング</span></button>
           <button onClick={() => setShowNoteForm(true)} className="flex-1 bg-gradient-to-b from-teal-500 to-cyan-700 hover:from-teal-400 hover:to-cyan-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-cyan-900/50 border border-teal-400/30 transition-all active:scale-95"><NoteIcon size={28} /><span className="text-xs">練習ノート</span></button>
           <button onClick={() => setShowBodyForm(true)} className="flex-1 bg-gradient-to-b from-violet-500 to-indigo-700 hover:from-violet-400 hover:to-indigo-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-indigo-900/50 border border-violet-400/30 transition-all active:scale-95"><RulerIcon size={28} /><span className="text-xs">身長・体重</span></button>
         </div>
