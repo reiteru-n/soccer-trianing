@@ -38,7 +38,7 @@ export default function BottomNav() {
           className="flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all"
         >
           <Image
-            src="/ball.png"
+            src="/ball-trionda.png"
             alt="リフティング"
             width={1170}
             height={1168}

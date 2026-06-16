@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 interface IconProps {
   size?: number;
   className?: string;
@@ -13,9 +15,14 @@ export function HouseIcon({ size = 24, className = '' }: IconProps) {
 
 export function BallIcon({ size = 24, className = '' }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path fillRule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM14.6 10.5L12 9l-2.6 1.5v3L12 15l2.6-1.5v-3zM12 3l2.4 1.8-.9 2.2h-3l-.9-2.2L12 3zM16 5.5l3 1.5-.5 3-2.5.5-1.5-2.5 1.5-2.5zM16 13.5l2.5 1.5-1 3-3 .5-1-2.5 2.5-2.5zM10 15l-.5 3-3-.5-1-3 2.5-1.5 2 2zM9.5 8L8 10.5l-2.5-.5L5 7l3-1.5 1.5 2.5z"/>
-    </svg>
+    <Image
+      src="/ball-trionda.png"
+      alt=""
+      width={size}
+      height={size}
+      className={className}
+      style={{ objectFit: 'contain' }}
+    />
   );
 }
 
