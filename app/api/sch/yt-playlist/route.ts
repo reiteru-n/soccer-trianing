@@ -13,6 +13,47 @@ export interface YtVideo {
 
 let cache: { data: YtVideo[]; expires: number } | null = null;
 
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+// XML エンティティをデコード
+function decodeXml(s: string): string {
+  return s
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)));
+}
+
+// 【主経路】YouTube 公式のプレイリスト RSS フィードから取得する。
+// <published> が ISO8601 の絶対日付なので、ロケール/構造変更に影響されず日付ラベルが必ず出る。
+// 注意: RSS は最新15件まで（UIは6件＋「もっと見る」なので十分）。
+async function fetchViaRss(): Promise<YtVideo[]> {
+  const res = await fetch(
+    `https://www.youtube.com/feeds/videos.xml?playlist_id=${PLAYLIST_ID}`,
+    { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(10000) }
+  );
+  if (!res.ok) throw new Error(`RSS HTTP ${res.status}`);
+  const xml = await res.text();
+  const videos: YtVideo[] = [];
+  for (const entry of xml.split('<entry>').slice(1)) {
+    const videoId = entry.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1] ?? '';
+    if (!videoId) continue;
+    const title = decodeXml(entry.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() ?? '');
+    const published = entry.match(/<published>([^<]+)<\/published>/)?.[1] ?? '';
+    const thumbnail = entry.match(/<media:thumbnail\s+url="([^"]+)"/)?.[1]
+      ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+    videos.push({
+      videoId, title, publishedAt: published, thumbnail,
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+    });
+    if (videos.length >= 50) break;
+  }
+  return videos;
+}
+
 // ytInitialData の JSON ブロックを HTML から抽出
 function extractJsonBlock(html: string, marker: string): unknown | null {
   const idx = html.indexOf(marker);
@@ -82,7 +123,8 @@ function findTimeTextDeep(obj: unknown, depth = 0): string {
     }
   }
   for (const [key, v] of Object.entries(o)) {
-    if (['thumbnail', 'navigationEndpoint', 'trackingParams'].includes(key)) continue;
+    // title は誤検出の温床（「3日前の練習試合」等が投稿日と誤認される）ので除外
+    if (['thumbnail', 'navigationEndpoint', 'trackingParams', 'title'].includes(key)) continue;
     const found = findTimeTextDeep(v, depth + 1);
     if (found) return found;
   }
@@ -106,12 +148,28 @@ export async function GET(req: Request) {
   const now = Date.now();
   if (!rawDebug && cache && cache.expires > now) return NextResponse.json(cache.data.slice(0, limit));
 
+  // 【主経路】RSS フィード（ISO絶対日付・構造変更に強い）
+  try {
+    const rss = await fetchViaRss();
+    if (rawDebug) {
+      return NextResponse.json({ source: 'rss', count: rss.length, items: rss.slice(0, 5) });
+    }
+    if (rss.length > 0) {
+      cache = { data: rss, expires: now + CACHE_TTL };
+      return NextResponse.json(rss.slice(0, limit));
+    }
+    console.warn('[yt-playlist] RSS returned 0 entries, falling back to HTML scrape');
+  } catch (e) {
+    console.warn('[yt-playlist] RSS failed, falling back to HTML scrape:', e);
+  }
+
+  // 【フォールバック】HTML スクレイピング（RSS が空/失敗時のみ）
   try {
     const res = await fetch(
       `https://www.youtube.com/playlist?list=${PLAYLIST_ID}`,
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'User-Agent': UA,
           'Accept-Language': 'en-US,en;q=0.9',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         },
@@ -127,17 +185,6 @@ export async function GET(req: Request) {
     if (data) {
       // 再帰的に playlistVideoListRenderer を探す（構造変更に強い）
       contents = findPlaylistContents(data) ?? [];
-    }
-
-    // debug: raw=1 でキャッシュ無視し最初の5アイテムの生 renderer データを返す
-    if (rawDebug) {
-      const rawItems = contents.slice(0, 5).map((item) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const r = (item as any)?.playlistVideoRenderer;
-        if (!r) return item;
-        return { videoId: r.videoId, publishedTimeText: r.publishedTimeText, videoInfo: r.videoInfo };
-      });
-      return NextResponse.json({ contentsLength: contents.length, items: rawItems, hasYtInitialData: !!data });
     }
 
     const videos: YtVideo[] = [];
