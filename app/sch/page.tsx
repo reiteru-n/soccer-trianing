@@ -1913,10 +1913,10 @@ function relativeDateLabel(text: string): { label: string; isNew: boolean; color
     const today = new Date(); today.setHours(0, 0, 0, 0); d.setHours(0, 0, 0, 0);
     days = Math.round((today.getTime() - d.getTime()) / 86400000);
   } else {
-    const m1 = text.match(/(\d+)日前/);
-    const m2 = text.match(/(\d+)週間?前/);
-    const m3 = text.match(/(\d+)[ヶヵか]月前/);
-    const m4 = text.match(/(\d+)年前/);
+    const m1 = text.match(/(\d+)\s*日前/);
+    const m2 = text.match(/(\d+)\s*週間?前/);
+    const m3 = text.match(/(\d+)\s*[ヶヵか]月前/);
+    const m4 = text.match(/(\d+)\s*年前/);
     const m5 = text.match(/(\d+)\s+days?\s+ago/i);
     const m6 = text.match(/(\d+)\s+weeks?\s+ago/i);
     const m7 = text.match(/(\d+)\s+months?\s+ago/i);
