@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// ビルド時の静的最適化を無効化（YouTube取得結果が空/古いまま固定されるのを防ぐ）
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const PLAYLIST_ID = 'PLo9LruwA1kPSBNtamp53j4AVZup6aVrin';
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
@@ -33,7 +37,7 @@ function decodeXml(s: string): string {
 async function fetchViaRss(): Promise<YtVideo[]> {
   const res = await fetch(
     `https://www.youtube.com/feeds/videos.xml?playlist_id=${PLAYLIST_ID}`,
-    { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(10000) }
+    { headers: { 'User-Agent': UA }, cache: 'no-store', signal: AbortSignal.timeout(10000) }
   );
   if (!res.ok) throw new Error(`RSS HTTP ${res.status}`);
   const xml = await res.text();
@@ -173,6 +177,7 @@ export async function GET(req: Request) {
           'Accept-Language': 'en-US,en;q=0.9',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         },
+        cache: 'no-store',
         signal: AbortSignal.timeout(10000),
       }
     );
