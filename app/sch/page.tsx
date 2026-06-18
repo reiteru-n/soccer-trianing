@@ -4814,7 +4814,7 @@ export default function SchPage() {
                   if (isIOS) {
                     window.location.href = calUrl.replace('https://', 'webcal://');
                   } else {
-                    window.open(`https://calendar.google.com/calendar/r?cid=${encodeURIComponent('webcal://soccer-trianing.vercel.app/api/sch/calendar')}`, '_blank');
+                    window.open(`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(calUrl)}`, '_blank');
                   }
                 }}
                 className="text-[10px] whitespace-nowrap text-sky-400/70 hover:text-sky-100 border border-sky-600/30 hover:border-sky-500/50 px-2.5 py-1 rounded-lg transition-colors"
