@@ -4853,72 +4853,113 @@ export default function SchPage() {
         const calUrl = 'https://soccer-trianing.vercel.app/api/sch/calendar';
         return (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowCalDialog(false)}>
-            <div className="bg-slate-800 rounded-t-2xl p-5 w-full max-w-md border-t border-white/10 pb-8" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center gap-2 mb-1">
-                <CalendarIcon size={16} className="text-sky-400" />
-                <h3 className="text-sm font-bold text-white">Googleカレンダーに追加</h3>
-              </div>
-              <p className="text-[11px] text-amber-400/80 mb-4">AndroidのGoogleカレンダーアプリにはURL購読機能がないため、2つの方法があります。</p>
-
-              {/* Option A: ICSx5 (easiest) */}
-              <div className="mb-4">
-                <p className="text-[11px] font-bold text-emerald-400 mb-1.5">方法A（簡単）: ICSx5アプリを使う</p>
-                <div className="bg-slate-900/60 rounded-lg px-3 py-2 mb-2 text-[10px] text-slate-400 leading-relaxed">
-                  無料アプリ「ICSx5」をインストールすると、<span className="text-white font-semibold">webcal:// リンクをAndroidで直接処理</span>できるようになり、Googleカレンダーに自動同期されます。
+            <div className="bg-slate-800 rounded-t-2xl w-full max-w-md border-t border-white/10 overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
+              <div className="p-5 pb-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <CalendarIcon size={16} className="text-sky-400 shrink-0" />
+                  <h3 className="text-sm font-bold text-white">Googleカレンダーに追加</h3>
                 </div>
-                <a
-                  href="https://play.google.com/store/apps/details?id=at.bitfire.icsdroid"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 rounded-xl py-2.5 mb-2 transition-colors"
-                  onClick={() => setShowCalDialog(false)}
-                >
-                  Google Playで ICSx5 を入手
-                </a>
-                <button
-                  onClick={() => {
-                    setShowCalDialog(false);
-                    window.location.href = calUrl.replace('https://', 'webcal://');
-                  }}
-                  className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-white bg-sky-700 hover:bg-sky-600 active:bg-sky-800 rounded-xl py-2.5 transition-colors"
-                >
-                  <CalendarIcon size={13} /> ICSx5でカレンダーを購読する
-                </button>
-              </div>
+                <p className="text-[11px] text-slate-400 mb-4">AndroidアプリにはURL追加機能がないため、ChromeのPC版から追加します。</p>
 
-              {/* Option B: Chrome desktop mode */}
-              <div className="mb-4">
-                <p className="text-[11px] font-bold text-slate-300 mb-1.5">方法B: ChromeのPC版サイトから追加</p>
-                <div className="bg-slate-900 rounded-xl p-3 mb-2 flex items-center gap-2 border border-white/5">
-                  <span className="text-[10px] text-sky-300 flex-1 break-all leading-relaxed">{calUrl}</span>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(calUrl).then(() => {
-                        setCalCopied(true);
-                        setTimeout(() => setCalCopied(false), 2500);
-                      });
-                    }}
-                    className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg shrink-0 transition-colors ${calCopied ? 'bg-emerald-600 text-white' : 'bg-sky-600 hover:bg-sky-500 text-white'}`}
+                {/* ステップ1 */}
+                <div className="flex gap-3 mb-4">
+                  <div className="flex flex-col items-center shrink-0">
+                    <span className="w-7 h-7 rounded-full bg-sky-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+                    <div className="w-px flex-1 bg-white/10 mt-1" />
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <p className="text-xs font-semibold text-white mb-2">下のURLをコピーする</p>
+                    <div className="bg-slate-900 rounded-xl p-3 flex items-center gap-2 border border-white/5">
+                      <span className="text-[10px] text-sky-300 flex-1 break-all leading-relaxed">{calUrl}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(calUrl).then(() => {
+                            setCalCopied(true);
+                            setTimeout(() => setCalCopied(false), 2500);
+                          });
+                        }}
+                        className={`text-[11px] font-bold px-3 py-1.5 rounded-lg shrink-0 transition-colors ${calCopied ? 'bg-emerald-600 text-white' : 'bg-sky-600 hover:bg-sky-500 text-white'}`}
+                      >
+                        {calCopied ? '✓ コピー済' : 'コピー'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ステップ2 */}
+                <div className="flex gap-3 mb-4">
+                  <div className="flex flex-col items-center shrink-0">
+                    <span className="w-7 h-7 rounded-full bg-sky-600 text-white text-xs font-bold flex items-center justify-center">2</span>
+                    <div className="w-px flex-1 bg-white/10 mt-1" />
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <p className="text-xs font-semibold text-white mb-2">Googleカレンダーをブラウザで開く</p>
+                    <a
+                      href="https://calendar.google.com/calendar/r"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-600 rounded-xl py-2.5 transition-colors"
+                      onClick={() => setShowCalDialog(false)}
+                    >
+                      <CalendarIcon size={13} /> Googleカレンダーを開く
+                    </a>
+                  </div>
+                </div>
+
+                {/* ステップ3 ★重要 */}
+                <div className="flex gap-3 mb-4">
+                  <div className="flex flex-col items-center shrink-0">
+                    <span className="w-7 h-7 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">3</span>
+                    <div className="w-px flex-1 bg-white/10 mt-1" />
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <p className="text-xs font-semibold text-white mb-2">ChromeをPC版に切り替える</p>
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+                      <p className="text-xs text-amber-200 font-semibold mb-1">⚠️ この操作をしないと次に進めません</p>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        Chrome右上の <span className="bg-slate-700 px-1.5 py-0.5 rounded text-white font-bold">︙</span> をタップ<br />
+                        →「<span className="text-white font-semibold">PC版サイト</span>」にチェックを入れる
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ステップ4 */}
+                <div className="flex gap-3 mb-5">
+                  <div className="flex flex-col items-center shrink-0">
+                    <span className="w-7 h-7 rounded-full bg-sky-600 text-white text-xs font-bold flex items-center justify-center">4</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-white mb-2">「URLで追加」からコピーしたURLを貼り付ける</p>
+                    <div className="bg-slate-900/60 rounded-xl p-3 text-[11px] text-slate-300 leading-relaxed space-y-1">
+                      <p>左メニューの「<span className="text-white font-semibold">その他のカレンダー</span>」の横にある <span className="bg-slate-700 px-1.5 py-0.5 rounded text-white font-bold">＋</span> をタップ</p>
+                      <p>→「<span className="text-white font-semibold">URLで追加</span>」をタップ</p>
+                      <p>→ コピーしたURLを貼り付けて「<span className="text-white font-semibold">カレンダーを追加</span>」</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 区切り：ICSx5 */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex-1 h-px bg-white/10" />
+                  <span className="text-[10px] text-slate-500">別の方法</span>
+                  <div className="flex-1 h-px bg-white/10" />
+                </div>
+                <div className="mb-5">
+                  <p className="text-[11px] text-slate-400 mb-2">アプリ「<span className="text-white font-semibold">ICSx5</span>」を使うとワンタップで購読できます（無料）</p>
+                  <a
+                    href="https://play.google.com/store/apps/details?id=at.bitfire.icsdroid"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-600 rounded-xl py-2.5 transition-colors"
+                    onClick={() => setShowCalDialog(false)}
                   >
-                    {calCopied ? '✓ コピー済' : 'コピー'}
-                  </button>
+                    Google Playで ICSx5 を入手
+                  </a>
                 </div>
-                <a
-                  href="https://calendar.google.com/calendar/r"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-600 active:bg-blue-800 rounded-xl py-2.5 mb-2 transition-colors"
-                  onClick={() => setShowCalDialog(false)}
-                >
-                  <CalendarIcon size={13} /> Googleカレンダーを開く
-                </a>
-                <div className="bg-slate-900/60 rounded-lg px-3 py-2 text-[10px] text-slate-400 leading-relaxed">
-                  ① URLをコピー → ② Chromeで開く → ③ 右上<span className="text-white font-semibold">「︙」→「PC版サイト」</span>に切り替え<br />
-                  → ④ 左メニュー「<span className="text-white font-semibold">その他のカレンダー ＋</span>」→「<span className="text-white font-semibold">URLで追加</span>」→ 貼り付け
-                </div>
-              </div>
 
-              <button onClick={() => setShowCalDialog(false)} className="w-full text-center text-xs text-slate-500 py-1">閉じる</button>
+                <button onClick={() => setShowCalDialog(false)} className="w-full text-center text-xs text-slate-500 py-2 mb-3">閉じる</button>
+              </div>
             </div>
           </div>
         );
