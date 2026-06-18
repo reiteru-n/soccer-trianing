@@ -4487,6 +4487,8 @@ export default function SchPage() {
   const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'subscribed' | 'denied'>('loading');
   const [pushBusy, setPushBusy] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
+  const [showCalDialog, setShowCalDialog] = useState(false);
+  const [calCopied, setCalCopied] = useState(false);
   // 編集履歴モーダル
   interface HistoryModal { editEntries: SchUpdateHistory[]; autoEntries: SchUpdateHistory[]; baseHistory: SchUpdateHistory[]; memo: string; previousEvents?: SchEvent[]; previousAnnouncements?: SchAnnouncement[]; newEvents?: SchEvent[]; newAnnouncements?: SchAnnouncement[]; notifyLine?: boolean; }
   const [historyModal, setHistoryModal] = useState<HistoryModal | null>(null);
@@ -4814,7 +4816,7 @@ export default function SchPage() {
                   if (isIOS) {
                     window.location.href = calUrl.replace('https://', 'webcal://');
                   } else {
-                    window.open(`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(calUrl)}`, '_blank');
+                    setShowCalDialog(true);
                   }
                 }}
                 className="text-[10px] whitespace-nowrap text-sky-400/70 hover:text-sky-100 border border-sky-600/30 hover:border-sky-500/50 px-2.5 py-1 rounded-lg transition-colors"
@@ -4845,6 +4847,46 @@ export default function SchPage() {
           </Link>
         </div>
       </header>
+
+      {/* Androidカレンダー追加ダイアログ */}
+      {showCalDialog && (() => {
+        const calUrl = 'https://soccer-trianing.vercel.app/api/sch/calendar';
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowCalDialog(false)}>
+            <div className="bg-slate-800 rounded-t-2xl p-5 w-full max-w-md border-t border-white/10 pb-8" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-2 mb-3">
+                <CalendarIcon size={16} className="text-sky-400" />
+                <h3 className="text-sm font-bold text-white">Googleカレンダーに追加</h3>
+              </div>
+              <p className="text-xs text-slate-400 mb-3">① URLをコピー → ② Googleカレンダーの設定を開く → ③「URLで追加」に貼り付け</p>
+              <div className="bg-slate-900 rounded-xl p-3 mb-3 flex items-center gap-2 border border-white/5">
+                <span className="text-[10px] text-sky-300 flex-1 break-all leading-relaxed">{calUrl}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(calUrl).then(() => {
+                      setCalCopied(true);
+                      setTimeout(() => setCalCopied(false), 2000);
+                    });
+                  }}
+                  className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg shrink-0 transition-colors ${calCopied ? 'bg-emerald-600 text-white' : 'bg-sky-600 hover:bg-sky-500 text-white'}`}
+                >
+                  {calCopied ? '✓ コピー済' : 'コピー'}
+                </button>
+              </div>
+              <a
+                href="https://calendar.google.com/calendar/r/settings/addbyurl"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl py-3 mb-3 transition-colors"
+                onClick={() => setShowCalDialog(false)}
+              >
+                <CalendarIcon size={14} /> Googleカレンダー設定を開く
+              </a>
+              <button onClick={() => setShowCalDialog(false)} className="w-full text-center text-xs text-slate-500 py-1">閉じる</button>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="flex bg-white/5 backdrop-blur rounded-xl p-1 mb-5 border border-white/10">
         {tabs.map(({ key, label, Icon }) => (
