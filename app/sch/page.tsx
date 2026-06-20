@@ -755,6 +755,26 @@ function SuggestInput({ value, onChange, suggestions, placeholder, className }: 
   );
 }
 
+// ---- LINE quota types ----
+interface LineQuota { totalUsage: number; limit: number; memberCount: number | null; resetDate: string; }
+
+function LineQuotaBadge({ quota }: { quota: LineQuota | null }) {
+  if (!quota) return null;
+  const remaining = quota.limit - quota.totalUsage;
+  const timesLeft = quota.memberCount ? Math.floor(remaining / quota.memberCount) : null;
+  const isCritical = timesLeft !== null && timesLeft === 0;
+  const isWarning = timesLeft !== null && timesLeft <= 2;
+  return (
+    <div className={`text-[11px] rounded-lg px-2.5 py-1.5 mt-1 border ${isCritical ? 'bg-red-900/30 text-red-300 border-red-500/30' : isWarning ? 'bg-amber-900/30 text-amber-300 border-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+      <div>通知上限 {quota.totalUsage}/{quota.limit}</div>
+      {timesLeft !== null && quota.memberCount && (
+        <div>グループ{quota.memberCount}人の場合、あと<span className={`font-bold ${isCritical ? 'text-red-300' : isWarning ? 'text-amber-300' : ''}`}>{timesLeft}回</span>通知可能</div>
+      )}
+      <div>{quota.resetDate}にリセットされます</div>
+    </div>
+  );
+}
+
 // ---- EventForm ----
 function EventForm({
   initialEvent,
@@ -765,6 +785,8 @@ function EventForm({
   pastOpponents,
   onSave,
   onClose,
+  isAdmin,
+  lineQuota,
 }: {
   initialEvent?: SchEvent;
   initialDate?: string;
@@ -774,6 +796,8 @@ function EventForm({
   pastOpponents: string[];
   onSave: (event: SchEvent, notifyLine: boolean) => void;
   onClose: () => void;
+  isAdmin?: boolean;
+  lineQuota?: LineQuota | null;
 }) {
   const [type, setType] = useState<SchEventType>(initialEvent?.type ?? 'practice');
   const [date, setDate] = useState(initialEvent?.date ?? initialDate ?? todayStr());
@@ -1122,10 +1146,13 @@ function EventForm({
                 }} />
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={notifyLine} onChange={e => setNotifyLine(e.target.checked)} className="w-4 h-4 accent-green-500" />
-              <span className="text-sm text-slate-300">💬 LINE通知</span>
-            </label>
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={notifyLine} onChange={e => setNotifyLine(e.target.checked)} className="w-4 h-4 accent-green-500" />
+                <span className="text-sm text-slate-300">💬 LINE通知</span>
+              </label>
+              {isAdmin && notifyLine && <LineQuotaBadge quota={lineQuota ?? null} />}
+            </div>
             <button type="submit" className="w-full bg-gradient-to-r from-sky-500 to-cyan-600 hover:from-sky-400 hover:to-cyan-500 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all">保存</button>
           </form>
         </div>
@@ -1608,11 +1635,13 @@ function SchCalendar({ events, today, onSelectDate }: {
 // ---- EventSection ----
 type EventFilter = 'all' | SchEventType;
 
-function EventSection({ events, members, onSave, openDetailId }: {
+function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuota }: {
   events: SchEvent[];
   members: SchMember[];
   onSave: (events: SchEvent[], notifyLine: boolean) => void;
   openDetailId?: string | null;
+  isAdmin?: boolean;
+  lineQuota?: LineQuota | null;
 }) {
   const [filter, setFilter] = useState<EventFilter>('all');
   const [showForm, setShowForm] = useState(false);
@@ -1799,6 +1828,8 @@ function EventSection({ events, members, onSave, openDetailId }: {
           pastOpponents={pastOpponents}
           onSave={handleSave}
           onClose={() => { setShowForm(false); setEditing(null); setCalendarDate(null); }}
+          isAdmin={isAdmin}
+          lineQuota={lineQuota}
         />
       )}
 
@@ -3769,7 +3800,7 @@ function CheckList({ items, announcementId }: { items: { text: string; note?: st
 }
 
 // ---- AnnounceSection ----
-function AnnounceSection({ announcements, onSave, events, isAdmin }: { announcements: SchAnnouncement[]; onSave: (a: SchAnnouncement[], notifyLine: boolean) => void; events: SchEvent[]; isAdmin?: boolean }) {
+function AnnounceSection({ announcements, onSave, events, isAdmin, lineQuota }: { announcements: SchAnnouncement[]; onSave: (a: SchAnnouncement[], notifyLine: boolean) => void; events: SchEvent[]; isAdmin?: boolean; lineQuota?: LineQuota | null }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SchAnnouncement | null>(null);
   const [date, setDate] = useState(todayStr());
@@ -4008,7 +4039,10 @@ function AnnounceSection({ announcements, onSave, events, isAdmin }: { announcem
 
                 <div><label className="block text-xs font-semibold text-slate-400 mb-1">🔗 投稿URL <span className="font-normal text-slate-500">（Instagram リンク等）</span></label><input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.instagram.com/p/..." className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 text-white px-3 py-2.5 text-sm focus:border-purple-400 focus:outline-none placeholder-slate-500" /></div>
                 <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={important} onChange={e => setImportant(e.target.checked)} className="w-4 h-4 accent-red-500" /><span className="text-sm text-slate-300">🔴 重要な連絡としてマーク</span></label>
-                <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={notifyLine} onChange={e => setNotifyLine(e.target.checked)} className="w-4 h-4 accent-green-500" /><span className="text-sm text-slate-300">💬 LINE通知</span></label>
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={notifyLine} onChange={e => setNotifyLine(e.target.checked)} className="w-4 h-4 accent-green-500" /><span className="text-sm text-slate-300">💬 LINE通知</span></label>
+                  {isAdmin && notifyLine && <LineQuotaBadge quota={lineQuota ?? null} />}
+                </div>
                 <button type="submit" className="w-full bg-gradient-to-r from-sky-500 to-cyan-600 text-white font-bold py-3 rounded-xl text-sm">投稿</button>
               </form>
             </div>
@@ -4484,6 +4518,7 @@ export default function SchPage() {
   const [openDetailId, setOpenDetailId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [lineQuota, setLineQuota] = useState<LineQuota | null>(null);
   const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'subscribed' | 'denied'>('loading');
   const [pushBusy, setPushBusy] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -4494,7 +4529,19 @@ export default function SchPage() {
   const [historyModal, setHistoryModal] = useState<HistoryModal | null>(null);
 
   useEffect(() => {
-    fetch('/api/admin/logs?limit=1').then(r => { if (r.ok) setIsAdmin(true); }).catch(() => {});
+    fetch('/api/admin/logs?limit=1').then(r => {
+      if (r.ok) {
+        setIsAdmin(true);
+        fetch('/api/sch/line-status').then(r2 => r2.json()).then(d => {
+          setLineQuota({
+            totalUsage: (d.consumption?.totalUsage as number) ?? 0,
+            limit: (d.quota?.value as number) ?? 200,
+            memberCount: (d.memberCount as number | null) ?? null,
+            resetDate: (d.resetDate as string) ?? '',
+          });
+        }).catch(() => {});
+      }
+    }).catch(() => {});
   }, []);
 
   // URLパラメータ ?tab=xxx でタブを初期化（LINE通知からの直リンク対応）
@@ -5150,7 +5197,7 @@ export default function SchPage() {
         />
       )}
       {tab === 'events' && (
-        <EventSection events={events} members={members} onSave={saveEvents} openDetailId={openDetailId} />
+        <EventSection events={events} members={members} onSave={saveEvents} openDetailId={openDetailId} isAdmin={isAdmin} lineQuota={lineQuota} />
       )}
       {tab === 'video' && (
         <VideoSection events={events} standaloneVideos={standaloneVideos} onSaveStandaloneVideos={saveStandaloneVideos} videoThumbnails={videoThumbnails} onSaveVideoThumbnails={saveVideoThumbnails} />
@@ -5159,7 +5206,7 @@ export default function SchPage() {
         <StatsSection events={events} members={members} />
       )}
       {tab === 'announce' && (
-        <AnnounceSection announcements={announcements} onSave={saveAnnounce} events={events} isAdmin={isAdmin} />
+        <AnnounceSection announcements={announcements} onSave={saveAnnounce} events={events} isAdmin={isAdmin} lineQuota={lineQuota} />
       )}
       {tab === 'member' && (
         <MemberSection
