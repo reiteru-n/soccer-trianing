@@ -1,0 +1,70 @@
+name: Check LINE Debug Logs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-line-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch LINE debug data from Redis
+        env:
+          UPSTASH_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+        run: |
+          echo "=== sch:line_send_debug (最後のLINE送信結果) ==="
+          curl -s "$UPSTASH_URL/get/sch:line_send_debug" \
+            -H "Authorization: Bearer $UPSTASH_TOKEN" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          val = d.get('result')
+          if val:
+              try:
+                  print(json.dumps(json.loads(val), ensure_ascii=False, indent=2))
+              except:
+                  print(val)
+          else:
+              print('(データなし)')
+          "
+
+          echo ""
+          echo "=== sch:line_debug (最後の保存処理の状態) ==="
+          curl -s "$UPSTASH_URL/get/sch:line_debug" \
+            -H "Authorization: Bearer $UPSTASH_TOKEN" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          val = d.get('result')
+          if val:
+              try:
+                  print(json.dumps(json.loads(val), ensure_ascii=False, indent=2))
+              except:
+                  print(val)
+          else:
+              print('(データなし)')
+          "
+
+          echo ""
+          echo "=== sch:line_group_id (登録済みグループID) ==="
+          curl -s "$UPSTASH_URL/get/sch:line_group_id" \
+            -H "Authorization: Bearer $UPSTASH_TOKEN" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          val = d.get('result')
+          print(val if val else '(未設定 - LINEグループIDがRedisにない)')
+          "
+
+          echo ""
+          echo "=== sch:line_webhook_log (最後のWebhookイベント) ==="
+          curl -s "$UPSTASH_URL/get/sch:line_webhook_log" \
+            -H "Authorization: Bearer $UPSTASH_TOKEN" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          val = d.get('result')
+          if val:
+              try:
+                  print(json.dumps(json.loads(val), ensure_ascii=False, indent=2))
+              except:
+                  print(val)
+          else:
+              print('(データなし)')
+          "
