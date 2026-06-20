@@ -29,9 +29,21 @@ export async function getLineGroupId(): Promise<string | null> {
 
 export async function sendLineMessage(text: string): Promise<void> {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-  if (!token) return;
+  const logRedis = async (data: object) => {
+    if (!process.env.UPSTASH_REDIS_REST_URL) return;
+    const redis = await getRedis().catch(() => null);
+    if (redis) await redis.set('sch:line_send_debug', data).catch(() => {});
+  };
+
+  if (!token) {
+    await logRedis({ ts: new Date().toISOString(), error: 'LINE_CHANNEL_ACCESS_TOKEN not set' });
+    return;
+  }
   const groupId = await getLineGroupId();
-  if (!groupId) return;
+  if (!groupId) {
+    await logRedis({ ts: new Date().toISOString(), error: 'groupId not found (sch:line_group_id empty and LINE_GROUP_ID not set)', tokenPrefix: token.slice(0, 10) });
+    return;
+  }
   try {
     const res = await fetch(LINE_PUSH_API, {
       method: 'POST',
@@ -44,13 +56,10 @@ export async function sendLineMessage(text: string): Promise<void> {
         messages: [{ type: 'text', text }],
       }),
     });
-    // temp debug: log LINE API response
     const resBody = await res.text();
-    const redis = await getRedis();
-    await redis.set('sch:line_send_debug', { ts: new Date().toISOString(), status: res.status, body: resBody, groupId, tokenPrefix: token.slice(0, 10) });
+    await logRedis({ ts: new Date().toISOString(), status: res.status, body: resBody, groupId, tokenPrefix: token.slice(0, 10) });
   } catch (e) {
-    const redis = await getRedis().catch(() => null);
-    if (redis) await redis.set('sch:line_send_debug', { ts: new Date().toISOString(), error: String(e) }).catch(() => {});
+    await logRedis({ ts: new Date().toISOString(), error: String(e) });
   }
 }
 
