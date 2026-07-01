@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const [bodyWeight, setBodyWeight] = useState("");
   const [bodyHeight, setBodyHeight] = useState("");
   const [bodySleep, setBodySleep] = useState("");
+  const [bodyDinner, setBodyDinner] = useState("");
   const [bodyDate, setBodyDate] = useState(todayStr());
   const [bodySaved, setBodySaved] = useState(false);
   const [editingBodyId, setEditingBodyId] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export default function DashboardPage() {
   type MergeConflict = {
     existing: BodyRecord;
     incoming: Omit<BodyRecord, 'id'>;
-    choices: { weight: 'existing'|'new'; height: 'existing'|'new'; sleepTime: 'existing'|'new' };
+    choices: { weight: 'existing'|'new'; height: 'existing'|'new'; sleepTime: 'existing'|'new'; dinnerTime: 'existing'|'new' };
   };
   const [mergeConflict, setMergeConflict] = useState<MergeConflict | null>(null);
   const [birthDateInput, setBirthDateInput] = useState("");
@@ -55,7 +56,7 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
     reader.readAsText(file);
   };
   const finishBodySave = () => {
-    setBodyWeight(""); setBodyHeight(""); setBodySleep(""); setMergeConflict(null);
+    setBodyWeight(""); setBodyHeight(""); setBodySleep(""); setBodyDinner(""); setMergeConflict(null);
     setEditingBodyId(null);
     setBodySaved(true);
     setTimeout(() => { setBodySaved(false); setShowBodyForm(false); }, 1200);
@@ -66,6 +67,7 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
     setBodyHeight(record.height != null ? String(record.height) : "");
     setBodyWeight(record.weight != null ? String(record.weight) : "");
     setBodySleep(record.sleepTime ?? "");
+    setBodyDinner(record.dinnerTime ?? "");
     setMergeConflict(null);
     setShowBodyForm(true);
   };
@@ -73,11 +75,12 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
     e.preventDefault();
     const w = bodyWeight ? parseFloat(bodyWeight.replace(',', '.')) : NaN;
     const h = bodyHeight ? parseFloat(bodyHeight.replace(',', '.')) : NaN;
-    if (isNaN(w) && isNaN(h) && !bodySleep) return;
+    if (isNaN(w) && isNaN(h) && !bodySleep && !bodyDinner) return;
     const incoming: Omit<BodyRecord, 'id'> = { date: bodyDate };
     if (!isNaN(w) && w > 0) incoming.weight = w;
     if (!isNaN(h) && h > 0) incoming.height = h;
     if (bodySleep) incoming.sleepTime = bodySleep;
+    if (bodyDinner) incoming.dinnerTime = bodyDinner;
     if (editingBodyId) {
       const dateConflict = bodyRecords.find(r => r.date === bodyDate && r.id !== editingBodyId);
       if (dateConflict) {
@@ -89,6 +92,7 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
         weight: (!isNaN(w) && w > 0) ? w : undefined,
         height: (!isNaN(h) && h > 0) ? h : undefined,
         sleepTime: bodySleep || undefined,
+        dinnerTime: bodyDinner || undefined,
       });
       finishBodySave();
       return;
@@ -98,8 +102,9 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
       const wConflict = incoming.weight != null && existing.weight != null && incoming.weight !== existing.weight;
       const hConflict = incoming.height != null && existing.height != null && incoming.height !== existing.height;
       const sConflict = incoming.sleepTime && existing.sleepTime && incoming.sleepTime !== existing.sleepTime;
-      if (wConflict || hConflict || sConflict) {
-        setMergeConflict({ existing, incoming, choices: { weight: 'new', height: 'new', sleepTime: 'new' } });
+      const dConflict = incoming.dinnerTime && existing.dinnerTime && incoming.dinnerTime !== existing.dinnerTime;
+      if (wConflict || hConflict || sConflict || dConflict) {
+        setMergeConflict({ existing, incoming, choices: { weight: 'new', height: 'new', sleepTime: 'new', dinnerTime: 'new' } });
         return;
       }
       // no conflict: auto-merge (fill blanks)
@@ -107,6 +112,7 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
         weight: incoming.weight ?? existing.weight,
         height: incoming.height ?? existing.height,
         sleepTime: incoming.sleepTime ?? existing.sleepTime,
+        dinnerTime: incoming.dinnerTime ?? existing.dinnerTime,
       });
     } else {
       addBodyRecord(incoming);
@@ -120,6 +126,7 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
       weight: choices.weight === 'new' ? (incoming.weight ?? existing.weight) : existing.weight,
       height: choices.height === 'new' ? (incoming.height ?? existing.height) : existing.height,
       sleepTime: choices.sleepTime === 'new' ? (incoming.sleepTime ?? existing.sleepTime) : existing.sleepTime,
+      dinnerTime: choices.dinnerTime === 'new' ? (incoming.dinnerTime ?? existing.dinnerTime) : existing.dinnerTime,
     });
     finishBodySave();
   };
@@ -182,8 +189,8 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
       <section id="section-body" className="mb-6">
         <div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase flex items-center gap-1.5"><RulerIcon size={14} />体重・身長</h2><button onClick={() => setShowBodyForm(true)} className="text-xs bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-bold px-3 py-1.5 rounded-lg transition-colors">+ 追加</button></div>
         {sortedBody.length > 0 ? (<div className="bg-white/95 rounded-2xl shadow-xl shadow-blue-900/30 border border-white/20 overflow-hidden">
-          <div className="flex bg-slate-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-14 text-center">体重</span><span className="w-14 text-center">身長</span><span className="w-12 text-center">就寝</span><span className="w-12"></span></div>
-          {(showAllBody ? sortedBody : sortedBody.slice(0, 5)).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-14 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-14 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><span className="w-12 text-center text-gray-500 text-xs">{r.sleepTime ?? "-"}</span><div className="w-12 flex items-center justify-end gap-1"><button onClick={()=>handleEditBody(r)} className="text-gray-300 hover:text-blue-400 p-0.5"><EditIcon size={14} /></button><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="text-gray-300 hover:text-red-400 text-lg leading-none">×</button></div></div>))}
+          <div className="flex bg-slate-50 text-xs font-semibold text-gray-500 px-4 py-2 border-b border-gray-100"><span className="flex-1">日付</span><span className="w-12 text-center">体重</span><span className="w-12 text-center">身長</span><span className="w-11 text-center">就寝</span><span className="w-11 text-center">食終</span><span className="w-12"></span></div>
+          {(showAllBody ? sortedBody : sortedBody.slice(0, 5)).map((r)=>(<div key={r.id} className="flex items-center px-4 py-2 border-b border-gray-50 text-sm"><span className="flex-1 text-gray-600">{r.date}</span><span className="w-12 text-center font-semibold">{r.weight ? r.weight+"kg" : "-"}</span><span className="w-12 text-center font-semibold">{r.height ? r.height+"cm" : "-"}</span><span className="w-11 text-center text-gray-500 text-xs">{r.sleepTime ?? "-"}</span><span className="w-11 text-center text-gray-500 text-xs">{r.dinnerTime ?? "-"}</span><div className="w-12 flex items-center justify-end gap-1"><button onClick={()=>handleEditBody(r)} className="text-gray-300 hover:text-blue-400 p-0.5"><EditIcon size={14} /></button><button onClick={()=>{ if(window.confirm('この記録を削除しますか？')) deleteBodyRecord(r.id); }} className="text-gray-300 hover:text-red-400 text-lg leading-none">×</button></div></div>))}
           {sortedBody.length > 5 && (
             <button onClick={() => setShowAllBody(!showAllBody)} className="w-full py-2 text-xs text-blue-500 hover:text-blue-600 font-medium bg-slate-50 border-t border-gray-100">
               {showAllBody ? '折りたたむ ▲' : `すべて表示（${sortedBody.length}件）▼`}
@@ -232,14 +239,16 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
                     <button type="button" onClick={() => setMergeConflict(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
                   </div>
                   <p className="text-xs text-gray-500">{bodyDate} — どちらの値を使うか選んでください。</p>
-                  {(['weight', 'height', 'sleepTime'] as const).map(field => {
+                  {(['weight', 'height', 'sleepTime', 'dinnerTime'] as const).map(field => {
                     const existVal = field === 'weight' ? (mergeConflict.existing.weight != null ? `${mergeConflict.existing.weight}kg` : null)
                       : field === 'height' ? (mergeConflict.existing.height != null ? `${mergeConflict.existing.height}cm` : null)
-                      : mergeConflict.existing.sleepTime ?? null;
+                      : field === 'sleepTime' ? (mergeConflict.existing.sleepTime ?? null)
+                      : mergeConflict.existing.dinnerTime ?? null;
                     const newVal = field === 'weight' ? (mergeConflict.incoming.weight != null ? `${mergeConflict.incoming.weight}kg` : null)
                       : field === 'height' ? (mergeConflict.incoming.height != null ? `${mergeConflict.incoming.height}cm` : null)
-                      : mergeConflict.incoming.sleepTime ?? null;
-                    const label = field === 'weight' ? '⚖️ 体重' : field === 'height' ? '📐 身長' : '😴 就寝時刻';
+                      : field === 'sleepTime' ? (mergeConflict.incoming.sleepTime ?? null)
+                      : mergeConflict.incoming.dinnerTime ?? null;
+                    const label = field === 'weight' ? '⚖️ 体重' : field === 'height' ? '📐 身長' : field === 'sleepTime' ? '😴 就寝時刻' : '🍚 食終時刻';
                     if (!existVal && !newVal) return null;
                     if (!existVal || !newVal) return (
                       <div key={field} className="bg-gray-50 rounded-xl px-3 py-2 text-sm text-gray-600">
@@ -294,9 +303,15 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
                         <input type="text" inputMode="decimal" value={bodyWeight} onChange={e => setBodyWeight(e.target.value)} placeholder="例: 18.5" className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-600 mb-1">😴 就寝時刻 <span className="text-gray-400 font-normal text-xs">（任意）</span></label>
-                      <input type="time" value={bodySleep} onChange={e => setBodySleep(e.target.value)} className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <label className="block text-sm font-semibold text-gray-600 mb-1">😴 就寝時刻 <span className="text-gray-400 font-normal text-xs">（任意）</span></label>
+                        <input type="time" value={bodySleep} onChange={e => setBodySleep(e.target.value)} className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-semibold text-gray-600 mb-1">🍚 食終時刻 <span className="text-gray-400 font-normal text-xs">（任意）</span></label>
+                        <input type="time" value={bodyDinner} onChange={e => setBodyDinner(e.target.value)} className="w-full rounded-xl border-2 border-gray-200 px-3 py-3 text-base focus:border-purple-400 focus:outline-none" />
+                      </div>
                     </div>
                     <button type="submit" className="w-full bg-purple-600 active:bg-purple-700 text-white font-bold py-3 rounded-xl text-base flex items-center justify-center gap-2"><SaveIcon size={18} />記録する</button>
                   </form>
