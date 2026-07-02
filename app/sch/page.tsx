@@ -756,17 +756,31 @@ function SuggestInput({ value, onChange, suggestions, placeholder, className }: 
 }
 
 // ---- LINE quota types ----
-interface LineQuota { totalUsage: number; limit: number; memberCount: number | null; resetDate: string; }
+interface LineBotQuota { index: number; totalUsage: number; limit: number; memberCount: number | null; hasGroup: boolean; }
+interface LineQuota {
+  bots: LineBotQuota[];
+  memberCount: number | null;
+  totalUsage: number;
+  totalLimit: number;
+  totalRemaining: number;
+  timesLeft: number | null;
+  resetDate: string;
+}
 
 function LineQuotaBadge({ quota }: { quota: LineQuota | null }) {
   if (!quota) return null;
-  const remaining = quota.limit - quota.totalUsage;
-  const timesLeft = quota.memberCount ? Math.floor(remaining / quota.memberCount) : null;
+  const { timesLeft } = quota;
   const isCritical = timesLeft !== null && timesLeft === 0;
   const isWarning = timesLeft !== null && timesLeft <= 2;
+  const multiBot = quota.bots.length > 1;
   return (
     <div className={`text-[11px] rounded-lg px-2.5 py-1.5 mt-1 border ${isCritical ? 'bg-red-900/30 text-red-300 border-red-500/30' : isWarning ? 'bg-amber-900/30 text-amber-300 border-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-      <div>通知上限 {quota.totalUsage}/{quota.limit}</div>
+      <div>通知上限 {quota.totalUsage}/{quota.totalLimit}{multiBot ? '（全ボット合計）' : ''}</div>
+      {multiBot && (
+        <div className="text-[10px] opacity-80">
+          {quota.bots.map(b => `Bot${b.index}: ${b.totalUsage}/${b.limit}${b.hasGroup ? '' : '⚠未参加'}`).join('・')}
+        </div>
+      )}
       {timesLeft !== null && quota.memberCount && (
         <div>グループ{quota.memberCount}人の場合、あと<span className={`font-bold ${isCritical ? 'text-red-300' : isWarning ? 'text-amber-300' : ''}`}>{timesLeft}回</span>通知可能</div>
       )}
@@ -4533,12 +4547,7 @@ export default function SchPage() {
       if (r.ok) {
         setIsAdmin(true);
         fetch('/api/sch/line-status').then(r2 => r2.json()).then(d => {
-          setLineQuota({
-            totalUsage: (d.consumption?.totalUsage as number) ?? 0,
-            limit: (d.quota?.value as number) ?? 200,
-            memberCount: (d.memberCount as number | null) ?? null,
-            resetDate: (d.resetDate as string) ?? '',
-          });
+          if (d && Array.isArray(d.bots)) setLineQuota(d as LineQuota);
         }).catch(() => {});
       }
     }).catch(() => {});

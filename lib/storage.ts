@@ -5,6 +5,24 @@ export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
+/**
+ * 配列を末尾（＝直近に入力されたもの）から走査し、重複と空値を除いて
+ * 「直近入力順」で返す。レコードは追記されるため末尾ほど新しい。
+ * 後ろに渡した配列の要素ほど新しい扱いになる。
+ */
+export function recentDistinct(values: (string | undefined | null)[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (let i = values.length - 1; i >= 0; i--) {
+    const v = values[i];
+    if (v && !seen.has(v)) {
+      seen.add(v);
+      out.push(v);
+    }
+  }
+  return out;
+}
+
 function migrateNote(note: any): PracticeNote {
   if (note.improvements == null) {
     return { ...note, improvements: [] };

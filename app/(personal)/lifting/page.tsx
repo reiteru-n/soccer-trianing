@@ -9,6 +9,7 @@ import MilestoneSection from '@/components/MilestoneSection';
 import PartSummaryCards from '@/components/PartSummaryCards';
 import ConfettiEffect from '@/components/ConfettiEffect';
 import { LiftingPart, LiftingSide, LiftingRecord } from '@/lib/types';
+import { recentDistinct } from '@/lib/storage';
 import { BallIcon, ChartIcon, TrophyIcon, ClipboardIcon } from '@/components/AppIcons';
 
 const PARTS: (LiftingPart | 'all')[] = ['all', 'インステップ', 'インサイド', 'アウトサイド', 'もも', '頭', '胸→足'];
@@ -24,7 +25,7 @@ export default function LiftingPage() {
   const [filterPart, setFilterPart] = useState<LiftingPart | 'all'>('インステップ');
   const [filterSide, setFilterSide] = useState<LiftingSide | 'all'>('左足');
 
-  const pastLocations = [...new Set(liftingRecords.map((r) => r.location))];
+  const pastLocations = recentDistinct(liftingRecords.map((r) => r.location));
 
   const handleEditSave = (data: Omit<LiftingRecord, 'id'>) => {
     if (editingRecord) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifyLineSignature, storeLineGroupId } from '@/lib/line';
+import { matchBotBySignature, storeLineGroupId } from '@/lib/line';
 
 async function getRedis() {
   const { Redis } = await import('@upstash/redis');
@@ -13,7 +13,9 @@ export async function POST(req: Request) {
   const body = await req.text();
   const sig = req.headers.get('x-line-signature') ?? '';
 
-  const sigOk = await verifyLineSignature(body, sig);
+  // どのボット宛のWebhookか署名で判別（複数ボットが同じURLを共有可能）
+  const bot = await matchBotBySignature(body, sig);
+  const sigOk = !!bot;
 
   // Always log what we received (for debugging)
   if (process.env.UPSTASH_REDIS_REST_URL) {
@@ -26,6 +28,7 @@ export async function POST(req: Request) {
       await redis.set('sch:line_webhook_log', {
         ts: new Date().toISOString(),
         sigOk,
+        matchedBot: bot?.index ?? null,
         destination: parsed.destination,
         events: (parsed.events ?? []).map(e => ({
           type: e.type,
@@ -38,7 +41,7 @@ export async function POST(req: Request) {
     }
   }
 
-  if (!sigOk) {
+  if (!bot) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
@@ -49,8 +52,9 @@ export async function POST(req: Request) {
     for (const event of data.events ?? []) {
       // Only capture join events to avoid test group messages overwriting real group ID
       if (event.type === 'join' && event.source?.type === 'group' && event.source.groupId) {
-        await storeLineGroupId(event.source.groupId);
-        console.log('[LINE webhook] Group ID captured from join:', event.source.groupId);
+        // 一致したボット専用のgroupIdキーに保存
+        await storeLineGroupId(event.source.groupId, bot.groupIdKey);
+        console.log(`[LINE webhook] Bot${bot.index} Group ID captured from join:`, event.source.groupId);
         break;
       }
     }

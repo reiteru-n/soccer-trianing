@@ -11,7 +11,7 @@ import LiftingForm from '@/components/LiftingForm';
 import NoteForm from '@/components/NoteForm';
 import ConfettiEffect from '@/components/ConfettiEffect';
 import { BodyRecord } from '@/lib/types';
-import { exportData, importData } from '@/lib/storage';
+import { exportData, importData, recentDistinct } from '@/lib/storage';
 import BodyChart from '@/components/BodyChart';
 import BodyCharts from '@/components/BodyCharts';
 import { EditIcon, BallIcon, TrophyIcon, NoteIcon, RulerIcon, VideoIcon, ChartIcon, SaveIcon, UploadIcon, DownloadIcon, CheckIcon, WarningIcon } from '@/components/AppIcons';
@@ -46,9 +46,9 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
   const sortedBody = [...bodyRecords].sort((a, b) => b.date.localeCompare(a.date));
   const latestH = sortedBody.find(r => r.height != null);
   const latestW = sortedBody.find(r => r.weight != null);
-  const pastLocations = [...new Set([...liftingRecords.map((r) => r.location), ...practiceNotes.map((n) => n.location)])];
-  const pastCategories = [...new Set(practiceNotes.map((n) => n.category).filter(Boolean) as string[])];
-  const pastTeamNames = [...new Set(practiceNotes.map((n) => n.teamName).filter(Boolean) as string[])];
+  const pastLocations = recentDistinct([...liftingRecords.map((r) => r.location), ...practiceNotes.map((n) => n.location)]);
+  const pastCategories = recentDistinct(practiceNotes.map((n) => n.category));
+  const pastTeamNames = recentDistinct(practiceNotes.map((n) => n.teamName));
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();

@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/lib/context';
+import { recentDistinct } from '@/lib/storage';
 
 function ScrollToNote() {
   const searchParams = useSearchParams();
@@ -91,12 +92,12 @@ export default function NotesPage() {
     return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
   }, [filtered, groupByLocation]);
 
-  const pastLocations = [...new Set([
-    ...practiceNotes.map((n) => n.location),
+  const pastLocations = recentDistinct([
     ...liftingRecords.map((r) => r.location),
-  ])];
-  const pastCategories = [...new Set(practiceNotes.map((n) => n.category).filter(Boolean) as string[])];
-  const pastTeamNames = [...new Set(practiceNotes.map((n) => n.teamName).filter(Boolean) as string[])];
+    ...practiceNotes.map((n) => n.location),
+  ]);
+  const pastCategories = recentDistinct(practiceNotes.map((n) => n.category));
+  const pastTeamNames = recentDistinct(practiceNotes.map((n) => n.teamName));
 
   const handleEditSave = (data: Omit<PracticeNote, 'id'>) => {
     if (editingNote) {
