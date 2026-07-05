@@ -409,16 +409,20 @@ function TimestampItem({
   );
 }
 
-// --- スキップボタン設定（後退3 + 前進3）---
+// --- スキップボタン設定（後退5 + 前進5）---
 const SKIP_BACK = [
-  { d: -20, icon: '⏮', label: '20' },
-  { d: -10, icon: '◀◀', label: '10' },
-  { d: -5,  icon: '◀',  label: '5'  },
+  { d: -60, icon: '⏮', label: '1m' },
+  { d: -30, icon: '⏮', label: '30s' },
+  { d: -20, icon: '⏮', label: '20s' },
+  { d: -10, icon: '◀◀', label: '10s' },
+  { d: -5,  icon: '◀',  label: '5s'  },
 ];
 const SKIP_FWD = [
-  { d: 5,   icon: '▶',  label: '5'  },
-  { d: 10,  icon: '▶▶', label: '10' },
-  { d: 20,  icon: '⏭',  label: '20' },
+  { d: 5,   icon: '▶',  label: '5s'  },
+  { d: 10,  icon: '▶▶', label: '10s' },
+  { d: 20,  icon: '⏭',  label: '20s' },
+  { d: 30,  icon: '⏭',  label: '30s' },
+  { d: 60,  icon: '⏭',  label: '1m' },
 ];
 
 // --- シークバー（再生位置 + タイムスタンプマーカー）---
@@ -441,7 +445,7 @@ function SeekBar({
   };
 
   return (
-    <div className="px-3 py-1.5 bg-gray-950 flex-shrink-0 select-none">
+    <div className="px-3 pt-1.5 pb-0 bg-gray-950 flex-shrink-0 select-none">
       <div
         ref={barRef}
         className="relative h-5 bg-white/10 rounded-full cursor-pointer"
@@ -631,7 +635,7 @@ function VideoPlayerModal({
     playerRef.current.playVideo();
   };
 
-  const skipBtnClass = "flex flex-col items-center justify-center gap-0 w-10 h-10 rounded-xl bg-slate-700 active:bg-slate-600 text-white disabled:opacity-30 active:scale-95 transition-transform";
+  const skipBtnClass = "flex flex-col items-center justify-center gap-0 w-9 h-9 rounded-xl bg-slate-700 active:bg-slate-600 text-white disabled:opacity-30 active:scale-95 transition-transform";
 
   return (
     <div className="fixed inset-0 z-[200] bg-black overflow-hidden">
@@ -640,13 +644,12 @@ function VideoPlayerModal({
       {/* ===== 左カラム（動画 + コントロール）===== */}
       <div className="flex flex-col flex-1 min-h-0">
 
-        {/* ヘッダー */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-gray-950 flex-shrink-0">
+        {/* ヘッダー（閉じるボタンのみ。タイトルは右カラムへ移動）*/}
+        <div className="flex items-center px-2 py-1 bg-gray-950 flex-shrink-0">
           <button
             onClick={onClose}
-            className="text-white text-xl leading-none w-8 h-8 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 flex-shrink-0"
+            className="text-white text-base leading-none w-7 h-7 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 flex-shrink-0"
           >✕</button>
-          <p className="flex-1 text-white/90 text-sm font-semibold line-clamp-1 min-w-0">{description}</p>
         </div>
 
         {/* YouTube プレイヤー（ズーム対応）*/}
@@ -687,18 +690,18 @@ function VideoPlayerModal({
           onSeek={handleSeekTo}
         />
 
-        {/* 7ボタンコントロール */}
-        <div className="flex items-center justify-center gap-1 px-2 py-2 bg-gray-950 flex-shrink-0">
+        {/* スキップ・記録ボタン列 */}
+        <div className="flex items-center justify-center gap-0.5 px-2 pt-0.5 pb-2 bg-gray-950 flex-shrink-0">
           {SKIP_BACK.map(({ d, icon, label }) => (
             <button key={d} onClick={() => skip(d)} disabled={!isPlayerReady} className={skipBtnClass}>
               <span className="text-[11px] leading-none">{icon}</span>
-              <span className="text-[9px] leading-none opacity-60">{label}s</span>
+              <span className="text-[9px] leading-none opacity-60">{label}</span>
             </button>
           ))}
           <button
             onClick={handleRecord}
             disabled={!isPlayerReady}
-            className="flex flex-col items-center justify-center w-12 h-10 rounded-xl bg-red-700 active:bg-red-600 text-white disabled:opacity-30 active:scale-95 transition-transform mx-1"
+            className="flex flex-col items-center justify-center w-10 h-9 rounded-xl bg-red-700 active:bg-red-600 text-white disabled:opacity-30 active:scale-95 transition-transform mx-0.5"
           >
             <span className="text-base leading-none">⏱</span>
             <span className="text-[9px] leading-none opacity-80">記録</span>
@@ -706,7 +709,7 @@ function VideoPlayerModal({
           {SKIP_FWD.map(({ d, icon, label }) => (
             <button key={d} onClick={() => skip(d)} disabled={!isPlayerReady} className={skipBtnClass}>
               <span className="text-[11px] leading-none">{icon}</span>
-              <span className="text-[9px] leading-none opacity-60">{label}s</span>
+              <span className="text-[9px] leading-none opacity-60">{label}</span>
             </button>
           ))}
         </div>
@@ -741,7 +744,11 @@ function VideoPlayerModal({
 
       {/* ===== 右カラム（タイムスタンプリスト、1/4幅）===== */}
       <div className="flex flex-col w-1/4 bg-gray-900 border-l border-white/10 min-h-0">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 flex-shrink-0">
+        {/* 動画タイトル（旧ヘッダーから移動、文字サイズ縮小）*/}
+        <div className="px-3 py-1.5 border-b border-white/10 flex-shrink-0">
+          <p className="text-white/70 text-[10px] font-semibold line-clamp-2">{description}</p>
+        </div>
+        <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/10 flex-shrink-0">
           <span className="text-white/60 text-xs font-bold">タイムスタンプ（{timestamps.length}件）</span>
           <button
             onClick={() => setListOpen(!listOpen)}
