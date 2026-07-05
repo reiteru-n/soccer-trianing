@@ -477,6 +477,28 @@ function SeekBar({
   );
 }
 
+// --- スマホ判定時のみ、縦画面でも強制的に横画面レイアウトへ回転させる ---
+function useForceLandscape(): boolean {
+  const [shouldRotate, setShouldRotate] = useState(false);
+
+  useEffect(() => {
+    const mobileMq = window.matchMedia('(hover: none) and (pointer: coarse)');
+    const portraitMq = window.matchMedia('(orientation: portrait)');
+
+    const update = () => setShouldRotate(mobileMq.matches && portraitMq.matches);
+    update();
+
+    mobileMq.addEventListener('change', update);
+    portraitMq.addEventListener('change', update);
+    return () => {
+      mobileMq.removeEventListener('change', update);
+      portraitMq.removeEventListener('change', update);
+    };
+  }, []);
+
+  return shouldRotate;
+}
+
 // --- 試合動画プレイヤー モーダル（試合カテゴリ専用）---
 function VideoPlayerModal({
   url,
@@ -503,6 +525,36 @@ function VideoPlayerModal({
   const [zoom, setZoom] = useState(1.0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  const shouldRotate = useForceLandscape();
+  const [rotated, setRotated] = useState(false);
+
+  useEffect(() => {
+    if (!shouldRotate) {
+      setRotated(false);
+      return;
+    }
+    // 1フレーム置いてから回転させることで「縦→横」のアニメーションを発生させる
+    const raf1 = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setRotated(true));
+    });
+    return () => cancelAnimationFrame(raf1);
+  }, [shouldRotate]);
+
+  const rotateStyle = shouldRotate
+    ? {
+        position: 'absolute' as const,
+        transformOrigin: '0 0',
+        transitionProperty: 'top, left, width, height, transform',
+        transitionDuration: '450ms',
+        transitionTimingFunction: 'ease-in-out',
+        top: rotated ? '100%' : 0,
+        left: 0,
+        width: rotated ? '100vh' : '100vw',
+        height: rotated ? '100vw' : '100vh',
+        transform: rotated ? 'rotate(-90deg)' : 'rotate(0deg)',
+      }
+    : { position: 'absolute' as const, inset: 0 };
 
   const videoId = extractVideoId(url);
 
@@ -582,7 +634,8 @@ function VideoPlayerModal({
   const skipBtnClass = "flex flex-col items-center justify-center gap-0 w-10 h-10 rounded-xl bg-slate-700 active:bg-slate-600 text-white disabled:opacity-30 active:scale-95 transition-transform";
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black flex flex-row">
+    <div className="fixed inset-0 z-[200] bg-black overflow-hidden">
+    <div className="flex flex-row" style={rotateStyle}>
 
       {/* ===== 左カラム（動画 + コントロール）===== */}
       <div className="flex flex-col flex-1 min-h-0">
@@ -717,6 +770,7 @@ function VideoPlayerModal({
         )}
       </div>
 
+    </div>
     </div>
   );
 }
