@@ -548,11 +548,11 @@ function VideoPlayerModal({
         transitionProperty: 'top, left, width, height, transform',
         transitionDuration: '450ms',
         transitionTimingFunction: 'ease-in-out',
-        top: rotated ? '100%' : 0,
-        left: 0,
+        top: 0,
+        left: rotated ? '100%' : 0,
         width: rotated ? '100vh' : '100vw',
         height: rotated ? '100vw' : '100vh',
-        transform: rotated ? 'rotate(-90deg)' : 'rotate(0deg)',
+        transform: rotated ? 'rotate(90deg)' : 'rotate(0deg)',
       }
     : { position: 'absolute' as const, inset: 0 };
 
