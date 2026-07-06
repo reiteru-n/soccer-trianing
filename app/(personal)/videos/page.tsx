@@ -358,81 +358,30 @@ function CategoryBlock({
   );
 }
 
-// --- タイムスタンプ1行（左スワイプで削除ボタン表示）---
-const SWIPE_REVEAL = 72;
-
+// --- タイムスタンプ1行（ゴミ箱アイコンで削除、確認あり）---
 function TimestampItem({
-  ts, onPlay, onDelete, isActive, shouldRotate, isTouchDevice,
+  ts, onPlay, onDelete, isActive,
 }: {
   ts: VideoTimestamp;
   onPlay: (ts: VideoTimestamp) => void;
   onDelete: (id: string) => void;
   isActive: boolean;
-  shouldRotate: boolean;
-  isTouchDevice: boolean;
 }) {
-  const [offsetX, setOffsetX] = useState(0);
-  const startRef = useRef(0);
-  const isDragging = useRef(false);
-
-  // 強制横画面時はCSSでコンテナごと回転しているため、視覚的な「左右スワイプ」は
-  // 生のタッチ座標ではclientYの変化として現れる（通常時はclientX）
-  const axisValue = (touch: React.Touch) => shouldRotate ? touch.clientY : touch.clientX;
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    startRef.current = axisValue(e.touches[0]);
-    isDragging.current = true;
+  const handleDelete = () => {
+    if (window.confirm('このタイムスタンプを削除しますか？')) onDelete(ts.id);
   };
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging.current) return;
-    const dx = axisValue(e.touches[0]) - startRef.current;
-    setOffsetX(Math.min(0, Math.max(-SWIPE_REVEAL, dx)));
-  };
-  const handleTouchEnd = () => {
-    isDragging.current = false;
-    setOffsetX(offsetX < -SWIPE_REVEAL / 2 ? -SWIPE_REVEAL : 0);
-  };
-
-  // デスクトップ（マウス操作）: スワイプできないため、常時表示の削除アイコンを使う
-  if (!isTouchDevice) {
-    return (
-      <div className={`rounded-xl flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}>
-        <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-2 text-left min-w-0">
-          <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${isActive ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(ts.seconds)}</span>
-          <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{ts.label || 'シーン'}</span>
-        </button>
-        <button
-          onClick={() => onDelete(ts.id)}
-          className="text-white/40 hover:text-red-400 text-sm flex-shrink-0 px-1"
-          aria-label="削除"
-        >🗑</button>
-      </div>
-    );
-  }
 
   return (
-    <div className="relative rounded-xl overflow-hidden min-w-0">
-      {/* 削除ボタン（スワイプで露出、押下で削除）*/}
-      <div className="absolute right-0 top-0 bottom-0 w-[72px] flex items-center justify-center bg-red-600 rounded-r-xl">
-        <button
-          onClick={() => onDelete(ts.id)}
-          className="text-white text-xs font-bold w-full h-full flex items-center justify-center"
-          aria-label="削除"
-        >削除</button>
-      </div>
-      {/* メインコンテンツ（左スライド）*/}
-      <div
-        className={`relative flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${shouldRotate ? 'touch-pan-x' : 'touch-pan-y'} ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
-        style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.2s ease' }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-2 text-left min-w-0">
-          <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${isActive ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(ts.seconds)}</span>
-          <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{ts.label || 'シーン'}</span>
-        </button>
-      </div>
+    <div className={`rounded-xl flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}>
+      <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-2 text-left min-w-0">
+        <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${isActive ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(ts.seconds)}</span>
+        <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{ts.label || 'シーン'}</span>
+      </button>
+      <button
+        onClick={handleDelete}
+        className="text-white/40 hover:text-red-400 active:text-red-400 text-sm flex-shrink-0 px-1"
+        aria-label="削除"
+      >🗑</button>
     </div>
   );
 }
@@ -531,21 +480,6 @@ function useForceLandscape(): boolean {
   return shouldRotate;
 }
 
-// --- タッチ操作の端末か（向きに関わらず判定。スワイプUI/クリックUIの出し分けに使う）---
-function useIsTouchDevice(): boolean {
-  const [isTouch, setIsTouch] = useState(false);
-
-  useEffect(() => {
-    const mobileMq = window.matchMedia('(hover: none) and (pointer: coarse)');
-    const update = () => setIsTouch(mobileMq.matches);
-    update();
-    mobileMq.addEventListener('change', update);
-    return () => mobileMq.removeEventListener('change', update);
-  }, []);
-
-  return isTouch;
-}
-
 // --- 試合動画プレイヤー モーダル（試合カテゴリ専用）---
 function VideoPlayerModal({
   url,
@@ -599,7 +533,6 @@ function VideoPlayerModal({
   }, []);
 
   const shouldRotate = useForceLandscape();
-  const isTouchDevice = useIsTouchDevice();
   const [rotated, setRotated] = useState(false);
 
   useEffect(() => {
@@ -853,12 +786,12 @@ function VideoPlayerModal({
               </button>
             ))}
             <button
-              onClick={handleRecord}
+              onClick={pendingSeconds !== null ? handleCancelRecord : handleRecord}
               disabled={!isPlayerReady}
-              className="flex flex-col items-center justify-center w-10 h-9 rounded-xl bg-red-700 active:bg-red-600 text-white disabled:opacity-30 active:scale-95 transition-transform mx-0.5"
+              className={`flex flex-col items-center justify-center w-10 h-9 rounded-xl text-white disabled:opacity-30 active:scale-95 transition-transform mx-0.5 ${pendingSeconds !== null ? 'bg-sky-600 active:bg-sky-500' : 'bg-red-700 active:bg-red-600'}`}
             >
-              <span className="text-base leading-none">⏱</span>
-              <span className="text-[9px] leading-none opacity-80">記録</span>
+              <span className="text-base leading-none">{pendingSeconds !== null ? '▶' : '⏱'}</span>
+              <span className="text-[9px] leading-none opacity-80">{pendingSeconds !== null ? '再生' : '記録'}</span>
             </button>
             {SKIP_FWD.map(({ d, icon, label }) => (
               <button key={d} onClick={() => skip(d)} disabled={!isPlayerReady} className={skipBtnClass}>
@@ -957,8 +890,6 @@ function VideoPlayerModal({
                     onPlay={handleSeek}
                     onDelete={onDeleteTimestamp}
                     isActive={ts.id === activeTimestampId}
-                    shouldRotate={shouldRotate}
-                    isTouchDevice={isTouchDevice}
                   />
                 ))}
               </div>
