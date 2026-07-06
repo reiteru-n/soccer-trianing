@@ -362,13 +362,14 @@ function CategoryBlock({
 const SWIPE_REVEAL = 72;
 
 function TimestampItem({
-  ts, onPlay, onDelete, isActive, shouldRotate,
+  ts, onPlay, onDelete, isActive, shouldRotate, isTouchDevice,
 }: {
   ts: VideoTimestamp;
   onPlay: (ts: VideoTimestamp) => void;
   onDelete: (id: string) => void;
   isActive: boolean;
   shouldRotate: boolean;
+  isTouchDevice: boolean;
 }) {
   const [offsetX, setOffsetX] = useState(0);
   const startRef = useRef(0);
@@ -391,6 +392,23 @@ function TimestampItem({
     isDragging.current = false;
     setOffsetX(offsetX < -SWIPE_REVEAL / 2 ? -SWIPE_REVEAL : 0);
   };
+
+  // デスクトップ（マウス操作）: スワイプできないため、常時表示の削除アイコンを使う
+  if (!isTouchDevice) {
+    return (
+      <div className={`rounded-xl flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}>
+        <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-2 text-left min-w-0">
+          <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${isActive ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(ts.seconds)}</span>
+          <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{ts.label || 'シーン'}</span>
+        </button>
+        <button
+          onClick={() => onDelete(ts.id)}
+          className="text-white/40 hover:text-red-400 text-sm flex-shrink-0 px-1"
+          aria-label="削除"
+        >🗑</button>
+      </div>
+    );
+  }
 
   return (
     <div className="relative rounded-xl overflow-hidden min-w-0">
@@ -513,6 +531,21 @@ function useForceLandscape(): boolean {
   return shouldRotate;
 }
 
+// --- タッチ操作の端末か（向きに関わらず判定。スワイプUI/クリックUIの出し分けに使う）---
+function useIsTouchDevice(): boolean {
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    const mobileMq = window.matchMedia('(hover: none) and (pointer: coarse)');
+    const update = () => setIsTouch(mobileMq.matches);
+    update();
+    mobileMq.addEventListener('change', update);
+    return () => mobileMq.removeEventListener('change', update);
+  }, []);
+
+  return isTouch;
+}
+
 // --- 試合動画プレイヤー モーダル（試合カテゴリ専用）---
 function VideoPlayerModal({
   url,
@@ -566,6 +599,7 @@ function VideoPlayerModal({
   }, []);
 
   const shouldRotate = useForceLandscape();
+  const isTouchDevice = useIsTouchDevice();
   const [rotated, setRotated] = useState(false);
 
   useEffect(() => {
@@ -921,6 +955,7 @@ function VideoPlayerModal({
                     onDelete={onDeleteTimestamp}
                     isActive={ts.id === activeTimestampId}
                     shouldRotate={shouldRotate}
+                    isTouchDevice={isTouchDevice}
                   />
                 ))}
               </div>
