@@ -1,4 +1,4 @@
-import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from './types';
+import { LiftingRecord, PracticeNote, ImprovementItem, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat, VideoTimestamp, VideoPlaybackPosition } from './types';
 import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS, INITIAL_VIDEO_CATEGORIES, INITIAL_VIDEOS } from './data';
 
 export function generateId(): string {
@@ -53,6 +53,7 @@ export interface AllData {
   videos: VideoItem[];
   videoStats: VideoViewStat[];
   videoTimestamps: VideoTimestamp[];
+  videoPlaybackPositions: VideoPlaybackPosition[];
 }
 
 export async function fetchAllData(): Promise<AllData> {
@@ -70,6 +71,7 @@ export async function fetchAllData(): Promise<AllData> {
       videos: INITIAL_VIDEOS,
       videoStats: [],
       videoTimestamps: [],
+      videoPlaybackPositions: [],
     };
   }
   try {
@@ -88,6 +90,7 @@ export async function fetchAllData(): Promise<AllData> {
       videos: data.videos ?? INITIAL_VIDEOS,
       videoStats: data.videoStats ?? [],
       videoTimestamps: data.videoTimestamps ?? [],
+      videoPlaybackPositions: data.videoPlaybackPositions ?? [],
     };
   } catch {
     return {
@@ -103,6 +106,7 @@ export async function fetchAllData(): Promise<AllData> {
       videos: INITIAL_VIDEOS,
       videoStats: [],
       videoTimestamps: [],
+      videoPlaybackPositions: [],
     };
   }
 }
@@ -127,6 +131,7 @@ export function saveVideoCategories(cats: VideoCategory[]): void { savePartial({
 export function saveVideos(videos: VideoItem[]): void { savePartial({ videos }); }
 export function saveVideoStats(stats: VideoViewStat[]): void { savePartial({ videoStats: stats }); }
 export function saveVideoTimestamps(timestamps: VideoTimestamp[]): void { savePartial({ videoTimestamps: timestamps }); }
+export function saveVideoPlaybackPositions(positions: VideoPlaybackPosition[]): void { savePartial({ videoPlaybackPositions: positions }); }
 
 export async function exportData(): Promise<void> {
   const data = await fetchAllData();

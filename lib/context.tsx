@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from './types';
-import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, saveCustomMetrics, saveVideoCategories, saveVideos, saveVideoStats, saveVideoTimestamps, generateId } from './storage';
+import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat, VideoTimestamp, VideoPlaybackPosition } from './types';
+import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, saveCustomMetrics, saveVideoCategories, saveVideos, saveVideoStats, saveVideoTimestamps, saveVideoPlaybackPositions, generateId } from './storage';
 import { MILESTONES } from './data';
 
 interface AppContextType {
@@ -56,6 +56,8 @@ interface AppContextType {
   addVideoTimestamp: (videoUrl: string, seconds: number, label?: string) => void;
   deleteVideoTimestamp: (id: string) => void;
   recordTimestampView: (id: string) => void;
+  videoPlaybackPositions: VideoPlaybackPosition[];
+  updateVideoPlaybackPosition: (videoUrl: string, seconds: number) => void;
   isLoading: boolean;
 }
 
@@ -85,6 +87,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [videoStats, setVideoStats] = useState<VideoViewStat[]>([]);
   const [videoTimestamps, setVideoTimestamps] = useState<VideoTimestamp[]>([]);
+  const [videoPlaybackPositions, setVideoPlaybackPositions] = useState<VideoPlaybackPosition[]>([]);
   const [newMilestoneAchieved, setNewMilestoneAchieved] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -103,6 +106,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setVideos(data.videos ?? []);
       setVideoStats(data.videoStats ?? []);
       setVideoTimestamps(data.videoTimestamps ?? []);
+      setVideoPlaybackPositions(data.videoPlaybackPositions ?? []);
       setIsLoading(false);
     }
     load();
@@ -384,6 +388,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateVideoPlaybackPosition = useCallback((videoUrl: string, seconds: number) => {
+    setVideoPlaybackPositions((prev) => {
+      const existing = prev.find((p) => p.videoUrl === videoUrl);
+      const updatedAt = new Date().toISOString();
+      const updated = existing
+        ? prev.map((p) => p.videoUrl === videoUrl ? { ...p, seconds: Math.floor(seconds), updatedAt } : p)
+        : [...prev, { videoUrl, seconds: Math.floor(seconds), updatedAt }];
+      saveVideoPlaybackPositions(updated);
+      return updated;
+    });
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -400,6 +416,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         videos, addVideo, updateVideo, deleteVideo, reorderVideos, toggleVideoPin,
         videoStats, recordVideoView,
         videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView,
+        videoPlaybackPositions, updateVideoPlaybackPosition,
         isLoading,
       }}
     >

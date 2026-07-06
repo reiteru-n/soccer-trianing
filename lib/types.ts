@@ -304,6 +304,13 @@ export interface VideoTimestamp {
   createdAt: string;     // ISO datetime
 }
 
+// 動画ごとの最後の再生位置（次回開いたときに再開するため）
+export interface VideoPlaybackPosition {
+  videoUrl: string;
+  seconds: number;
+  updatedAt: string; // ISO datetime
+}
+
 // Admin logs
 export interface AccessLogEntry {
   ts: string;   // ISO timestamp

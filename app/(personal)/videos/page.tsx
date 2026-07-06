@@ -24,6 +24,7 @@ interface YTPlayer {
   getDuration: () => number;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
   playVideo: () => void;
+  pauseVideo: () => void;
   destroy: () => void;
 }
 
@@ -31,6 +32,9 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import { VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from '@/lib/types';
+
+// タイムスタンプのラベル選択肢（プリセット）
+const PRESET_TIMESTAMP_LABELS = ['ゴール', 'ボールタッチ', 'シュート', 'ディフェンス', 'ポジショニング'];
 
 // --- helpers ---
 function getYoutubeThumbnail(url: string): string | null {
@@ -353,15 +357,16 @@ function CategoryBlock({
   );
 }
 
-// --- タイムスタンプ1行（左スワイプで削除ボタン表示）---
+// --- タイムスタンプ1行（左スワイプで「確定」ボタン表示）---
 const SWIPE_REVEAL = 72;
 
 function TimestampItem({
-  ts, onPlay, onDelete,
+  ts, onPlay, onDelete, isActive,
 }: {
   ts: VideoTimestamp;
   onPlay: (ts: VideoTimestamp) => void;
   onDelete: (id: string) => void;
+  isActive: boolean;
 }) {
   const [offsetX, setOffsetX] = useState(0);
   const startXRef = useRef(0);
@@ -383,27 +388,26 @@ function TimestampItem({
 
   return (
     <div className="relative rounded-xl overflow-hidden">
-      {/* 削除ボタン（スワイプで露出）*/}
+      {/* 確定ボタン（スワイプで露出、押下で削除）*/}
       <div className="absolute right-0 top-0 bottom-0 w-[72px] flex items-center justify-center bg-red-600 rounded-r-xl">
         <button
           onClick={() => onDelete(ts.id)}
           className="text-white text-xs font-bold w-full h-full flex items-center justify-center"
-          aria-label="削除"
-        >削除</button>
+          aria-label="削除を確定"
+        >確定</button>
       </div>
       {/* メインコンテンツ（左スライド）*/}
       <div
-        className="relative bg-white/5 flex items-center gap-2 px-3 py-2"
+        className={`relative flex items-center gap-2 px-3 py-2 border-l-4 ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
         style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.2s ease' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-2 text-left">
-          <span className="text-blue-300 text-sm font-bold font-mono w-12 flex-shrink-0">{formatSeconds(ts.seconds)}</span>
+          <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${isActive ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(ts.seconds)}</span>
           <span className="text-white/80 text-xs flex-1 line-clamp-1">{ts.label || 'シーン'}</span>
         </button>
-        <span className="text-yellow-400 text-xs font-bold flex-shrink-0">👁 {ts.viewCount}</span>
       </div>
     </div>
   );
@@ -512,6 +516,9 @@ function VideoPlayerModal({
   onDeleteTimestamp,
   onTimestampView,
   onClose,
+  customLabelOptions,
+  initialSeconds,
+  onProgressSave,
 }: {
   url: string;
   description: string;
@@ -520,15 +527,36 @@ function VideoPlayerModal({
   onDeleteTimestamp: (id: string) => void;
   onTimestampView: (id: string) => void;
   onClose: () => void;
+  customLabelOptions: string[];
+  initialSeconds: number;
+  onProgressSave: (seconds: number) => void;
 }) {
   const playerRef = useRef<YTPlayer | null>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [pendingSeconds, setPendingSeconds] = useState<number | null>(null);
   const [pendingLabel, setPendingLabel] = useState('');
+  const [recordOffsetEnabled, setRecordOffsetEnabled] = useState(true);
   const [listOpen, setListOpen] = useState(true);
   const [zoom, setZoom] = useState(1.0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  const initialSecondsRef = useRef(initialSeconds);
+  const onProgressSaveRef = useRef(onProgressSave);
+  onProgressSaveRef.current = onProgressSave;
+
+  // 動画エリア/タイムスタンプリストの幅比率（ドラッグでリサイズ可能、端末に保存）
+  const [sidebarFraction, setSidebarFraction] = useState(0.25);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef(false);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem('videoPlayerSidebarFraction');
+    if (saved) {
+      const n = parseFloat(saved);
+      if (!Number.isNaN(n) && n >= 0.12 && n <= 0.5) setSidebarFraction(n);
+    }
+  }, []);
 
   const shouldRotate = useForceLandscape();
   const [rotated, setRotated] = useState(false);
@@ -569,7 +597,14 @@ function VideoPlayerModal({
       playerRef.current = new window.YT.Player('yt-player-iframe', {
         videoId,
         playerVars: { autoplay: 1, playsinline: 1, rel: 0, controls: 0, modestbranding: 1, iv_load_policy: 3, fs: 0, disablekb: 1 },
-        events: { onReady: () => setIsPlayerReady(true) },
+        events: {
+          onReady: (event) => {
+            setIsPlayerReady(true);
+            if (initialSecondsRef.current > 0) {
+              event.target.seekTo(initialSecondsRef.current, true);
+            }
+          },
+        },
       });
     };
 
@@ -585,7 +620,13 @@ function VideoPlayerModal({
     }
 
     return () => {
-      playerRef.current?.destroy();
+      if (playerRef.current) {
+        try {
+          const finalTime = playerRef.current.getCurrentTime();
+          if (finalTime > 0) onProgressSaveRef.current(finalTime);
+        } catch { /* プレイヤー破棄中は取得できないことがある */ }
+        playerRef.current.destroy();
+      }
       playerRef.current = null;
       setIsPlayerReady(false);
     };
@@ -611,15 +652,26 @@ function VideoPlayerModal({
 
   const handleRecord = () => {
     if (!playerRef.current) return;
+    playerRef.current.pauseVideo();
     setPendingSeconds(playerRef.current.getCurrentTime());
-    setPendingLabel('');
+    setPendingLabel('ボールタッチ');
   };
+
+  const effectivePendingSeconds = pendingSeconds !== null
+    ? (recordOffsetEnabled ? Math.max(0, pendingSeconds - 10) : pendingSeconds)
+    : 0;
 
   const handleAddToList = () => {
     if (pendingSeconds === null) return;
-    onAddTimestamp(pendingSeconds, pendingLabel.trim() || undefined);
+    onAddTimestamp(effectivePendingSeconds, pendingLabel.trim() || undefined);
     setPendingSeconds(null);
     setPendingLabel('');
+    playerRef.current?.playVideo();
+  };
+
+  const handleCancelRecord = () => {
+    setPendingSeconds(null);
+    playerRef.current?.playVideo();
   };
 
   const handleSeek = (ts: VideoTimestamp) => {
@@ -635,11 +687,60 @@ function VideoPlayerModal({
     playerRef.current.playVideo();
   };
 
+  // 強制横画面時はCSSでコンテナごと回転しているため、生のポインタ座標(clientY)が
+  // 実際のレイアウト上の「動画→リスト」方向に対応する（通常時はclientXを使う）
+  const updateSidebarFractionFromPointer = useCallback((clientX: number, clientY: number) => {
+    let videoFraction: number;
+    if (shouldRotate) {
+      videoFraction = clientY / window.innerHeight;
+    } else {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect || rect.width === 0) return;
+      videoFraction = (clientX - rect.left) / rect.width;
+    }
+    setSidebarFraction(Math.min(0.5, Math.max(0.12, 1 - videoFraction)));
+  }, [shouldRotate]);
+
+  const handleDividerPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    const onMove = (ev: PointerEvent) => {
+      if (!draggingRef.current) return;
+      updateSidebarFractionFromPointer(ev.clientX, ev.clientY);
+    };
+    const onUp = () => {
+      draggingRef.current = false;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      setSidebarFraction((f) => {
+        window.localStorage.setItem('videoPlayerSidebarFraction', String(f));
+        return f;
+      });
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
   const skipBtnClass = "flex flex-col items-center justify-center gap-0 w-9 h-9 rounded-xl bg-slate-700 active:bg-slate-600 text-white disabled:opacity-30 active:scale-95 transition-transform";
+
+  // 現在の再生位置が該当するタイムスタンプ（timestampsはseconds昇順）
+  const activeTimestampId = useMemo(() => {
+    let active: string | null = null;
+    for (const ts of timestamps) {
+      if (ts.seconds <= currentTime) active = ts.id;
+      else break;
+    }
+    return active;
+  }, [timestamps, currentTime]);
+
+  const quickLabelOptions = useMemo(() => {
+    const extra = customLabelOptions.filter((l) => !PRESET_TIMESTAMP_LABELS.includes(l));
+    return [...PRESET_TIMESTAMP_LABELS, ...extra];
+  }, [customLabelOptions]);
 
   return (
     <div className="fixed inset-0 z-[200] bg-black overflow-hidden">
-    <div className="flex flex-row" style={rotateStyle}>
+    <div ref={containerRef} className="flex flex-row" style={rotateStyle}>
 
       {/* ===== 左カラム（動画 + コントロール）===== */}
       <div className="flex flex-col flex-1 min-h-0">
@@ -718,16 +819,38 @@ function VideoPlayerModal({
         {/* 記録確定エリア */}
         {pendingSeconds !== null && (
           <div className="flex-shrink-0 bg-red-900/60 border-t border-red-500/40 px-3 py-2">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-red-200 text-sm font-bold font-mono">{formatSeconds(pendingSeconds)}</span>
-              <span className="text-red-300/70 text-xs">を記録中</span>
+            <div className="flex items-center justify-between gap-1.5 mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-red-200 text-sm font-bold font-mono">{formatSeconds(effectivePendingSeconds)}</span>
+                <span className="text-red-300/70 text-xs">を記録中</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRecordOffsetEnabled(v => !v)}
+                className="flex items-center gap-1.5"
+              >
+                <span className="text-[10px] text-red-200/80">10秒前から記録する</span>
+                <span className={`w-9 h-5 rounded-full relative transition-colors ${recordOffsetEnabled ? 'bg-emerald-500' : 'bg-white/20'}`}>
+                  <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${recordOffsetEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </span>
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {quickLabelOptions.map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setPendingLabel(l)}
+                  className={`text-[10px] px-2 py-1 rounded-full border whitespace-nowrap ${pendingLabel === l ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-black/30 border-white/20 text-white/70'}`}
+                >{l}</button>
+              ))}
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={pendingLabel}
                 onChange={e => setPendingLabel(e.target.value)}
-                placeholder="ラベル（任意）"
+                placeholder="ラベル（自由入力も可）"
                 className="flex-1 bg-black/40 text-white placeholder-white/30 text-sm px-3 py-1.5 rounded-lg border border-white/20 focus:outline-none focus:border-red-400 min-w-0"
               />
               <button
@@ -735,7 +858,7 @@ function VideoPlayerModal({
                 className="bg-red-500 active:bg-red-400 text-white text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap"
               >追加</button>
               <button
-                onClick={() => setPendingSeconds(null)}
+                onClick={handleCancelRecord}
                 className="text-white/40 active:text-white text-xl leading-none"
               >✕</button>
             </div>
@@ -743,8 +866,14 @@ function VideoPlayerModal({
         )}
       </div>
 
-      {/* ===== 右カラム（タイムスタンプリスト、1/4幅）===== */}
-      <div className="flex flex-col w-1/4 bg-gray-900 border-l border-white/10 min-h-0">
+      {/* ドラッグで幅調整できる仕切り */}
+      <div
+        onPointerDown={handleDividerPointerDown}
+        className="w-2 flex-shrink-0 bg-white/10 active:bg-sky-400/50 cursor-col-resize touch-none"
+      />
+
+      {/* ===== 右カラム（タイムスタンプリスト、ドラッグで幅調整可）===== */}
+      <div className="flex flex-col bg-gray-900 min-h-0" style={{ width: `${sidebarFraction * 100}%`, flexShrink: 0 }}>
         {/* 動画タイトル（旧ヘッダーから移動、文字サイズ縮小）*/}
         <div className="px-3 py-1.5 border-b border-white/10 flex-shrink-0">
           <p className="text-white/70 text-[10px] font-semibold line-clamp-2">{description}</p>
@@ -770,6 +899,7 @@ function VideoPlayerModal({
                     ts={ts}
                     onPlay={handleSeek}
                     onDelete={onDeleteTimestamp}
+                    isActive={ts.id === activeTimestampId}
                   />
                 ))}
               </div>
@@ -902,6 +1032,7 @@ export default function VideosPage() {
     videos, addVideo, updateVideo, deleteVideo, toggleVideoPin,
     videoStats, recordVideoView,
     videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView,
+    videoPlaybackPositions, updateVideoPlaybackPosition,
     isLoading,
   } = useApp();
 
@@ -924,6 +1055,25 @@ export default function VideosPage() {
       .filter((t) => t.videoUrl === playerModal.url)
       .sort((a, b) => a.seconds - b.seconds);
   }, [videoTimestamps, playerModal]);
+
+  // 過去に自由入力されたラベル履歴（プリセットを除く、直近入力順）
+  const customLabelHistory = useMemo(() => {
+    const sorted = [...videoTimestamps].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+    const seen = new Set<string>(PRESET_TIMESTAMP_LABELS);
+    const out: string[] = [];
+    for (const t of sorted) {
+      if (t.label && !seen.has(t.label)) {
+        seen.add(t.label);
+        out.push(t.label);
+      }
+    }
+    return out;
+  }, [videoTimestamps]);
+
+  const activeInitialSeconds = useMemo(() => {
+    if (!playerModal) return 0;
+    return videoPlaybackPositions.find((p) => p.videoUrl === playerModal.url)?.seconds ?? 0;
+  }, [videoPlaybackPositions, playerModal]);
 
   const moveCategory = (id: string, dir: -1 | 1) => {
     const idx = sortedCategories.findIndex(c => c.id === id);
@@ -1030,6 +1180,7 @@ export default function VideosPage() {
 
       {playerModal && (
         <VideoPlayerModal
+          key={playerModal.url}
           url={playerModal.url}
           description={playerModal.description}
           timestamps={activeTimestamps}
@@ -1037,6 +1188,9 @@ export default function VideosPage() {
           onDeleteTimestamp={deleteVideoTimestamp}
           onTimestampView={recordTimestampView}
           onClose={() => setPlayerModal(null)}
+          customLabelOptions={customLabelHistory}
+          initialSeconds={activeInitialSeconds}
+          onProgressSave={(seconds) => updateVideoPlaybackPosition(playerModal.url, seconds)}
         />
       )}
 
