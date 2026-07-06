@@ -11,6 +11,7 @@ declare global {
           playerVars?: Record<string, string | number>;
           events?: {
             onReady?: (event: { target: YTPlayer }) => void;
+            onStateChange?: (event: { data: number }) => void;
           };
         }
       ) => YTPlayer;
@@ -357,7 +358,7 @@ function CategoryBlock({
   );
 }
 
-// --- タイムスタンプ1行（左スワイプで「確定」ボタン表示）---
+// --- タイムスタンプ1行（左スワイプで削除ボタン表示）---
 const SWIPE_REVEAL = 72;
 
 function TimestampItem({
@@ -388,13 +389,13 @@ function TimestampItem({
 
   return (
     <div className="relative rounded-xl overflow-hidden">
-      {/* 確定ボタン（スワイプで露出、押下で削除）*/}
+      {/* 削除ボタン（スワイプで露出、押下で削除）*/}
       <div className="absolute right-0 top-0 bottom-0 w-[72px] flex items-center justify-center bg-red-600 rounded-r-xl">
         <button
           onClick={() => onDelete(ts.id)}
           className="text-white text-xs font-bold w-full h-full flex items-center justify-center"
-          aria-label="削除を確定"
-        >確定</button>
+          aria-label="削除"
+        >削除</button>
       </div>
       {/* メインコンテンツ（左スライド）*/}
       <div
@@ -533,6 +534,7 @@ function VideoPlayerModal({
 }) {
   const playerRef = useRef<YTPlayer | null>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [pendingSeconds, setPendingSeconds] = useState<number | null>(null);
   const [pendingLabel, setPendingLabel] = useState('');
   const [recordOffsetEnabled, setRecordOffsetEnabled] = useState(true);
@@ -604,6 +606,7 @@ function VideoPlayerModal({
               event.target.seekTo(initialSecondsRef.current, true);
             }
           },
+          onStateChange: (event) => setIsPlaying(event.data === 1),
         },
       });
     };
@@ -758,8 +761,20 @@ function VideoPlayerModal({
               </div>
             )}
           </div>
-          {/* YouTube側のタップで出るタイトル/ブランディング表示を出させないためのブロック用オーバーレイ */}
-          {videoId && <div className="absolute inset-0" />}
+          {/* タップで再生/一時停止。YouTube側にタップを渡さないことで、
+              YouTubeが出すタイトル/ブランディング表示も防いでいる */}
+          {videoId && (
+            <button
+              type="button"
+              aria-label={isPlaying ? '一時停止' : '再生'}
+              onClick={() => {
+                if (!playerRef.current) return;
+                if (isPlaying) playerRef.current.pauseVideo();
+                else playerRef.current.playVideo();
+              }}
+              className="absolute inset-0"
+            />
+          )}
           {/* ズームボタン（右下オーバーレイ）*/}
           <div className="absolute bottom-2 right-2 flex gap-1 z-10">
             <button
