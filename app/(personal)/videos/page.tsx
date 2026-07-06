@@ -328,26 +328,26 @@ function TimestampItem({
   };
 
   return (
-    <div className={`rounded-xl flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}>
+    <div className={`rounded-xl flex items-center gap-1 px-2 py-2 border-l-4 min-w-0 ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}>
       <button
         onClick={() => onToggleFavorite(ts.id)}
-        className={`flex-shrink-0 ${ts.favorite ? 'text-amber-400' : 'text-white/25 hover:text-white/50'}`}
+        className={`flex-shrink-0 w-5 h-5 flex items-center justify-center p-0 ${ts.favorite ? 'text-amber-400' : 'text-white/25 hover:text-white/50'}`}
         aria-label={ts.favorite ? 'お気に入りを解除' : 'お気に入りに追加'}
         title={ts.favorite ? 'お気に入りを解除' : 'お気に入りに追加'}
       >
-        <StarIcon size={16} />
+        <StarIcon size={15} />
       </button>
-      <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-2 text-left min-w-0">
-        <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${isActive ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(ts.seconds)}</span>
+      <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-1.5 text-left min-w-0">
+        <span className={`text-xs font-bold font-mono w-9 flex-shrink-0 ${isActive ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(ts.seconds)}</span>
         <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{ts.label || 'シーン'}</span>
       </button>
       <button
         onClick={handleDelete}
-        className="text-white/40 hover:text-red-400 active:text-red-400 flex-shrink-0 px-1"
+        className="flex-shrink-0 w-5 h-5 flex items-center justify-center p-0 text-white/40 hover:text-red-400 active:text-red-400"
         aria-label="削除"
         title="削除"
       >
-        <TrashIcon size={16} />
+        <TrashIcon size={15} />
       </button>
     </div>
   );
@@ -497,7 +497,7 @@ function VideoPlayerModal({
     const saved = window.localStorage.getItem('videoPlayerSidebarFraction');
     if (saved) {
       const n = parseFloat(saved);
-      if (!Number.isNaN(n) && n >= 0.12 && n <= 0.5) setSidebarFraction(n);
+      if (!Number.isNaN(n) && n >= 0.2 && n <= 0.5) setSidebarFraction(n);
     }
   }, []);
 
@@ -633,7 +633,7 @@ function VideoPlayerModal({
       if (!rect || rect.width === 0) return;
       videoFraction = (clientX - rect.left) / rect.width;
     }
-    setSidebarFraction(Math.min(0.5, Math.max(0.12, 1 - videoFraction)));
+    setSidebarFraction(Math.min(0.5, Math.max(0.2, 1 - videoFraction)));
   }, [shouldRotate]);
 
   const handleDividerPointerDown = (e: React.PointerEvent) => {
