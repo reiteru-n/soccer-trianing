@@ -20,7 +20,7 @@ function formatSeconds(s: number): string {
 interface FavoriteClip {
   id: string;
   videoUrl: string;
-  videoId: string;
+  videoId: string | null; // 動画IDが特定できない場合もお気に入り自体は表示し続ける
   seconds: number;
   label?: string;
   videoDescription: string;
@@ -60,8 +60,8 @@ export default function FavoriteScenesPage() {
     });
     const out: FavoriteClip[] = [];
     for (const url of orderedUrls) {
+      // 動画IDが特定できなくても（URL形式が想定外でも）お気に入り自体は一覧から消さない
       const videoId = extractYoutubeVideoId(url);
-      if (!videoId) continue;
       const description = videoInfoByUrl.get(url)?.description ?? '';
       const items = [...groups.get(url)!].sort((a, b) => a.seconds - b.seconds);
       for (const t of items) {
@@ -124,9 +124,18 @@ export default function FavoriteScenesPage() {
     slotVideoIdRef.current[slot] = videoId;
   }, []);
 
+  // 動画IDが特定できないお気に入りは一覧には残すが、自動連続再生ではスキップする
+  const findNextPlayableIndex = useCallback((fromIndex: number): number => {
+    for (let i = fromIndex; i < clipsRef.current.length; i++) {
+      if (clipsRef.current[i].videoId) return i;
+    }
+    return -1;
+  }, []);
+
   const preloadNext = useCallback((index: number) => {
-    const next = clipsRef.current[index + 1];
-    if (!next) return;
+    const nextIndex = findNextPlayableIndex(index + 1);
+    const next = nextIndex >= 0 ? clipsRef.current[nextIndex] : undefined;
+    if (!next || !next.videoId) return;
     const inactiveSlot = OTHER_SLOT(activeSlotRef.current);
     if (slotVideoIdRef.current[inactiveSlot] === next.videoId) return;
     if (next.videoId === slotVideoIdRef.current[activeSlotRef.current]) return;
@@ -137,19 +146,20 @@ export default function FavoriteScenesPage() {
     } else {
       createPlayer(inactiveSlot, next.videoId, next.start, false);
     }
-  }, [createPlayer]);
+  }, [createPlayer, findNextPlayableIndex]);
 
   const playClip = useCallback((index: number) => {
     const clip = clipsRef.current[index];
-    if (!clip) return;
+    if (!clip || !clip.videoId) return;
+    const videoId = clip.videoId;
     setFinished(false);
     const active = activeSlotRef.current;
     const other = OTHER_SLOT(active);
 
-    if (slotVideoIdRef.current[active] === clip.videoId && playersRef.current[active]) {
+    if (slotVideoIdRef.current[active] === videoId && playersRef.current[active]) {
       playersRef.current[active]!.seekTo(clip.start, true);
       playersRef.current[active]!.playVideo();
-    } else if (slotVideoIdRef.current[other] === clip.videoId && playersRef.current[other]) {
+    } else if (slotVideoIdRef.current[other] === videoId && playersRef.current[other]) {
       // 事前読み込み済みの反対側スロットへスワップ（切替の待ち時間を減らす）
       playersRef.current[other]!.seekTo(clip.start, true);
       playersRef.current[other]!.playVideo();
@@ -158,10 +168,10 @@ export default function FavoriteScenesPage() {
       activeSlotRef.current = other;
       setIsPlayerReady(true);
     } else if (playersRef.current[active]) {
-      playersRef.current[active]!.loadVideoById(clip.videoId, clip.start);
-      slotVideoIdRef.current[active] = clip.videoId;
+      playersRef.current[active]!.loadVideoById(videoId, clip.start);
+      slotVideoIdRef.current[active] = videoId;
     } else {
-      createPlayer(active, clip.videoId, clip.start, true);
+      createPlayer(active, videoId, clip.start, true);
     }
 
     setActiveIndex(index);
@@ -172,14 +182,19 @@ export default function FavoriteScenesPage() {
   const playClipRef = useRef(playClip);
   playClipRef.current = playClip;
 
-  // 初回ブートストラップ: 最初のクリップを再生し、2番目のクリップを事前読み込み
+  // 初回ブートストラップ: 再生可能な最初のクリップを再生し、次のクリップを事前読み込み
   useEffect(() => {
     if (bootstrappedRef.current) return;
     if (clips.length === 0) return;
+    const firstPlayable = findNextPlayableIndex(0);
+    if (firstPlayable < 0) return;
     bootstrappedRef.current = true;
+    const clip = clips[firstPlayable];
     loadYouTubeIframeApi(() => {
-      createPlayer(0, clips[0].videoId, clips[0].start, true);
-      preloadNext(0);
+      createPlayer(0, clip.videoId!, clip.start, true);
+      setActiveIndex(firstPlayable);
+      activeIndexRef.current = firstPlayable;
+      preloadNext(firstPlayable);
     });
     return () => {
       playersRef.current[0]?.destroy();
@@ -204,8 +219,8 @@ export default function FavoriteScenesPage() {
       }
       setCurrentTime(t);
       if (t >= clip.end) {
-        const nextIdx = idx + 1;
-        if (nextIdx < clipsRef.current.length) {
+        const nextIdx = findNextPlayableIndex(idx + 1);
+        if (nextIdx >= 0) {
           playClipRef.current(nextIdx);
         } else {
           player.pauseVideo();
@@ -271,7 +286,7 @@ export default function FavoriteScenesPage() {
               <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-3">
                 <p className="text-white font-bold">全てのシーンを再生しました</p>
                 <button
-                  onClick={() => playClip(0)}
+                  onClick={() => { const i = findNextPlayableIndex(0); if (i >= 0) playClip(i); }}
                   className="bg-emerald-500 active:bg-emerald-400 text-white text-sm font-bold px-4 py-2 rounded-full"
                 >もう一度最初から再生</button>
               </div>
@@ -324,16 +339,24 @@ export default function FavoriteScenesPage() {
               >
                 <button
                   onClick={() => toggleTimestampFavorite(clip.id)}
-                  className="text-amber-400 flex-shrink-0"
+                  className="flex-shrink-0 w-5 h-5 flex items-center justify-center p-0 text-amber-400"
                   aria-label="お気に入りを解除"
                   title="お気に入りを解除"
                 >
                   <StarIcon size={16} />
                 </button>
-                <button onClick={() => playClip(idx)} className="flex-1 flex items-center gap-2 text-left min-w-0">
+                <button
+                  onClick={() => playClip(idx)}
+                  disabled={!clip.videoId}
+                  className="flex-1 flex items-center gap-2 text-left min-w-0 disabled:opacity-40"
+                >
                   <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${idx === activeIndex ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(clip.seconds)}</span>
                   <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{clip.label || 'シーン'}</span>
-                  <span className="text-blue-300/60 text-[10px] flex-shrink-0 max-w-[35%] truncate">{clip.videoDescription}</span>
+                  {clip.videoId ? (
+                    <span className="text-blue-300/60 text-[10px] flex-shrink-0 max-w-[35%] truncate">{clip.videoDescription}</span>
+                  ) : (
+                    <span className="text-red-400/70 text-[10px] flex-shrink-0" title="動画URLを認識できませんでした">再生不可</span>
+                  )}
                 </button>
               </div>
             ))}

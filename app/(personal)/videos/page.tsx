@@ -4,23 +4,12 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import { VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from '@/lib/types';
-import { YTPlayer, loadYouTubeIframeApi } from '@/lib/youtubePlayer';
+import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, getYoutubeThumbnail } from '@/lib/youtubePlayer';
 import { useSchMatchVideos, SchMatchVideo } from '@/lib/schMatchVideos';
 import { StarIcon, TrashIcon, ChevronIcon } from '@/components/AppIcons';
 
 // タイムスタンプのラベル選択肢（プリセット）
 const PRESET_TIMESTAMP_LABELS = ['ゴール', 'ボールタッチ', 'シュート', 'ディフェンス', 'ポジショニング'];
-
-// --- helpers ---
-function getYoutubeThumbnail(url: string): string | null {
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null;
-}
-
-function extractVideoId(url: string): string | null {
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  return m ? m[1] : null;
-}
 
 function formatSeconds(s: number): string {
   const m = Math.floor(s / 60);
@@ -531,7 +520,7 @@ function VideoPlayerModal({
       }
     : { position: 'absolute' as const, inset: 0 };
 
-  const videoId = extractVideoId(url);
+  const videoId = extractYoutubeVideoId(url);
 
   useEffect(() => {
     if (!videoId) return;
