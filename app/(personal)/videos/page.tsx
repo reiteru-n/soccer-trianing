@@ -881,10 +881,10 @@ function VideoPlayerModal({
               <button
                 type="button"
                 onClick={() => setRecordOffsetEnabled(v => !v)}
-                className="flex items-center gap-1.5"
+                className="flex items-center gap-1.5 flex-shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-full"
               >
-                <span className="text-[10px] text-red-200/80">10秒前から記録する</span>
-                <span className={`w-9 h-5 rounded-full relative transition-colors ${recordOffsetEnabled ? 'bg-emerald-500' : 'bg-white/20'}`}>
+                <span className="text-[10px] text-red-200/80 whitespace-nowrap">10秒前から記録する</span>
+                <span className={`w-9 h-5 rounded-full relative flex-shrink-0 transition-colors ${recordOffsetEnabled ? 'bg-emerald-500' : 'bg-white/20'}`}>
                   <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${recordOffsetEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
                 </span>
               </button>
