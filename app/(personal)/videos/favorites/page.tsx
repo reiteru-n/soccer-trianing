@@ -100,12 +100,16 @@ export default function FavoriteScenesPage() {
   // 何も起きないように見える不具合の原因だった）。
   const readyRef = useRef<[boolean, boolean]>([false, false]);
   const pendingPlayRef = useRef<number | null>(null);
+  // loadVideoById/playerVars.start で指定した開始位置をYouTube側が無視することがあるため、
+  // 再生が始まった直後にもう一度seekToして確定させる（既知のIFrame APIの挙動不安定さへの対策）。
+  const pendingSeekRef = useRef<[number | null, number | null]>([null, null]);
   const bootstrappedRef = useRef(false);
 
   const playClipRef = useRef<(index: number) => void>(() => {});
 
   const createPlayer = useCallback((slot: Slot, videoId: string, start: number, autoplay: boolean) => {
     readyRef.current[slot] = false;
+    pendingSeekRef.current[slot] = start;
     const player = new window.YT.Player(`fav-player-${slot}`, {
       videoId,
       playerVars: {
@@ -116,6 +120,7 @@ export default function FavoriteScenesPage() {
         controls: 0,
         modestbranding: 1,
         iv_load_policy: 3,
+        cc_load_policy: 0,
         fs: 0,
         disablekb: 1,
       },
@@ -134,6 +139,12 @@ export default function FavoriteScenesPage() {
         },
         onStateChange: (e) => {
           if (slot === activeSlotRef.current) setIsPlaying(e.data === 1);
+          // PLAYING(1) / CUED(5) に達したタイミングで一度だけ開始位置を再確定する
+          const target = pendingSeekRef.current[slot];
+          if (target !== null && (e.data === 1 || e.data === 5)) {
+            pendingSeekRef.current[slot] = null;
+            e.target.seekTo(target, true);
+          }
         },
       },
     });
@@ -158,6 +169,7 @@ export default function FavoriteScenesPage() {
     if (next.videoId === slotVideoIdRef.current[activeSlotRef.current]) return;
     const p = playersRef.current[inactiveSlot];
     if (p && readyRef.current[inactiveSlot]) {
+      pendingSeekRef.current[inactiveSlot] = next.start;
       p.cueVideoById(next.videoId, next.start);
       slotVideoIdRef.current[inactiveSlot] = next.videoId;
     } else if (!p) {
@@ -185,10 +197,12 @@ export default function FavoriteScenesPage() {
     }
 
     if (slotVideoIdRef.current[active] === videoId) {
+      pendingSeekRef.current[active] = clip.start;
       activePlayer.seekTo(clip.start, true);
       activePlayer.playVideo();
     } else if (slotVideoIdRef.current[other] === videoId && playersRef.current[other] && readyRef.current[other]) {
       // 事前読み込み済みの反対側スロットへスワップ（切替の待ち時間を減らす）
+      pendingSeekRef.current[other] = clip.start;
       playersRef.current[other]!.seekTo(clip.start, true);
       playersRef.current[other]!.playVideo();
       activePlayer.pauseVideo();
@@ -196,6 +210,7 @@ export default function FavoriteScenesPage() {
       activeSlotRef.current = other;
       setIsPlayerReady(true);
     } else {
+      pendingSeekRef.current[active] = clip.start;
       activePlayer.loadVideoById(videoId, clip.start);
       slotVideoIdRef.current[active] = videoId;
     }

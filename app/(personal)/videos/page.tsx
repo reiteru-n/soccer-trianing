@@ -60,7 +60,7 @@ function VideoThumb({ url }: { url: string }) {
 // href がない場合はアプリ内プレイヤーを開くボタン（試合カテゴリ）
 function VideoRow({
   url, description, stat, pinned, onView, href, editMode, onEdit, onDelete, onTogglePin,
-  readOnly,
+  readOnly, favoriteCount,
 }: {
   url: string;
   description: string;
@@ -73,6 +73,7 @@ function VideoRow({
   onDelete?: () => void;
   onTogglePin?: () => void;
   readOnly?: boolean;
+  favoriteCount?: number;
 }) {
   return (
     <div className={"relative rounded-2xl shadow-md overflow-hidden flex " +
@@ -82,6 +83,11 @@ function VideoRow({
     }>
       {pinned && (
         <span className="absolute top-1.5 right-1.5 z-10 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow shadow-amber-300/70 flex items-center gap-0.5">📌 PIN</span>
+      )}
+      {!!favoriteCount && (
+        <span className="absolute top-1.5 left-1.5 z-10 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow shadow-amber-300/70 flex items-center gap-0.5">
+          <StarIcon size={10} />{favoriteCount}
+        </span>
       )}
       {/* 左：サムネ 1/4 */}
       {href ? (
@@ -176,7 +182,7 @@ function VideoRow({
 function CategoryBlock({
   category, items, stats, onView, editMode, onAdd, onEdit, onDelete, onTogglePin,
   onRenameCategory, onDeleteCategory, onMoveCategoryUp, onMoveCategoryDown, canMoveCatUp, canMoveCatDown,
-  matchVideos, favoriteCount,
+  matchVideos, favoriteCount, favoriteCountByUrl,
 }: {
   category: VideoCategory;
   items: VideoItem[];
@@ -196,6 +202,7 @@ function CategoryBlock({
   canMoveCatDown: boolean;
   matchVideos: SchMatchVideo[];
   favoriteCount: number;
+  favoriteCountByUrl: Map<string, number>;
 }) {
   const [open, setOpen] = useState(true);
   const sortedItems = useMemo(() => {
@@ -273,6 +280,7 @@ function CategoryBlock({
               onEdit={() => onEdit(item.id)}
               onDelete={() => onDelete(item.id)}
               onTogglePin={() => onTogglePin(item.id)}
+              favoriteCount={favoriteCountByUrl.get(item.url)}
             />
           ))}
           {isMatch && matchVideos.map((mv) => (
@@ -285,6 +293,7 @@ function CategoryBlock({
               onView={() => onView(mv.url, mv.description, true)}
               editMode={editMode}
               readOnly
+              favoriteCount={favoriteCountByUrl.get(mv.url)}
             />
           ))}
           {sortedItems.length === 0 && (!isMatch || matchVideos.length === 0) && (
@@ -528,7 +537,7 @@ function VideoPlayerModal({
     const initPlayer = () => {
       playerRef.current = new window.YT.Player('yt-player-iframe', {
         videoId,
-        playerVars: { autoplay: 1, playsinline: 1, rel: 0, controls: 0, modestbranding: 1, iv_load_policy: 3, fs: 0, disablekb: 1 },
+        playerVars: { autoplay: 1, playsinline: 1, rel: 0, controls: 0, modestbranding: 1, iv_load_policy: 3, cc_load_policy: 0, fs: 0, disablekb: 1 },
         events: {
           onReady: (event) => {
             setIsPlayerReady(true);
@@ -1020,6 +1029,15 @@ export default function VideosPage() {
     [videoTimestamps]
   );
 
+  const favoriteCountByUrl = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const t of videoTimestamps) {
+      if (!t.favorite) continue;
+      map.set(t.videoUrl, (map.get(t.videoUrl) ?? 0) + 1);
+    }
+    return map;
+  }, [videoTimestamps]);
+
   const moveCategory = (id: string, dir: -1 | 1) => {
     const idx = sortedCategories.findIndex(c => c.id === id);
     if (idx < 0) return;
@@ -1113,6 +1131,7 @@ export default function VideosPage() {
             canMoveCatDown={idx < sortedCategories.length - 1}
             matchVideos={cat.isMatchCategory ? schMatchVideos : []}
             favoriteCount={cat.isMatchCategory ? favoriteTimestampCount : 0}
+            favoriteCountByUrl={favoriteCountByUrl}
           />
         ))}
       </div>
