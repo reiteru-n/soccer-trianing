@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { PracticeNote, ImprovementItem } from '@/lib/types';
 import { EditIcon, NoteIcon, SaveIcon } from '@/components/AppIcons';
+import VoiceInputButton from '@/components/VoiceInputButton';
 
 interface Props {
   onSave: (note: Omit<PracticeNote, 'id'>) => void;
@@ -142,7 +143,13 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-green-700 mb-1">⭐ 良かったところ</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-semibold text-green-700">⭐ 良かったところ</label>
+                <VoiceInputButton
+                  className="w-7 h-7"
+                  onResult={(text) => setGoodPoints((prev) => prev ? `${prev}\n${text}` : text)}
+                />
+              </div>
               <textarea
                 value={goodPoints}
                 onChange={(e) => setGoodPoints(e.target.value)}
@@ -153,7 +160,13 @@ export default function NoteForm({ onSave, onClose, pastLocations, pastCategorie
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-orange-700 mb-1">💪 改善したいところ</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-semibold text-orange-700">💪 改善したいところ</label>
+                <VoiceInputButton
+                  className="w-7 h-7"
+                  onResult={(text) => setImprovementsText((prev) => prev ? `${prev}\n${text}` : text)}
+                />
+              </div>
               <p className="text-xs text-gray-400 mb-1">1行ごとに1つの項目として登録されます</p>
               <textarea
                 value={improvementsText}
