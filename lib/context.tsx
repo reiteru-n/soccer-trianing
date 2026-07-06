@@ -56,6 +56,7 @@ interface AppContextType {
   addVideoTimestamp: (videoUrl: string, seconds: number, label?: string) => void;
   deleteVideoTimestamp: (id: string) => void;
   recordTimestampView: (id: string) => void;
+  toggleTimestampFavorite: (id: string) => void;
   videoPlaybackPositions: VideoPlaybackPosition[];
   updateVideoPlaybackPosition: (videoUrl: string, seconds: number) => void;
   isLoading: boolean;
@@ -388,6 +389,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const toggleTimestampFavorite = useCallback((id: string) => {
+    setVideoTimestamps((prev) => {
+      const updated = prev.map((t) => t.id === id ? { ...t, favorite: !t.favorite } : t);
+      saveVideoTimestamps(updated);
+      return updated;
+    });
+  }, []);
+
   const updateVideoPlaybackPosition = useCallback((videoUrl: string, seconds: number) => {
     setVideoPlaybackPositions((prev) => {
       const existing = prev.find((p) => p.videoUrl === videoUrl);
@@ -415,7 +424,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         videoCategories, addVideoCategory, updateVideoCategory, deleteVideoCategory, reorderVideoCategories,
         videos, addVideo, updateVideo, deleteVideo, reorderVideos, toggleVideoPin,
         videoStats, recordVideoView,
-        videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView,
+        videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView, toggleTimestampFavorite,
         videoPlaybackPositions, updateVideoPlaybackPosition,
         isLoading,
       }}

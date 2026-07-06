@@ -1,38 +1,12 @@
 'use client';
 
-// YouTube IFrame Player API 型宣言
-declare global {
-  interface Window {
-    YT: {
-      Player: new (
-        elementId: string,
-        options: {
-          videoId: string;
-          playerVars?: Record<string, string | number>;
-          events?: {
-            onReady?: (event: { target: YTPlayer }) => void;
-            onStateChange?: (event: { data: number }) => void;
-          };
-        }
-      ) => YTPlayer;
-    };
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
-
-interface YTPlayer {
-  getCurrentTime: () => number;
-  getDuration: () => number;
-  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
-  playVideo: () => void;
-  pauseVideo: () => void;
-  destroy: () => void;
-}
-
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import { VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from '@/lib/types';
+import { YTPlayer, loadYouTubeIframeApi } from '@/lib/youtubePlayer';
+import { useSchMatchVideos, SchMatchVideo } from '@/lib/schMatchVideos';
+import { StarIcon, TrashIcon, ChevronIcon } from '@/components/AppIcons';
 
 // タイムスタンプのラベル選択肢（プリセット）
 const PRESET_TIMESTAMP_LABELS = ['ゴール', 'ボールタッチ', 'シュート', 'ディフェンス', 'ポジショニング'];
@@ -78,39 +52,6 @@ function speak(text: string) {
   window.speechSynthesis.speak(utter);
 }
 
-// --- SCH match videos fetch (YouTubeのSCHチームプレイリストに限定) ---
-interface SchMatchVideo {
-  url: string;
-  description: string;
-  date: string;
-}
-
-interface YtPlaylistVideo {
-  videoId: string;
-  title: string;
-  publishedAt: string;
-  thumbnail: string;
-  url: string;
-}
-
-function useSchMatchVideos(enabled: boolean): SchMatchVideo[] {
-  const [videos, setVideos] = useState<SchMatchVideo[]>([]);
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    fetch('/api/sch/yt-playlist?limit=50').then(r => r.ok ? r.json() : null).then((d: YtPlaylistVideo[] | null) => {
-      if (cancelled || !d) return;
-      const collected: SchMatchVideo[] = d.map(v => ({
-        url: v.url,
-        description: v.title,
-        date: v.publishedAt,
-      }));
-      setVideos(collected);
-    }).catch(() => { /* ignore */ });
-    return () => { cancelled = true; };
-  }, [enabled]);
-  return videos;
-}
 
 // --- 1行ぶんのサムネ ---
 function VideoThumb({ url }: { url: string }) {
@@ -246,7 +187,7 @@ function VideoRow({
 function CategoryBlock({
   category, items, stats, onView, editMode, onAdd, onEdit, onDelete, onTogglePin,
   onRenameCategory, onDeleteCategory, onMoveCategoryUp, onMoveCategoryDown, canMoveCatUp, canMoveCatDown,
-  matchVideos,
+  matchVideos, favoriteCount,
 }: {
   category: VideoCategory;
   items: VideoItem[];
@@ -265,6 +206,7 @@ function CategoryBlock({
   canMoveCatUp: boolean;
   canMoveCatDown: boolean;
   matchVideos: SchMatchVideo[];
+  favoriteCount: number;
 }) {
   const [open, setOpen] = useState(true);
   const sortedItems = useMemo(() => {
@@ -314,6 +256,19 @@ function CategoryBlock({
 
       {open && (
         <div className="space-y-2 landscape:md:grid landscape:md:grid-cols-2 landscape:md:gap-3 landscape:md:space-y-0">
+          {isMatch && (
+            <Link
+              href="/videos/favorites"
+              className="flex items-center gap-3 rounded-2xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 shadow-md shadow-amber-900/10 px-4 py-3 landscape:md:col-span-2"
+            >
+              <StarIcon size={28} className="text-amber-500 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-amber-900 text-sm">お気に入りシーン集</p>
+                <p className="text-amber-700/70 text-xs">{favoriteCount}件のシーンを連続再生</p>
+              </div>
+              <ChevronIcon size={18} className="text-amber-500 flex-shrink-0" />
+            </Link>
+          )}
           {sortedItems.map((item) => (
             <VideoRow
               key={item.id}
@@ -360,11 +315,12 @@ function CategoryBlock({
 
 // --- タイムスタンプ1行（ゴミ箱アイコンで削除、確認あり）---
 function TimestampItem({
-  ts, onPlay, onDelete, isActive,
+  ts, onPlay, onDelete, onToggleFavorite, isActive,
 }: {
   ts: VideoTimestamp;
   onPlay: (ts: VideoTimestamp) => void;
   onDelete: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
   isActive: boolean;
 }) {
   const handleDelete = () => {
@@ -373,15 +329,26 @@ function TimestampItem({
 
   return (
     <div className={`rounded-xl flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}>
+      <button
+        onClick={() => onToggleFavorite(ts.id)}
+        className={`flex-shrink-0 ${ts.favorite ? 'text-amber-400' : 'text-white/25 hover:text-white/50'}`}
+        aria-label={ts.favorite ? 'お気に入りを解除' : 'お気に入りに追加'}
+        title={ts.favorite ? 'お気に入りを解除' : 'お気に入りに追加'}
+      >
+        <StarIcon size={16} />
+      </button>
       <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-2 text-left min-w-0">
         <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${isActive ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(ts.seconds)}</span>
         <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{ts.label || 'シーン'}</span>
       </button>
       <button
         onClick={handleDelete}
-        className="text-white/40 hover:text-red-400 active:text-red-400 text-sm flex-shrink-0 px-1"
+        className="text-white/40 hover:text-red-400 active:text-red-400 flex-shrink-0 px-1"
         aria-label="削除"
-      >🗑</button>
+        title="削除"
+      >
+        <TrashIcon size={16} />
+      </button>
     </div>
   );
 }
@@ -488,6 +455,7 @@ function VideoPlayerModal({
   onAddTimestamp,
   onDeleteTimestamp,
   onTimestampView,
+  onToggleFavorite,
   onClose,
   customLabelOptions,
   initialSeconds,
@@ -499,6 +467,7 @@ function VideoPlayerModal({
   onAddTimestamp: (seconds: number, label?: string) => void;
   onDeleteTimestamp: (id: string) => void;
   onTimestampView: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
   onClose: () => void;
   customLabelOptions: string[];
   initialSeconds: number;
@@ -583,16 +552,7 @@ function VideoPlayerModal({
       });
     };
 
-    if (window.YT && window.YT.Player) {
-      initPlayer();
-    } else {
-      window.onYouTubeIframeAPIReady = initPlayer;
-      if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
-        const tag = document.createElement('script');
-        tag.src = 'https://www.youtube.com/iframe_api';
-        document.head.appendChild(tag);
-      }
-    }
+    loadYouTubeIframeApi(initPlayer);
 
     return () => {
       if (playerRef.current) {
@@ -889,6 +849,7 @@ function VideoPlayerModal({
                     ts={ts}
                     onPlay={handleSeek}
                     onDelete={onDeleteTimestamp}
+                    onToggleFavorite={onToggleFavorite}
                     isActive={ts.id === activeTimestampId}
                   />
                 ))}
@@ -1021,7 +982,7 @@ export default function VideosPage() {
     videoCategories, addVideoCategory, updateVideoCategory, deleteVideoCategory, reorderVideoCategories,
     videos, addVideo, updateVideo, deleteVideo, toggleVideoPin,
     videoStats, recordVideoView,
-    videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView,
+    videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView, toggleTimestampFavorite,
     videoPlaybackPositions, updateVideoPlaybackPosition,
     isLoading,
   } = useApp();
@@ -1064,6 +1025,11 @@ export default function VideosPage() {
     if (!playerModal) return 0;
     return videoPlaybackPositions.find((p) => p.videoUrl === playerModal.url)?.seconds ?? 0;
   }, [videoPlaybackPositions, playerModal]);
+
+  const favoriteTimestampCount = useMemo(
+    () => videoTimestamps.filter((t) => t.favorite).length,
+    [videoTimestamps]
+  );
 
   const moveCategory = (id: string, dir: -1 | 1) => {
     const idx = sortedCategories.findIndex(c => c.id === id);
@@ -1157,6 +1123,7 @@ export default function VideosPage() {
             canMoveCatUp={idx > 0}
             canMoveCatDown={idx < sortedCategories.length - 1}
             matchVideos={cat.isMatchCategory ? schMatchVideos : []}
+            favoriteCount={cat.isMatchCategory ? favoriteTimestampCount : 0}
           />
         ))}
       </div>
@@ -1177,6 +1144,7 @@ export default function VideosPage() {
           onAddTimestamp={(seconds, label) => addVideoTimestamp(playerModal.url, seconds, label)}
           onDeleteTimestamp={deleteVideoTimestamp}
           onTimestampView={recordTimestampView}
+          onToggleFavorite={toggleTimestampFavorite}
           onClose={() => setPlayerModal(null)}
           customLabelOptions={customLabelHistory}
           initialSeconds={activeInitialSeconds}

@@ -302,6 +302,7 @@ export interface VideoTimestamp {
   viewCount: number;     // このタイムスタンプを何回再生したか
   lastViewedAt?: string; // 最終視聴日 yyyy/mm/dd
   createdAt: string;     // ISO datetime
+  favorite?: boolean;    // お気に入りシーン
 }
 
 // 動画ごとの最後の再生位置（次回開いたときに再開するため）

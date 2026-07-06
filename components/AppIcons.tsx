@@ -90,6 +90,14 @@ export function PlayIcon({ size = 24, className = '' }: IconProps) {
   );
 }
 
+export function PauseIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+    </svg>
+  );
+}
+
 export function PlusIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -349,6 +357,14 @@ export function SpeakerIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
       <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+    </svg>
+  );
+}
+
+export function ChevronIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z" />
     </svg>
   );
 }
