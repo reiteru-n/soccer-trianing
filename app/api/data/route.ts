@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { INITIAL_LIFTING_RECORDS, INITIAL_PRACTICE_NOTES, INITIAL_TRAINING_MENU, INITIAL_BODY_RECORDS, INITIAL_VIDEO_CATEGORIES, INITIAL_VIDEOS } from '@/lib/data';
-import { logAccess, getIp, getUa, getDeviceId } from '@/lib/logger';
+import { logAccess, logChange, getIp, getUa, getDeviceId } from '@/lib/logger';
 
 // キーを種別ごとに分割してサイズ上限を回避
 const KEYS = {
@@ -187,6 +187,18 @@ export async function POST(req: Request) {
   try {
     const body = await req.json() as Record<string, unknown>;
     await writePartial(body);
+    // 書き込んだキーと件数を記録しておく（同時書き込みによる上書き競合の事後調査用）
+    const summary = Object.entries(body)
+      .map(([k, v]) => `${k}=${Array.isArray(v) ? v.length : typeof v === 'object' ? 'obj' : String(v)}`)
+      .join(',');
+    logChange({
+      ts: new Date().toISOString(),
+      action: 'data_save',
+      detail: summary,
+      ip: getIp(req),
+      ua: getUa(req),
+      device_id: getDeviceId(req),
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('POST error:', err);

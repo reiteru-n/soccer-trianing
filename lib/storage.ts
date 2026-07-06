@@ -111,12 +111,29 @@ export async function fetchAllData(): Promise<AllData> {
   }
 }
 
+// 保存リクエストを1本ずつ直列に送る。
+// 並行に fetch すると、後から呼ばれた（＝新しい状態を持つ）リクエストの方が
+// 先にサーバーに届き、その後で古い状態を積んだリクエストが遅れて上書きしてしまう
+// ことがある（お気に入り等のトグルを連続操作したときにデータが消える不具合の原因）。
+// 前のリクエストが完了するまで次を送らないことで、この上書きレースを防ぐ。
+let saveQueue: Promise<void> = Promise.resolve();
+
 function savePartial(body: Partial<Record<string, unknown>>): void {
-  fetch('/api/data', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  }).catch(console.error);
+  saveQueue = saveQueue.then(async () => {
+    try {
+      const res = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        console.error('[savePartial] failed', { status: res.status, keys: Object.keys(body), body: text.slice(0, 500) });
+      }
+    } catch (err) {
+      console.error('[savePartial] network error', { keys: Object.keys(body), err });
+    }
+  });
 }
 
 export function saveLiftingRecords(records: LiftingRecord[]): void { savePartial({ liftingRecords: records }); }
