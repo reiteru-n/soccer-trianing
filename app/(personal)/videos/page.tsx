@@ -362,24 +362,29 @@ function CategoryBlock({
 const SWIPE_REVEAL = 72;
 
 function TimestampItem({
-  ts, onPlay, onDelete, isActive,
+  ts, onPlay, onDelete, isActive, shouldRotate,
 }: {
   ts: VideoTimestamp;
   onPlay: (ts: VideoTimestamp) => void;
   onDelete: (id: string) => void;
   isActive: boolean;
+  shouldRotate: boolean;
 }) {
   const [offsetX, setOffsetX] = useState(0);
-  const startXRef = useRef(0);
+  const startRef = useRef(0);
   const isDragging = useRef(false);
 
+  // 強制横画面時はCSSでコンテナごと回転しているため、視覚的な「左右スワイプ」は
+  // 生のタッチ座標ではclientYの変化として現れる（通常時はclientX）
+  const axisValue = (touch: React.Touch) => shouldRotate ? touch.clientY : touch.clientX;
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    startXRef.current = e.touches[0].clientX;
+    startRef.current = axisValue(e.touches[0]);
     isDragging.current = true;
   };
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging.current) return;
-    const dx = e.touches[0].clientX - startXRef.current;
+    const dx = axisValue(e.touches[0]) - startRef.current;
     setOffsetX(Math.min(0, Math.max(-SWIPE_REVEAL, dx)));
   };
   const handleTouchEnd = () => {
@@ -399,7 +404,7 @@ function TimestampItem({
       </div>
       {/* メインコンテンツ（左スライド）*/}
       <div
-        className={`relative flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 touch-pan-y ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
+        className={`relative flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${shouldRotate ? 'touch-pan-x' : 'touch-pan-y'} ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
         style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.2s ease' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -915,6 +920,7 @@ function VideoPlayerModal({
                     onPlay={handleSeek}
                     onDelete={onDeleteTimestamp}
                     isActive={ts.id === activeTimestampId}
+                    shouldRotate={shouldRotate}
                   />
                 ))}
               </div>
