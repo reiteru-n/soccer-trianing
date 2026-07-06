@@ -94,9 +94,18 @@ export default function FavoriteScenesPage() {
   const activeSlotRef = useRef<Slot>(0);
   const playersRef = useRef<[YTPlayer | null, YTPlayer | null]>([null, null]);
   const slotVideoIdRef = useRef<[string | null, string | null]>([null, null]);
+  // onReady が実際に発火したかどうか。playersRef は new YT.Player() 直後から
+  // 非nullになるため、これだけで「操作可能」とは判断できない
+  // （準備が終わる前に seekTo/playVideo 等を呼ぶと無視され、タップしても
+  // 何も起きないように見える不具合の原因だった）。
+  const readyRef = useRef<[boolean, boolean]>([false, false]);
+  const pendingPlayRef = useRef<number | null>(null);
   const bootstrappedRef = useRef(false);
 
+  const playClipRef = useRef<(index: number) => void>(() => {});
+
   const createPlayer = useCallback((slot: Slot, videoId: string, start: number, autoplay: boolean) => {
+    readyRef.current[slot] = false;
     const player = new window.YT.Player(`fav-player-${slot}`, {
       videoId,
       playerVars: {
@@ -113,7 +122,15 @@ export default function FavoriteScenesPage() {
       events: {
         onReady: (e) => {
           playersRef.current[slot] = e.target;
-          if (slot === activeSlotRef.current) setIsPlayerReady(true);
+          readyRef.current[slot] = true;
+          if (slot === activeSlotRef.current) {
+            setIsPlayerReady(true);
+            if (pendingPlayRef.current !== null) {
+              const idx = pendingPlayRef.current;
+              pendingPlayRef.current = null;
+              playClipRef.current(idx);
+            }
+          }
         },
         onStateChange: (e) => {
           if (slot === activeSlotRef.current) setIsPlaying(e.data === 1);
@@ -140,12 +157,13 @@ export default function FavoriteScenesPage() {
     if (slotVideoIdRef.current[inactiveSlot] === next.videoId) return;
     if (next.videoId === slotVideoIdRef.current[activeSlotRef.current]) return;
     const p = playersRef.current[inactiveSlot];
-    if (p) {
+    if (p && readyRef.current[inactiveSlot]) {
       p.cueVideoById(next.videoId, next.start);
       slotVideoIdRef.current[inactiveSlot] = next.videoId;
-    } else {
+    } else if (!p) {
       createPlayer(inactiveSlot, next.videoId, next.start, false);
     }
+    // pがあってもまだreadyでない場合は何もしない（作成中に別の動画IDを積むと混乱するため）
   }, [createPlayer, findNextPlayableIndex]);
 
   const playClip = useCallback((index: number) => {
@@ -155,23 +173,31 @@ export default function FavoriteScenesPage() {
     setFinished(false);
     const active = activeSlotRef.current;
     const other = OTHER_SLOT(active);
+    const activePlayer = playersRef.current[active];
 
-    if (slotVideoIdRef.current[active] === videoId && playersRef.current[active]) {
-      playersRef.current[active]!.seekTo(clip.start, true);
-      playersRef.current[active]!.playVideo();
-    } else if (slotVideoIdRef.current[other] === videoId && playersRef.current[other]) {
+    if (!activePlayer || !readyRef.current[active]) {
+      // アクティブプレイヤーの準備がまだ終わっていない → 準備完了時に自動で再生する
+      pendingPlayRef.current = index;
+      if (!activePlayer) createPlayer(active, videoId, clip.start, true);
+      setActiveIndex(index);
+      activeIndexRef.current = index;
+      return;
+    }
+
+    if (slotVideoIdRef.current[active] === videoId) {
+      activePlayer.seekTo(clip.start, true);
+      activePlayer.playVideo();
+    } else if (slotVideoIdRef.current[other] === videoId && playersRef.current[other] && readyRef.current[other]) {
       // 事前読み込み済みの反対側スロットへスワップ（切替の待ち時間を減らす）
       playersRef.current[other]!.seekTo(clip.start, true);
       playersRef.current[other]!.playVideo();
-      playersRef.current[active]?.pauseVideo();
+      activePlayer.pauseVideo();
       setActiveSlot(other);
       activeSlotRef.current = other;
       setIsPlayerReady(true);
-    } else if (playersRef.current[active]) {
-      playersRef.current[active]!.loadVideoById(videoId, clip.start);
-      slotVideoIdRef.current[active] = videoId;
     } else {
-      createPlayer(active, videoId, clip.start, true);
+      activePlayer.loadVideoById(videoId, clip.start);
+      slotVideoIdRef.current[active] = videoId;
     }
 
     setActiveIndex(index);
@@ -179,7 +205,6 @@ export default function FavoriteScenesPage() {
     preloadNext(index);
   }, [createPlayer, preloadNext]);
 
-  const playClipRef = useRef(playClip);
   playClipRef.current = playClip;
 
   // 初回ブートストラップ: 再生可能な最初のクリップを再生し、次のクリップを事前読み込み

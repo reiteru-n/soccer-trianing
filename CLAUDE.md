@@ -1,5 +1,14 @@
 # CLAUDE.md — プロジェクト記録
 
+## 残件（未解決タスク）
+
+- **練習ノートの音声入力**: 実装は完了済み（`components/VoiceInputButton.tsx` + `/api/transcribe`、
+  外部脳 `Knowledge/tech/voice-input-recipe.md` 準拠でMediaRecorder→自宅PCのWhisperデーモンへ中継）。
+  ただし以下が未設定のため実際には動作しない：
+  1. 自宅PCのWhisperデーモンをTailscale Funnel等でHTTPS公開する
+  2. Vercel環境変数に `WHISPER_DAEMON_URL`（公開したURL）を設定する（認証をかけるなら `WHISPER_DAEMON_TOKEN` も）
+  → ユーザーから「また今度解決しよう」と保留された残件。次回このテーマが出たら上記の設定から再開する。
+
 ## Claude の行動ルール
 
 - **デプロイ確認・ビルド状況・GitHub上のファイル確認など、MCP・ツールで自分で確認できることはユーザーに聞かずに自分でやること**
