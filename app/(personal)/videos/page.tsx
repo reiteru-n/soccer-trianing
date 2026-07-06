@@ -886,9 +886,9 @@ function VideoPlayerModal({
                   onClick={() => setRecordOffsetEnabled(v => !v)}
                   aria-pressed={recordOffsetEnabled}
                   aria-label="10秒前から記録する"
-                  className={`block w-9 h-5 rounded-full relative flex-shrink-0 shrink-0 transition-colors outline-none ${recordOffsetEnabled ? 'bg-emerald-500' : 'bg-white/20'}`}
+                  className={`block w-9 h-5 p-0 rounded-full relative flex-shrink-0 shrink-0 transition-colors outline-none ${recordOffsetEnabled ? 'bg-emerald-500' : 'bg-white/20'}`}
                 >
-                  <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${recordOffsetEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${recordOffsetEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                 </button>
               </div>
             </div>
