@@ -388,7 +388,7 @@ function TimestampItem({
   };
 
   return (
-    <div className="relative rounded-xl overflow-hidden">
+    <div className="relative rounded-xl overflow-hidden min-w-0">
       {/* 削除ボタン（スワイプで露出、押下で削除）*/}
       <div className="absolute right-0 top-0 bottom-0 w-[72px] flex items-center justify-center bg-red-600 rounded-r-xl">
         <button
@@ -399,15 +399,15 @@ function TimestampItem({
       </div>
       {/* メインコンテンツ（左スライド）*/}
       <div
-        className={`relative flex items-center gap-2 px-3 py-2 border-l-4 ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
+        className={`relative flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 touch-pan-y ${isActive ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
         style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.2s ease' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-2 text-left">
+        <button onClick={() => onPlay(ts)} className="flex-1 flex items-center gap-2 text-left min-w-0">
           <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${isActive ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(ts.seconds)}</span>
-          <span className="text-white/80 text-xs flex-1 line-clamp-1">{ts.label || 'シーン'}</span>
+          <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{ts.label || 'シーン'}</span>
         </button>
       </div>
     </div>
@@ -903,11 +903,11 @@ function VideoPlayerModal({
           </button>
         </div>
         {listOpen && (
-          <div className="flex-1 overflow-y-auto px-2 py-2">
+          <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-2 py-2">
             {timestamps.length === 0 ? (
               <p className="text-white/30 text-xs text-center py-4">「記録」ボタンでシーンを登録</p>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 {timestamps.map((ts) => (
                   <TimestampItem
                     key={ts.id}
