@@ -34,6 +34,13 @@ html, body {
   animation: pulse-once 0.7s ease-in-out;
 }
 
+/* YouTube IFrame API はデフォルトで固定px幅(640x390)のiframeを生成するため、
+   コンテナいっぱいに広げて黒帯（レターボックス）を消す */
+#yt-player-iframe {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 main {
   animation: fadeIn 0.2s ease;
 }

@@ -568,7 +568,7 @@ function VideoPlayerModal({
     const initPlayer = () => {
       playerRef.current = new window.YT.Player('yt-player-iframe', {
         videoId,
-        playerVars: { autoplay: 1, playsinline: 1, rel: 0, controls: 0 },
+        playerVars: { autoplay: 1, playsinline: 1, rel: 0, controls: 0, modestbranding: 1, iv_load_policy: 3, fs: 0, disablekb: 1 },
         events: { onReady: () => setIsPlayerReady(true) },
       });
     };
@@ -644,14 +644,6 @@ function VideoPlayerModal({
       {/* ===== 左カラム（動画 + コントロール）===== */}
       <div className="flex flex-col flex-1 min-h-0">
 
-        {/* ヘッダー（閉じるボタンのみ。タイトルは右カラムへ移動）*/}
-        <div className="flex items-center px-2 py-1 bg-gray-950 flex-shrink-0">
-          <button
-            onClick={onClose}
-            className="text-white text-base leading-none w-7 h-7 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 flex-shrink-0"
-          >✕</button>
-        </div>
-
         {/* YouTube プレイヤー（ズーム対応）*/}
         <div className="relative w-full bg-black flex-1 min-h-0 overflow-hidden">
           <div
@@ -665,6 +657,8 @@ function VideoPlayerModal({
               </div>
             )}
           </div>
+          {/* YouTube側のタップで出るタイトル/ブランディング表示を出させないためのブロック用オーバーレイ */}
+          {videoId && <div className="absolute inset-0" />}
           {/* ズームボタン（右下オーバーレイ）*/}
           <div className="absolute bottom-2 right-2 flex gap-1 z-10">
             <button
@@ -690,28 +684,35 @@ function VideoPlayerModal({
           onSeek={handleSeekTo}
         />
 
-        {/* スキップ・記録ボタン列 */}
-        <div className="flex items-center justify-center gap-0.5 px-2 pt-0.5 pb-2 bg-gray-950 flex-shrink-0">
-          {SKIP_BACK.map(({ d, icon, label }) => (
-            <button key={d} onClick={() => skip(d)} disabled={!isPlayerReady} className={skipBtnClass}>
-              <span className="text-[11px] leading-none">{icon}</span>
-              <span className="text-[9px] leading-none opacity-60">{label}</span>
-            </button>
-          ))}
+        {/* スキップ・記録ボタン列（左端に閉じるボタン）*/}
+        <div className="flex items-center px-2 pt-0.5 pb-2 bg-gray-950 flex-shrink-0">
           <button
-            onClick={handleRecord}
-            disabled={!isPlayerReady}
-            className="flex flex-col items-center justify-center w-10 h-9 rounded-xl bg-red-700 active:bg-red-600 text-white disabled:opacity-30 active:scale-95 transition-transform mx-0.5"
-          >
-            <span className="text-base leading-none">⏱</span>
-            <span className="text-[9px] leading-none opacity-80">記録</span>
-          </button>
-          {SKIP_FWD.map(({ d, icon, label }) => (
-            <button key={d} onClick={() => skip(d)} disabled={!isPlayerReady} className={skipBtnClass}>
-              <span className="text-[11px] leading-none">{icon}</span>
-              <span className="text-[9px] leading-none opacity-60">{label}</span>
+            onClick={onClose}
+            className="text-white text-base leading-none w-9 h-9 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 flex-shrink-0"
+          >✕</button>
+          <div className="flex-1 flex items-center justify-center gap-0.5">
+            {SKIP_BACK.map(({ d, icon, label }) => (
+              <button key={d} onClick={() => skip(d)} disabled={!isPlayerReady} className={skipBtnClass}>
+                <span className="text-[11px] leading-none">{icon}</span>
+                <span className="text-[9px] leading-none opacity-60">{label}</span>
+              </button>
+            ))}
+            <button
+              onClick={handleRecord}
+              disabled={!isPlayerReady}
+              className="flex flex-col items-center justify-center w-10 h-9 rounded-xl bg-red-700 active:bg-red-600 text-white disabled:opacity-30 active:scale-95 transition-transform mx-0.5"
+            >
+              <span className="text-base leading-none">⏱</span>
+              <span className="text-[9px] leading-none opacity-80">記録</span>
             </button>
-          ))}
+            {SKIP_FWD.map(({ d, icon, label }) => (
+              <button key={d} onClick={() => skip(d)} disabled={!isPlayerReady} className={skipBtnClass}>
+                <span className="text-[11px] leading-none">{icon}</span>
+                <span className="text-[9px] leading-none opacity-60">{label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="w-9 flex-shrink-0" aria-hidden />
         </div>
 
         {/* 記録確定エリア */}
