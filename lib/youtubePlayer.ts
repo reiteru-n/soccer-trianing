@@ -9,6 +9,7 @@ export interface YTPlayer {
   pauseVideo: () => void;
   cueVideoById: (videoId: string, startSeconds?: number) => void;
   loadVideoById: (videoId: string, startSeconds?: number) => void;
+  unloadModule: (moduleName: string) => void;
   destroy: () => void;
 }
 
@@ -23,12 +24,24 @@ declare global {
           events?: {
             onReady?: (event: { target: YTPlayer }) => void;
             onStateChange?: (event: { data: number; target: YTPlayer }) => void;
+            onApiChange?: (event: { target: YTPlayer }) => void;
           };
         }
       ) => YTPlayer;
     };
     onYouTubeIframeAPIReady?: () => void;
   }
+}
+
+/**
+ * cc_load_policy: 0 だけでは強制字幕・視聴者アカウント側の字幕設定が優先されて
+ * 表示されてしまうことがあるため、onApiChangeで字幕モジュール自体をアンロードして完全に消す
+ */
+export function disableCaptionsHard(player: YTPlayer): void {
+  try {
+    player.unloadModule('captions');
+    player.unloadModule('cc');
+  } catch { /* モジュール未ロード時などは無視 */ }
 }
 
 /** YouTube IFrame API を（未読込なら）読み込み、準備できたら onReady を呼ぶ */

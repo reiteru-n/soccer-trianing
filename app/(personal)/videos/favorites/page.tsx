@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, type PointerEvent as ReactPointerEvent } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import { VideoTimestamp } from '@/lib/types';
-import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId } from '@/lib/youtubePlayer';
+import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, disableCaptionsHard } from '@/lib/youtubePlayer';
 import { useSchMatchVideos } from '@/lib/schMatchVideos';
 import { StarIcon, PlayIcon, PauseIcon, ShuffleIcon, SkipIcon } from '@/components/AppIcons';
 
-const DEFAULT_CLIP_OFFSET = 20;
+const DEFAULT_CLIP_OFFSET_BEFORE = 20;
+const DEFAULT_CLIP_OFFSET_AFTER = 20;
 const MIN_CLIP_OFFSET = 5;
 const MAX_CLIP_OFFSET = 60;
 const PROGRESS_POLL_MS = 300;
@@ -85,9 +86,12 @@ export default function FavoriteScenesPage() {
   const clipsRef = useRef(clips);
   clipsRef.current = clips;
 
-  const [clipOffset, setClipOffset] = useState(DEFAULT_CLIP_OFFSET);
-  const clipOffsetRef = useRef(clipOffset);
-  clipOffsetRef.current = clipOffset;
+  const [clipOffsetBefore, setClipOffsetBefore] = useState(DEFAULT_CLIP_OFFSET_BEFORE);
+  const clipOffsetBeforeRef = useRef(clipOffsetBefore);
+  clipOffsetBeforeRef.current = clipOffsetBefore;
+  const [clipOffsetAfter, setClipOffsetAfter] = useState(DEFAULT_CLIP_OFFSET_AFTER);
+  const clipOffsetAfterRef = useRef(clipOffsetAfter);
+  clipOffsetAfterRef.current = clipOffsetAfter;
 
   const [shuffleMode, setShuffleMode] = useState(false);
   const [playOrder, setPlayOrder] = useState<string[]>([]);
@@ -136,6 +140,7 @@ export default function FavoriteScenesPage() {
           playerRef.current = e.target;
           readyRef.current = true;
           setIsPlayerReady(true);
+          disableCaptionsHard(e.target);
           const pending = pendingLoadRef.current;
           if (pending) {
             pendingLoadRef.current = null;
@@ -157,6 +162,7 @@ export default function FavoriteScenesPage() {
             e.target.seekTo(target, true);
           }
         },
+        onApiChange: (e) => disableCaptionsHard(e.target),
       },
     });
   }, []);
@@ -166,7 +172,7 @@ export default function FavoriteScenesPage() {
     const clip = clipsByIdRef.current.get(clipId);
     if (!clip || !clip.videoId) return;
     const videoId = clip.videoId;
-    const start = Math.max(0, clip.seconds - clipOffsetRef.current);
+    const start = Math.max(0, clip.seconds - clipOffsetBeforeRef.current);
 
     if (!playerRef.current) {
       loadYouTubeIframeApi(() => {
@@ -269,7 +275,7 @@ export default function FavoriteScenesPage() {
         return;
       }
       setCurrentTime(t);
-      if (t >= clip.seconds + clipOffsetRef.current) {
+      if (t >= clip.seconds + clipOffsetAfterRef.current) {
         const nextPos = (pos + 1) % order.length;
         setQueuePos(nextPos);
         queuePosRef.current = nextPos;
@@ -292,11 +298,40 @@ export default function FavoriteScenesPage() {
     else player.playVideo();
   };
 
-  const clipStart = activeClip ? Math.max(0, activeClip.seconds - clipOffset) : 0;
-  const clipEnd = activeClip ? activeClip.seconds + clipOffset : 0;
+  const clipStart = activeClip ? Math.max(0, activeClip.seconds - clipOffsetBefore) : 0;
+  const clipEnd = activeClip ? activeClip.seconds + clipOffsetAfter : 0;
   const progress = activeClip
     ? Math.min(100, Math.max(0, ((currentTime - clipStart) / (clipEnd - clipStart)) * 100))
     : 0;
+
+  // クリップ範囲内をドラッグ/タップしてシークできるバー
+  const seekBarRef = useRef<HTMLDivElement>(null);
+  const seekFromClientX = useCallback((clientX: number) => {
+    const player = playerRef.current;
+    const bar = seekBarRef.current;
+    if (!player || !bar || !activeClip) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const t = clipStart + ratio * (clipEnd - clipStart);
+    player.seekTo(t, true);
+    setCurrentTime(t);
+  }, [activeClip, clipStart, clipEnd]);
+
+  const draggingSeekRef = useRef(false);
+  const handleSeekPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!activeClip) return;
+    draggingSeekRef.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    seekFromClientX(e.clientX);
+  };
+  const handleSeekPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!draggingSeekRef.current) return;
+    seekFromClientX(e.clientX);
+  };
+  const handleSeekPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    draggingSeekRef.current = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
 
   if (isLoading) {
     return (<div className="flex items-center justify-center py-24 text-blue-200"><div className="text-center"><p className="text-4xl mb-3">⭐</p><p className="text-sm">読み込み中...</p></div></div>);
@@ -335,21 +370,38 @@ export default function FavoriteScenesPage() {
             </button>
           </div>
 
-          {/* 1シーンあたりの切り取り秒数 */}
-          <div className="flex items-center justify-center gap-2 mb-4 text-xs text-blue-200/80">
-            <span>1シーンの長さ: 前後</span>
-            <button
-              onClick={() => setClipOffset((o) => Math.max(MIN_CLIP_OFFSET, o - 5))}
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
-              aria-label="短くする"
-            >−</button>
-            <span className="font-mono font-bold text-white w-6 text-center">{clipOffset}</span>
-            <button
-              onClick={() => setClipOffset((o) => Math.min(MAX_CLIP_OFFSET, o + 5))}
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
-              aria-label="長くする"
-            >+</button>
-            <span>秒</span>
+          {/* 1シーンあたりの切り取り秒数（前後で別々に設定可能） */}
+          <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1 mb-4 text-xs text-blue-200/80">
+            <div className="flex items-center gap-2">
+              <span>シーン前</span>
+              <button
+                onClick={() => setClipOffsetBefore((o) => Math.max(MIN_CLIP_OFFSET, o - 5))}
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+                aria-label="シーン前を短くする"
+              >−</button>
+              <span className="font-mono font-bold text-white w-6 text-center">{clipOffsetBefore}</span>
+              <button
+                onClick={() => setClipOffsetBefore((o) => Math.min(MAX_CLIP_OFFSET, o + 5))}
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+                aria-label="シーン前を長くする"
+              >+</button>
+              <span>秒</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>シーン後</span>
+              <button
+                onClick={() => setClipOffsetAfter((o) => Math.max(MIN_CLIP_OFFSET, o - 5))}
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+                aria-label="シーン後を短くする"
+              >−</button>
+              <span className="font-mono font-bold text-white w-6 text-center">{clipOffsetAfter}</span>
+              <button
+                onClick={() => setClipOffsetAfter((o) => Math.min(MAX_CLIP_OFFSET, o + 5))}
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+                aria-label="シーン後を長くする"
+              >+</button>
+              <span>秒</span>
+            </div>
           </div>
 
           <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg">
@@ -369,9 +421,20 @@ export default function FavoriteScenesPage() {
             )}
           </div>
 
-          {/* クリップ進捗バー */}
-          <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-amber-400 transition-[width]" style={{ width: `${progress}%` }} />
+          {/* クリップ進捗バー（ドラッグ/タップでシーク可能） */}
+          <div
+            ref={seekBarRef}
+            className="relative h-5 mt-2 bg-white/10 rounded-full cursor-pointer select-none touch-none"
+            onPointerDown={handleSeekPointerDown}
+            onPointerMove={handleSeekPointerMove}
+            onPointerUp={handleSeekPointerUp}
+            onPointerCancel={handleSeekPointerUp}
+          >
+            <div className="absolute left-0 top-0 h-full bg-amber-400/70 rounded-full pointer-events-none" style={{ width: `${progress}%` }} />
+            <div
+              className="absolute top-1/2 w-3 h-3 bg-white rounded-full shadow-md pointer-events-none"
+              style={{ left: `${progress}%`, transform: 'translateX(-50%) translateY(-50%)' }}
+            />
           </div>
 
           {/* 現在のシーン情報 + 操作 */}

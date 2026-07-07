@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import { VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from '@/lib/types';
-import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, getYoutubeThumbnail } from '@/lib/youtubePlayer';
+import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, getYoutubeThumbnail, disableCaptionsHard } from '@/lib/youtubePlayer';
 import { useSchMatchVideos, SchMatchVideo } from '@/lib/schMatchVideos';
 import { StarIcon, TrashIcon, ChevronIcon } from '@/components/AppIcons';
 
@@ -541,11 +541,13 @@ function VideoPlayerModal({
         events: {
           onReady: (event) => {
             setIsPlayerReady(true);
+            disableCaptionsHard(event.target);
             if (initialSecondsRef.current > 0) {
               event.target.seekTo(initialSecondsRef.current, true);
             }
           },
           onStateChange: (event) => setIsPlaying(event.data === 1),
+          onApiChange: (event) => disableCaptionsHard(event.target),
         },
       });
     };
