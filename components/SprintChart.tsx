@@ -59,7 +59,7 @@ export default function SprintChart({ records }: Props) {
         bodyColor: '#e2e8f0',
         callbacks: {
           title: (items) => sorted[items[0].dataIndex]?.date ?? '',
-          label: (item) => `${item.raw}秒`,
+          label: (item) => `${Number(item.raw).toFixed(2)}秒`,
         },
       },
       datalabels: {
@@ -67,7 +67,7 @@ export default function SprintChart({ records }: Props) {
         anchor: 'end',
         color: '#fb923c',
         font: { weight: 'bold', size: 11 },
-        formatter: (v) => `${v}`,
+        formatter: (v) => `${Number(v).toFixed(2)}`,
       },
     },
     scales: {
@@ -78,7 +78,7 @@ export default function SprintChart({ records }: Props) {
       },
       y: {
         grid: { color: 'rgba(255,255,255,0.06)' },
-        ticks: { color: 'rgba(148,163,184,0.8)', font: { size: 11 }, callback: (v) => `${v}秒` },
+        ticks: { color: 'rgba(148,163,184,0.8)', font: { size: 11 }, callback: (v) => `${Number(v).toFixed(2)}秒` },
         border: { color: 'rgba(255,255,255,0.1)' },
       },
     },
