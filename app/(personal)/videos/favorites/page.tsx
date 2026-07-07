@@ -6,9 +6,11 @@ import { useApp } from '@/lib/context';
 import { VideoTimestamp } from '@/lib/types';
 import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId } from '@/lib/youtubePlayer';
 import { useSchMatchVideos } from '@/lib/schMatchVideos';
-import { StarIcon, PlayIcon, PauseIcon, SkipIcon } from '@/components/AppIcons';
+import { StarIcon, PlayIcon, PauseIcon, ShuffleIcon, SkipIcon } from '@/components/AppIcons';
 
-const CLIP_MARGIN_SECONDS = 20;
+const DEFAULT_CLIP_OFFSET = 20;
+const MIN_CLIP_OFFSET = 5;
+const MAX_CLIP_OFFSET = 60;
 const PROGRESS_POLL_MS = 300;
 
 function formatSeconds(s: number): string {
@@ -24,13 +26,16 @@ interface FavoriteClip {
   seconds: number;
   label?: string;
   videoDescription: string;
-  start: number;
-  end: number;
 }
 
-type Slot = 0 | 1;
-const OTHER_SLOT = (slot: Slot): Slot => (slot === 0 ? 1 : 0);
-
+/**
+ * 再生の仕組み（シンプルな単一プレイヤー方式）:
+ * 1. 再生ボタン押下 or シーンをクリック
+ * 2. そのシーンの動画をYouTubeプレイヤーに読み込む（同じ動画なら読み込み直さずシークのみ）
+ * 3. シーン時刻 - 切り取り秒数 の位置にシーク
+ * 4. 再生開始
+ * 5. シーン時刻 + 切り取り秒数 に達したら次のシーンへ（末尾なら先頭に戻ってループ）
+ */
 export default function FavoriteScenesPage() {
   const { videos, videoTimestamps, toggleTimestampFavorite, isLoading } = useApp();
   const schMatchVideos = useSchMatchVideos(true);
@@ -60,61 +65,63 @@ export default function FavoriteScenesPage() {
     });
     const out: FavoriteClip[] = [];
     for (const url of orderedUrls) {
-      // 動画IDが特定できなくても（URL形式が想定外でも）お気に入り自体は一覧から消さない
       const videoId = extractYoutubeVideoId(url);
       const description = videoInfoByUrl.get(url)?.description ?? '';
       const items = [...groups.get(url)!].sort((a, b) => a.seconds - b.seconds);
       for (const t of items) {
-        out.push({
-          id: t.id,
-          videoUrl: url,
-          videoId,
-          seconds: t.seconds,
-          label: t.label,
-          videoDescription: description,
-          start: Math.max(0, t.seconds - CLIP_MARGIN_SECONDS),
-          end: t.seconds + CLIP_MARGIN_SECONDS,
-        });
+        out.push({ id: t.id, videoUrl: url, videoId, seconds: t.seconds, label: t.label, videoDescription: description });
       }
     }
     return out;
   }, [videoTimestamps, videoInfoByUrl]);
 
+  const clipsById = useMemo(() => {
+    const m = new Map<string, FavoriteClip>();
+    for (const c of clips) m.set(c.id, c);
+    return m;
+  }, [clips]);
+  const clipsByIdRef = useRef(clipsById);
+  clipsByIdRef.current = clipsById;
   const clipsRef = useRef(clips);
   clipsRef.current = clips;
 
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [activeSlot, setActiveSlot] = useState<Slot>(0);
+  const [clipOffset, setClipOffset] = useState(DEFAULT_CLIP_OFFSET);
+  const clipOffsetRef = useRef(clipOffset);
+  clipOffsetRef.current = clipOffset;
+
+  const [shuffleMode, setShuffleMode] = useState(false);
+  const [playOrder, setPlayOrder] = useState<string[]>([]);
+  const playOrderRef = useRef<string[]>([]);
+  playOrderRef.current = playOrder;
+  const [queuePos, setQueuePos] = useState(-1);
+  const queuePosRef = useRef(-1);
+  queuePosRef.current = queuePos;
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [finished, setFinished] = useState(false);
 
-  const activeIndexRef = useRef(0);
-  const activeSlotRef = useRef<Slot>(0);
-  const playersRef = useRef<[YTPlayer | null, YTPlayer | null]>([null, null]);
-  const slotVideoIdRef = useRef<[string | null, string | null]>([null, null]);
-  // onReady が実際に発火したかどうか。playersRef は new YT.Player() 直後から
-  // 非nullになるため、これだけで「操作可能」とは判断できない
-  // （準備が終わる前に seekTo/playVideo 等を呼ぶと無視され、タップしても
-  // 何も起きないように見える不具合の原因だった）。
-  const readyRef = useRef<[boolean, boolean]>([false, false]);
-  const pendingPlayRef = useRef<number | null>(null);
-  // loadVideoById/playerVars.start で指定した開始位置をYouTube側が無視することがあるため、
-  // 再生が始まった直後にもう一度seekToして確定させる（既知のIFrame APIの挙動不安定さへの対策）。
-  const pendingSeekRef = useRef<[number | null, number | null]>([null, null]);
-  const bootstrappedRef = useRef(false);
+  const playerRef = useRef<YTPlayer | null>(null);
+  const readyRef = useRef(false);
+  const currentVideoIdRef = useRef<string | null>(null);
+  // YouTube側がloadVideoById/playerVars.startで指定した開始位置を無視することがあるため、
+  // 再生開始直後にもう一度seekToして確定させる
+  const pendingSeekRef = useRef<number | null>(null);
+  // プレイヤーがまだreadyでない間に再生要求が来た場合、ready後に実行する
+  const pendingLoadRef = useRef<{ videoId: string; start: number } | null>(null);
 
-  const playClipRef = useRef<(index: number) => void>(() => {});
+  const activeClipId = queuePos >= 0 && playOrder.length > 0 ? playOrder[queuePos] : null;
+  const activeClip = activeClipId ? clipsById.get(activeClipId) : undefined;
 
-  const createPlayer = useCallback((slot: Slot, videoId: string, start: number, autoplay: boolean) => {
-    readyRef.current[slot] = false;
-    pendingSeekRef.current[slot] = start;
-    const player = new window.YT.Player(`fav-player-${slot}`, {
+  const createPlayer = useCallback((videoId: string, start: number) => {
+    readyRef.current = false;
+    pendingSeekRef.current = start;
+    currentVideoIdRef.current = videoId;
+    playerRef.current = new window.YT.Player('fav-player', {
       videoId,
       playerVars: {
         start: Math.floor(start),
-        autoplay: autoplay ? 1 : 0,
+        autoplay: 1,
         playsinline: 1,
         rel: 0,
         controls: 0,
@@ -126,131 +133,135 @@ export default function FavoriteScenesPage() {
       },
       events: {
         onReady: (e) => {
-          playersRef.current[slot] = e.target;
-          readyRef.current[slot] = true;
-          if (slot === activeSlotRef.current) {
-            setIsPlayerReady(true);
-            if (pendingPlayRef.current !== null) {
-              const idx = pendingPlayRef.current;
-              pendingPlayRef.current = null;
-              playClipRef.current(idx);
+          playerRef.current = e.target;
+          readyRef.current = true;
+          setIsPlayerReady(true);
+          const pending = pendingLoadRef.current;
+          if (pending) {
+            pendingLoadRef.current = null;
+            pendingSeekRef.current = pending.start;
+            if (currentVideoIdRef.current === pending.videoId) {
+              e.target.seekTo(pending.start, true);
+              e.target.playVideo();
+            } else {
+              currentVideoIdRef.current = pending.videoId;
+              e.target.loadVideoById(pending.videoId, pending.start);
             }
           }
         },
         onStateChange: (e) => {
-          if (slot === activeSlotRef.current) setIsPlaying(e.data === 1);
-          // PLAYING(1) / CUED(5) に達したタイミングで一度だけ開始位置を再確定する
-          const target = pendingSeekRef.current[slot];
+          setIsPlaying(e.data === 1);
+          const target = pendingSeekRef.current;
           if (target !== null && (e.data === 1 || e.data === 5)) {
-            pendingSeekRef.current[slot] = null;
+            pendingSeekRef.current = null;
             e.target.seekTo(target, true);
           }
         },
       },
     });
-    playersRef.current[slot] = player;
-    slotVideoIdRef.current[slot] = videoId;
   }, []);
 
-  // 動画IDが特定できないお気に入りは一覧には残すが、自動連続再生ではスキップする
-  const findNextPlayableIndex = useCallback((fromIndex: number): number => {
-    for (let i = fromIndex; i < clipsRef.current.length; i++) {
-      if (clipsRef.current[i].videoId) return i;
-    }
-    return -1;
-  }, []);
-
-  const preloadNext = useCallback((index: number) => {
-    const nextIndex = findNextPlayableIndex(index + 1);
-    const next = nextIndex >= 0 ? clipsRef.current[nextIndex] : undefined;
-    if (!next || !next.videoId) return;
-    const inactiveSlot = OTHER_SLOT(activeSlotRef.current);
-    if (slotVideoIdRef.current[inactiveSlot] === next.videoId) return;
-    if (next.videoId === slotVideoIdRef.current[activeSlotRef.current]) return;
-    const p = playersRef.current[inactiveSlot];
-    if (p && readyRef.current[inactiveSlot]) {
-      pendingSeekRef.current[inactiveSlot] = next.start;
-      p.cueVideoById(next.videoId, next.start);
-      slotVideoIdRef.current[inactiveSlot] = next.videoId;
-    } else if (!p) {
-      createPlayer(inactiveSlot, next.videoId, next.start, false);
-    }
-    // pがあってもまだreadyでない場合は何もしない（作成中に別の動画IDを積むと混乱するため）
-  }, [createPlayer, findNextPlayableIndex]);
-
-  const playClip = useCallback((index: number) => {
-    const clip = clipsRef.current[index];
+  // 指定したクリップ(id)を読み込んで再生する
+  const loadAndPlayClip = useCallback((clipId: string) => {
+    const clip = clipsByIdRef.current.get(clipId);
     if (!clip || !clip.videoId) return;
     const videoId = clip.videoId;
-    setFinished(false);
-    const active = activeSlotRef.current;
-    const other = OTHER_SLOT(active);
-    const activePlayer = playersRef.current[active];
+    const start = Math.max(0, clip.seconds - clipOffsetRef.current);
 
-    if (!activePlayer || !readyRef.current[active]) {
-      // アクティブプレイヤーの準備がまだ終わっていない → 準備完了時に自動で再生する
-      pendingPlayRef.current = index;
-      if (!activePlayer) createPlayer(active, videoId, clip.start, true);
-      setActiveIndex(index);
-      activeIndexRef.current = index;
+    if (!playerRef.current) {
+      loadYouTubeIframeApi(() => {
+        if (!playerRef.current) createPlayer(videoId, start);
+      });
       return;
     }
-
-    if (slotVideoIdRef.current[active] === videoId) {
-      pendingSeekRef.current[active] = clip.start;
-      activePlayer.seekTo(clip.start, true);
-      activePlayer.playVideo();
-    } else if (slotVideoIdRef.current[other] === videoId && playersRef.current[other] && readyRef.current[other]) {
-      // 事前読み込み済みの反対側スロットへスワップ（切替の待ち時間を減らす）
-      pendingSeekRef.current[other] = clip.start;
-      playersRef.current[other]!.seekTo(clip.start, true);
-      playersRef.current[other]!.playVideo();
-      activePlayer.pauseVideo();
-      setActiveSlot(other);
-      activeSlotRef.current = other;
-      setIsPlayerReady(true);
-    } else {
-      pendingSeekRef.current[active] = clip.start;
-      activePlayer.loadVideoById(videoId, clip.start);
-      slotVideoIdRef.current[active] = videoId;
+    if (!readyRef.current) {
+      pendingLoadRef.current = { videoId, start };
+      return;
     }
+    if (currentVideoIdRef.current === videoId) {
+      pendingSeekRef.current = start;
+      playerRef.current.seekTo(start, true);
+      playerRef.current.playVideo();
+    } else {
+      pendingSeekRef.current = start;
+      currentVideoIdRef.current = videoId;
+      playerRef.current.loadVideoById(videoId, start);
+    }
+  }, [createPlayer]);
 
-    setActiveIndex(index);
-    activeIndexRef.current = index;
-    preloadNext(index);
-  }, [createPlayer, preloadNext]);
+  const loadAndPlayClipRef = useRef(loadAndPlayClip);
+  loadAndPlayClipRef.current = loadAndPlayClip;
 
-  playClipRef.current = playClip;
+  const buildPlayableIds = useCallback((): string[] => {
+    return clipsRef.current.filter((c) => c.videoId).map((c) => c.id);
+  }, []);
 
-  // 初回ブートストラップ: 再生可能な最初のクリップを再生し、次のクリップを事前読み込み
-  useEffect(() => {
-    if (bootstrappedRef.current) return;
-    if (clips.length === 0) return;
-    const firstPlayable = findNextPlayableIndex(0);
-    if (firstPlayable < 0) return;
-    bootstrappedRef.current = true;
-    const clip = clips[firstPlayable];
-    loadYouTubeIframeApi(() => {
-      createPlayer(0, clip.videoId!, clip.start, true);
-      setActiveIndex(firstPlayable);
-      activeIndexRef.current = firstPlayable;
-      preloadNext(firstPlayable);
-    });
-    return () => {
-      playersRef.current[0]?.destroy();
-      playersRef.current[1]?.destroy();
-      playersRef.current = [null, null];
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clips.length > 0]);
+  const shuffleIds = (ids: string[]): string[] => {
+    const a = [...ids];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
 
-  // 再生位置を監視し、クリップの終端(+20秒)に達したら自動で次へ
+  const startQueue = useCallback((order: string[], pos: number) => {
+    if (order.length === 0) return;
+    setPlayOrder(order);
+    playOrderRef.current = order;
+    setQueuePos(pos);
+    queuePosRef.current = pos;
+    loadAndPlayClip(order[pos]);
+  }, [loadAndPlayClip]);
+
+  const handlePlayAll = useCallback(() => {
+    setShuffleMode(false);
+    startQueue(buildPlayableIds(), 0);
+  }, [buildPlayableIds, startQueue]);
+
+  const handleShufflePlay = useCallback(() => {
+    setShuffleMode(true);
+    startQueue(shuffleIds(buildPlayableIds()), 0);
+  }, [buildPlayableIds, startQueue]);
+
+  const handleClickClip = useCallback((clipId: string) => {
+    if (!clipsByIdRef.current.get(clipId)?.videoId) return;
+    const all = buildPlayableIds();
+    let order: string[];
+    let pos: number;
+    if (shuffleMode) {
+      order = [clipId, ...shuffleIds(all.filter((id) => id !== clipId))];
+      pos = 0;
+    } else {
+      order = all;
+      pos = order.indexOf(clipId);
+    }
+    startQueue(order, pos);
+  }, [buildPlayableIds, shuffleMode, startQueue]);
+
+  const goToOffset = useCallback((delta: number) => {
+    const order = playOrderRef.current;
+    if (order.length === 0) return;
+    const pos = queuePosRef.current;
+    const nextPos = ((pos + delta) % order.length + order.length) % order.length;
+    setQueuePos(nextPos);
+    queuePosRef.current = nextPos;
+    loadAndPlayClip(order[nextPos]);
+  }, [loadAndPlayClip]);
+
+  // 再生位置を監視し、シーン+切り取り秒数に達したら自動で次へ（末尾なら先頭に戻る）
   useEffect(() => {
     const interval = setInterval(() => {
-      const idx = activeIndexRef.current;
-      const clip = clipsRef.current[idx];
-      const player = playersRef.current[activeSlotRef.current];
-      if (!clip || !player) return;
+      const player = playerRef.current;
+      const pos = queuePosRef.current;
+      const order = playOrderRef.current;
+      if (!player || pos < 0 || order.length === 0) return;
+      const clip = clipsByIdRef.current.get(order[pos]);
+      if (!clip) {
+        // お気に入り解除等で消えたクリップはスキップして次へ
+        goToOffset(1);
+        return;
+      }
       let t: number;
       try {
         t = player.getCurrentTime();
@@ -258,29 +269,33 @@ export default function FavoriteScenesPage() {
         return;
       }
       setCurrentTime(t);
-      if (t >= clip.end) {
-        const nextIdx = findNextPlayableIndex(idx + 1);
-        if (nextIdx >= 0) {
-          playClipRef.current(nextIdx);
-        } else {
-          player.pauseVideo();
-          setFinished(true);
-        }
+      if (t >= clip.seconds + clipOffsetRef.current) {
+        const nextPos = (pos + 1) % order.length;
+        setQueuePos(nextPos);
+        queuePosRef.current = nextPos;
+        loadAndPlayClipRef.current(order[nextPos]);
       }
     }, PROGRESS_POLL_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [goToOffset]);
+
+  // アンマウント時にプレイヤーを破棄
+  useEffect(() => () => { playerRef.current?.destroy(); playerRef.current = null; }, []);
 
   const handleTogglePlay = () => {
-    const player = playersRef.current[activeSlotRef.current];
-    if (!player) return;
+    const player = playerRef.current;
+    if (!player) {
+      handlePlayAll();
+      return;
+    }
     if (isPlaying) player.pauseVideo();
     else player.playVideo();
   };
 
-  const activeClip = clips[activeIndex];
+  const clipStart = activeClip ? Math.max(0, activeClip.seconds - clipOffset) : 0;
+  const clipEnd = activeClip ? activeClip.seconds + clipOffset : 0;
   const progress = activeClip
-    ? Math.min(100, Math.max(0, ((currentTime - activeClip.start) / (activeClip.end - activeClip.start)) * 100))
+    ? Math.min(100, Math.max(0, ((currentTime - clipStart) / (clipEnd - clipStart)) * 100))
     : 0;
 
   if (isLoading) {
@@ -304,17 +319,41 @@ export default function FavoriteScenesPage() {
         </p>
       ) : (
         <>
+          {/* 全体再生・シャッフル再生 */}
+          <div className="flex items-center gap-2 mb-2">
+            <button
+              onClick={handlePlayAll}
+              className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500 active:bg-emerald-400 text-white font-bold py-2.5 rounded-xl text-sm"
+            >
+              <PlayIcon size={16} />上から再生
+            </button>
+            <button
+              onClick={handleShufflePlay}
+              className={`flex-1 flex items-center justify-center gap-1.5 text-white font-bold py-2.5 rounded-xl text-sm ${shuffleMode ? 'bg-sky-500 active:bg-sky-400' : 'bg-white/10 active:bg-white/20'}`}
+            >
+              <ShuffleIcon size={16} />シャッフル再生
+            </button>
+          </div>
+
+          {/* 1シーンあたりの切り取り秒数 */}
+          <div className="flex items-center justify-center gap-2 mb-4 text-xs text-blue-200/80">
+            <span>1シーンの長さ: 前後</span>
+            <button
+              onClick={() => setClipOffset((o) => Math.max(MIN_CLIP_OFFSET, o - 5))}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+              aria-label="短くする"
+            >−</button>
+            <span className="font-mono font-bold text-white w-6 text-center">{clipOffset}</span>
+            <button
+              onClick={() => setClipOffset((o) => Math.min(MAX_CLIP_OFFSET, o + 5))}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+              aria-label="長くする"
+            >+</button>
+            <span>秒</span>
+          </div>
+
           <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg">
-            <div
-              id="fav-player-0"
-              className="absolute inset-0 w-full h-full"
-              style={{ visibility: activeSlot === 0 ? 'visible' : 'hidden' }}
-            />
-            <div
-              id="fav-player-1"
-              className="absolute inset-0 w-full h-full"
-              style={{ visibility: activeSlot === 1 ? 'visible' : 'hidden' }}
-            />
+            <div id="fav-player" className="absolute inset-0 w-full h-full" />
             {/* YouTube側のタップ操作によるタイトル/ブランディング表示を防ぐブロック用オーバーレイ（タップで再生/一時停止） */}
             <button
               type="button"
@@ -322,13 +361,10 @@ export default function FavoriteScenesPage() {
               onClick={handleTogglePlay}
               className="absolute inset-0"
             />
-            {finished && (
-              <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-3">
-                <p className="text-white font-bold">全てのシーンを再生しました</p>
-                <button
-                  onClick={() => { const i = findNextPlayableIndex(0); if (i >= 0) playClip(i); }}
-                  className="bg-emerald-500 active:bg-emerald-400 text-white text-sm font-bold px-4 py-2 rounded-full"
-                >もう一度最初から再生</button>
+            {!activeClip && (
+              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 pointer-events-none">
+                <PlayIcon size={40} className="text-white/70" />
+                <p className="text-white/70 text-xs">再生ボタンかシーンを選んでね</p>
               </div>
             )}
           </div>
@@ -341,8 +377,8 @@ export default function FavoriteScenesPage() {
           {/* 現在のシーン情報 + 操作 */}
           <div className="mt-2 flex items-center gap-2">
             <button
-              onClick={() => activeIndex > 0 && playClip(activeIndex - 1)}
-              disabled={activeIndex <= 0}
+              onClick={() => goToOffset(-1)}
+              disabled={queuePos < 0}
               className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/10 text-white disabled:opacity-30 active:scale-95 transition-transform"
               aria-label="前のシーン"
             >
@@ -350,32 +386,31 @@ export default function FavoriteScenesPage() {
             </button>
             <button
               onClick={handleTogglePlay}
-              disabled={!isPlayerReady}
-              className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-emerald-500 active:bg-emerald-400 text-white disabled:opacity-30 active:scale-95 transition-transform"
+              className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-emerald-500 active:bg-emerald-400 text-white active:scale-95 transition-transform"
               aria-label={isPlaying ? '一時停止' : '再生'}
             >
               {isPlaying ? <PauseIcon size={22} /> : <PlayIcon size={22} />}
             </button>
             <button
-              onClick={() => activeIndex < clips.length - 1 && playClip(activeIndex + 1)}
-              disabled={activeIndex >= clips.length - 1}
+              onClick={() => goToOffset(1)}
+              disabled={queuePos < 0}
               className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/10 text-white disabled:opacity-30 active:scale-95 transition-transform"
               aria-label="次のシーン"
             >
               <SkipIcon size={18} />
             </button>
             <div className="flex-1 min-w-0 pl-1">
-              <p className="text-white text-sm font-semibold line-clamp-1">{activeClip?.label || 'シーン'}</p>
+              <p className="text-white text-sm font-semibold line-clamp-1">{activeClip?.label || (activeClip ? 'シーン' : '未再生')}</p>
               <p className="text-blue-300/70 text-xs line-clamp-1">{activeClip?.videoDescription}</p>
             </div>
           </div>
 
           {/* お気に入りシーン一覧 */}
           <div className="mt-5 space-y-1.5">
-            {clips.map((clip, idx) => (
+            {clips.map((clip) => (
               <div
                 key={clip.id}
-                className={`rounded-xl flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${idx === activeIndex ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
+                className={`rounded-xl flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${clip.id === activeClipId ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
               >
                 <button
                   onClick={() => toggleTimestampFavorite(clip.id)}
@@ -386,11 +421,11 @@ export default function FavoriteScenesPage() {
                   <StarIcon size={16} />
                 </button>
                 <button
-                  onClick={() => playClip(idx)}
+                  onClick={() => handleClickClip(clip.id)}
                   disabled={!clip.videoId}
                   className="flex-1 flex items-center gap-2 text-left min-w-0 disabled:opacity-40"
                 >
-                  <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${idx === activeIndex ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(clip.seconds)}</span>
+                  <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${clip.id === activeClipId ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(clip.seconds)}</span>
                   <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{clip.label || 'シーン'}</span>
                   {clip.videoId ? (
                     <span className="text-blue-300/60 text-[10px] flex-shrink-0 max-w-[35%] truncate">{clip.videoDescription}</span>
