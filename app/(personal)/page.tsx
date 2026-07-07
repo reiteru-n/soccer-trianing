@@ -14,7 +14,7 @@ import { BodyRecord } from '@/lib/types';
 import { exportData, importData, recentDistinct } from '@/lib/storage';
 import BodyChart from '@/components/BodyChart';
 import BodyCharts from '@/components/BodyCharts';
-import { EditIcon, BallIcon, TrophyIcon, NoteIcon, RulerIcon, VideoIcon, ChartIcon, SaveIcon, UploadIcon, DownloadIcon, CheckIcon, WarningIcon } from '@/components/AppIcons';
+import { EditIcon, BallIcon, TrophyIcon, NoteIcon, RulerIcon, VideoIcon, ChartIcon, SaveIcon, UploadIcon, DownloadIcon, CheckIcon, WarningIcon, TimerIcon } from '@/components/AppIcons';
 
 function todayStr() {
   const d = new Date();
@@ -23,7 +23,7 @@ function todayStr() {
 
 
 export default function DashboardPage() {
-  const { liftingRecords, addLiftingRecord, practiceNotes, addPracticeNote, milestones, maxCount, newMilestoneAchieved, clearNewMilestone, bodyRecords, addBodyRecord, updateBodyRecord, deleteBodyRecord, childBirthDate, setChildBirthDate, isLoading } = useApp();
+  const { liftingRecords, addLiftingRecord, practiceNotes, addPracticeNote, milestones, maxCount, newMilestoneAchieved, clearNewMilestone, bodyRecords, addBodyRecord, updateBodyRecord, deleteBodyRecord, childBirthDate, setChildBirthDate, sprintRecords, isLoading } = useApp();
   const [showLiftingForm, setShowLiftingForm] = useState(false);
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [showBodyForm, setShowBodyForm] = useState(false);
@@ -46,6 +46,7 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
   const sortedBody = [...bodyRecords].sort((a, b) => b.date.localeCompare(a.date));
   const latestH = sortedBody.find(r => r.height != null);
   const latestW = sortedBody.find(r => r.weight != null);
+  const bestSprintTime = sprintRecords.length > 0 ? Math.min(...sprintRecords.map((r) => r.timeSeconds)) : null;
   const pastLocations = recentDistinct([...liftingRecords.map((r) => r.location), ...practiceNotes.map((n) => n.location)]);
   const pastCategories = recentDistinct(practiceNotes.map((n) => n.category));
   const pastTeamNames = recentDistinct(practiceNotes.map((n) => n.teamName));
@@ -145,12 +146,24 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
       </div>
       <Link
         href="/videos"
-        className="mb-5 block bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-2xl px-4 py-3 text-white shadow-lg shadow-orange-900/30 border border-amber-300/40 active:scale-[0.98] transition-transform"
+        className="mb-3 block bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-2xl px-4 py-3 text-white shadow-lg shadow-orange-900/30 border border-amber-300/40 active:scale-[0.98] transition-transform"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <VideoIcon size={22} />
             <span className="text-sm font-bold">目標達成に近づく動画</span>
+          </div>
+          <span className="text-white/80 text-sm">→</span>
+        </div>
+      </Link>
+      <Link
+        href="/sprint"
+        className="mb-5 block bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 rounded-2xl px-4 py-3 text-white shadow-lg shadow-rose-900/30 border border-red-300/40 active:scale-[0.98] transition-transform"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TimerIcon size={22} />
+            <span className="text-sm font-bold">50m走記録{bestSprintTime !== null ? `（ベスト ${bestSprintTime}秒）` : ''}</span>
           </div>
           <span className="text-white/80 text-sm">→</span>
         </div>

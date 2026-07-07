@@ -111,7 +111,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // Personal pages: requires family session
-  const personalPaths = ['/', '/lifting', '/notes', '/training', '/growth', '/performance', '/videos'];
+  const personalPaths = ['/', '/lifting', '/notes', '/training', '/growth', '/performance', '/videos', '/sprint'];
   const isPersonal = personalPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
   if (isPersonal) {
     if (!(await hasValidCookie(req, 'family_session', 'family'))) {

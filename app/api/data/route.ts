@@ -17,6 +17,7 @@ const KEYS = {
   videoStats:       'takuto:video_stats',
   videoTimestamps:  'takuto:video_timestamps',
   videoPlayback:    'takuto:video_playback',
+  sprint:           'takuto:sprint',
 } as const;
 
 // 旧キー（初回のみマイグレーション用）
@@ -36,6 +37,7 @@ interface AppData {
   videoStats?: unknown[];
   videoTimestamps?: unknown[];
   videoPlaybackPositions?: unknown[];
+  sprintRecords?: unknown[];
 }
 
 // ----- Redis helpers -----
@@ -57,9 +59,9 @@ async function readData(): Promise<AppData | null> {
     const redis = await getRedis();
 
     // 新キーから一括読み込み
-    const [notes, lifting, body, menu, logs, config, perf, perfCfg, vcats, vids, vstats, vtimestamps, vplayback] = await redis.mget<unknown[]>(
+    const [notes, lifting, body, menu, logs, config, perf, perfCfg, vcats, vids, vstats, vtimestamps, vplayback, sprint] = await redis.mget<unknown[]>(
       KEYS.notes, KEYS.lifting, KEYS.body, KEYS.menu, KEYS.logs, KEYS.config, KEYS.performance, KEYS.perfConfig,
-      KEYS.videoCats, KEYS.videos, KEYS.videoStats, KEYS.videoTimestamps, KEYS.videoPlayback
+      KEYS.videoCats, KEYS.videos, KEYS.videoStats, KEYS.videoTimestamps, KEYS.videoPlayback, KEYS.sprint
     );
 
     // いずれかのキーがあれば新形式
@@ -78,6 +80,7 @@ async function readData(): Promise<AppData | null> {
         videoStats:        (vstats       as unknown[]) ?? undefined,
         videoTimestamps:   (vtimestamps  as unknown[]) ?? undefined,
         videoPlaybackPositions: (vplayback as unknown[]) ?? undefined,
+        sprintRecords:     (sprint       as unknown[]) ?? undefined,
       };
     }
 
@@ -133,6 +136,7 @@ async function writePartial(body: Partial<Record<string, unknown>>): Promise<voi
     if ('videoStats'         in body) updates[KEYS.videoStats]       = body.videoStats;
     if ('videoTimestamps'    in body) updates[KEYS.videoTimestamps]  = body.videoTimestamps;
     if ('videoPlaybackPositions' in body) updates[KEYS.videoPlayback] = body.videoPlaybackPositions;
+    if ('sprintRecords'         in body) updates[KEYS.sprint]        = body.sprintRecords;
     if (Object.keys(updates).length > 0) {
       await redis.mset(updates);
     }
@@ -164,6 +168,7 @@ export async function GET(req: Request) {
       videoStats:       [],
       videoTimestamps:  [],
       videoPlaybackPositions: [],
+      sprintRecords: [],
     });
   }
   return NextResponse.json({
@@ -180,6 +185,7 @@ export async function GET(req: Request) {
     videoStats:        data.videoStats       ?? [],
     videoTimestamps:   data.videoTimestamps  ?? [],
     videoPlaybackPositions: (data as any).videoPlaybackPositions ?? [],
+    sprintRecords: (data as any).sprintRecords ?? [],
   });
 }
 

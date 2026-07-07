@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat, VideoTimestamp, VideoPlaybackPosition } from './types';
-import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, saveCustomMetrics, saveVideoCategories, saveVideos, saveVideoStats, saveVideoTimestamps, saveVideoPlaybackPositions, generateId } from './storage';
+import { LiftingRecord, PracticeNote, Milestone, BodyRecord, TrainingMenuItem, TrainingLog, PerformanceRecord, CustomMetricDef, VideoCategory, VideoItem, VideoViewStat, VideoTimestamp, VideoPlaybackPosition, SprintRecord } from './types';
+import { fetchAllData, saveLiftingRecords, savePracticeNotes, saveBodyRecords, saveTrainingMenu, saveTrainingLogs, saveBirthDate, savePerformanceRecords, saveCustomMetrics, saveVideoCategories, saveVideos, saveVideoStats, saveVideoTimestamps, saveVideoPlaybackPositions, saveSprintRecords, generateId } from './storage';
 import { MILESTONES } from './data';
 
 interface AppContextType {
@@ -59,6 +59,10 @@ interface AppContextType {
   toggleTimestampFavorite: (id: string) => void;
   videoPlaybackPositions: VideoPlaybackPosition[];
   updateVideoPlaybackPosition: (videoUrl: string, seconds: number) => void;
+  sprintRecords: SprintRecord[];
+  addSprintRecord: (record: Omit<SprintRecord, 'id'>) => void;
+  updateSprintRecord: (id: string, data: Omit<SprintRecord, 'id'>) => void;
+  deleteSprintRecord: (id: string) => void;
   isLoading: boolean;
 }
 
@@ -89,6 +93,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [videoStats, setVideoStats] = useState<VideoViewStat[]>([]);
   const [videoTimestamps, setVideoTimestamps] = useState<VideoTimestamp[]>([]);
   const [videoPlaybackPositions, setVideoPlaybackPositions] = useState<VideoPlaybackPosition[]>([]);
+  const [sprintRecords, setSprintRecords] = useState<SprintRecord[]>([]);
   const [newMilestoneAchieved, setNewMilestoneAchieved] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -108,6 +113,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setVideoStats(data.videoStats ?? []);
       setVideoTimestamps(data.videoTimestamps ?? []);
       setVideoPlaybackPositions(data.videoPlaybackPositions ?? []);
+      setSprintRecords(data.sprintRecords ?? []);
       setIsLoading(false);
     }
     load();
@@ -409,6 +415,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const addSprintRecord = useCallback((record: Omit<SprintRecord, 'id'>) => {
+    const updated = [...sprintRecords, { ...record, id: generateId() }];
+    setSprintRecords(updated);
+    saveSprintRecords(updated);
+  }, [sprintRecords]);
+
+  const updateSprintRecord = useCallback((id: string, data: Omit<SprintRecord, 'id'>) => {
+    const updated = sprintRecords.map((r) => (r.id === id ? { ...data, id } : r));
+    setSprintRecords(updated);
+    saveSprintRecords(updated);
+  }, [sprintRecords]);
+
+  const deleteSprintRecord = useCallback((id: string) => {
+    const updated = sprintRecords.filter((r) => r.id !== id);
+    setSprintRecords(updated);
+    saveSprintRecords(updated);
+  }, [sprintRecords]);
+
   return (
     <AppContext.Provider
       value={{
@@ -426,6 +450,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         videoStats, recordVideoView,
         videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView, toggleTimestampFavorite,
         videoPlaybackPositions, updateVideoPlaybackPosition,
+        sprintRecords, addSprintRecord, updateSprintRecord, deleteSprintRecord,
         isLoading,
       }}
     >

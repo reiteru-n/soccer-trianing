@@ -48,6 +48,14 @@ export interface LiftingRecord {
   side: LiftingSide;
 }
 
+export interface SprintRecord {
+  id: string;
+  date: string; // yyyy/mm/dd
+  location: string;
+  method: string; // 計測方法（自由入力）
+  timeSeconds: number; // タイム（秒）
+}
+
 export interface ImprovementItem {
   text: string;
   done: boolean;
