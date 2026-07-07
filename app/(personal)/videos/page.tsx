@@ -546,7 +546,12 @@ function VideoPlayerModal({
               event.target.seekTo(initialSecondsRef.current, true);
             }
           },
-          onStateChange: (event) => setIsPlaying(event.data === 1),
+          onStateChange: (event) => {
+            setIsPlaying(event.data === 1);
+            // onApiChangeはcaptionsモジュール初回ロード時にしか確実に発火しないため、
+            // 再生/バッファ中の状態遷移でも都度アンロードし直して字幕再表示を防ぐ
+            if (event.data === 1 || event.data === 3) disableCaptionsHard(event.target);
+          },
           onApiChange: (event) => disableCaptionsHard(event.target),
         },
       });
@@ -572,6 +577,7 @@ function VideoPlayerModal({
     if (!isPlayerReady) return;
     const id = setInterval(() => {
       if (!playerRef.current) return;
+      disableCaptionsHard(playerRef.current); // 字幕再表示のフェイルセーフ（ポーリングで都度アンロード）
       setCurrentTime(playerRef.current.getCurrentTime());
       const d = playerRef.current.getDuration();
       if (d > 0) setDuration(d);

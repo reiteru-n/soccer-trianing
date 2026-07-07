@@ -86,12 +86,26 @@ export default function FavoriteScenesPage() {
   const clipsRef = useRef(clips);
   clipsRef.current = clips;
 
-  const [clipOffsetBefore, setClipOffsetBefore] = useState(DEFAULT_CLIP_OFFSET_BEFORE);
+  // 前後の切り取り秒数は端末に保存し、次回訪問時も引き継ぐ
+  const readSavedOffset = (key: string, fallback: number): number => {
+    if (typeof window === 'undefined') return fallback;
+    const saved = window.localStorage.getItem(key);
+    const n = saved ? parseInt(saved, 10) : NaN;
+    return !Number.isNaN(n) && n >= MIN_CLIP_OFFSET && n <= MAX_CLIP_OFFSET ? n : fallback;
+  };
+  const [clipOffsetBefore, setClipOffsetBefore] = useState(() => readSavedOffset('favoriteClipOffsetBefore', DEFAULT_CLIP_OFFSET_BEFORE));
   const clipOffsetBeforeRef = useRef(clipOffsetBefore);
   clipOffsetBeforeRef.current = clipOffsetBefore;
-  const [clipOffsetAfter, setClipOffsetAfter] = useState(DEFAULT_CLIP_OFFSET_AFTER);
+  const [clipOffsetAfter, setClipOffsetAfter] = useState(() => readSavedOffset('favoriteClipOffsetAfter', DEFAULT_CLIP_OFFSET_AFTER));
   const clipOffsetAfterRef = useRef(clipOffsetAfter);
   clipOffsetAfterRef.current = clipOffsetAfter;
+
+  useEffect(() => {
+    window.localStorage.setItem('favoriteClipOffsetBefore', String(clipOffsetBefore));
+  }, [clipOffsetBefore]);
+  useEffect(() => {
+    window.localStorage.setItem('favoriteClipOffsetAfter', String(clipOffsetAfter));
+  }, [clipOffsetAfter]);
 
   const [shuffleMode, setShuffleMode] = useState(false);
   const [playOrder, setPlayOrder] = useState<string[]>([]);
@@ -156,6 +170,9 @@ export default function FavoriteScenesPage() {
         },
         onStateChange: (e) => {
           setIsPlaying(e.data === 1);
+          // onApiChangeはcaptionsモジュール初回ロード時にしか確実に発火しないため、
+          // 再生/バッファ中の状態遷移でも都度アンロードし直して字幕再表示を防ぐ
+          if (e.data === 1 || e.data === 3) disableCaptionsHard(e.target);
           const target = pendingSeekRef.current;
           if (target !== null && (e.data === 1 || e.data === 5)) {
             pendingSeekRef.current = null;
@@ -259,6 +276,7 @@ export default function FavoriteScenesPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       const player = playerRef.current;
+      if (player) disableCaptionsHard(player); // 字幕再表示のフェイルセーフ（ポーリングで都度アンロード）
       const pos = queuePosRef.current;
       const order = playOrderRef.current;
       if (!player || pos < 0 || order.length === 0) return;
