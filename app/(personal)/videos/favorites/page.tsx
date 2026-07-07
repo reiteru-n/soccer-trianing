@@ -10,9 +10,20 @@ import { StarIcon, PlayIcon, PauseIcon, ShuffleIcon, SkipIcon, ExpandIcon, Colla
 
 const DEFAULT_CLIP_OFFSET_BEFORE = 20;
 const DEFAULT_CLIP_OFFSET_AFTER = 20;
-const MIN_CLIP_OFFSET = 5;
+const MIN_CLIP_OFFSET = 0;
 const MAX_CLIP_OFFSET = 60;
+const FINE_STEP_THRESHOLD = 5; // これ未満は1秒刻み、以上は5秒刻み
 const PROGRESS_POLL_MS = 300;
+
+// 5秒未満は1秒刻み、5秒以上は5秒刻みで増減する
+function stepOffsetUp(value: number): number {
+  const next = value < FINE_STEP_THRESHOLD ? value + 1 : value + 5;
+  return Math.min(MAX_CLIP_OFFSET, next);
+}
+function stepOffsetDown(value: number): number {
+  const next = value <= FINE_STEP_THRESHOLD ? value - 1 : value - 5;
+  return Math.max(MIN_CLIP_OFFSET, next);
+}
 
 function formatSeconds(s: number): string {
   const m = Math.floor(s / 60);
@@ -318,7 +329,7 @@ export default function FavoriteScenesPage() {
 
   const clipStart = activeClip ? Math.max(0, activeClip.seconds - clipOffsetBefore) : 0;
   const clipEnd = activeClip ? activeClip.seconds + clipOffsetAfter : 0;
-  const progress = activeClip
+  const progress = activeClip && clipEnd > clipStart
     ? Math.min(100, Math.max(0, ((currentTime - clipStart) / (clipEnd - clipStart)) * 100))
     : 0;
 
@@ -425,13 +436,13 @@ export default function FavoriteScenesPage() {
             <div className="flex items-center gap-2">
               <span>シーン前</span>
               <button
-                onClick={() => setClipOffsetBefore((o) => Math.max(MIN_CLIP_OFFSET, o - 5))}
+                onClick={() => setClipOffsetBefore(stepOffsetDown)}
                 className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
                 aria-label="シーン前を短くする"
               >−</button>
               <span className="font-mono font-bold text-white w-6 text-center">{clipOffsetBefore}</span>
               <button
-                onClick={() => setClipOffsetBefore((o) => Math.min(MAX_CLIP_OFFSET, o + 5))}
+                onClick={() => setClipOffsetBefore(stepOffsetUp)}
                 className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
                 aria-label="シーン前を長くする"
               >+</button>
@@ -440,13 +451,13 @@ export default function FavoriteScenesPage() {
             <div className="flex items-center gap-2">
               <span>シーン後</span>
               <button
-                onClick={() => setClipOffsetAfter((o) => Math.max(MIN_CLIP_OFFSET, o - 5))}
+                onClick={() => setClipOffsetAfter(stepOffsetDown)}
                 className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
                 aria-label="シーン後を短くする"
               >−</button>
               <span className="font-mono font-bold text-white w-6 text-center">{clipOffsetAfter}</span>
               <button
-                onClick={() => setClipOffsetAfter((o) => Math.min(MAX_CLIP_OFFSET, o + 5))}
+                onClick={() => setClipOffsetAfter(stepOffsetUp)}
                 className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
                 aria-label="シーン後を長くする"
               >+</button>
@@ -463,18 +474,25 @@ export default function FavoriteScenesPage() {
             >
               <div className={isFullscreen ? 'relative flex-1 min-h-0 bg-black overflow-hidden' : 'relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg'}>
                 <div id="fav-player" className="absolute inset-0 w-full h-full" />
-                {/* YouTube側のタップ操作によるタイトル/ブランディング表示を防ぐブロック用オーバーレイ（タップで再生/一時停止） */}
-                <button
-                  type="button"
-                  aria-label={isPlaying ? '一時停止' : '再生'}
-                  onClick={handleTogglePlay}
-                  className="absolute inset-0"
-                />
-                {!activeClip && (
-                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 pointer-events-none">
-                    <PlayIcon size={40} className="text-white/70" />
-                    <p className="text-white/70 text-xs">再生ボタンかシーンを選んでね</p>
-                  </div>
+                {activeClip ? (
+                  // YouTube側のタップ操作によるタイトル/ブランディング表示を防ぐブロック用オーバーレイ（タップで再生/一時停止）
+                  <button
+                    type="button"
+                    aria-label={isPlaying ? '一時停止' : '再生'}
+                    onClick={handleTogglePlay}
+                    className="absolute inset-0"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    aria-label="再生"
+                    onClick={handleTogglePlay}
+                    className="absolute inset-0 bg-black/40 flex items-center justify-center"
+                  >
+                    <span className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
+                      <PlayIcon size={28} className="text-white ml-1" />
+                    </span>
+                  </button>
                 )}
                 <button
                   type="button"
