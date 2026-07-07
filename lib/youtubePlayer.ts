@@ -1,6 +1,8 @@
 // YouTube IFrame Player API 型宣言 + 共通ヘルパー
 // videos ページ本体と /videos/favorites（お気に入りシーン連続再生）で共有する
 
+import { useEffect, useState } from 'react';
+
 export interface YTPlayer {
   getCurrentTime: () => number;
   getDuration: () => number;
@@ -96,4 +98,26 @@ export function extractYoutubeVideoId(url: string): string | null {
 export function getYoutubeThumbnail(url: string): string | null {
   const id = extractYoutubeVideoId(url);
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
+
+/** スマホ判定時のみ、縦画面でも強制的に横画面レイアウトへ回転させる（動画フルスクリーン表示用） */
+export function useForceLandscape(): boolean {
+  const [shouldRotate, setShouldRotate] = useState(false);
+
+  useEffect(() => {
+    const mobileMq = window.matchMedia('(hover: none) and (pointer: coarse)');
+    const portraitMq = window.matchMedia('(orientation: portrait)');
+
+    const update = () => setShouldRotate(mobileMq.matches && portraitMq.matches);
+    update();
+
+    mobileMq.addEventListener('change', update);
+    portraitMq.addEventListener('change', update);
+    return () => {
+      mobileMq.removeEventListener('change', update);
+      portraitMq.removeEventListener('change', update);
+    };
+  }, []);
+
+  return shouldRotate;
 }

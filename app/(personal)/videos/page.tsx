@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import { VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from '@/lib/types';
-import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, getYoutubeThumbnail, disableCaptionsHard } from '@/lib/youtubePlayer';
+import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, getYoutubeThumbnail, disableCaptionsHard, useForceLandscape } from '@/lib/youtubePlayer';
 import { useSchMatchVideos, SchMatchVideo } from '@/lib/schMatchVideos';
 import { StarIcon, TrashIcon, ChevronIcon } from '@/components/AppIcons';
 
@@ -421,28 +421,6 @@ function SeekBar({
       </div>
     </div>
   );
-}
-
-// --- スマホ判定時のみ、縦画面でも強制的に横画面レイアウトへ回転させる ---
-function useForceLandscape(): boolean {
-  const [shouldRotate, setShouldRotate] = useState(false);
-
-  useEffect(() => {
-    const mobileMq = window.matchMedia('(hover: none) and (pointer: coarse)');
-    const portraitMq = window.matchMedia('(orientation: portrait)');
-
-    const update = () => setShouldRotate(mobileMq.matches && portraitMq.matches);
-    update();
-
-    mobileMq.addEventListener('change', update);
-    portraitMq.addEventListener('change', update);
-    return () => {
-      mobileMq.removeEventListener('change', update);
-      portraitMq.removeEventListener('change', update);
-    };
-  }, []);
-
-  return shouldRotate;
 }
 
 // --- 試合動画プレイヤー モーダル（試合カテゴリ専用）---

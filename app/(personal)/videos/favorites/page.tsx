@@ -4,9 +4,9 @@ import { useState, useMemo, useEffect, useRef, useCallback, type PointerEvent as
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import { VideoTimestamp } from '@/lib/types';
-import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, disableCaptionsHard } from '@/lib/youtubePlayer';
+import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, disableCaptionsHard, useForceLandscape } from '@/lib/youtubePlayer';
 import { useSchMatchVideos } from '@/lib/schMatchVideos';
-import { StarIcon, PlayIcon, PauseIcon, ShuffleIcon, SkipIcon } from '@/components/AppIcons';
+import { StarIcon, PlayIcon, PauseIcon, ShuffleIcon, SkipIcon, ExpandIcon, CollapseIcon } from '@/components/AppIcons';
 
 const DEFAULT_CLIP_OFFSET_BEFORE = 20;
 const DEFAULT_CLIP_OFFSET_AFTER = 20;
@@ -351,6 +351,38 @@ export default function FavoriteScenesPage() {
     e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
+  // 画面最大化（通常の試合動画モーダルと同じ「スマホ縦画面なら強制横回転」方式）
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const shouldRotate = useForceLandscape();
+  const [rotated, setRotated] = useState(false);
+
+  useEffect(() => {
+    if (!isFullscreen || !shouldRotate) {
+      setRotated(false);
+      return;
+    }
+    // 1フレーム置いてから回転させることで「縦→横」のアニメーションを発生させる
+    const raf1 = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setRotated(true));
+    });
+    return () => cancelAnimationFrame(raf1);
+  }, [isFullscreen, shouldRotate]);
+
+  const rotateStyle = shouldRotate
+    ? {
+        position: 'absolute' as const,
+        transformOrigin: '0 0',
+        transitionProperty: 'top, left, width, height, transform',
+        transitionDuration: '450ms',
+        transitionTimingFunction: 'ease-in-out',
+        top: 0,
+        left: rotated ? '100%' : 0,
+        width: rotated ? '100vh' : '100vw',
+        height: rotated ? '100vw' : '100vh',
+        transform: rotated ? 'rotate(90deg)' : 'rotate(0deg)',
+      }
+    : { position: 'absolute' as const, inset: 0 };
+
   if (isLoading) {
     return (<div className="flex items-center justify-center py-24 text-blue-200"><div className="text-center"><p className="text-4xl mb-3">⭐</p><p className="text-sm">読み込み中...</p></div></div>);
   }
@@ -422,67 +454,85 @@ export default function FavoriteScenesPage() {
             </div>
           </div>
 
-          <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg">
-            <div id="fav-player" className="absolute inset-0 w-full h-full" />
-            {/* YouTube側のタップ操作によるタイトル/ブランディング表示を防ぐブロック用オーバーレイ（タップで再生/一時停止） */}
-            <button
-              type="button"
-              aria-label={isPlaying ? '一時停止' : '再生'}
-              onClick={handleTogglePlay}
-              className="absolute inset-0"
-            />
-            {!activeClip && (
-              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 pointer-events-none">
-                <PlayIcon size={40} className="text-white/70" />
-                <p className="text-white/70 text-xs">再生ボタンかシーンを選んでね</p>
-              </div>
-            )}
-          </div>
-
-          {/* クリップ進捗バー（ドラッグ/タップでシーク可能） */}
-          <div
-            ref={seekBarRef}
-            className="relative h-5 mt-2 bg-white/10 rounded-full cursor-pointer select-none touch-none"
-            onPointerDown={handleSeekPointerDown}
-            onPointerMove={handleSeekPointerMove}
-            onPointerUp={handleSeekPointerUp}
-            onPointerCancel={handleSeekPointerUp}
-          >
-            <div className="absolute left-0 top-0 h-full bg-amber-400/70 rounded-full pointer-events-none" style={{ width: `${progress}%` }} />
+          {/* 動画+シークバー+操作ボタン: フルスクリーン時はDOMツリー形状を変えずclassName/styleだけ切り替える
+              （YT.Playerがバインドされた#fav-playerを跨って再マウントされると再生が壊れるため） */}
+          <div className={isFullscreen ? 'fixed inset-0 z-[200] bg-black overflow-hidden' : 'contents'}>
             <div
-              className="absolute top-1/2 w-3 h-3 bg-white rounded-full shadow-md pointer-events-none"
-              style={{ left: `${progress}%`, transform: 'translateX(-50%) translateY(-50%)' }}
-            />
-          </div>
+              className={isFullscreen ? 'flex flex-col h-full' : 'contents'}
+              style={isFullscreen ? rotateStyle : undefined}
+            >
+              <div className={isFullscreen ? 'relative flex-1 min-h-0 bg-black overflow-hidden' : 'relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg'}>
+                <div id="fav-player" className="absolute inset-0 w-full h-full" />
+                {/* YouTube側のタップ操作によるタイトル/ブランディング表示を防ぐブロック用オーバーレイ（タップで再生/一時停止） */}
+                <button
+                  type="button"
+                  aria-label={isPlaying ? '一時停止' : '再生'}
+                  onClick={handleTogglePlay}
+                  className="absolute inset-0"
+                />
+                {!activeClip && (
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 pointer-events-none">
+                    <PlayIcon size={40} className="text-white/70" />
+                    <p className="text-white/70 text-xs">再生ボタンかシーンを選んでね</p>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsFullscreen((v) => !v)}
+                  aria-label={isFullscreen ? '画面最大化を解除' : '画面を最大化'}
+                  title={isFullscreen ? '元のサイズに戻す' : '画面を最大化'}
+                  className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 text-white active:bg-black/70"
+                >
+                  {isFullscreen ? <CollapseIcon size={16} /> : <ExpandIcon size={16} />}
+                </button>
+              </div>
 
-          {/* 現在のシーン情報 + 操作 */}
-          <div className="mt-2 flex items-center gap-2">
-            <button
-              onClick={() => goToOffset(-1)}
-              disabled={queuePos < 0}
-              className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/10 text-white disabled:opacity-30 active:scale-95 transition-transform"
-              aria-label="前のシーン"
-            >
-              <SkipIcon size={18} className="rotate-180" />
-            </button>
-            <button
-              onClick={handleTogglePlay}
-              className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-emerald-500 active:bg-emerald-400 text-white active:scale-95 transition-transform"
-              aria-label={isPlaying ? '一時停止' : '再生'}
-            >
-              {isPlaying ? <PauseIcon size={22} /> : <PlayIcon size={22} />}
-            </button>
-            <button
-              onClick={() => goToOffset(1)}
-              disabled={queuePos < 0}
-              className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/10 text-white disabled:opacity-30 active:scale-95 transition-transform"
-              aria-label="次のシーン"
-            >
-              <SkipIcon size={18} />
-            </button>
-            <div className="flex-1 min-w-0 pl-1">
-              <p className="text-white text-sm font-semibold line-clamp-1">{activeClip?.label || (activeClip ? 'シーン' : '未再生')}</p>
-              <p className="text-blue-300/70 text-xs line-clamp-1">{activeClip?.videoDescription}</p>
+              {/* クリップ進捗バー（ドラッグ/タップでシーク可能） */}
+              <div
+                ref={seekBarRef}
+                className={isFullscreen ? 'relative h-6 mx-3 mt-2 flex-shrink-0 bg-white/10 rounded-full cursor-pointer select-none touch-none' : 'relative h-5 mt-2 bg-white/10 rounded-full cursor-pointer select-none touch-none'}
+                onPointerDown={handleSeekPointerDown}
+                onPointerMove={handleSeekPointerMove}
+                onPointerUp={handleSeekPointerUp}
+                onPointerCancel={handleSeekPointerUp}
+              >
+                <div className="absolute left-0 top-0 h-full bg-amber-400/70 rounded-full pointer-events-none" style={{ width: `${progress}%` }} />
+                <div
+                  className="absolute top-1/2 w-3 h-3 bg-white rounded-full shadow-md pointer-events-none"
+                  style={{ left: `${progress}%`, transform: 'translateX(-50%) translateY(-50%)' }}
+                />
+              </div>
+
+              {/* 現在のシーン情報 + 操作 */}
+              <div className={isFullscreen ? 'flex items-center gap-2 px-3 py-2 flex-shrink-0' : 'mt-2 flex items-center gap-2'}>
+                <button
+                  onClick={() => goToOffset(-1)}
+                  disabled={queuePos < 0}
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/10 text-white disabled:opacity-30 active:scale-95 transition-transform"
+                  aria-label="前のシーン"
+                >
+                  <SkipIcon size={18} className="rotate-180" />
+                </button>
+                <button
+                  onClick={handleTogglePlay}
+                  className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-emerald-500 active:bg-emerald-400 text-white active:scale-95 transition-transform"
+                  aria-label={isPlaying ? '一時停止' : '再生'}
+                >
+                  {isPlaying ? <PauseIcon size={22} /> : <PlayIcon size={22} />}
+                </button>
+                <button
+                  onClick={() => goToOffset(1)}
+                  disabled={queuePos < 0}
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/10 text-white disabled:opacity-30 active:scale-95 transition-transform"
+                  aria-label="次のシーン"
+                >
+                  <SkipIcon size={18} />
+                </button>
+                <div className="flex-1 min-w-0 pl-1">
+                  <p className="text-white text-sm font-semibold line-clamp-1">{activeClip?.label || (activeClip ? 'シーン' : '未再生')}</p>
+                  <p className="text-blue-300/70 text-xs line-clamp-1">{activeClip?.videoDescription}</p>
+                </div>
+              </div>
             </div>
           </div>
 
