@@ -28,7 +28,10 @@ interface Dot {
  * 予定一覧の左側に配置する縦カレンダー目盛り。
  * 日付の間隔だけで位置を計算すると、カード1件あたりの高さがバラバラなため
  * 実際の一覧の行位置とズレてしまう。そのため各行の実際のDOM位置(offsetTop)を
- * 測定し、それに合わせてドット・今日の線を配置する（月ラベルはドット間を日付で補間）。
+ * 測定し、それに合わせてドット・今日の線を配置する。
+ * 月ラベルは「架空の月初日の位置を日付比率で補間する」と、一覧に時間差分の空白がない
+ * （カードは隙間なく並ぶだけ）ため実際の行位置と大きくズレる。そのため、月が変わる
+ * 最初の実イベントの実測位置にそのままラベルを置く方式にする（补間しない＝ズレない）。
  */
 export default function ScheduleCalendarRuler({ items, containerRef }: Props) {
   const [dots, setDots] = useState<Dot[]>([]);
@@ -56,41 +59,22 @@ export default function ScheduleCalendarRuler({ items, containerRef }: Props) {
       const todayEl = container.querySelector<HTMLElement>('[data-ruler-today]');
       setTodayPct(todayEl ? ((todayEl.offsetTop + todayEl.offsetHeight / 2) / totalHeight) * 100 : null);
 
-      // 月初の目盛りは、前後にある実測ドットの間を日付比率で補間して位置を決める
-      if (nextDots.length >= 2) {
-        const newest = new Date(nextDots[0].ms);
-        const oldest = new Date(nextDots[nextDots.length - 1].ms);
-        const tickList: { key: string; label: string; pct: number }[] = [];
-        let cursor = new Date(newest.getFullYear(), newest.getMonth(), 1);
-        const lowerBound = new Date(oldest.getFullYear(), oldest.getMonth(), 1).getTime();
-        let prevYear: number | null = null;
-        let guard = 0;
-        while (cursor.getTime() >= lowerBound && guard < 240) {
-          guard++;
-          const ms = cursor.getTime();
-          // ms を挟む2つの実測ドットを探して線形補間
-          let before = nextDots[0];
-          let after = nextDots[nextDots.length - 1];
-          for (let i = 0; i < nextDots.length - 1; i++) {
-            if (nextDots[i].ms >= ms && nextDots[i + 1].ms <= ms) {
-              before = nextDots[i];
-              after = nextDots[i + 1];
-              break;
-            }
-          }
-          const span = before.ms - after.ms;
-          const pct = span !== 0 ? before.pct + ((before.ms - ms) / span) * (after.pct - before.pct) : before.pct;
-          const year = cursor.getFullYear();
-          const month = cursor.getMonth() + 1;
-          const label = prevYear !== null && prevYear !== year ? `${year}年${month}月` : `${month}月`;
-          tickList.push({ key: `${year}-${month}`, label, pct: Math.min(100, Math.max(0, pct)) });
-          prevYear = year;
-          cursor = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1);
-        }
-        setTicks(tickList);
-      } else {
-        setTicks([]);
+      // 月ラベルは「その月最初の実イベント」の実測位置にそのまま置く（補間しないのでズレない）
+      const tickList: { key: string; label: string; pct: number }[] = [];
+      let prevKey: string | null = null;
+      let prevYear: number | null = null;
+      for (const d of nextDots) {
+        const dt = new Date(d.ms);
+        const year = dt.getFullYear();
+        const month = dt.getMonth() + 1;
+        const key = `${year}-${month}`;
+        if (key === prevKey) continue;
+        const label = prevYear !== null && prevYear !== year ? `${year}年${month}月` : `${month}月`;
+        tickList.push({ key, label, pct: d.pct });
+        prevKey = key;
+        prevYear = year;
       }
+      setTicks(tickList);
     };
 
     measure();
