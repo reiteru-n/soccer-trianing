@@ -1245,6 +1245,34 @@ function EventCard({
   const isWin = mW > 0 && mD === 0 && mL === 0;
   const isLoss = mL > 0 && mW === 0 && mD === 0;
 
+  // 練習/OFFは詳細を表示する必要がないため、展開なしの小さい1行バーで表示する
+  const isCompactType = event.type === 'practice' || (event.type as string) === 'schedule' || event.type === 'off';
+  if (isCompactType) {
+    return (
+      <div className={`rounded-lg border overflow-hidden ${isPast ? 'opacity-70 border-white/5' : cfg.border}`}>
+        <div className={`${isPast ? 'bg-slate-800/40' : cfg.bg} px-2.5 py-1.5 flex items-center gap-2`}>
+          <div className={`text-center px-1.5 py-0.5 rounded flex-shrink-0 min-w-[38px] ${isPast ? 'bg-slate-700 text-slate-400' : 'bg-black/20 text-white'}`}>
+            <p className="text-[8px] leading-tight">{event.date.slice(5)}</p>
+            <p className="text-[11px] font-bold leading-tight">{dayLabel(event.date)}</p>
+          </div>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 flex-shrink-0 ${cfg.badge}`}>{cfg.icon(9)}</span>
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            <p className="text-xs font-semibold text-white truncate">
+              {event.type === 'off' ? (event.note || '休みの日') : (event.label || event.location || '練習')}
+            </p>
+            {event.type !== 'off' && (event.startTime || event.endTime) && (
+              <span className="text-[10px] text-slate-400 flex-shrink-0">{event.startTime ?? ''}{event.startTime && event.endTime ? '〜' : ''}{event.endTime ?? ''}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            <button onClick={onEdit} className="text-[10px] text-slate-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-slate-700">編集</button>
+            <button onClick={onDelete} className="text-[10px] text-slate-400 hover:text-red-400 px-1.5 py-0.5 rounded hover:bg-slate-700">削除</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`rounded-xl border overflow-hidden ${isPast ? 'opacity-70 border-white/5' : cfg.border}`}>
       <div className={`${isPast ? 'bg-slate-800/40' : cfg.bg} px-3 py-3 cursor-pointer`} onClick={() => setExpanded(p => !p)}>
@@ -1679,8 +1707,31 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
   const [popupDay, setPopupDay] = useState<{ date: string; events: SchEvent[] } | null>(null);
   const [showAllPast, setShowAllPast] = useState(false);
   const today = todayStr();
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const timelineListRef = useRef<HTMLDivElement>(null);
+  const hasAutoScrolledRef = useRef(false);
 
   useEffect(() => { if (openDetailId) setDetailId(openDetailId); }, [openDetailId]);
+
+  // タイムライン(全予定)セクションが画面に入ってきたら、一度だけ「今日」の位置まで自動スクロールする
+  useEffect(() => {
+    const el = timelineRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (hasAutoScrolledRef.current) return;
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          hasAutoScrolledRef.current = true;
+          const todayEl = timelineListRef.current?.querySelector('[data-ruler-today]');
+          todayEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          observer.disconnect();
+          break;
+        }
+      }
+    }, { threshold: 0.15 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleSave = (ev: SchEvent, notifyLine: boolean) => {
     const updated = editing
@@ -1739,7 +1790,6 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
   // タイムライン表示用: 上ほど未来・下ほど過去の一本の時系列に並べる（今日の位置に区切り線を挿む）
   const upcomingDesc = [...upcoming].sort((a, b) => b.date.localeCompare(a.date));
   const visiblePast = showAllPast ? past : past.slice(0, PAST_EVENTS_SHOW_COUNT);
-  const todayDate = new Date(today.replace(/\//g, '-'));
   const rulerItems = filtered.map(e => ({
     id: e.id,
     date: new Date(e.date.replace(/\//g, '-')),
@@ -1827,19 +1877,21 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
       {filtered.length === 0 ? (
         <p className="text-center text-slate-400 text-sm py-4">予定がありません</p>
       ) : (
-        <div>
+        <div ref={timelineRef}>
           <p className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">全予定 ({filtered.length}件)</p>
           <div className="flex gap-2">
-            <ScheduleCalendarRuler items={rulerItems} todayDate={todayDate} />
-            <div className="flex-1 min-w-0 space-y-2">
+            <ScheduleCalendarRuler items={rulerItems} containerRef={timelineListRef} />
+            <div ref={timelineListRef} className="flex-1 min-w-0 space-y-2">
               {upcomingDesc.map(ev => (
-                <div key={ev.id} id={`event-card-${ev.id}`}>
+                <div key={ev.id} id={`event-card-${ev.id}`} data-ruler-id={ev.id}>
                   <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} externalExpanded={detailId === ev.id} />
                 </div>
               ))}
-              <TodayDivider />
+              <div data-ruler-today>
+                <TodayDivider />
+              </div>
               {visiblePast.map(ev => (
-                <div key={ev.id} id={`event-card-${ev.id}`}>
+                <div key={ev.id} id={`event-card-${ev.id}`} data-ruler-id={ev.id}>
                   <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
                 </div>
               ))}
