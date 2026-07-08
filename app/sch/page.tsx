@@ -25,6 +25,22 @@ function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
 }
+// ブラウザ標準のscrollIntoView(smooth)は速度を指定できないため、
+// 自動スクロール演出用にduration(ms)を指定できる独自のスムーズスクロールを用意する
+function smoothScrollToCenter(el: HTMLElement, durationMs = 1400) {
+  const targetY = el.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2 + el.offsetHeight / 2;
+  const startY = window.scrollY;
+  const diff = targetY - startY;
+  if (Math.abs(diff) < 1) return;
+  const startTime = performance.now();
+  function step(now: number) {
+    const t = Math.min(1, (now - startTime) / durationMs);
+    const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // ease-in-out
+    window.scrollTo(0, startY + diff * eased);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
 // 終了日が今日より前なら「過去」とみなす（同日イベントは日付が変わるまで表示）
 function isEventPast(event: { date: string; endDate?: string }): boolean {
   const today = todayStr();
@@ -1722,8 +1738,8 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
       for (const entry of entries) {
         if (entry.isIntersecting) {
           hasAutoScrolledRef.current = true;
-          const todayEl = timelineListRef.current?.querySelector('[data-ruler-today]');
-          todayEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const todayEl = timelineListRef.current?.querySelector<HTMLElement>('[data-ruler-today]');
+          if (todayEl) smoothScrollToCenter(todayEl, 1800);
           observer.disconnect();
           break;
         }
