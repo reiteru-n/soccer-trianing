@@ -57,6 +57,7 @@ interface AppContextType {
   deleteVideoTimestamp: (id: string) => void;
   recordTimestampView: (id: string) => void;
   toggleTimestampFavorite: (id: string) => void;
+  updateTimestampOffsets: (id: string, offsetBefore: number | undefined, offsetAfter: number | undefined) => void;
   videoPlaybackPositions: VideoPlaybackPosition[];
   updateVideoPlaybackPosition: (videoUrl: string, seconds: number) => void;
   sprintRecords: SprintRecord[];
@@ -403,6 +404,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateTimestampOffsets = useCallback((id: string, offsetBefore: number | undefined, offsetAfter: number | undefined) => {
+    setVideoTimestamps((prev) => {
+      const updated = prev.map((t) => t.id === id ? { ...t, offsetBefore, offsetAfter } : t);
+      saveVideoTimestamps(updated);
+      return updated;
+    });
+  }, []);
+
   const updateVideoPlaybackPosition = useCallback((videoUrl: string, seconds: number) => {
     setVideoPlaybackPositions((prev) => {
       const existing = prev.find((p) => p.videoUrl === videoUrl);
@@ -448,7 +457,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         videoCategories, addVideoCategory, updateVideoCategory, deleteVideoCategory, reorderVideoCategories,
         videos, addVideo, updateVideo, deleteVideo, reorderVideos, toggleVideoPin,
         videoStats, recordVideoView,
-        videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView, toggleTimestampFavorite,
+        videoTimestamps, addVideoTimestamp, deleteVideoTimestamp, recordTimestampView, toggleTimestampFavorite, updateTimestampOffsets,
         videoPlaybackPositions, updateVideoPlaybackPosition,
         sprintRecords, addSprintRecord, updateSprintRecord, deleteSprintRecord,
         isLoading,

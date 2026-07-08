@@ -6,7 +6,7 @@ import { useApp } from '@/lib/context';
 import { VideoTimestamp } from '@/lib/types';
 import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, disableCaptionsHard, useForceLandscape } from '@/lib/youtubePlayer';
 import { useSchMatchVideos } from '@/lib/schMatchVideos';
-import { StarIcon, PlayIcon, PauseIcon, ShuffleIcon, SkipIcon, ExpandIcon, CollapseIcon } from '@/components/AppIcons';
+import { StarIcon, PlayIcon, PauseIcon, ShuffleIcon, SkipIcon, ExpandIcon, CollapseIcon, EditIcon } from '@/components/AppIcons';
 
 const DEFAULT_CLIP_OFFSET_BEFORE = 20;
 const DEFAULT_CLIP_OFFSET_AFTER = 20;
@@ -38,6 +38,8 @@ interface FavoriteClip {
   seconds: number;
   label?: string;
   videoDescription: string;
+  offsetBefore?: number; // 個別設定（未設定ならページのデフォルト値を使う）
+  offsetAfter?: number;
 }
 
 /**
@@ -49,7 +51,7 @@ interface FavoriteClip {
  * 5. シーン時刻 + 切り取り秒数 に達したら次のシーンへ（末尾なら先頭に戻ってループ）
  */
 export default function FavoriteScenesPage() {
-  const { videos, videoTimestamps, toggleTimestampFavorite, isLoading } = useApp();
+  const { videos, videoTimestamps, toggleTimestampFavorite, updateTimestampOffsets, isLoading } = useApp();
   const schMatchVideos = useSchMatchVideos(true);
 
   const videoInfoByUrl = useMemo(() => {
@@ -81,7 +83,7 @@ export default function FavoriteScenesPage() {
       const description = videoInfoByUrl.get(url)?.description ?? '';
       const items = [...groups.get(url)!].sort((a, b) => a.seconds - b.seconds);
       for (const t of items) {
-        out.push({ id: t.id, videoUrl: url, videoId, seconds: t.seconds, label: t.label, videoDescription: description });
+        out.push({ id: t.id, videoUrl: url, videoId, seconds: t.seconds, label: t.label, videoDescription: description, offsetBefore: t.offsetBefore, offsetAfter: t.offsetAfter });
       }
     }
     return out;
@@ -117,6 +119,9 @@ export default function FavoriteScenesPage() {
   useEffect(() => {
     window.localStorage.setItem('favoriteClipOffsetAfter', String(clipOffsetAfter));
   }, [clipOffsetAfter]);
+
+  // シーン個別の前後秒数設定パネル（一覧のどのシーンを展開中か）
+  const [editingOffsetClipId, setEditingOffsetClipId] = useState<string | null>(null);
 
   const [shuffleMode, setShuffleMode] = useState(false);
   const [playOrder, setPlayOrder] = useState<string[]>([]);
@@ -200,7 +205,7 @@ export default function FavoriteScenesPage() {
     const clip = clipsByIdRef.current.get(clipId);
     if (!clip || !clip.videoId) return;
     const videoId = clip.videoId;
-    const start = Math.max(0, clip.seconds - clipOffsetBeforeRef.current);
+    const start = Math.max(0, clip.seconds - (clip.offsetBefore ?? clipOffsetBeforeRef.current));
 
     if (!playerRef.current) {
       loadYouTubeIframeApi(() => {
@@ -304,7 +309,7 @@ export default function FavoriteScenesPage() {
         return;
       }
       setCurrentTime(t);
-      if (t >= clip.seconds + clipOffsetAfterRef.current) {
+      if (t >= clip.seconds + (clip.offsetAfter ?? clipOffsetAfterRef.current)) {
         const nextPos = (pos + 1) % order.length;
         setQueuePos(nextPos);
         queuePosRef.current = nextPos;
@@ -327,8 +332,8 @@ export default function FavoriteScenesPage() {
     else player.playVideo();
   };
 
-  const clipStart = activeClip ? Math.max(0, activeClip.seconds - clipOffsetBefore) : 0;
-  const clipEnd = activeClip ? activeClip.seconds + clipOffsetAfter : 0;
+  const clipStart = activeClip ? Math.max(0, activeClip.seconds - (activeClip.offsetBefore ?? clipOffsetBefore)) : 0;
+  const clipEnd = activeClip ? activeClip.seconds + (activeClip.offsetAfter ?? clipOffsetAfter) : 0;
   const progress = activeClip && clipEnd > clipStart
     ? Math.min(100, Math.max(0, ((currentTime - clipStart) / (clipEnd - clipStart)) * 100))
     : 0;
@@ -431,10 +436,10 @@ export default function FavoriteScenesPage() {
             </button>
           </div>
 
-          {/* 1シーンあたりの切り取り秒数（前後で別々に設定可能） */}
-          <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1 mb-4 text-xs text-blue-200/80">
+          {/* 1シーンあたりの切り取り秒数（前後で別々に設定可能・シーンごとの個別設定は一覧の✎から） */}
+          <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-1 mb-1 text-xs text-blue-200/80">
             <div className="flex items-center gap-2">
-              <span>シーン前</span>
+              <span>デフォルト: シーン前</span>
               <button
                 onClick={() => setClipOffsetBefore(stepOffsetDown)}
                 className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
@@ -449,7 +454,7 @@ export default function FavoriteScenesPage() {
               <span>秒</span>
             </div>
             <div className="flex items-center gap-2">
-              <span>シーン後</span>
+              <span>デフォルト: シーン後</span>
               <button
                 onClick={() => setClipOffsetAfter(stepOffsetDown)}
                 className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
@@ -464,6 +469,7 @@ export default function FavoriteScenesPage() {
               <span>秒</span>
             </div>
           </div>
+          <p className="text-[10px] text-blue-300/50 text-center mb-4">シーンごとに個別設定したい場合は、一覧の✎から変更できます</p>
 
           {/* 動画+シークバー+操作ボタン: フルスクリーン時はDOMツリー形状を変えずclassName/styleだけ切り替える
               （YT.Playerがバインドされた#fav-playerを跨って再マウントされると再生が壊れるため） */}
@@ -556,34 +562,93 @@ export default function FavoriteScenesPage() {
 
           {/* お気に入りシーン一覧 */}
           <div className="mt-5 space-y-1.5">
-            {clips.map((clip) => (
-              <div
-                key={clip.id}
-                className={`rounded-xl flex items-center gap-2 px-3 py-2 border-l-4 min-w-0 ${clip.id === activeClipId ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
-              >
-                <button
-                  onClick={() => toggleTimestampFavorite(clip.id)}
-                  className="flex-shrink-0 w-5 h-5 flex items-center justify-center p-0 text-amber-400"
-                  aria-label="お気に入りを解除"
-                  title="お気に入りを解除"
+            {clips.map((clip) => {
+              const hasCustomOffset = clip.offsetBefore != null || clip.offsetAfter != null;
+              const effectiveBefore = clip.offsetBefore ?? clipOffsetBefore;
+              const effectiveAfter = clip.offsetAfter ?? clipOffsetAfter;
+              const isEditingOffset = editingOffsetClipId === clip.id;
+              return (
+                <div
+                  key={clip.id}
+                  className={`rounded-xl border-l-4 min-w-0 ${clip.id === activeClipId ? 'bg-emerald-500/15 border-emerald-400' : 'bg-white/5 border-transparent'}`}
                 >
-                  <StarIcon size={16} />
-                </button>
-                <button
-                  onClick={() => handleClickClip(clip.id)}
-                  disabled={!clip.videoId}
-                  className="flex-1 flex items-center gap-2 text-left min-w-0 disabled:opacity-40"
-                >
-                  <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${clip.id === activeClipId ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(clip.seconds)}</span>
-                  <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{clip.label || 'シーン'}</span>
-                  {clip.videoId ? (
-                    <span className="text-blue-300/60 text-[10px] flex-shrink-0 max-w-[35%] truncate">{clip.videoDescription}</span>
-                  ) : (
-                    <span className="text-red-400/70 text-[10px] flex-shrink-0" title="動画URLを認識できませんでした">再生不可</span>
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <button
+                      onClick={() => toggleTimestampFavorite(clip.id)}
+                      className="flex-shrink-0 w-5 h-5 flex items-center justify-center p-0 text-amber-400"
+                      aria-label="お気に入りを解除"
+                      title="お気に入りを解除"
+                    >
+                      <StarIcon size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleClickClip(clip.id)}
+                      disabled={!clip.videoId}
+                      className="flex-1 flex items-center gap-2 text-left min-w-0 disabled:opacity-40"
+                    >
+                      <span className={`text-sm font-bold font-mono w-12 flex-shrink-0 ${clip.id === activeClipId ? 'text-emerald-300' : 'text-blue-300'}`}>{formatSeconds(clip.seconds)}</span>
+                      <span className="text-white/80 text-xs flex-1 line-clamp-1 min-w-0">{clip.label || 'シーン'}</span>
+                      {clip.videoId ? (
+                        <span className="text-blue-300/60 text-[10px] flex-shrink-0 max-w-[35%] truncate">{clip.videoDescription}</span>
+                      ) : (
+                        <span className="text-red-400/70 text-[10px] flex-shrink-0" title="動画URLを認識できませんでした">再生不可</span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setEditingOffsetClipId(isEditingOffset ? null : clip.id)}
+                      className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full ${hasCustomOffset ? 'bg-amber-400/20 text-amber-300' : 'bg-white/10 text-white/60'}`}
+                      aria-label="このシーンの前後秒数を個別設定"
+                      title="このシーンの前後秒数を個別設定"
+                    >
+                      <EditIcon size={12} />
+                    </button>
+                  </div>
+
+                  {isEditingOffset && (
+                    <div className="px-3 pb-3 flex items-center flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-blue-200/80 border-t border-white/5 pt-2">
+                      <div className="flex items-center gap-1.5">
+                        <span>このシーンの前</span>
+                        <button
+                          onClick={() => updateTimestampOffsets(clip.id, stepOffsetDown(effectiveBefore), clip.offsetAfter)}
+                          className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+                          aria-label="このシーンの前を短くする"
+                        >−</button>
+                        <span className="font-mono font-bold text-white w-5 text-center">{effectiveBefore}</span>
+                        <button
+                          onClick={() => updateTimestampOffsets(clip.id, stepOffsetUp(effectiveBefore), clip.offsetAfter)}
+                          className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+                          aria-label="このシーンの前を長くする"
+                        >+</button>
+                        <span>秒</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span>このシーンの後</span>
+                        <button
+                          onClick={() => updateTimestampOffsets(clip.id, clip.offsetBefore, stepOffsetDown(effectiveAfter))}
+                          className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+                          aria-label="このシーンの後を短くする"
+                        >−</button>
+                        <span className="font-mono font-bold text-white w-5 text-center">{effectiveAfter}</span>
+                        <button
+                          onClick={() => updateTimestampOffsets(clip.id, clip.offsetBefore, stepOffsetUp(effectiveAfter))}
+                          className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+                          aria-label="このシーンの後を長くする"
+                        >+</button>
+                        <span>秒</span>
+                      </div>
+                      {hasCustomOffset && (
+                        <button
+                          onClick={() => updateTimestampOffsets(clip.id, undefined, undefined)}
+                          className="text-blue-300/70 underline"
+                        >
+                          デフォルトに戻す
+                        </button>
+                      )}
+                    </div>
                   )}
-                </button>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
