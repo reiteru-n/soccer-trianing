@@ -12,7 +12,7 @@ import {
   HouseIcon, CalendarIcon, VideoIcon, TrophyIcon, BellIcon, PeopleIcon, EditIcon,
   BallIcon, CampIcon, StarIcon, TrashIcon, ChartIcon,
   OfficialMatchIcon, CupMatchIcon, FieldMatchIcon, GoalMatchIcon,
-  ParkingIcon, BanIcon, MapPinIcon, ClipboardIcon, SkipIcon, HandUpIcon, WarningIcon, ChatIcon, FolderIcon,
+  ParkingIcon, CarIcon, BanIcon, MapPinIcon, ClipboardIcon, SkipIcon, HandUpIcon, WarningIcon, ChatIcon, FolderIcon,
   SearchIcon,
 } from '@/components/AppIcons';
 import ScheduleCalendarRuler from '@/components/ScheduleCalendarRuler';
@@ -551,7 +551,7 @@ function ParkingEventCard({
   const cfg = tc(plan.type);
 
   return (
-    <div className={`rounded-xl overflow-hidden border ${isPast ? 'opacity-60 border-white/5' : cfg.border}`}>
+    <div id={`parking-card-${plan.id}`} className={`rounded-xl overflow-hidden border ${isPast ? 'opacity-60 border-white/5' : cfg.border}`}>
       {/* Header */}
       <div className={`flex items-center gap-2 px-4 py-2 ${cfg.bg}`}>
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-0.5 ${cfg.badge}`}>
@@ -1233,13 +1233,14 @@ function EventImageGallery({ images }: { images: string[] }) {
 
 // ---- EventCard ----
 function EventCard({
-  event, members, onEdit, onDelete, externalExpanded = false,
+  event, members, onEdit, onDelete, externalExpanded = false, onGoToParking,
 }: {
   event: SchEvent;
   members: SchMember[];
   onEdit: () => void;
   onDelete: () => void;
   externalExpanded?: boolean;
+  onGoToParking?: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   useEffect(() => { if (externalExpanded) setExpanded(true); }, [externalExpanded]);
@@ -1381,6 +1382,15 @@ function EventCard({
       {/* Expanded detail */}
       {expanded && (
         <div className="bg-slate-800/80 border-t border-white/10 px-4 py-3 space-y-4">
+          {/* 駐車場情報へのリンク（試合のみ） */}
+          {event.type === 'match' && event.maxParkingSlots !== 0 && onGoToParking && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onGoToParking(event.id); }}
+              className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 bg-blue-900/20 border border-blue-500/30 px-2.5 py-1.5 rounded-lg"
+            >
+              <CarIcon size={14} /> 駐車場情報を見る
+            </button>
+          )}
           {/* 各試合の詳細 */}
           {event.type === 'match' && eventMatches.map((m, i) => (
             <div key={m.id} className={i > 0 ? 'border-t border-white/10 pt-3' : ''}>
@@ -1707,13 +1717,14 @@ const PAST_EVENTS_SHOW_COUNT = 10;
 // ---- EventSection ----
 type EventFilter = 'all' | SchEventType;
 
-function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuota }: {
+function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuota, onGoToParking }: {
   events: SchEvent[];
   members: SchMember[];
   onSave: (events: SchEvent[], notifyLine: boolean) => void;
   openDetailId?: string | null;
   isAdmin?: boolean;
   lineQuota?: LineQuota | null;
+  onGoToParking?: (id: string) => void;
 }) {
   const [filter, setFilter] = useState<EventFilter>('all');
   const [showForm, setShowForm] = useState(false);
@@ -1856,6 +1867,7 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
               onEdit={() => openEdit(upcoming[0])}
               onDelete={() => handleDelete(upcoming[0].id)}
               externalExpanded={detailId === upcoming[0].id}
+              onGoToParking={onGoToParking}
             />
           </div>
           {/* 2・3件目：ミニカード横並び */}
@@ -1900,7 +1912,7 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
             <div ref={timelineListRef} className="flex-1 min-w-0 space-y-2">
               {upcomingDesc.map(ev => (
                 <div key={ev.id} id={`event-card-${ev.id}`} data-ruler-id={ev.id}>
-                  <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} externalExpanded={detailId === ev.id} />
+                  <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} externalExpanded={detailId === ev.id} onGoToParking={onGoToParking} />
                 </div>
               ))}
               <div data-ruler-today>
@@ -1908,7 +1920,7 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
               </div>
               {visiblePast.map(ev => (
                 <div key={ev.id} id={`event-card-${ev.id}`} data-ruler-id={ev.id}>
-                  <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
+                  <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} onGoToParking={onGoToParking} />
                 </div>
               ))}
               {past.length > visiblePast.length && (
@@ -3097,7 +3109,7 @@ function ParkingHistorySection({
           const hasRecord = !!record && record.slots.length > 0;
 
           return (
-            <div key={ev.id} className="bg-slate-800/60 border border-white/5 rounded-xl overflow-hidden">
+            <div key={ev.id} id={`parking-card-${ev.id}`} className="bg-slate-800/60 border border-white/5 rounded-xl overflow-hidden">
               {/* Header */}
               <div className="px-3 py-2 bg-slate-700/40 flex items-center gap-2">
                 <span className="text-[10px] text-slate-400">{ev.date.slice(5).replace('/', '/')}({dayLabel(ev.date)})</span>
@@ -3347,7 +3359,7 @@ function ParkingCommentSection({
 function HomeSection({
   events, members, parkingRecords, parkingRotation, nearbyParking, announcements,
   isAdmin, parkingComments, onSaveParkingComments,
-  onGoToAnnounce, onGoToEvent, onGoToVideo,
+  onGoToAnnounce, onGoToEvent, onGoToVideo, expandParkingTarget,
   onSkip, onUnskip, onMarkUsed, onMarkPending, onSaveHistory, onUpdateMaxSlots,
 }: {
   events: SchEvent[];
@@ -3362,6 +3374,7 @@ function HomeSection({
   onGoToAnnounce: () => void;
   onGoToEvent: (id: string) => void;
   onGoToVideo: () => void;
+  expandParkingTarget?: string | null;
   onSkip: (eventId: string, memberId: string, comment: string) => void;
   onUnskip: (eventId: string, memberId: string) => void;
   onMarkUsed: (eventId: string, memberId: string) => void;
@@ -3452,6 +3465,14 @@ function HomeSection({
             .filter(p => !isEventPast(p) && p.maxSlots !== 0),
     [sortedMembers, allEventItems, parkingRotation, parkingRecords]
   );
+
+  // 予定タブ等から特定イベントの駐車場情報にジャンプしてきた場合、
+  // ページネーションで隠れていれば表示件数を広げてから見えるようにする
+  useEffect(() => {
+    if (!expandParkingTarget) return;
+    const idx = parkingPlan.findIndex(p => p.id === expandParkingTarget);
+    if (idx >= 0 && idx >= parkingShowCount) setParkingShowCount(idx + 1);
+  }, [expandParkingTarget, parkingPlan, parkingShowCount]);
 
   return (
     <div className="space-y-5">
@@ -4657,7 +4678,7 @@ export default function SchPage() {
   useEffect(() => {
     if (!scrollTarget) return;
     const timer = setTimeout(() => {
-      const prefix = scrollTarget.tab === 'events' ? 'event-card' : 'announce-card';
+      const prefix = scrollTarget.tab === 'events' ? 'event-card' : scrollTarget.tab === 'home' ? 'parking-card' : 'announce-card';
       const el = document.getElementById(`${prefix}-${scrollTarget.itemId}`);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setScrollTarget(null);
@@ -5292,13 +5313,17 @@ export default function SchPage() {
           parkingComments={parkingComments}
           onSaveParkingComments={saveParkingComments}
           onGoToEvent={(id) => { setTab('events'); setOpenDetailId(id); setScrollTarget({ tab: 'events', itemId: id }); }}
+          expandParkingTarget={scrollTarget?.tab === 'home' ? scrollTarget.itemId : null}
           onSkip={handleSkip} onUnskip={handleUnskip} onMarkUsed={handleMarkUsed} onMarkPending={handleMarkPending}
           onSaveHistory={handleSaveFullRecord}
           onUpdateMaxSlots={handleUpdateMaxSlots}
         />
       )}
       {tab === 'events' && (
-        <EventSection events={events} members={members} onSave={saveEvents} openDetailId={openDetailId} isAdmin={isAdmin} lineQuota={lineQuota} />
+        <EventSection
+          events={events} members={members} onSave={saveEvents} openDetailId={openDetailId} isAdmin={isAdmin} lineQuota={lineQuota}
+          onGoToParking={(id) => { setTab('home'); setScrollTarget({ tab: 'home', itemId: id }); }}
+        />
       )}
       {tab === 'video' && (
         <VideoSection events={events} standaloneVideos={standaloneVideos} onSaveStandaloneVideos={saveStandaloneVideos} videoThumbnails={videoThumbnails} onSaveVideoThumbnails={saveVideoThumbnails} />
