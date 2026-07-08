@@ -101,11 +101,23 @@ export default function SprintChart({ records, birthDate }: Props) {
     datasets.push({
       label: '全国平均（年齢考慮）',
       data: ages.map((a) => Math.round(interpolateAnchors(NATIONAL_AVERAGE_ANCHORS, a) * 100) / 100),
-      borderColor: 'rgba(96,165,250,0.7)',
+      borderColor: '#2563eb',
       borderDash: [6, 4],
       pointRadius: 0,
       pointHoverRadius: 3,
-      borderWidth: 1.5,
+      borderWidth: 2,
+      tension: 0.3,
+      fill: false,
+      datalabels: { display: false },
+    });
+    datasets.push({
+      label: '一つ上の学年の平均',
+      data: ages.map((a) => Math.round(interpolateAnchors(NATIONAL_AVERAGE_ANCHORS, a + 1) * 100) / 100),
+      borderColor: '#059669',
+      borderDash: [8, 3, 2, 3],
+      pointRadius: 0,
+      pointHoverRadius: 3,
+      borderWidth: 2,
       tension: 0.3,
       fill: false,
       datalabels: { display: false },
@@ -113,11 +125,11 @@ export default function SprintChart({ records, birthDate }: Props) {
     datasets.push({
       label: 'セレクション目標ライン',
       data: ages.map((a) => Math.round(interpolateAnchors(SELECTION_TARGET_ANCHORS, a) * 100) / 100),
-      borderColor: 'rgba(192,132,252,0.8)',
+      borderColor: '#9333ea',
       borderDash: [2, 3],
       pointRadius: 0,
       pointHoverRadius: 3,
-      borderWidth: 1.5,
+      borderWidth: 2,
       tension: 0.3,
       fill: false,
       datalabels: { display: false },
@@ -134,7 +146,7 @@ export default function SprintChart({ records, birthDate }: Props) {
       legend: {
         display: true,
         position: 'bottom',
-        labels: { color: 'rgba(226,232,240,0.85)', font: { size: 10 }, boxWidth: 12, padding: 10 },
+        labels: { color: '#334155', font: { size: 10, weight: 'bold' }, boxWidth: 12, padding: 10 },
       },
       tooltip: {
         backgroundColor: 'rgba(7,20,40,0.95)',
@@ -150,28 +162,28 @@ export default function SprintChart({ records, birthDate }: Props) {
       datalabels: {
         align: 'top',
         anchor: 'end',
-        color: '#fb923c',
+        color: '#c2410c',
         font: { weight: 'bold', size: 11 },
         formatter: (v) => `${Number(v).toFixed(2)}`,
       },
     },
     scales: {
       x: {
-        grid: { color: 'rgba(255,255,255,0.06)' },
-        ticks: { color: 'rgba(148,163,184,0.8)', font: { size: 11 }, maxRotation: 45 },
-        border: { color: 'rgba(255,255,255,0.1)' },
+        grid: { color: '#e5e7eb' },
+        ticks: { color: '#475569', font: { size: 11 }, maxRotation: 45 },
+        border: { color: '#d1d5db' },
       },
       y: {
-        grid: { color: 'rgba(255,255,255,0.06)' },
-        ticks: { color: 'rgba(148,163,184,0.8)', font: { size: 11 }, callback: (v) => `${Number(v).toFixed(2)}秒` },
-        border: { color: 'rgba(255,255,255,0.1)' },
+        grid: { color: '#e5e7eb' },
+        ticks: { color: '#475569', font: { size: 11 }, callback: (v) => `${Number(v).toFixed(2)}秒` },
+        border: { color: '#d1d5db' },
       },
     },
   };
 
   if (sorted.length === 0) {
     return (
-      <div className="h-48 flex items-center justify-center text-slate-400 text-sm">
+      <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
         データがありません
       </div>
     );
@@ -183,12 +195,12 @@ export default function SprintChart({ records, birthDate }: Props) {
         <Line data={chartData} options={options} />
       </div>
       {!birthDate && (
-        <p className="text-[10px] text-slate-400 text-center mt-1">
+        <p className="text-[10px] text-gray-500 text-center mt-1">
           生年月日を設定すると年齢に応じた全国平均・セレクション目標ラインを表示できます
         </p>
       )}
       {birthDate && (
-        <p className="text-[9px] text-slate-500 text-center mt-1">
+        <p className="text-[9px] text-gray-500 text-center mt-1">
           ※セレクション目標ラインは複数の指導者ブログ等を参考にした目安で、公式基準ではありません
         </p>
       )}
