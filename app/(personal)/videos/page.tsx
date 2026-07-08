@@ -353,18 +353,18 @@ function TimestampItem({
 
 // --- スキップボタン設定（後退5 + 前進5）---
 const SKIP_BACK = [
+  { d: -300, icon: '⏮', label: '5m' },
   { d: -60, icon: '⏮', label: '1m' },
   { d: -30, icon: '⏮', label: '30s' },
-  { d: -20, icon: '⏮', label: '20s' },
   { d: -10, icon: '◀◀', label: '10s' },
   { d: -5,  icon: '◀',  label: '5s'  },
 ];
 const SKIP_FWD = [
   { d: 5,   icon: '▶',  label: '5s'  },
   { d: 10,  icon: '▶▶', label: '10s' },
-  { d: 20,  icon: '⏭',  label: '20s' },
   { d: 30,  icon: '⏭',  label: '30s' },
   { d: 60,  icon: '⏭',  label: '1m' },
+  { d: 300, icon: '⏭',  label: '5m' },
 ];
 
 // --- シークバー（再生位置 + タイムスタンプマーカー）---
@@ -732,7 +732,7 @@ function VideoPlayerModal({
             <button
               onClick={pendingSeconds !== null ? handleCancelRecord : handleRecord}
               disabled={!isPlayerReady}
-              className={`flex flex-col items-center justify-center w-10 h-9 rounded-xl text-white disabled:opacity-30 active:scale-95 transition-transform mx-0.5 ${pendingSeconds !== null ? 'bg-sky-600 active:bg-sky-500' : 'bg-red-700 active:bg-red-600'}`}
+              className={`flex flex-col items-center justify-center w-[60px] h-9 rounded-xl text-white disabled:opacity-30 active:scale-95 transition-transform mx-0.5 ${pendingSeconds !== null ? 'bg-sky-600 active:bg-sky-500' : 'bg-red-700 active:bg-red-600'}`}
             >
               <span className="text-base leading-none">{pendingSeconds !== null ? '▶' : '⏱'}</span>
               <span className="text-[9px] leading-none opacity-80">{pendingSeconds !== null ? '再生' : '記録'}</span>
