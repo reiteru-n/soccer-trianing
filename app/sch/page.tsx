@@ -15,6 +15,7 @@ import {
   ParkingIcon, BanIcon, MapPinIcon, ClipboardIcon, SkipIcon, HandUpIcon, WarningIcon, ChatIcon, FolderIcon,
   SearchIcon,
 } from '@/components/AppIcons';
+import ScheduleCalendarRuler from '@/components/ScheduleCalendarRuler';
 
 // ---- Utilities ----
 function generateId() {
@@ -1646,6 +1647,19 @@ function SchCalendar({ events, today, onSelectDate }: {
   );
 }
 
+// 過去/未来の境目に挿入する「今日」の目立つ横線
+function TodayDivider() {
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      <span className="flex-1 h-0.5 bg-amber-400/70 rounded-full" />
+      <span className="text-[11px] font-bold text-amber-300 bg-amber-500/15 border border-amber-400/40 px-2.5 py-0.5 rounded-full whitespace-nowrap">今日</span>
+      <span className="flex-1 h-0.5 bg-amber-400/70 rounded-full" />
+    </div>
+  );
+}
+
+const PAST_EVENTS_SHOW_COUNT = 10;
+
 // ---- EventSection ----
 type EventFilter = 'all' | SchEventType;
 
@@ -1663,6 +1677,7 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
   const [calendarDate, setCalendarDate] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(openDetailId ?? null);
   const [popupDay, setPopupDay] = useState<{ date: string; events: SchEvent[] } | null>(null);
+  const [showAllPast, setShowAllPast] = useState(false);
   const today = todayStr();
 
   useEffect(() => { if (openDetailId) setDetailId(openDetailId); }, [openDetailId]);
@@ -1681,10 +1696,7 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
   const closePopup = () => setPopupDay(null);
   const scrollToEvent = (ev: SchEvent) => {
     closePopup();
-    if (isEventPast(ev)) {
-      const el = document.getElementById('past-events-details') as HTMLDetailsElement | null;
-      if (el) el.open = true;
-    }
+    if (isEventPast(ev)) setShowAllPast(true);
     setTimeout(() => {
       const card = document.getElementById(`event-card-${ev.id}`);
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1724,6 +1736,16 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
   );
   const upcoming = filtered.filter(e => !isEventPast(e)).sort((a, b) => a.date.localeCompare(b.date));
   const past = filtered.filter(e => isEventPast(e)).sort((a, b) => b.date.localeCompare(a.date));
+  // タイムライン表示用: 上ほど未来・下ほど過去の一本の時系列に並べる（今日の位置に区切り線を挿む）
+  const upcomingDesc = [...upcoming].sort((a, b) => b.date.localeCompare(a.date));
+  const visiblePast = showAllPast ? past : past.slice(0, PAST_EVENTS_SHOW_COUNT);
+  const todayDate = new Date(today.replace(/\//g, '-'));
+  const rulerItems = filtered.map(e => ({
+    id: e.id,
+    date: new Date(e.date.replace(/\//g, '-')),
+    label: e.label || tc(e.type).label,
+    isPast: isEventPast(e),
+  }));
 
   const filterBtns: { key: EventFilter; icon: React.ReactNode; label: string }[] = [
     { key: 'all',      icon: <CalendarIcon size={20} />, label: '全て' },
@@ -1801,35 +1823,37 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
         }}
       />
 
-      {/* ── 全予定リスト ── */}
-      {upcoming.length === 0 && past.length === 0 && (
+      {/* ── 全予定タイムライン（上ほど未来・下ほど過去、今日の位置に区切り線）── */}
+      {filtered.length === 0 ? (
         <p className="text-center text-slate-400 text-sm py-4">予定がありません</p>
-      )}
-      {upcoming.length > 0 && (
-        <details open>
-          <summary className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider cursor-pointer select-none mb-2 list-none flex items-center gap-1">
-            <span>📅 全予定 ({upcoming.length}件)</span>
-          </summary>
-          <div className="space-y-2 mt-2">
-            {upcoming.map(ev => (
-              <div key={ev.id}>
-                <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} externalExpanded={detailId === ev.id} />
-              </div>
-            ))}
+      ) : (
+        <div>
+          <p className="text-[11px] font-bold text-sky-400/70 uppercase tracking-wider mb-2">全予定 ({filtered.length}件)</p>
+          <div className="flex gap-2">
+            <ScheduleCalendarRuler items={rulerItems} todayDate={todayDate} />
+            <div className="flex-1 min-w-0 space-y-2">
+              {upcomingDesc.map(ev => (
+                <div key={ev.id} id={`event-card-${ev.id}`}>
+                  <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} externalExpanded={detailId === ev.id} />
+                </div>
+              ))}
+              <TodayDivider />
+              {visiblePast.map(ev => (
+                <div key={ev.id} id={`event-card-${ev.id}`}>
+                  <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
+                </div>
+              ))}
+              {past.length > visiblePast.length && (
+                <button
+                  onClick={() => setShowAllPast(true)}
+                  className="w-full text-xs text-slate-400 hover:text-slate-300 py-2 rounded-lg border border-slate-700 hover:border-slate-600"
+                >
+                  もっと過去を見る（残り{past.length - visiblePast.length}件）
+                </button>
+              )}
+            </div>
           </div>
-        </details>
-      )}
-      {past.length > 0 && (
-        <details className="mt-2" id="past-events-details">
-          <summary className="text-xs text-slate-500 cursor-pointer mb-2 select-none">過去の予定 ({past.length}件)</summary>
-          <div className="space-y-2 mt-2">
-            {past.map(ev => (
-              <div key={ev.id} id={`event-card-${ev.id}`}>
-                <EventCard event={ev} members={members} onEdit={() => openEdit(ev)} onDelete={() => handleDelete(ev.id)} />
-              </div>
-            ))}
-          </div>
-        </details>
+        </div>
       )}
 
       {showForm && (
