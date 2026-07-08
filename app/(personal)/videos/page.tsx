@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useApp } from '@/lib/context';
 import { VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from '@/lib/types';
 import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, getYoutubeThumbnail, disableCaptionsHard, useForceLandscape } from '@/lib/youtubePlayer';
-import { useSchMatchVideos, SchMatchVideo } from '@/lib/schMatchVideos';
+import { useSchMatchVideos, SchMatchVideo, resolveVideoDate } from '@/lib/schMatchVideos';
 import { StarIcon, TrashIcon, ChevronIcon } from '@/components/AppIcons';
+import VideoCalendarRuler from '@/components/VideoCalendarRuler';
 
 // タイムスタンプのラベル選択肢（プリセット）
 const PRESET_TIMESTAMP_LABELS = ['ゴール', 'ボールタッチ', 'シュート', 'ディフェンス', 'ポジショニング'];
@@ -223,6 +224,24 @@ function CategoryBlock({
   const isMatch = !!category.isMatchCategory;
   const totalCount = sortedItems.length + (isMatch ? matchVideos.length : 0);
 
+  // 試合カテゴリ: タイトルの日付(なければアップロード日)を基準に新しい順へ並べ替え、
+  // 左側のカレンダー目盛り用データも同じ日付で作る
+  const sortedMatchVideos = useMemo(() => {
+    if (!isMatch) return matchVideos;
+    return [...matchVideos].sort((a, b) =>
+      resolveVideoDate(b.description, b.date).getTime() - resolveVideoDate(a.description, a.date).getTime()
+    );
+  }, [isMatch, matchVideos]);
+
+  const rulerItems = useMemo(() => {
+    if (!isMatch) return [];
+    return sortedMatchVideos.map((mv) => ({
+      id: mv.url,
+      date: resolveVideoDate(mv.description, mv.date),
+      label: mv.description,
+    }));
+  }, [isMatch, sortedMatchVideos]);
+
   return (
     <section className="mb-5">
       <div className="flex items-center gap-2 mb-2">
@@ -251,60 +270,63 @@ function CategoryBlock({
       </div>
 
       {open && (
-        <div className="space-y-2 landscape:md:grid landscape:md:grid-cols-2 landscape:md:gap-3 landscape:md:space-y-0">
-          {isMatch && (
-            <Link
-              href="/videos/favorites"
-              className="flex items-center gap-3 rounded-2xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 shadow-md shadow-amber-900/10 px-4 py-3 landscape:md:col-span-2"
-            >
-              <StarIcon size={28} className="text-amber-500 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-amber-900 text-sm">お気に入りシーン集</p>
-                <p className="text-amber-700/70 text-xs">{favoriteCount}件のシーンを連続再生</p>
-              </div>
-              <ChevronIcon size={18} className="text-amber-500 flex-shrink-0" />
-            </Link>
-          )}
-          {sortedItems.map((item) => (
-            <VideoRow
-              key={item.id}
-              url={item.url}
-              description={item.description}
-              stat={statByUrl.get(item.url)}
-              pinned={item.pinned}
-              // 試合カテゴリ: href なし（ボタン→アプリ内プレイヤー）
-              // それ以外: href あり（リンク→YouTube外部）
-              href={isMatch ? undefined : item.url}
-              onView={() => onView(item.url, item.description, isMatch)}
-              editMode={editMode}
-              onEdit={() => onEdit(item.id)}
-              onDelete={() => onDelete(item.id)}
-              onTogglePin={() => onTogglePin(item.id)}
-              favoriteCount={favoriteCountByUrl.get(item.url)}
-            />
-          ))}
-          {isMatch && matchVideos.map((mv) => (
-            <VideoRow
-              key={`sch_${mv.url}`}
-              url={mv.url}
-              description={mv.description}
-              stat={statByUrl.get(mv.url)}
-              href={undefined}
-              onView={() => onView(mv.url, mv.description, true)}
-              editMode={editMode}
-              readOnly
-              favoriteCount={favoriteCountByUrl.get(mv.url)}
-            />
-          ))}
-          {sortedItems.length === 0 && (!isMatch || matchVideos.length === 0) && (
-            <p className="text-xs text-blue-200/50 text-center py-4">まだ動画がありません</p>
-          )}
-          {editMode && !isMatch && (
-            <button
-              onClick={() => onAdd(category.id)}
-              className="w-full border-2 border-dashed border-blue-300/30 rounded-2xl py-2.5 text-blue-200/70 text-xs font-semibold hover:border-blue-300 hover:text-blue-200"
-            >＋ 動画を追加</button>
-          )}
+        <div className={isMatch ? 'flex gap-2' : undefined}>
+          {isMatch && <VideoCalendarRuler items={rulerItems} />}
+          <div className={`space-y-2 landscape:md:grid landscape:md:grid-cols-2 landscape:md:gap-3 landscape:md:space-y-0 ${isMatch ? 'flex-1 min-w-0' : ''}`}>
+            {isMatch && (
+              <Link
+                href="/videos/favorites"
+                className="flex items-center gap-3 rounded-2xl border-2 border-amber-300/70 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 shadow-md shadow-amber-900/10 px-4 py-3 landscape:md:col-span-2"
+              >
+                <StarIcon size={28} className="text-amber-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-amber-900 text-sm">お気に入りシーン集</p>
+                  <p className="text-amber-700/70 text-xs">{favoriteCount}件のシーンを連続再生</p>
+                </div>
+                <ChevronIcon size={18} className="text-amber-500 flex-shrink-0" />
+              </Link>
+            )}
+            {sortedItems.map((item) => (
+              <VideoRow
+                key={item.id}
+                url={item.url}
+                description={item.description}
+                stat={statByUrl.get(item.url)}
+                pinned={item.pinned}
+                // 試合カテゴリ: href なし（ボタン→アプリ内プレイヤー）
+                // それ以外: href あり（リンク→YouTube外部）
+                href={isMatch ? undefined : item.url}
+                onView={() => onView(item.url, item.description, isMatch)}
+                editMode={editMode}
+                onEdit={() => onEdit(item.id)}
+                onDelete={() => onDelete(item.id)}
+                onTogglePin={() => onTogglePin(item.id)}
+                favoriteCount={favoriteCountByUrl.get(item.url)}
+              />
+            ))}
+            {isMatch && sortedMatchVideos.map((mv) => (
+              <VideoRow
+                key={`sch_${mv.url}`}
+                url={mv.url}
+                description={mv.description}
+                stat={statByUrl.get(mv.url)}
+                href={undefined}
+                onView={() => onView(mv.url, mv.description, true)}
+                editMode={editMode}
+                readOnly
+                favoriteCount={favoriteCountByUrl.get(mv.url)}
+              />
+            ))}
+            {sortedItems.length === 0 && (!isMatch || matchVideos.length === 0) && (
+              <p className="text-xs text-blue-200/50 text-center py-4">まだ動画がありません</p>
+            )}
+            {editMode && !isMatch && (
+              <button
+                onClick={() => onAdd(category.id)}
+                className="w-full border-2 border-dashed border-blue-300/30 rounded-2xl py-2.5 text-blue-200/70 text-xs font-semibold hover:border-blue-300 hover:text-blue-200"
+              >＋ 動画を追加</button>
+            )}
+          </div>
         </div>
       )}
     </section>
