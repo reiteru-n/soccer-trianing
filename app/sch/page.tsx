@@ -4606,7 +4606,7 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 }
 
 export default function SchPage() {
-  const [tab, setTab] = useState<Tab>('home');
+  const [tab, setTab] = useState<Tab>('events');
   const [events, setEvents] = useState<SchEvent[]>([]);
   const [announcements, setAnnouncements] = useState<SchAnnouncement[]>([]);
   const [members, setMembers] = useState<SchMember[]>([]);
