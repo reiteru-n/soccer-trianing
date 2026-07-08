@@ -10,7 +10,7 @@ import { recentDistinct } from '@/lib/storage';
 import { TimerIcon, ChartIcon, ClipboardIcon, TrophyIcon } from '@/components/AppIcons';
 
 export default function SprintPage() {
-  const { sprintRecords, addSprintRecord, updateSprintRecord, deleteSprintRecord, isLoading } = useApp();
+  const { sprintRecords, addSprintRecord, updateSprintRecord, deleteSprintRecord, childBirthDate, isLoading } = useApp();
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<SprintRecord | null>(null);
 
@@ -57,7 +57,7 @@ export default function SprintPage() {
           <p className="text-xs font-semibold text-gray-500 mb-3 flex items-center gap-1">
             <ChartIcon size={14} />タイムの推移
           </p>
-          <SprintChart records={sprintRecords} />
+          <SprintChart records={sprintRecords} birthDate={childBirthDate} />
         </div>
       </section>
 
