@@ -398,7 +398,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const toggleTimestampFavorite = useCallback((id: string) => {
     setVideoTimestamps((prev) => {
-      const updated = prev.map((t) => t.id === id ? { ...t, favorite: !t.favorite } : t);
+      const updated = prev.map((t) => {
+        if (t.id !== id) return t;
+        const nextFavorite = !t.favorite;
+        return { ...t, favorite: nextFavorite, favoritedAt: nextFavorite ? new Date().toISOString() : t.favoritedAt };
+      });
       saveVideoTimestamps(updated);
       return updated;
     });

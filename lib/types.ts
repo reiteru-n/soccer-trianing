@@ -311,6 +311,7 @@ export interface VideoTimestamp {
   lastViewedAt?: string; // 最終視聴日 yyyy/mm/dd
   createdAt: string;     // ISO datetime
   favorite?: boolean;    // お気に入りシーン
+  favoritedAt?: string;  // お気に入りに追加した日時 ISO（並び替え「お気に入りに追加した順」用）
   offsetBefore?: number; // お気に入り再生時のシーン前秒数（個別設定・未設定ならページのデフォルト値を使う）
   offsetAfter?: number;  // お気に入り再生時のシーン後秒数（個別設定・未設定ならページのデフォルト値を使う）
 }

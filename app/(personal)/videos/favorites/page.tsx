@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback, type PointerEvent as ReactPointerEvent } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/context';
-import { VideoTimestamp } from '@/lib/types';
 import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, disableCaptionsHard, useForceLandscape } from '@/lib/youtubePlayer';
 import { useSchMatchVideos } from '@/lib/schMatchVideos';
 import { StarIcon, PlayIcon, PauseIcon, ShuffleIcon, SkipIcon, ExpandIcon, CollapseIcon, EditIcon } from '@/components/AppIcons';
@@ -50,44 +49,76 @@ interface FavoriteClip {
  * 4. 再生開始
  * 5. シーン時刻 + 切り取り秒数 に達したら次のシーンへ（末尾なら先頭に戻ってループ）
  */
+type SortMode = 'uploadOrder' | 'category' | 'favoritedOrder';
+type SortDir = 'asc' | 'desc';
+
+const SORT_MODE_OPTIONS: { mode: SortMode; label: string }[] = [
+  { mode: 'uploadOrder', label: '動画アップロード順' },
+  { mode: 'category', label: 'シーンのカテゴリー順' },
+  { mode: 'favoritedOrder', label: 'お気に入りをつけた順' },
+];
+
+function readSavedChoice<T extends string>(key: string, fallback: T, valid: readonly T[]): T {
+  if (typeof window === 'undefined') return fallback;
+  const saved = window.localStorage.getItem(key);
+  return saved && (valid as readonly string[]).includes(saved) ? (saved as T) : fallback;
+}
+
 export default function FavoriteScenesPage() {
-  const { videos, videoTimestamps, toggleTimestampFavorite, updateTimestampOffsets, isLoading } = useApp();
+  const { videos, videoCategories, videoTimestamps, toggleTimestampFavorite, updateTimestampOffsets, isLoading } = useApp();
   const schMatchVideos = useSchMatchVideos(true);
 
   const videoInfoByUrl = useMemo(() => {
-    const map = new Map<string, { description: string; sortKey: string }>();
+    const map = new Map<string, { description: string; sortKey: string; categoryOrder: number }>();
+    const matchCategory = videoCategories.find((c) => c.isMatchCategory);
     for (const v of videos) {
-      map.set(v.url, { description: v.description, sortKey: v.createdAt ?? '' });
+      const cat = videoCategories.find((c) => c.id === v.categoryId);
+      map.set(v.url, { description: v.description, sortKey: v.createdAt ?? '', categoryOrder: cat?.order ?? Number.MAX_SAFE_INTEGER });
     }
     for (const mv of schMatchVideos) {
-      if (!map.has(mv.url)) map.set(mv.url, { description: mv.description, sortKey: mv.date });
+      if (!map.has(mv.url)) map.set(mv.url, { description: mv.description, sortKey: mv.date, categoryOrder: matchCategory?.order ?? Number.MAX_SAFE_INTEGER });
     }
     return map;
-  }, [videos, schMatchVideos]);
+  }, [videos, schMatchVideos, videoCategories]);
+
+  // 並び替え設定（端末に保存し次回訪問時も引き継ぐ）。デフォルトは動画アップロード順の古い順。
+  const [sortMode, setSortMode] = useState<SortMode>(() => readSavedChoice('favoriteSortMode', 'uploadOrder', ['uploadOrder', 'category', 'favoritedOrder'] as const));
+  const [sortDir, setSortDir] = useState<SortDir>(() => readSavedChoice('favoriteSortDir', 'asc', ['asc', 'desc'] as const));
+  useEffect(() => { window.localStorage.setItem('favoriteSortMode', sortMode); }, [sortMode]);
+  useEffect(() => { window.localStorage.setItem('favoriteSortDir', sortDir); }, [sortDir]);
 
   const clips = useMemo<FavoriteClip[]>(() => {
     const favorites = videoTimestamps.filter((t) => t.favorite);
-    const groups = new Map<string, VideoTimestamp[]>();
-    for (const t of favorites) {
-      if (!groups.has(t.videoUrl)) groups.set(t.videoUrl, []);
-      groups.get(t.videoUrl)!.push(t);
-    }
-    const orderedUrls = [...groups.keys()].sort((a, b) => {
-      const ka = videoInfoByUrl.get(a)?.sortKey ?? '';
-      const kb = videoInfoByUrl.get(b)?.sortKey ?? '';
-      return kb.localeCompare(ka);
-    });
-    const out: FavoriteClip[] = [];
-    for (const url of orderedUrls) {
-      const videoId = extractYoutubeVideoId(url);
-      const description = videoInfoByUrl.get(url)?.description ?? '';
-      const items = [...groups.get(url)!].sort((a, b) => a.seconds - b.seconds);
-      for (const t of items) {
-        out.push({ id: t.id, videoUrl: url, videoId, seconds: t.seconds, label: t.label, videoDescription: description, offsetBefore: t.offsetBefore, offsetAfter: t.offsetAfter });
+    const dirMul = sortDir === 'asc' ? 1 : -1;
+    const withMeta = favorites.map((t) => ({ t, info: videoInfoByUrl.get(t.videoUrl) }));
+    withMeta.sort((a, b) => {
+      if (sortMode === 'favoritedOrder') {
+        const fa = a.t.favoritedAt ?? a.t.createdAt;
+        const fb = b.t.favoritedAt ?? b.t.createdAt;
+        return fa.localeCompare(fb) * dirMul;
       }
-    }
-    return out;
-  }, [videoTimestamps, videoInfoByUrl]);
+      if (sortMode === 'category') {
+        const ca = a.info?.categoryOrder ?? Number.MAX_SAFE_INTEGER;
+        const cb = b.info?.categoryOrder ?? Number.MAX_SAFE_INTEGER;
+        if (ca !== cb) return (ca - cb) * dirMul;
+      }
+      // uploadOrder、またはcategory内の同一カテゴリー内の並び: 動画の新しさ→シーン再生位置
+      const sa = a.info?.sortKey ?? '';
+      const sb = b.info?.sortKey ?? '';
+      if (sa !== sb) return sa.localeCompare(sb) * dirMul;
+      return (a.t.seconds - b.t.seconds) * dirMul;
+    });
+    return withMeta.map(({ t, info }) => ({
+      id: t.id,
+      videoUrl: t.videoUrl,
+      videoId: extractYoutubeVideoId(t.videoUrl),
+      seconds: t.seconds,
+      label: t.label,
+      videoDescription: info?.description ?? '',
+      offsetBefore: t.offsetBefore,
+      offsetAfter: t.offsetAfter,
+    }));
+  }, [videoTimestamps, videoInfoByUrl, sortMode, sortDir]);
 
   const clipsById = useMemo(() => {
     const m = new Map<string, FavoriteClip>();
@@ -420,6 +451,28 @@ export default function FavoriteScenesPage() {
         </p>
       ) : (
         <>
+          {/* 並び替え設定 */}
+          <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+            <span className="text-xs text-blue-200/70 flex-shrink-0">並び替え:</span>
+            {SORT_MODE_OPTIONS.map(({ mode, label }) => (
+              <button
+                key={mode}
+                onClick={() => setSortMode(mode)}
+                className={`text-xs font-bold px-2.5 py-1 rounded-full ${sortMode === mode ? 'bg-sky-500 text-white' : 'bg-white/10 text-blue-200/80 active:bg-white/20'}`}
+              >
+                {label}
+              </button>
+            ))}
+            <button
+              onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}
+              aria-label="並び順を反転"
+              title="並び順を反転（標準/逆順）"
+              className="text-xs font-bold px-2.5 py-1 rounded-full bg-white/10 text-blue-200/80 active:bg-white/20 flex-shrink-0"
+            >
+              {sortDir === 'asc' ? '標準' : '逆順'}
+            </button>
+          </div>
+
           {/* 全体再生・シャッフル再生 */}
           <div className="flex items-center gap-2 mb-2">
             <button
