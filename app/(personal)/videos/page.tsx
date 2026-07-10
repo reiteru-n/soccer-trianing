@@ -6,7 +6,7 @@ import { useApp } from '@/lib/context';
 import { VideoCategory, VideoItem, VideoViewStat, VideoTimestamp } from '@/lib/types';
 import { YTPlayer, loadYouTubeIframeApi, extractYoutubeVideoId, getYoutubeThumbnail, disableCaptionsHard, useForceLandscape } from '@/lib/youtubePlayer';
 import { useSchMatchVideos, SchMatchVideo, resolveVideoDate } from '@/lib/schMatchVideos';
-import { StarIcon, TrashIcon, ChevronIcon } from '@/components/AppIcons';
+import { StarIcon, TrashIcon, ChevronIcon, TimerIcon } from '@/components/AppIcons';
 import VideoCalendarRuler from '@/components/VideoCalendarRuler';
 
 // タイムスタンプのラベル選択肢（プリセット）
@@ -61,7 +61,7 @@ function VideoThumb({ url }: { url: string }) {
 // href がない場合はアプリ内プレイヤーを開くボタン（試合カテゴリ）
 function VideoRow({
   url, description, stat, pinned, onView, href, editMode, onEdit, onDelete, onTogglePin,
-  readOnly, favoriteCount,
+  readOnly, favoriteCount, sceneCount,
 }: {
   url: string;
   description: string;
@@ -75,6 +75,7 @@ function VideoRow({
   onTogglePin?: () => void;
   readOnly?: boolean;
   favoriteCount?: number;
+  sceneCount?: number;
 }) {
   return (
     <div className={"relative rounded-2xl shadow-md overflow-hidden flex " +
@@ -85,10 +86,19 @@ function VideoRow({
       {pinned && (
         <span className="absolute top-1.5 right-1.5 z-10 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow shadow-amber-300/70 flex items-center gap-0.5">📌 PIN</span>
       )}
-      {!!favoriteCount && (
-        <span className="absolute top-1.5 left-1.5 z-10 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow shadow-amber-300/70 flex items-center gap-0.5">
-          <StarIcon size={10} />{favoriteCount}
-        </span>
+      {(!!sceneCount || !!favoriteCount) && (
+        <div className="absolute top-1.5 left-1.5 z-10 flex items-center gap-1">
+          {!!sceneCount && (
+            <span className="bg-sky-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow shadow-sky-300/70 flex items-center gap-0.5">
+              <TimerIcon size={10} />{sceneCount}
+            </span>
+          )}
+          {!!favoriteCount && (
+            <span className="bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow shadow-amber-300/70 flex items-center gap-0.5">
+              <StarIcon size={10} />{favoriteCount}
+            </span>
+          )}
+        </div>
       )}
       {/* 左：サムネ 1/4 */}
       {href ? (
@@ -183,7 +193,7 @@ function VideoRow({
 function CategoryBlock({
   category, items, stats, onView, editMode, onAdd, onEdit, onDelete, onTogglePin,
   onRenameCategory, onDeleteCategory, onMoveCategoryUp, onMoveCategoryDown, canMoveCatUp, canMoveCatDown,
-  matchVideos, favoriteCount, favoriteCountByUrl,
+  matchVideos, favoriteCount, favoriteCountByUrl, sceneCountByUrl,
 }: {
   category: VideoCategory;
   items: VideoItem[];
@@ -204,6 +214,7 @@ function CategoryBlock({
   matchVideos: SchMatchVideo[];
   favoriteCount: number;
   favoriteCountByUrl: Map<string, number>;
+  sceneCountByUrl: Map<string, number>;
 }) {
   const [open, setOpen] = useState(true);
   const sortedItems = useMemo(() => {
@@ -302,6 +313,7 @@ function CategoryBlock({
                 onDelete={() => onDelete(item.id)}
                 onTogglePin={() => onTogglePin(item.id)}
                 favoriteCount={favoriteCountByUrl.get(item.url)}
+                sceneCount={sceneCountByUrl.get(item.url)}
               />
             ))}
             {isMatch && sortedMatchVideos.map((mv) => (
@@ -315,6 +327,7 @@ function CategoryBlock({
                 editMode={editMode}
                 readOnly
                 favoriteCount={favoriteCountByUrl.get(mv.url)}
+                sceneCount={sceneCountByUrl.get(mv.url)}
               />
             ))}
             {sortedItems.length === 0 && (!isMatch || matchVideos.length === 0) && (
@@ -1046,6 +1059,14 @@ export default function VideosPage() {
     return map;
   }, [videoTimestamps]);
 
+  const sceneCountByUrl = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const t of videoTimestamps) {
+      map.set(t.videoUrl, (map.get(t.videoUrl) ?? 0) + 1);
+    }
+    return map;
+  }, [videoTimestamps]);
+
   const moveCategory = (id: string, dir: -1 | 1) => {
     const idx = sortedCategories.findIndex(c => c.id === id);
     if (idx < 0) return;
@@ -1140,6 +1161,7 @@ export default function VideosPage() {
             matchVideos={cat.isMatchCategory ? schMatchVideos : []}
             favoriteCount={cat.isMatchCategory ? favoriteTimestampCount : 0}
             favoriteCountByUrl={favoriteCountByUrl}
+            sceneCountByUrl={sceneCountByUrl}
           />
         ))}
       </div>
