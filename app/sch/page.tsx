@@ -25,6 +25,26 @@ function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
 }
+// todayStr()は呼ばれた瞬間の日付を返すが、呼び出し元コンポーネントが再レンダーされない限り
+// 値は更新されない。PWAをバックグラウンドから復帰した時やタブを放置した時に再レンダーが
+// 起きないと「今日」の判定（過去/未来の区切り）が古いまま固まってしまうため、
+// フォアグラウンド復帰時・一定間隔で再計算をトリガーする。
+function useTodayStr(): string {
+  const [today, setToday] = useState(() => todayStr());
+  useEffect(() => {
+    const refresh = () => setToday(todayStr());
+    const onVisibilityChange = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', refresh);
+    const interval = setInterval(refresh, 5 * 60 * 1000);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', refresh);
+      clearInterval(interval);
+    };
+  }, []);
+  return today;
+}
 // ブラウザ標準のscrollIntoView(smooth)は速度を指定できないため、
 // 自動スクロール演出用にduration(ms)を指定できる独自のスムーズスクロールを用意する
 function smoothScrollToCenter(el: HTMLElement, durationMs = 1400) {
@@ -1733,7 +1753,7 @@ function EventSection({ events, members, onSave, openDetailId, isAdmin, lineQuot
   const [detailId, setDetailId] = useState<string | null>(openDetailId ?? null);
   const [popupDay, setPopupDay] = useState<{ date: string; events: SchEvent[] } | null>(null);
   const [showAllPast, setShowAllPast] = useState(false);
-  const today = todayStr();
+  const today = useTodayStr();
   const timelineRef = useRef<HTMLDivElement>(null);
   const timelineListRef = useRef<HTMLDivElement>(null);
   const hasAutoScrolledRef = useRef(false);
@@ -3382,7 +3402,7 @@ function HomeSection({
   onSaveHistory: (eventId: string, slots: SchParkingSlot[]) => void;
   onUpdateMaxSlots: (eventId: string, maxSlots: number) => void;
 }) {
-  const today = todayStr();
+  const today = useTodayStr();
   const sortedMembers = useMemo(() => [...members].sort((a, b) => a.number - b.number), [members]);
   const [parkingShowCount, setParkingShowCount] = useState(3);
   const [nextExpanded, setNextExpanded] = useState(false);
