@@ -236,7 +236,7 @@ export default function ObPage() {
           { label: '中学', value: '横浜F・マリノス JY追浜', note: '横浜市立谷本中' },
           { label: '高校', value: '横浜F・マリノスユース', note: '神奈川県立荏田高' },
           { label: '大学', value: '法政大学サッカー部' },
-          { label: 'プロ', value: '横浜F・マリノス', note: '2027シーズン加入内定・2025特別指定' },
+          { label: 'プロ', value: '横浜F・マリノス', note: '2027シーズン加入内定・2025-26特別指定選手' },
         ]}
         tags={[
           { text: 'J1プロ', color: 'gold' },
@@ -246,6 +246,7 @@ export default function ObPage() {
         ]}
         sources={[
           { href: 'https://www.f-marinos.com/news/team/8175', label: '横浜F・マリノス公式' },
+          { href: 'https://www.f-marinos.com/news/team/10280', label: '横浜F・マリノス公式（2026特別指定再登録）' },
           { href: 'https://ja.wikipedia.org/wiki/%E6%9D%BE%E6%9D%91%E6%99%83%E5%8A%A9', label: 'Wikipedia' },
           { href: 'https://www.jleague.jp/player/1639094', label: 'Jリーグ公式' },
         ]}
@@ -256,13 +257,13 @@ export default function ObPage() {
         nameKana="なかむら つばさ"
         birth="2002年4月26日生（神奈川県出身）"
         position="MF / FW"
-        highlight="⚽ 2025シーズン 福島ユナイテッドFC（J3）でプロデビュー！ 3/30初得点"
+        highlight="⚽ 福島ユナイテッドFC（J3）でプレー中！2025年15試合3得点・2026年も所属継続"
         career={[
           { label: '小学', value: 'SCH.FC', note: '横浜市立上矢部小 / 2014年度卒' },
           { label: '中学', value: '横浜F・マリノス JrユースU-15', note: '横浜市立岡津中' },
           { label: '高校', value: '横浜F・マリノスユース', note: '神奈川県立上矢部高・3年時キャプテン' },
           { label: '大学', value: '法政大学サッカー部' },
-          { label: 'プロ', value: '福島ユナイテッドFC', note: 'J3・2025〜' },
+          { label: 'プロ', value: '福島ユナイテッドFC', note: 'J3・2025〜 / 2025年15試合3得点' },
         ]}
         tags={[
           { text: 'J3プロ', color: 'blue' },
@@ -273,6 +274,7 @@ export default function ObPage() {
           { href: 'https://fufc.jp/news/12094/', label: '福島ユナイテッドFC公式' },
           { href: 'https://ja.wikipedia.org/wiki/%E4%B8%AD%E6%9D%91%E7%BF%BC_(%E3%82%B5%E3%83%83%E3%82%AB%E3%83%BC%E9%81%B8%E6%89%8B)', label: 'Wikipedia' },
           { href: 'https://www.jleague.jp/player/1637254/', label: 'Jリーグ公式' },
+          { href: 'https://www1.targma.jp/fukushima/2025/08/08/post11736/', label: '福島ユナイテッド番記者（2025年成績）' },
         ]}
       />
 
@@ -281,13 +283,13 @@ export default function ObPage() {
         nameKana="さいとう しゅんすけ"
         birth="2005年4月26日生（神奈川県出身）"
         position="MF"
-        highlight="🌍 2026年 KVCウェステルロー（ベルギー）移籍！ J2月間MVP・U-20日本代表"
+        highlight="🌍 2026年1月 KVCウェステルロー（ベルギー1部）へ完全移籍！欧州初アシスト・初ゴールも達成"
         career={[
           { label: '小学', value: 'SCH.FC → 横浜F・マリノスプライマリー', note: '2017年度卒' },
           { label: '中学', value: '横浜F・マリノス ジュニアユース' },
           { label: '高校', value: '桐光学園高校' },
           { label: 'プロ', value: '水戸ホーリーホック', note: 'J2・2024〜2025 / J2月間MVP・J2優秀選手賞' },
-          { label: '海外', value: 'KVCウェステルロー', note: 'ベルギー1部・2026年移籍' },
+          { label: '海外', value: 'KVCウェステルロー', note: 'ベルギー1部・2026年1月完全移籍（3年半契約）・欧州初ゴール達成' },
         ]}
         tags={[
           { text: '海外プロ（ベルギー）', color: 'gold' },
@@ -297,6 +299,7 @@ export default function ObPage() {
         ]}
         sources={[
           { href: 'https://www.mito-hollyhock.net/news/p=48042/', label: '水戸ホーリーホック公式' },
+          { href: 'https://www.mito-hollyhock.net/news/p=48413/', label: '水戸ホーリーホック公式（KVC完全移籍発表）' },
           { href: 'https://ja.wikipedia.org/wiki/%E9%BD%8B%E8%97%A4%E4%BF%8A%E8%BC%94', label: 'Wikipedia' },
         ]}
       />
@@ -312,15 +315,19 @@ export default function ObPage() {
           { label: '中学', value: '横浜F・マリノス ジュニアユース' },
           { label: '高校', value: '横浜F・マリノスユース' },
           { label: 'プロ', value: '横浜F・マリノス', note: 'J1・2025〜 / クラブ史上最年少契約' },
+          { label: '代表', value: 'U-19日本代表', note: '2026年 モーリスルベロトーナメント（フランス）出場・得点' },
         ]}
         tags={[
           { text: 'J1プロ', color: 'gold' },
           { text: 'U-17日本代表', color: 'red' },
+          { text: 'U-19日本代表', color: 'purple' },
           { text: 'クラブ史上最年少', color: 'green' },
         ]}
         sources={[
           { href: 'https://www.f-marinos.com/news/team/7937', label: '横浜F・マリノス公式（トップ昇格）' },
           { href: 'https://www.f-marinos.com/team/player/player-detail/46', label: '横浜F・マリノス選手詳細' },
+          { href: 'https://www.f-marinos.com/news/team/10128', label: '横浜F・マリノス公式（U-19代表選出）' },
+          { href: 'https://www.soccer-king.jp/news/japan/national/20260611/2170274.html', label: 'サッカーキング（U-19代表 得点）' },
         ]}
       />
 
@@ -336,7 +343,7 @@ export default function ObPage() {
           { label: '高校', value: '川崎フロンターレU-18' },
           { label: 'プロ', value: '川崎フロンターレ', note: 'J1・2022〜2025' },
           { label: 'ローン', value: 'レノファ山口FC', note: '育成型期限付き・2023〜2024' },
-          { label: '移籍', value: '栃木SC', note: 'J2・2026〜完全移籍' },
+          { label: '移籍', value: '栃木SC', note: 'J2・2026〜完全移籍 / 開幕戦先発（背番号10）・契約更新 / 通算J2 43試合4得点・J3 37試合9得点' },
         ]}
         tags={[
           { text: 'J1→J2プロ', color: 'blue' },
@@ -345,6 +352,55 @@ export default function ObPage() {
         sources={[
           { href: 'https://www.jleague.jp/sp/player/1635199/', label: 'Jリーグ公式：五十嵐太陽' },
           { href: 'https://www.tochigisc.jp/news/1381', label: '栃木SC公式（完全移籍加入）' },
+          { href: 'https://www.tochigisc.jp/news/1778', label: '栃木SC公式（契約更新）' },
+          { href: 'https://www.shimotsuke.co.jp/articles/-/1290482', label: '下野新聞（2026開幕戦先発）' },
+        ]}
+      />
+
+      <PlayerCard
+        name="加藤 大育"
+        nameKana="かとう だいすけ"
+        birth="1998年10月6日生"
+        highlight="🎉 2026年4月 SC相模原からジュビロ磐田（J1）へ完全移籍！"
+        career={[
+          { label: '小学', value: 'SCH.FC', note: '2010年度卒' },
+          { label: '中学', value: '横浜F・マリノス JY追浜' },
+          { label: '高校', value: '日本大学高校' },
+          { label: '大学', value: '神奈川大学' },
+          { label: 'プロ', value: 'ブリオベッカ浦安', note: 'JFL・2021-22' },
+          { label: '移籍', value: 'SC相模原', note: 'J3・2023-2025（通算99試合4得点）' },
+          { label: '移籍', value: 'ジュビロ磐田', note: 'J1・2026年4月完全移籍' },
+        ]}
+        tags={[
+          { text: 'J1プロ', color: 'gold' },
+          { text: 'J3→J1', color: 'green' },
+        ]}
+        sources={[
+          { href: 'https://www.scsagamihara.com/news/post/20260409002', label: 'SC相模原公式（完全移籍）' },
+          { href: 'https://jubilo-iwata.co.jp/news/topteam20260409contractw3p6j9rt', label: 'ジュビロ磐田公式（加入）' },
+        ]}
+      />
+
+      <PlayerCard
+        name="角田 惠風"
+        nameKana="つのだ よしかぜ"
+        birth="2003年8月18日生"
+        highlight="⚽ 2026年 柏レイソル（J1）加入 → 藤枝MYFC（J3）へ期限付き移籍中"
+        career={[
+          { label: '小学', value: 'SCH.FC' },
+          { label: '中学', value: '横浜F・マリノス JY追浜' },
+          { label: '高校', value: '横浜F・マリノスユース' },
+          { label: '大学', value: '慶應義塾大学' },
+          { label: 'プロ', value: '柏レイソル', note: 'J1・2026年加入' },
+          { label: 'ローン', value: '藤枝MYFC', note: 'J3・期限付き移籍 2026/7〜2027/6' },
+        ]}
+        tags={[
+          { text: 'J1加入', color: 'gold' },
+          { text: '期限付き移籍中(J3)', color: 'blue' },
+        ]}
+        sources={[
+          { href: 'https://www.reysol.co.jp/team/players/2026/37.php', label: '柏レイソル公式' },
+          { href: 'https://myfc.co.jp/news/20260616/1187565/', label: '藤枝MYFC公式（期限付き移籍加入）' },
         ]}
       />
 
@@ -387,11 +443,6 @@ export default function ObPage() {
 
       {[
         {
-          name: '加藤 大育', kana: 'かとう だいすけ', birth: '1998年10月6日生', grad: '2010年度卒（小学部）',
-          career: 'SCH.FC → 横浜FM JY追浜 → 日本大学高校 → 神奈川大学 → ブリオベッカ浦安（JFL・2021-22）→ SC相模原（J3・2023〜）',
-          src: 'https://soccer.yahoo.co.jp/jleague/category/j3/teams/30676/players/1640670',
-        },
-        {
           name: '平野 元稀', kana: 'ひらの もとき', birth: '2002年10月15日生', grad: '2014年度卒（小学部）',
           career: 'SCH.FC → 東急SレイエスFC → 帝京第三高 → 流通経済大 → Y.S.C.C.横浜（JFL）',
           src: 'https://www.fansaka.info/player/J52AF1/',
@@ -413,19 +464,21 @@ export default function ObPage() {
         },
         {
           name: '西山 大輝', kana: 'にしやま だいき', birth: '—', grad: '—',
-          career: 'SCH.FC → クリアソン新宿（JFL）',
-          src: 'https://www.sch-fc.com/pages/246/',
+          career: 'SCH.FC → クリアソン新宿（JFL通算73試合2得点）→ 2025年限りで現役引退・フロント業務に転向',
+          src: 'https://criacao.co.jp/information/post-28102/',
+          league: '引退',
         },
         {
           name: '土佐 陸翼', kana: 'とさ りくと', birth: '—', grad: 'JY卒（中学部）',
-          career: 'SCH FC JY → 栃木シティFC（J3優勝・J2昇格 2025〜）',
-          src: 'https://www.sch-fc.com/pages/246/',
-          league: 'J3→J2',
+          career: 'SCH FC JY → 栃木シティFC（J3優勝・J2昇格 2024-25）→ 2026年1月 ツエーゲン金沢（J3）へ完全移籍',
+          src: 'https://www.zweigen-kanazawa.jp/news/?id=18497',
+          league: 'J3',
         },
         {
-          name: '国本 玲央', kana: 'くにもと れお', birth: '—', grad: '2013年度卒（JY中学部）',
-          career: 'SCH FC JY → 暁星国際高 → レノファ山口FC（J2） → 新潟シンガポール等',
-          src: 'https://www.sch-fc.com/pages/246/',
+          name: '国本 玲央', kana: 'くにもと れお', birth: '2001年9月1日生', grad: '2013年度卒（JY中学部）',
+          career: 'SCH FC JY → 暁星国際高 → レノファ山口FC（J2） → 2024年6月 プノンペン・クラウン（カンボジア1部）へ移籍',
+          src: 'https://www.renofa.com/archives/130364/',
+          league: '海外',
         },
         {
           name: '北村 涼太', kana: 'きたむら りょうた', birth: '—', grad: '2010年度卒（JY中学部）',
@@ -457,12 +510,29 @@ export default function ObPage() {
       />
 
       <TrecenCard
+        year="2026"
+        name="對馬 羽琉"
+        level="日本代表"
+        event="U-16日本代表 複数回選出 / フランス遠征・インターナショナルドリームカップ"
+        note="川崎フロンターレU-15生田 → U-18昇格"
+      />
+      <TrecenCard
+        year="2026"
+        name="對馬 羽琉"
+        level="ナショナル"
+        event="AFC U-17アジアカップ（サウジアラビア）国内トレーニングパートナー招集"
+      />
+      <TrecenCard
         year="2025"
         name="對馬 羽琉"
         level="日本代表"
         event="U-15日本代表選出 / クロアチア遠征（Vlatko Marković Tournament）"
         note="SCH.FC → 川崎フロンターレU-15生田"
       />
+      <div className="mx-4 mb-2 flex flex-wrap gap-2">
+        <Src href="https://www.frontale.co.jp/info/2026/0325_1.html" label="川崎フロンターレ公式（對馬羽琉 代表選出）" />
+        <Src href="https://www.frontale.co.jp/info/2026/0420_1.html" label="川崎フロンターレ公式（AFC U-17招集）" />
+      </div>
       <TrecenCard
         year="2025"
         name="浅田大翔"
@@ -662,7 +732,7 @@ export default function ObPage() {
       <PathCard
         season="2015年度卒"
         players={['角田 惠風']}
-        destinations={['横浜FM JY追浜 → ユース → 慶應大', '→ 柏レイソル（J1）2026年加入⭐']}
+        destinations={['横浜FM JY追浜 → ユース → 慶應大', '→ 柏レイソル（J1）2026年加入 → 藤枝MYFC(J3)期限付き移籍⭐']}
       />
       <PathCard
         season="2014年度卒"
@@ -718,6 +788,13 @@ export default function ObPage() {
             { href: 'https://ja.wikipedia.org/wiki/%E5%B0%8F%E9%87%8E%E5%A5%88%E8%8F%9C', label: 'Wikipedia：小野奈菜' },
             { href: 'https://web.gekisaka.jp/player/?43716-43716-jp', label: 'ゲキサカ：岩崎真波' },
             { href: 'https://sports-hosei.net/78893/', label: '法政大スポーツ：松村晃助インタビュー' },
+            { href: 'https://www.mito-hollyhock.net/news/p=48413/', label: '水戸ホーリーホック公式：齋藤俊輔 KVCウェステルロー完全移籍' },
+            { href: 'https://www.scsagamihara.com/news/post/20260409002', label: 'SC相模原公式：加藤大育 ジュビロ磐田完全移籍' },
+            { href: 'https://www.tochigisc.jp/news/1778', label: '栃木SC公式：五十嵐太陽 契約更新' },
+            { href: 'https://myfc.co.jp/news/20260616/1187565/', label: '藤枝MYFC公式：角田惠風 期限付き移籍加入' },
+            { href: 'https://www.zweigen-kanazawa.jp/news/?id=18497', label: 'ツエーゲン金沢公式：土佐陸翼 完全移籍' },
+            { href: 'https://www.renofa.com/archives/130364/', label: 'レノファ山口FC公式：国本玲央 移籍' },
+            { href: 'https://www.frontale.co.jp/info/2026/0325_1.html', label: '川崎フロンターレ公式：對馬羽琉 U-16代表選出' },
           ].map((s, i) => (
             <div key={i}>
               <Src href={s.href} label={s.label} />
