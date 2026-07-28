@@ -807,6 +807,23 @@ export default function ObPage() {
         </p>
       </div>
 
+      {/* ─── インターハイまとめページへのリンク ─── */}
+      <div className="mx-4 mt-2 mb-2">
+        <Link
+          href="/sch/ob/interhai"
+          className="flex items-center justify-between w-full bg-white border border-[#003087]/10 rounded-xl px-4 py-3 hover:border-[#003087]/40 transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-[#003087] text-lg">🏃</span>
+            <div>
+              <p className="text-[#001A52] text-[13px] font-bold">インターハイ出場選手</p>
+              <p className="text-slate-400 text-[10px] mt-0.5">2019年度以降・高校サッカー部の進路を見る</p>
+            </div>
+          </div>
+          <span className="text-[#003087] text-[18px] group-hover:translate-x-1 transition-transform">→</span>
+        </Link>
+      </div>
+
       {/* ─── 戻るリンク ─── */}
       <div className="mx-4 mt-2">
         <Link
