@@ -2,6 +2,25 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'SCH Info',
+  // ホーム画面追加(PWAインストール)時、ルートのmanifest(start_url: "/")ではなく
+  // /sch を起点とするこちら専用のmanifestを使わせるための上書き。
+  // これがないと/sch配下でホーム画面に追加しても常に個人ページ側が起動し、
+  // 個人ページ用のログイン画面が表示されてしまう不具合が起きる。
+  manifest: '/manifest-sch.webmanifest',
+  icons: {
+    icon: [
+      { url: '/sch-icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/sch-icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/sch-icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'SCH Info',
+  },
   openGraph: {
     title: 'SCH Info',
     description: 'SCH FC 保護者向け情報サイト',
