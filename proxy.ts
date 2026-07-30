@@ -89,7 +89,6 @@ export async function proxy(req: NextRequest) {
     if (!(await hasValidCookie(req, 'family_session', 'family'))) {
       const url = req.nextUrl.clone();
       url.pathname = '/login';
-      url.searchParams.set('type', 'family');
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
@@ -103,7 +102,6 @@ export async function proxy(req: NextRequest) {
     if (!ok) {
       const url = req.nextUrl.clone();
       url.pathname = '/login';
-      url.searchParams.set('type', 'team');
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
@@ -117,7 +115,6 @@ export async function proxy(req: NextRequest) {
     if (!(await hasValidCookie(req, 'family_session', 'family'))) {
       const url = req.nextUrl.clone();
       url.pathname = '/login';
-      url.searchParams.set('type', 'family');
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }

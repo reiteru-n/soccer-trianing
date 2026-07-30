@@ -3,17 +3,30 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+// 遷移先は入力されたパスワードの種類（家族／チーム）でサーバー側が判定して返す。
+// 未ログイン状態のこの画面では、個人ページ・チームページどちらが存在するかを
+// 一切示さない（タイトル・アイコンは常に共通のもの）。
+function safeRedirect(kind: 'family' | 'team', redirectParam: string | null): string {
+  if (kind === 'family') {
+    // 家族パスワードは上位互換のため、どのページへのリダイレクト要求でもそのまま許可する
+    return redirectParam || '/';
+  }
+  // チームパスワードは /sch 配下（/sch/admin を除く）にしかアクセスできないため、
+  // それ以外の遷移先が指定されていた場合はチームトップへフォールバックする
+  if (redirectParam && redirectParam.startsWith('/sch') && !redirectParam.startsWith('/sch/admin')) {
+    return redirectParam;
+  }
+  return '/sch';
+}
+
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const type = params.get('type') === 'team' ? 'team' : 'family';
-  const redirect = params.get('redirect') || (type === 'team' ? '/sch' : '/');
+  const redirectParam = params.get('redirect');
 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const isTeam = type === 'team';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,12 +36,12 @@ function LoginForm() {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, password }),
+        body: JSON.stringify({ password }),
       });
+      const data = await res.json();
       if (res.ok) {
-        router.push(redirect);
+        router.push(safeRedirect(data.kind, redirectParam));
       } else {
-        const data = await res.json();
         setError(data.error ?? 'ログインに失敗しました');
       }
     } catch {
@@ -43,12 +56,12 @@ function LoginForm() {
       style={{ background: 'linear-gradient(135deg, #0a1628 0%, #0d2347 50%, #0a1f3e 100%)' }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <p className="text-5xl mb-3">{isTeam ? '⚽' : '🏠'}</p>
+          <p className="text-5xl mb-3">⚽</p>
           <h1 className="text-2xl font-extrabold text-white">
-            {isTeam ? 'SCH チームページ' : '拓渡のサッカー記録'}
+            ログイン
           </h1>
           <p className="text-sm text-blue-300 mt-1">
-            {isTeam ? 'チームパスワードでログイン' : 'パスワードを入力してください'}
+            パスワードを入力してください
           </p>
         </div>
 

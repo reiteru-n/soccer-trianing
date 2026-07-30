@@ -17,53 +17,7 @@ async function makeToken(type: string): Promise<string> {
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
 export async function POST(req: NextRequest) {
-  const { type, password } = await req.json() as { type: string; password: string };
-
-  if (type === 'family') {
-    const expected = process.env.FAMILY_PASSWORD;
-    if (!expected || password.toLowerCase() !== expected.toLowerCase()) {
-      return NextResponse.json({ error: 'パスワードが違います' }, { status: 401 });
-    }
-    const res = NextResponse.json({ ok: true });
-    res.cookies.set('family_session', await makeToken('family'), {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: COOKIE_MAX_AGE,
-    });
-    logChange({ ts: new Date().toISOString(), action: 'login', detail: 'type=family', ip: getIp(req), ua: getUa(req), device_id: getDeviceId(req) });
-    return res;
-  }
-
-  if (type === 'team') {
-    const teamPw = process.env.TEAM_PASSWORD;
-    const familyPw = process.env.FAMILY_PASSWORD;
-    const pw = password.toLowerCase();
-    // family password is superset: also accepted on team login, issues family_session
-    if (familyPw && pw === familyPw.toLowerCase()) {
-      const res = NextResponse.json({ ok: true });
-      res.cookies.set('family_session', await makeToken('family'), {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: COOKIE_MAX_AGE,
-      });
-      logChange({ ts: new Date().toISOString(), action: 'login', detail: 'type=team(via family)', ip: getIp(req), ua: getUa(req), device_id: getDeviceId(req) });
-      return res;
-    }
-    if (!teamPw || pw !== teamPw.toLowerCase()) {
-      return NextResponse.json({ error: 'パスワードが違います' }, { status: 401 });
-    }
-    const res = NextResponse.json({ ok: true });
-    res.cookies.set('team_session', await makeToken('team'), {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: COOKIE_MAX_AGE,
-    });
-    logChange({ ts: new Date().toISOString(), action: 'login', detail: 'type=team', ip: getIp(req), ua: getUa(req), device_id: getDeviceId(req) });
-    return res;
-  }
+  const { type, password } = await req.json() as { type?: string; password: string };
 
   if (type === 'member') {
     const expected = process.env.MEMBER_PASSWORD ?? 'SCH26';
@@ -73,7 +27,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  return NextResponse.json({ error: '不正なリクエスト' }, { status: 400 });
+  // 個人ページ/チームページを画面上で区別せず、入力されたパスワードがどちらに
+  // 一致するかだけで遷移先セッションを決める（家族パスワードは上位互換）。
+  const pw = password.toLowerCase();
+  const familyPw = process.env.FAMILY_PASSWORD;
+  const teamPw = process.env.TEAM_PASSWORD;
+
+  if (familyPw && pw === familyPw.toLowerCase()) {
+    const res = NextResponse.json({ ok: true, kind: 'family' });
+    res.cookies.set('family_session', await makeToken('family'), {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: COOKIE_MAX_AGE,
+    });
+    logChange({ ts: new Date().toISOString(), action: 'login', detail: 'kind=family', ip: getIp(req), ua: getUa(req), device_id: getDeviceId(req) });
+    return res;
+  }
+
+  if (teamPw && pw === teamPw.toLowerCase()) {
+    const res = NextResponse.json({ ok: true, kind: 'team' });
+    res.cookies.set('team_session', await makeToken('team'), {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: COOKIE_MAX_AGE,
+    });
+    logChange({ ts: new Date().toISOString(), action: 'login', detail: 'kind=team', ip: getIp(req), ua: getUa(req), device_id: getDeviceId(req) });
+    return res;
+  }
+
+  return NextResponse.json({ error: 'パスワードが違います' }, { status: 401 });
 }
 
 export async function DELETE() {
