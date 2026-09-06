@@ -46,7 +46,7 @@ function interp(ref: Record<number, Ref>, age: number): Ref | null {
 
 type Point = { x: number; y: number };
 
-interface Props { records: BodyRecord[]; birthDate: string; }
+interface Props { records: BodyRecord[]; birthDate: string; extendToToday?: boolean; }
 
 function sdLabel(sd: number): { text: string; color: string } {
   const abs = Math.abs(sd);
@@ -143,7 +143,7 @@ function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color, currentA
   );
 }
 
-export default function BodyChart({ records, birthDate }: Props) {
+export default function BodyChart({ records, birthDate, extendToToday = true }: Props) {
   const sorted = [...records].sort((a,b) => a.date.localeCompare(b.date));
   const hRecs = sorted.filter(r => r.height != null);
   const wRecs = sorted.filter(r => r.weight != null);
@@ -163,8 +163,9 @@ export default function BodyChart({ records, birthDate }: Props) {
   const currentAge = ageYears(birthDate, todayTokyo);
 
   const allAges = sorted.map(r => ageYears(birthDate, r.date));
-  const axisMin = Math.floor(Math.min(...allAges, currentAge));
-  const axisMax = Math.ceil(Math.max(...allAges, currentAge));
+  const anchorAges = extendToToday ? [...allAges, currentAge] : allAges;
+  const axisMin = Math.floor(Math.min(...anchorAges));
+  const axisMax = Math.ceil(Math.max(...anchorAges));
 
   const refMin = Math.max(0, axisMin);
   const refMax = Math.min(17, axisMax + 1);

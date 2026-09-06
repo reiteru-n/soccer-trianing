@@ -35,6 +35,9 @@ export default function DashboardPage() {
   const [bodySaved, setBodySaved] = useState(false);
   const [editingBodyId, setEditingBodyId] = useState<string | null>(null);
   const [showAllBody, setShowAllBody] = useState(false);
+  const [bodyPeriod, setBodyPeriod] = useState<'all' | '3m' | '6m' | '1y' | 'custom'>('all');
+  const [bodyPeriodStart, setBodyPeriodStart] = useState(''); // yyyy-mm-dd（date input用）
+  const [bodyPeriodEnd, setBodyPeriodEnd] = useState('');     // yyyy-mm-dd
   type MergeConflict = {
     existing: BodyRecord;
     incoming: Omit<BodyRecord, 'id'>;
@@ -46,6 +49,28 @@ const latestNotes = [...practiceNotes].sort((a, b) => b.date.localeCompare(a.dat
   const sortedBody = [...bodyRecords].sort((a, b) => b.date.localeCompare(a.date));
   const latestH = sortedBody.find(r => r.height != null);
   const latestW = sortedBody.find(r => r.weight != null);
+  // 体重・身長グラフの横軸期間（全期間 / プリセット / カスタム範囲）
+  const bodyDateRange = (() => {
+    if (bodyPeriod === 'all') return { start: null as string | null, end: null as string | null };
+    if (bodyPeriod === 'custom') {
+      return {
+        start: bodyPeriodStart ? bodyPeriodStart.split('-').join('/') : null,
+        end: bodyPeriodEnd ? bodyPeriodEnd.split('-').join('/') : null,
+      };
+    }
+    const days = bodyPeriod === '3m' ? 90 : bodyPeriod === '6m' ? 182 : 365;
+    const start = new Date(Date.now() - days * 86400000);
+    const fmt = (d: Date) => `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    return { start: fmt(start), end: null as string | null };
+  })();
+  const filteredBodyRecords = (!bodyDateRange.start && !bodyDateRange.end)
+    ? bodyRecords
+    : bodyRecords.filter(r =>
+        (!bodyDateRange.start || r.date >= bodyDateRange.start) &&
+        (!bodyDateRange.end || r.date <= bodyDateRange.end)
+      );
+  // 期間の終端を指定していない（＝現在まで）場合のみ、グラフの軸を今日まで延ばす
+  const bodyExtendToToday = !bodyDateRange.end;
   const bestSprintTime = sprintRecords.length > 0 ? Math.min(...sprintRecords.map((r) => r.timeSeconds)) : null;
   const pastLocations = recentDistinct([...liftingRecords.map((r) => r.location), ...practiceNotes.map((n) => n.location)]);
   const pastCategories = recentDistinct(practiceNotes.map((n) => n.category));
@@ -211,6 +236,33 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
           )}
         </div>) : (<p className="text-sm text-blue-200/60 text-center py-4">まだ記録がありません</p>)}
         {sortedBody.length >= 1 && (
+          <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-blue-200/70 flex-shrink-0">グラフ期間:</span>
+            {([
+              { key: 'all', label: '全期間' },
+              { key: '3m', label: '3ヶ月' },
+              { key: '6m', label: '半年' },
+              { key: '1y', label: '1年' },
+              { key: 'custom', label: 'カスタム' },
+            ] as const).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setBodyPeriod(key)}
+                className={`text-xs font-bold px-2.5 py-1 rounded-full ${bodyPeriod === key ? 'bg-violet-600 text-white' : 'bg-white/10 text-blue-200/80'}`}
+              >
+                {label}
+              </button>
+            ))}
+            {bodyPeriod === 'custom' && (
+              <div className="w-full flex items-center gap-2 mt-1">
+                <input type="date" value={bodyPeriodStart} onChange={e => setBodyPeriodStart(e.target.value)} className="flex-1 rounded-xl border-2 border-white/10 bg-white/95 px-2.5 py-1.5 text-xs" />
+                <span className="text-blue-200/60 text-xs">〜</span>
+                <input type="date" value={bodyPeriodEnd} onChange={e => setBodyPeriodEnd(e.target.value)} className="flex-1 rounded-xl border-2 border-white/10 bg-white/95 px-2.5 py-1.5 text-xs" />
+              </div>
+            )}
+          </div>
+        )}
+        {sortedBody.length >= 1 && (
           <div className="mt-3 bg-white/95 rounded-2xl p-4 shadow-xl shadow-blue-900/30 border border-white/20">
             {!childBirthDate ? (
               <div className="mb-3">
@@ -226,10 +278,10 @@ if (isLoading) return (<div className="flex items-center justify-center py-24 te
                 <button onClick={()=>setChildBirthDate("")} className="text-xs text-gray-400 hover:text-red-400">変更</button>
               </div>
             )}
-            <BodyChart records={bodyRecords} birthDate={childBirthDate} />
+            <BodyChart records={filteredBodyRecords} birthDate={childBirthDate} extendToToday={bodyExtendToToday} />
           </div>
         )}
-        <BodyCharts records={bodyRecords} birthDate={childBirthDate} />
+        <BodyCharts records={filteredBodyRecords} birthDate={childBirthDate} />
       </section>
       <section id="section-notes" className="mb-6"><div className="flex items-center justify-between mb-3"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase flex items-center gap-1.5"><NoteIcon size={14} />最新の練習ノート</h2><Link href="/notes" className="text-xs text-blue-300 font-medium">もっと見る →</Link></div>{latestNotes.length === 0 ? (<p className="text-sm text-blue-200/60 text-center py-4">まだノートがありません</p>) : (<div className="space-y-3">{latestNotes.map((n) => <NoteCard key={n.id} note={n} />)}</div>)}</section>
       <section className="mb-2"><h2 className="text-sm font-bold text-blue-200 tracking-wide uppercase mb-3 flex items-center gap-1.5"><SaveIcon size={14} />データ管理</h2><div className="flex gap-3"><button onClick={exportData} className="flex-1 bg-blue-600/80 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-sm border border-blue-400/30 flex items-center justify-center gap-1"><UploadIcon size={16} className="inline mr-1" />エクスポート</button><label className="flex-1 bg-slate-600/80 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-sm cursor-pointer text-center border border-slate-400/30 flex items-center justify-center gap-1"><DownloadIcon size={16} className="inline mr-1" />インポート<input type="file" accept=".json" onChange={handleImport} className="hidden" /></label></div></section>
