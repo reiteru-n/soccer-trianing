@@ -123,9 +123,9 @@ function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color, currentA
             type: 'linear' as const,
             min: axisMin,
             max: axisMax,
-            grid: { color: 'rgba(255,255,255,0.06)' },
-            ticks: { color: 'rgba(148,163,184,0.7)', font: { size: 9 }, callback: (v: unknown) => String(v) },
-            border: { color: 'rgba(255,255,255,0.1)' },
+            grid: { color: 'rgba(0,0,0,0.08)' },
+            ticks: { color: 'rgba(100,116,139,0.9)', font: { size: 9 }, callback: (v: unknown) => String(v) },
+            border: { color: 'rgba(0,0,0,0.15)' },
             afterBuildTicks: (axis: Scale) => {
               const ticks = [];
               for (let i = axisMin; i <= axisMax; i++) ticks.push({ value: i });
@@ -133,9 +133,9 @@ function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color, currentA
             },
           },
           y: {
-            grid: { color: 'rgba(255,255,255,0.06)' },
-            ticks: { color: 'rgba(148,163,184,0.7)', font: { size: 9 }, callback: (v: unknown) => `${v}${unit}` },
-            border: { color: 'rgba(255,255,255,0.1)' },
+            grid: { color: 'rgba(0,0,0,0.08)' },
+            ticks: { color: 'rgba(100,116,139,0.9)', font: { size: 9 }, callback: (v: unknown) => `${v}${unit}` },
+            border: { color: 'rgba(0,0,0,0.15)' },
           },
         }
       } as any}
