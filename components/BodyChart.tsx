@@ -143,6 +143,69 @@ function MiniChart({ actual, band, mean, axisMin, axisMax, unit, color, currentA
   );
 }
 
+function DeviationChart({ hSeries, wSeries, axisMin, axisMax, currentAge }: {
+  hSeries: Point[];
+  wSeries: Point[];
+  axisMin: number;
+  axisMax: number;
+  currentAge?: number;
+}) {
+  const plugins = currentAge != null ? [makeVerticalLinePlugin(currentAge)] : [];
+  const zeroLine: Point[] = [{ x: axisMin, y: 0 }, { x: axisMax, y: 0 }];
+  const datasets = [
+    { data: zeroLine, borderColor: 'rgba(100,116,139,0.6)', borderWidth: 1, borderDash: [4, 3], pointRadius: 0, pointHoverRadius: 0, tension: 0, parsing: false, label: '' },
+    { data: hSeries, borderColor: 'rgb(234,88,12)', backgroundColor: 'rgb(234,88,12)', borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, tension: 0.3, parsing: false, label: '身長SD' },
+    { data: wSeries, borderColor: 'rgb(37,99,235)', backgroundColor: 'rgb(37,99,235)', borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, tension: 0.3, parsing: false, label: '体重SD' },
+  ];
+  return (
+    <Line
+      plugins={plugins}
+      data={{ datasets: datasets as any[] }}
+      options={{
+        responsive: true,
+        parsing: false,
+        interaction: { mode: 'nearest' as const, axis: 'x', intersect: false },
+        plugins: {
+          datalabels: { display: false },
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(7,20,40,0.95)',
+            borderColor: 'rgba(96,165,250,0.3)',
+            borderWidth: 1,
+            titleColor: '#93c5fd',
+            bodyColor: '#e2e8f0',
+            filter: (item: any) => !!item.dataset.label,
+            callbacks: {
+              title: (items: any[]) => `${items[0]?.parsed.x.toFixed(1)}歳`,
+              label: (ctx: any) => `${ctx.dataset.label}: ${(ctx.parsed.y ?? 0) >= 0 ? '+' : ''}${ctx.parsed.y}SD`,
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear' as const,
+            min: axisMin,
+            max: axisMax,
+            grid: { color: 'rgba(0,0,0,0.08)' },
+            ticks: { color: 'rgba(100,116,139,0.9)', font: { size: 9 }, callback: (v: unknown) => String(v) },
+            border: { color: 'rgba(0,0,0,0.15)' },
+            afterBuildTicks: (axis: Scale) => {
+              const ticks = [];
+              for (let i = axisMin; i <= axisMax; i++) ticks.push({ value: i });
+              axis.ticks = ticks;
+            },
+          },
+          y: {
+            grid: { color: 'rgba(0,0,0,0.08)' },
+            ticks: { color: 'rgba(100,116,139,0.9)', font: { size: 9 }, callback: (v: unknown) => `${v}SD` },
+            border: { color: 'rgba(0,0,0,0.15)' },
+          },
+        }
+      } as any}
+    />
+  );
+}
+
 export default function BodyChart({ records, birthDate, extendToToday = true }: Props) {
   const sorted = [...records].sort((a,b) => a.date.localeCompare(b.date));
   const hRecs = sorted.filter(r => r.height != null);
@@ -179,6 +242,22 @@ export default function BodyChart({ records, birthDate, extendToToday = true }: 
 
   const hActual: Point[] = hRecs.map(r => ({ x: ageYears(birthDate, r.date), y: r.height! }));
   const wActual: Point[] = wRecs.map(r => ({ x: ageYears(birthDate, r.date), y: r.weight! }));
+
+  // 平均との乖離（SDスコア）の推移: (実測値 - 参照平均) / 参照SD
+  const hSDSeries: Point[] = hRecs
+    .map(r => {
+      const age = ageYears(birthDate, r.date);
+      const ref = interp(H, age);
+      return ref ? { x: age, y: parseFloat(((r.height! - ref.mean) / ref.sd).toFixed(2)) } : null;
+    })
+    .filter(Boolean) as Point[];
+  const wSDSeries: Point[] = wRecs
+    .map(r => {
+      const age = ageYears(birthDate, r.date);
+      const ref = interp(W, age);
+      return ref ? { x: age, y: parseFloat(((r.weight! - ref.mean) / ref.sd).toFixed(2)) } : null;
+    })
+    .filter(Boolean) as Point[];
 
   // 最新値と偏差
   const latestH = hRecs.at(-1);
@@ -246,6 +325,21 @@ export default function BodyChart({ records, birthDate, extendToToday = true }: 
             mean={mkBand(W, 0)}
             axisMin={axisMin} axisMax={axisMax}
             unit="kg" color="blue" currentAge={currentAge}
+          />
+        </div>
+      )}
+
+      {/* 平均との乖離（SD）の推移 */}
+      {(hSDSeries.length > 0 || wSDSeries.length > 0) && (
+        <div>
+          <p className="text-xs font-semibold text-gray-500 mb-1">📊 平均との乖離（SD）の推移</p>
+          <p className="text-[9px] text-gray-400 mb-1">
+            <span style={{ color: 'rgb(234,88,12)' }}>━</span> 身長SD
+            <span style={{ color: 'rgb(37,99,235)' }}>━</span> 体重SD
+          </p>
+          <DeviationChart
+            hSeries={hSDSeries} wSeries={wSDSeries}
+            axisMin={axisMin} axisMax={axisMax} currentAge={currentAge}
           />
         </div>
       )}
