@@ -422,7 +422,7 @@ function SeekBar({
   };
 
   return (
-    <div className="px-3 pt-1.5 pb-0 bg-gray-950 flex-shrink-0 select-none">
+    <div className="px-3 pt-1 pb-0 bg-gray-950 flex-shrink-0 select-none">
       <div
         ref={barRef}
         className="relative h-5 bg-white/10 rounded-full cursor-pointer"
@@ -500,7 +500,8 @@ function VideoPlayerModal({
   onProgressSaveRef.current = onProgressSave;
 
   // 動画エリア/タイムスタンプリストの幅比率（ドラッグでリサイズ可能、端末に保存）
-  const [sidebarFraction, setSidebarFraction] = useState(0.25);
+  // 動画エリアをできるだけ広く取るため、デフォルトは一覧エリアを小さめ(12.5%)にする
+  const [sidebarFraction, setSidebarFraction] = useState(0.125);
   const containerRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
 
@@ -508,7 +509,7 @@ function VideoPlayerModal({
     const saved = window.localStorage.getItem('videoPlayerSidebarFraction');
     if (saved) {
       const n = parseFloat(saved);
-      if (!Number.isNaN(n) && n >= 0.2 && n <= 0.5) setSidebarFraction(n);
+      if (!Number.isNaN(n) && n >= 0.1 && n <= 0.5) setSidebarFraction(n);
     }
   }, []);
 
@@ -652,7 +653,7 @@ function VideoPlayerModal({
       if (!rect || rect.width === 0) return;
       videoFraction = (clientX - rect.left) / rect.width;
     }
-    setSidebarFraction(Math.min(0.5, Math.max(0.2, 1 - videoFraction)));
+    setSidebarFraction(Math.min(0.5, Math.max(0.1, 1 - videoFraction)));
   }, [shouldRotate]);
 
   const handleDividerPointerDown = (e: React.PointerEvent) => {
@@ -752,7 +753,7 @@ function VideoPlayerModal({
         />
 
         {/* スキップ・記録ボタン列（左端に閉じるボタン）*/}
-        <div className="flex items-center px-2 pt-0.5 pb-2 bg-gray-950 flex-shrink-0">
+        <div className="flex items-center px-2 pt-0.5 pb-1 bg-gray-950 flex-shrink-0">
           <button
             onClick={onClose}
             className="text-white text-base leading-none w-9 h-9 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 flex-shrink-0"
@@ -838,26 +839,23 @@ function VideoPlayerModal({
       {/* ドラッグで幅調整できる仕切り */}
       <div
         onPointerDown={handleDividerPointerDown}
-        className="w-2 flex-shrink-0 bg-white/10 active:bg-sky-400/50 cursor-col-resize touch-none"
+        className="w-1.5 flex-shrink-0 bg-white/10 active:bg-sky-400/50 cursor-col-resize touch-none"
       />
 
       {/* ===== 右カラム（タイムスタンプリスト、ドラッグで幅調整可）===== */}
       <div className="flex flex-col bg-gray-900 min-h-0" style={{ width: `${sidebarFraction * 100}%`, flexShrink: 0 }}>
-        {/* 動画タイトル（旧ヘッダーから移動、文字サイズ縮小）*/}
-        <div className="px-3 py-1.5 border-b border-white/10 flex-shrink-0">
-          <p className="text-white/70 text-[10px] font-semibold line-clamp-2">{description}</p>
-        </div>
-        <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/10 flex-shrink-0">
-          <span className="text-white/60 text-xs font-bold">タイムスタンプ（{timestamps.length}件）</span>
+        {/* 動画タイトル + 件数を1行に詰めて余白を削減 */}
+        <div className="flex items-center justify-between gap-2 px-2 py-1 border-b border-white/10 flex-shrink-0">
+          <span className="text-white/60 text-[10px] font-bold whitespace-nowrap">タイムスタンプ（{timestamps.length}件）</span>
           <button
             onClick={() => setListOpen(!listOpen)}
-            className="text-white/40 active:text-white text-xs px-2 py-1"
+            className="text-white/40 active:text-white text-xs px-1.5 py-0.5 flex-shrink-0"
           >
             {listOpen ? '▲' : '▼'}
           </button>
         </div>
         {listOpen && (
-          <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-2 py-2">
+          <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-1.5 py-1.5">
             {timestamps.length === 0 ? (
               <p className="text-white/30 text-xs text-center py-4">「記録」ボタンでシーンを登録</p>
             ) : (
