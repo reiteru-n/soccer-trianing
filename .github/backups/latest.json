@@ -1,8 +1,16 @@
 {
-  "timestamp": "2026-10-12T04:17:45.329120+09:00",
+  "timestamp": "2026-10-13T07:21:15.012392+09:00",
   "total_keys": 30,
   "keys": {
     "sch:announcements": [
+      {
+        "id": "auto-match-mtzq28a8kk72ocz4u4",
+        "date": "2026/10/12",
+        "title": "⚽ 試合のお知らせ：2026/10/12 vs FCカルパ",
+        "content": "📅 日時：2026/10/12（月） 14:00\n📍 場所：SCHフッボルエスタディオ横浜\n⚽ 種別：トレマ\n🏆 大会名：TRM\n⏰ 集合：13:30\n🆚 試合：\n　vs FCカルパ\n　vs FCカルパ\n　vs FCカルパ\n　vs FCカルパ\n　vs FCカルパ\n　vs FCカルパ",
+        "important": true,
+        "createdAt": "2026-10-12T06:35:45.655Z"
+      },
       {
         "id": "auto-match-mtb6eqemnsc0ss1k5s8",
         "date": "2026/10/10",
@@ -50,14 +58,6 @@
         "content": "📅 日時：2026/11/29（日） 09:00\n📍 場所：SCHフッボルエスタディオ横浜\n⚽ 種別：トレマ\n🏆 大会名：TRM\n⏰ 集合：08:40\n🆚 相手：横浜すみれSC（ホーム）",
         "important": true,
         "createdAt": "2026-09-30T04:49:32.710Z"
-      },
-      {
-        "id": "auto-match-mtzq28a8kk72ocz4u4",
-        "date": "2026/09/28",
-        "title": "⚽ 試合のお知らせ：2026/10/12 vs FCカルパ",
-        "content": "📅 日時：2026/10/12（月） 14:00\n📍 場所：SCHフッボルエスタディオ横浜\n⚽ 種別：トレマ\n🏆 大会名：TRM\n⏰ 集合：13:30\n🆚 相手：FCカルパ（ホーム）",
-        "important": true,
-        "createdAt": "2026-09-28T01:17:34.454Z"
       },
       {
         "id": "auto-match-mt49jc01z3tgdyoe2cr",
@@ -3291,7 +3291,44 @@
           {
             "id": "mukk35om52ybk5b0bvu",
             "opponentName": "FCカルパ",
-            "isHome": true
+            "isHome": true,
+            "homeScore": 1,
+            "awayScore": 1
+          },
+          {
+            "id": "mv4t9xu9152aio2rlg6",
+            "opponentName": "FCカルパ",
+            "isHome": true,
+            "homeScore": 1,
+            "awayScore": 0
+          },
+          {
+            "id": "mv4tmh4jbkzj6h3stxh",
+            "opponentName": "FCカルパ",
+            "isHome": true,
+            "homeScore": 1,
+            "awayScore": 2
+          },
+          {
+            "id": "mv4u6lorr9pixvhfari",
+            "opponentName": "FCカルパ",
+            "isHome": true,
+            "homeScore": 0,
+            "awayScore": 0
+          },
+          {
+            "id": "mv4uvy7xpl3p5lhxb",
+            "opponentName": "FCカルパ",
+            "isHome": true,
+            "homeScore": 1,
+            "awayScore": 1
+          },
+          {
+            "id": "mv4v6vbewcl0br3g1wf",
+            "opponentName": "FCカルパ",
+            "isHome": true,
+            "homeScore": 2,
+            "awayScore": 0
           }
         ]
       },
@@ -3515,7 +3552,7 @@
       }
     ],
     "sch:line_debug": {
-      "ts": "2026-10-10T01:54:26.721Z",
+      "ts": "2026-10-12T06:35:46.669Z",
       "notifyLine": false,
       "notifyLineRaw": false,
       "bodyKeys": [
@@ -3528,7 +3565,7 @@
       "matchChanged": 1,
       "nonMatchChanged": 0,
       "anyChanged": 1,
-      "scoreEntered": 0,
+      "scoreEntered": 1,
       "editedAnns": 0,
       "newAnnouncements": 0
     },
@@ -9941,6 +9978,15 @@
         "goodPoints": "",
         "improvements": [],
         "id": "mv3r1y2ule76qpuo9j9"
+      },
+      {
+        "date": "2026/10/12",
+        "teamName": "FCパーシモン",
+        "location": "SCHフッボルエスタディオ横浜",
+        "category": "試合",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mv5024ma810eidr670d"
       }
     ],
     "takuto:perf_config": [
