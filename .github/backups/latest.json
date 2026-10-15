@@ -1,8 +1,16 @@
 {
-  "timestamp": "2026-10-15T04:07:02.398093+09:00",
+  "timestamp": "2026-10-16T03:50:04.664918+09:00",
   "total_keys": 30,
   "keys": {
     "sch:announcements": [
+      {
+        "id": "auto-match-mup6w21ugoj7g71g7g6",
+        "date": "2026/10/14",
+        "title": "⚽ 試合のお知らせ：2026/10/25 vs FCパーシモン",
+        "content": "📅 日時：2026/10/25（日） 08:00\n📍 場所：西長沢多目的広場\n⚽ 種別：トレマ\n🏆 大会名：TRM\n🆚 相手：FCパーシモン（ホーム）",
+        "important": true,
+        "createdAt": "2026-10-14T23:44:49.106Z"
+      },
       {
         "id": "auto-match-mtzq28a8kk72ocz4u4",
         "date": "2026/10/12",
@@ -3371,11 +3379,21 @@
       {
         "id": "mup6w21ugoj7g71g7g6",
         "date": "2026/10/25",
-        "type": "practice",
-        "startTime": "16:30",
-        "endTime": "18:00",
-        "location": "SCHフッボルエスタディオ横浜",
-        "maxParkingSlots": -1
+        "type": "match",
+        "startTime": "08:00",
+        "endTime": "13:00",
+        "location": "西長沢多目的広場",
+        "label": "TRM",
+        "maxParkingSlots": -1,
+        "matchType": "トレマ",
+        "matchFormat": "friendly",
+        "matches": [
+          {
+            "id": "mv8r8rquu79indeqb4",
+            "opponentName": "FCパーシモン",
+            "isHome": true
+          }
+        ]
       },
       {
         "id": "mup6xaq640fdblugc87",
@@ -3552,26 +3570,26 @@
       }
     ],
     "sch:line_debug": {
-      "ts": "2026-10-12T06:35:46.669Z",
-      "notifyLine": false,
-      "notifyLineRaw": false,
+      "ts": "2026-10-14T23:44:50.804Z",
+      "notifyLine": true,
+      "notifyLineRaw": true,
       "bodyKeys": [
         "events",
         "notifyLine",
         "announcements"
       ],
-      "lineMsg": "skipped",
+      "lineMsg": "match",
       "offChanged": 0,
       "matchChanged": 1,
       "nonMatchChanged": 0,
       "anyChanged": 1,
-      "scoreEntered": 1,
+      "scoreEntered": 0,
       "editedAnns": 0,
       "newAnnouncements": 0
     },
     "sch:line_group_id": "Cf3a03fdab1aed6a1502a15521303435c",
     "sch:line_send_debug": {
-      "ts": "2026-09-28T01:17:36.306Z",
+      "ts": "2026-10-14T23:44:50.654Z",
       "sentBy": 1,
       "status": 200,
       "groupId": "Cf3a03fdab1aed6a1502a15521303435c",
@@ -4192,6 +4210,16 @@
     ],
     "sch:update_history": [
       {
+        "id": "mv8rbh12o6ljsacjhv",
+        "timestamp": "2026-10-14T23:44:36.854Z",
+        "type": "event",
+        "eventType": "match",
+        "title": "vs FCパーシモン",
+        "action": "edit",
+        "itemId": "mup6w21ugoj7g71g7g6",
+        "tab": "events"
+      },
+      {
         "id": "muz3rzyn6602ywvxoy8",
         "timestamp": "2026-10-08T05:35:41.519Z",
         "type": "event",
@@ -4379,16 +4407,6 @@
         "title": "OFF",
         "action": "edit",
         "itemId": "mszvdx678lrdku08rke",
-        "tab": "events"
-      },
-      {
-        "id": "mtl8idnnrw47lcb32ne",
-        "timestamp": "2026-09-03T07:59:41.987Z",
-        "type": "event",
-        "eventType": "match",
-        "title": "試合",
-        "action": "new",
-        "itemId": "mtl8idnle4nju2ywdfn",
         "tab": "events"
       }
     ],
@@ -10058,6 +10076,15 @@
         "goodPoints": "",
         "improvements": [],
         "id": "mv7wwib5yt5aearxsep"
+      },
+      {
+        "date": "2026/10/15",
+        "teamName": "SCH",
+        "location": "SCHフッボルエスタディオ横浜",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mv9exc21a8ruuuk50zc"
       }
     ],
     "takuto:perf_config": [
