@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-17T03:34:09.855447+09:00",
+  "timestamp": "2026-10-18T02:42:05.591983+09:00",
   "total_keys": 30,
   "keys": {
     "sch:announcements": [
@@ -3405,6 +3405,15 @@
         "maxParkingSlots": -1
       },
       {
+        "id": "mvc3imergz7ydllial",
+        "date": "2026/10/31",
+        "type": "practice",
+        "startTime": "09:00",
+        "endTime": "10:30",
+        "location": "SCHフッボルエスタディオ横浜",
+        "maxParkingSlots": -1
+      },
+      {
         "id": "mt5r4g3cs78mfcdn0g",
         "date": "2026/11/05",
         "type": "practice",
@@ -3570,18 +3579,17 @@
       }
     ],
     "sch:line_debug": {
-      "ts": "2026-10-14T23:44:50.804Z",
-      "notifyLine": true,
-      "notifyLineRaw": true,
+      "ts": "2026-10-17T07:49:27.072Z",
+      "notifyLine": false,
+      "notifyLineRaw": false,
       "bodyKeys": [
         "events",
-        "notifyLine",
-        "announcements"
+        "notifyLine"
       ],
-      "lineMsg": "match",
+      "lineMsg": "skipped",
       "offChanged": 0,
-      "matchChanged": 1,
-      "nonMatchChanged": 0,
+      "matchChanged": 0,
+      "nonMatchChanged": 1,
       "anyChanged": 1,
       "scoreEntered": 0,
       "editedAnns": 0,
@@ -4210,6 +4218,16 @@
     ],
     "sch:update_history": [
       {
+        "id": "mvc3imet8s14w6iamye",
+        "timestamp": "2026-10-17T07:49:24.341Z",
+        "type": "event",
+        "eventType": "practice",
+        "title": "SCHフッボルエスタディオ横浜",
+        "action": "new",
+        "itemId": "mvc3imergz7ydllial",
+        "tab": "events"
+      },
+      {
         "id": "mv8rbh12o6ljsacjhv",
         "timestamp": "2026-10-14T23:44:36.854Z",
         "type": "event",
@@ -4397,16 +4415,6 @@
         "title": "試合",
         "action": "edit",
         "itemId": "msx05orgf7sefdnp5ld",
-        "tab": "events"
-      },
-      {
-        "id": "mtovhbc03ke90ke54ef",
-        "timestamp": "2026-09-05T21:06:02.016Z",
-        "type": "event",
-        "eventType": "off",
-        "title": "OFF",
-        "action": "edit",
-        "itemId": "mszvdx678lrdku08rke",
         "tab": "events"
       }
     ],
@@ -10085,6 +10093,15 @@
         "goodPoints": "",
         "improvements": [],
         "id": "mv9exc21a8ruuuk50zc"
+      },
+      {
+        "date": "2026/10/17",
+        "teamName": "SCH",
+        "location": "SCHフッボルエスタディオ横浜",
+        "category": "チーム練習",
+        "goodPoints": "",
+        "improvements": [],
+        "id": "mvc1v02wnkvwoevxcd"
       }
     ],
     "takuto:perf_config": [
